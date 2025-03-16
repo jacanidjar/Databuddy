@@ -10,10 +10,12 @@ import { BlogSidebar } from '@/app/components/blog/sidebar'
 import { calculateReadingTime, generateMetaDescription, generateSeoTitle } from '@/app/lib/blog-utils'
 import { Separator } from '@/components/ui/separator'
 import Script from 'next/script'
+import { Post, SidebarPost, SidebarCategory, SidebarTag } from '@/app/types/blog'
+import React from 'react'
 
 interface Props {
-    params: Promise<{ slug: string }>;
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+    params: { slug: string };
+    searchParams: { [key: string]: string | string[] | undefined };
 }
 
 // Generate metadata for the page
@@ -22,40 +24,40 @@ export async function generateMetadata(
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   // Fetch post data
-  const { slug } = await params
-  const post = await getPostBySlug(slug)
+  const { slug } = params;
+  const post = await getPostBySlug(slug);
   
   if (!post) {
     return {
       title: 'Post Not Found | Databuddy Analytics',
       description: 'The requested blog post could not be found.'
-    }
+    };
   }
   
   // Generate meta description from content if no excerpt is available
-  const description = post.excerpt || generateMetaDescription(post.content, 155)
+  const description = post.excerpt || generateMetaDescription(post.content, 155);
   
   // Generate SEO-optimized title
-  const title = generateSeoTitle(post.title)
+  const title = generateSeoTitle(post.title);
   
   // Ensure we have a valid date string for ISO format
   const publishedTime = post.createdAt instanceof Date 
     ? post.createdAt.toISOString() 
-    : new Date(post.createdAt).toISOString()
+    : new Date(post.createdAt).toISOString();
   
   // Construct the canonical URL for the post
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.databuddy.cc'
-  const canonicalUrl = `${baseUrl}/blog/${post.slug}`
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.databuddy.cc';
+  const canonicalUrl = `${baseUrl}/blog/${post.slug}`;
   
   // Optionally access and extend parent metadata
-  const previousImages = (await parent).openGraph?.images || []
+  const previousImages = (await parent).openGraph?.images || [];
   
   // Extract keywords from tags and categories
   const keywords = [
-    ...(post.tags ? post.tags.map((tag: { name: string }) => tag.name) : []),
-    ...(post.categories ? post.categories.map((category: { name: string }) => category.name) : []),
+    ...(post.tags?.map(tag => tag.name) || []),
+    ...(post.categories?.map(category => category.name) || []),
     'analytics', 'web analytics', 'privacy'
-  ]
+  ];
   
   return {
     title,
@@ -80,25 +82,25 @@ export async function generateMetadata(
     alternates: {
       canonical: canonicalUrl,
     }
-  }
+  };
 }
 
-export default async function BlogPostPage({ params }: Props) {
+export default async function BlogPostPage({ params }: Props): Promise<React.ReactElement> {
   // Fetch post data
-  const { slug } = await params
-  const post = await getPostBySlug(slug)
+  const { slug } = params;
+  const post = await getPostBySlug(slug);
   
   // If post not found, return 404
   if (!post) {
-    notFound()
+    notFound();
   }
   
   // Calculate reading time
-  const readingTime = calculateReadingTime(post.content)
+  const readingTime = calculateReadingTime(post.content);
   
   // Get category and tag IDs for related posts
-  const categoryIds = post.categories ? post.categories.map((category) => category.id) : []
-  const tagIds = post.tags ? post.tags.map((tag) => tag.id) : []
+  const categoryIds = post.categories?.map(category => category.id) || [];
+  const tagIds = post.tags?.map(tag => tag.id) || [];
   
   // Fetch related posts, recent posts, categories, and tags in parallel
   const [relatedPosts, recentPosts, categories, tags] = await Promise.all([
@@ -106,16 +108,16 @@ export default async function BlogPostPage({ params }: Props) {
     getRecentPosts(5),
     getAllCategories(),
     getAllTags()
-  ])
+  ]);
   
   // Construct the canonical URL for the post
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.databuddy.co'
-  const canonicalUrl = `${baseUrl}/blog/${post.slug}`
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.databuddy.cc';
+  const canonicalUrl = `${baseUrl}/blog/${post.slug}`;
   
   // Prepare structured data for the article
   const publishDate = post.createdAt instanceof Date 
     ? post.createdAt.toISOString() 
-    : new Date(post.createdAt).toISOString()
+    : new Date(post.createdAt).toISOString();
     
   const structuredData = {
     '@context': 'https://schema.org',
@@ -141,7 +143,7 @@ export default async function BlogPostPage({ params }: Props) {
       '@type': 'WebPage',
       '@id': canonicalUrl
     }
-  }
+  };
   
   return (
     <div className="fixed inset-0 overflow-hidden">
@@ -191,5 +193,5 @@ export default async function BlogPostPage({ params }: Props) {
         <Footer />
       </div>
     </div>
-  )
+  );
 } 

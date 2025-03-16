@@ -2,11 +2,12 @@
 
 import prisma from "@/lib/db";
 import { unstable_cache } from "next/cache";
+import { Post, SidebarPost, SidebarCategory, SidebarTag } from "@/app/types/blog";
 
 // Get all published blog posts
 export const getAllPublishedPosts = unstable_cache(
-  async () => {
-    return await prisma.post.findMany({
+  async (): Promise<Post[]> => {
+    const posts = await prisma.post.findMany({
       where: { 
         published: true 
       },
@@ -24,6 +25,8 @@ export const getAllPublishedPosts = unstable_cache(
         createdAt: 'desc'
       }
     });
+    
+    return posts as unknown as Post[];
   },
   ["published-posts"],
   { revalidate: 3600 } // Revalidate every hour
@@ -31,8 +34,8 @@ export const getAllPublishedPosts = unstable_cache(
 
 // Get a single blog post by slug
 export const getPostBySlug = unstable_cache(
-  async (slug: string) => {
-    return await prisma.post.findUnique({
+  async (slug: string): Promise<Post | null> => {
+    const post = await prisma.post.findUnique({
       where: { 
         slug,
         published: true
@@ -48,6 +51,8 @@ export const getPostBySlug = unstable_cache(
         tags: true
       }
     });
+    
+    return post as unknown as Post | null;
   },
   ["post-by-slug"],
   { revalidate: 3600 } // Revalidate every hour
@@ -55,8 +60,8 @@ export const getPostBySlug = unstable_cache(
 
 // Get related posts based on categories and tags
 export const getRelatedPosts = unstable_cache(
-  async (postId: string, categoryIds: string[], tagIds: string[], limit = 3) => {
-    return await prisma.post.findMany({
+  async (postId: string, categoryIds: string[], tagIds: string[], limit = 3): Promise<Post[]> => {
+    const posts = await prisma.post.findMany({
       where: {
         id: { not: postId },
         published: true,
@@ -80,6 +85,8 @@ export const getRelatedPosts = unstable_cache(
       },
       take: limit
     });
+    
+    return posts as unknown as Post[];
   },
   ["related-posts"],
   { revalidate: 3600 } // Revalidate every hour
@@ -87,26 +94,32 @@ export const getRelatedPosts = unstable_cache(
 
 // Get recent posts
 export const getRecentPosts = unstable_cache(
-  async (limit = 5) => {
-    return await prisma.post.findMany({
+  async (limit = 5): Promise<SidebarPost[]> => {
+    const posts = await prisma.post.findMany({
       where: { 
         published: true 
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        excerpt: true,
+        coverImage: true,
+        createdAt: true,
         author: {
           select: {
             name: true,
             image: true
           }
-        },
-        categories: true,
-        tags: true
+        }
       },
       orderBy: {
         createdAt: 'desc'
       },
       take: limit
     });
+    
+    return posts as unknown as SidebarPost[];
   },
   ["recent-posts"],
   { revalidate: 3600 } // Revalidate every hour
@@ -114,7 +127,7 @@ export const getRecentPosts = unstable_cache(
 
 // Get all categories with post count
 export const getAllCategories = unstable_cache(
-  async () => {
+  async (): Promise<SidebarCategory[]> => {
     const categories = await prisma.category.findMany({
       include: {
         _count: {
@@ -135,7 +148,7 @@ export const getAllCategories = unstable_cache(
     return categories.map(category => ({
       ...category,
       postCount: category._count.posts
-    }));
+    })) as unknown as SidebarCategory[];
   },
   ["all-categories"],
   { revalidate: 3600 } // Revalidate every hour
@@ -143,7 +156,7 @@ export const getAllCategories = unstable_cache(
 
 // Get all tags with post count
 export const getAllTags = unstable_cache(
-  async () => {
+  async (): Promise<SidebarTag[]> => {
     const tags = await prisma.tag.findMany({
       include: {
         _count: {
@@ -164,7 +177,7 @@ export const getAllTags = unstable_cache(
     return tags.map(tag => ({
       ...tag,
       postCount: tag._count.posts
-    }));
+    })) as unknown as SidebarTag[];
   },
   ["all-tags"],
   { revalidate: 3600 } // Revalidate every hour
