@@ -101,7 +101,7 @@ export default async function CompetitorComparisonPage({ params }: { params: Pro
                 Competitor Not Found
               </h1>
               <p className="text-slate-400 max-w-2xl mx-auto mb-8">
-                The competitor you're looking for doesn't exist in our comparison database.
+                The competitor you&apos;re looking for doesn&apos;t exist in our comparison database.
               </p>
               <Link 
                 href="/compare"
