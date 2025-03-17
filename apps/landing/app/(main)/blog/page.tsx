@@ -52,58 +52,6 @@ export default async function BlogPage() {
       .substring(0, 2)
   }
 
-  if (posts.length === 0) {
-    return (
-      <div className="fixed inset-0 overflow-hidden">
-        <Background />
-        <div className="relative z-10 h-full overflow-auto scrollbar-hide">
-          <Navbar />
-          <main className="container mx-auto px-4 py-16">
-            <div className="text-center mb-16">
-              <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-blue-500 mb-4">
-                Databuddy Blog
-              </h1>
-              <p className="text-lg text-slate-300 max-w-2xl mx-auto">
-                Loading blog content...
-              </p>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-              <div className="lg:col-span-8">
-                <div className="space-y-12">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden animate-pulse">
-                      <div className="h-[300px] bg-slate-800"></div>
-                      <div className="p-6 md:p-8">
-                        <div className="h-6 bg-slate-800 rounded w-1/3 mb-4"></div>
-                        <div className="h-10 bg-slate-800 rounded w-3/4 mb-4"></div>
-                        <div className="h-20 bg-slate-800 rounded w-full mb-6"></div>
-                        <div className="flex justify-between">
-                          <div className="h-6 bg-slate-800 rounded w-1/3"></div>
-                          <div className="h-6 bg-slate-800 rounded w-1/4"></div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="lg:col-span-4">
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 animate-pulse">
-                  <div className="h-8 bg-slate-800 rounded w-1/2 mb-6"></div>
-                  <div className="space-y-4">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <div key={i} className="h-6 bg-slate-800 rounded w-full"></div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </main>
-          <Footer />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="fixed inset-0 overflow-hidden">
       <Background />
