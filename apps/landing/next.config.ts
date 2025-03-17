@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
     images: {
         domains: ['qdpxznrqyzyebbrmqvpi.supabase.co'],
     },
-    plugins: [PrismaPlugin()],
+    plugins: [new PrismaPlugin()],
 };
 
 export default nextConfig;
