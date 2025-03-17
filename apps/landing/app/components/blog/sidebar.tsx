@@ -1,11 +1,10 @@
 import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { CalendarIcon, Hash, Layers, Search, Mail, TrendingUp } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { BlogPost, BlogCategory, BlogTag } from '@/app/lib/blog-types'
-
+import Image from 'next/image'
 interface BlogSidebarProps {
   recentPosts: BlogPost[]
   categories: BlogCategory[]
@@ -61,8 +60,10 @@ export function BlogSidebar({ recentPosts, categories, tags }: BlogSidebarProps)
                 >
                   {post.coverImage ? (
                     <div className="w-16 h-16 rounded-md overflow-hidden shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
-                      <img 
+                      <Image 
                         src={post.coverImage} 
+                        width={64}
+                        height={64}
                         alt={post.title} 
                         className="w-full h-full object-cover transition-transform group-hover:scale-105"
                       />

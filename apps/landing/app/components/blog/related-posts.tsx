@@ -1,7 +1,7 @@
 import Link from 'next/link'
-import { Card, CardContent } from '@/components/ui/card'
 import { CalendarIcon } from 'lucide-react'
 import { BlogPost } from '@/app/lib/blog-types'
+import Image from 'next/image'
 
 interface RelatedPostsProps {
   posts: BlogPost[]
@@ -31,9 +31,11 @@ export function RelatedPosts({ posts }: RelatedPostsProps) {
             <div className="h-full bg-slate-900/30 border border-slate-800/60 rounded-lg overflow-hidden hover:border-sky-500/30 transition-all hover:shadow-[0_0_15px_rgba(14,165,233,0.15)] duration-300">
               <div className="relative h-48 w-full overflow-hidden">
                 {post.coverImage ? (
-                  <img 
+                  <Image 
                     src={post.coverImage} 
                     alt={post.title} 
+                    width={640}
+                    height={480}
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 ) : (

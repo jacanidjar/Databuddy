@@ -6,8 +6,6 @@ import {
   BookOpen,
   Mail,
   Home,
-  ChevronRight,
-  ChevronLeft,
   ArrowUp,
   CalendarIcon,
   Hash,
@@ -17,7 +15,6 @@ import Link from "next/link";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 // Define navigation sections for blog
 const navigationSections = [
@@ -70,7 +67,6 @@ export function BlogSidebar({ recentPosts, categories, tags }: BlogSidebarProps)
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isMobile = useIsMobile();
@@ -177,13 +173,11 @@ export function BlogSidebar({ recentPosts, categories, tags }: BlogSidebarProps)
       clearTimeout(closeTimeoutRef.current);
       closeTimeoutRef.current = null;
     }
-    setIsHovering(true);
     setIsCollapsed(false);
   };
 
   const handleMouseLeave = () => {
     closeTimeoutRef.current = setTimeout(() => {
-      setIsHovering(false);
       setIsCollapsed(true);
     }, 300); // 300ms delay before closing
   };

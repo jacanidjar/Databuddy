@@ -4,6 +4,7 @@ import { CalendarIcon, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { SocialShare } from './social-share'
 import { BlogCategory, BlogTag } from '@/app/lib/blog-types'
+import Image from 'next/image'
 
 interface PostContentProps {
   title: string
@@ -54,9 +55,11 @@ export function PostContent({
       {/* Cover Image */}
       {coverImage && (
         <div className="relative w-full h-[400px] mb-10 rounded-xl overflow-hidden">
-          <img
+          <Image
             src={coverImage}
             alt={title}
+            width={1024}
+            height={768}
             className="w-full h-full object-cover"
           />
         </div>
