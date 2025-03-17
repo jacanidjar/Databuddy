@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@databuddy/db";
-import { ApplicationStatus } from "@databuddy/db";
+// import { ApplicationStatus } from "@databuddy/db";
 // import { isSpamEmail, isSpamMessage } from "@/app/lib/spam-detection";
 import { RateLimiter } from "@/app/lib/rate-limiter";
 
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
         jobListingId: jobListingId,
         resume: data.resumeUrl,
         coverLetter: data.coverLetter,
-        status: ApplicationStatus.NEW,
+        // status: ApplicationStatus.NEW,
       };
 
       // Log the data being sent to the database for debugging
