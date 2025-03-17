@@ -64,8 +64,8 @@ export async function generateMetadata(
   
   // Extract keywords from tags and categories
   const keywords = [
-    ...post.tags.map(tag => tag.name),
-    ...post.categories.map(category => category.name),
+    ...post.tags.map(tag => tag.slug),
+    ...post.categories.map(category => category.slug),
     'analytics', 'web analytics', 'privacy'
   ];
   
