@@ -19,7 +19,6 @@
         "db:studio": "prisma studio",
         "db:migrate": "prisma migrate dev --skip-generate",
         "db:deploy": "prisma migrate deploy",
-        "vercel-build": "prisma generate",
         "generate": "prisma generate"
     }
 }
