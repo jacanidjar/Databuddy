@@ -3,11 +3,12 @@
 
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output = "../generated/client"
-  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+generator json {
+  provider = "prisma-json-types-generator"
 }
 datasource db {
   provider = "postgresql"

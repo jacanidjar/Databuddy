@@ -1,8 +1,28 @@
-import { PrismaClient } from "../generated/client";
+import { createLogger } from '@/packages/logger/src';
+import { PrismaClient } from '@prisma/client';
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+export * from '@prisma/client';
 
-export const prisma =
-    globalForPrisma.prisma || new PrismaClient();
+const logger = createLogger('db');
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+/**
+ * Get a properly configured PrismaClient instance
+ */
+const getPrismaClient = () => {
+  return new PrismaClient({
+    log: ['error'],
+  });
+};
+
+// Add prisma to the global type
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient;
+};
+
+// Export a singleton instance of PrismaClient
+export const prisma = globalForPrisma.prisma ?? getPrismaClient();
+
+// Prevent multiple instances during development due to HMR
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma;
+}
