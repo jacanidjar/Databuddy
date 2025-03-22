@@ -189,21 +189,21 @@ export default function PricingPage() {
                 <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:border-sky-500/30 hover:bg-slate-900/80 transition-colors">
                   <h3 className="text-lg font-semibold text-white mb-3">Can I upgrade or downgrade my plan?</h3>
                   <p className="text-slate-300">
-                    Yes, you can change your plan at any time. Changes take effect on your next billing cycle, and you'll only be charged for what you use.
+                    Yes, you can change your plan at any time. Changes take effect on your next billing cycle, and you&apos;ll only be charged for what you use.
                   </p>
                 </div>
                 
                 <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:border-sky-500/30 hover:bg-slate-900/80 transition-colors">
                   <h3 className="text-lg font-semibold text-white mb-3">Do you offer refunds?</h3>
                   <p className="text-slate-300">
-                    We offer a 14-day money-back guarantee if you're not satisfied with our service. No questions asked.
+                    We offer a 14-day money-back guarantee if you&apos;re not satisfied with our service. No questions asked.
                   </p>
                 </div>
                 
                 <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:border-sky-500/30 hover:bg-slate-900/80 transition-colors">
                   <h3 className="text-lg font-semibold text-white mb-3">What happens if I exceed my pageviews?</h3>
                   <p className="text-slate-300">
-                    With the pay-as-you-go plan, you'll be billed for additional pageviews at a tiered rate. With bundles, you can purchase additional capacity as needed.
+                    With the pay-as-you-go plan, you&apos;ll be billed for additional pageviews at a tiered rate. With bundles, you can purchase additional capacity as needed.
                   </p>
                 </div>
                 
@@ -224,7 +224,7 @@ export default function PricingPage() {
                 <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:border-sky-500/30 hover:bg-slate-900/80 transition-colors">
                   <h3 className="text-lg font-semibold text-white mb-3">How are pageviews counted?</h3>
                   <p className="text-slate-300">
-                    A pageview is counted each time a page loads with our tracking script. We don't count bot traffic or repetitive views from the same user within a short timeframe.
+                    A pageview is counted each time a page loads with our tracking script. We don&apos;t count bot traffic or repetitive views from the same user within a short timeframe.
                   </p>
                 </div>
               </div>

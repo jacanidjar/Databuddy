@@ -152,7 +152,7 @@ export default function FeaturesPage() {
                   Powerful Features, Simple Interface
                 </h1>
                 <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto mb-10">
-                  Everything you need to understand your audience without compromising their privacy or your site's performance.
+                  Everything you need to understand your audience without compromising their privacy or your site&apos;s performance.
                 </p>
                 <div className="flex flex-wrap justify-center gap-4 mt-8">
                   <Button asChild className="bg-sky-500 hover:bg-sky-600 text-white">
@@ -244,7 +244,7 @@ export default function FeaturesPage() {
                   </div>
                   <h3 className="text-xl font-bold mb-2">Lightning Fast</h3>
                   <p className="text-slate-400">
-                    Lightweight script less than 2KB with edge processing for minimal impact on your site's performance.
+                    Lightweight script less than 2KB with edge processing for minimal impact on your site&apos;s performance.
                   </p>
                   <Button asChild variant="link" className="mt-4 text-sky-400">
                     <Link href="/performance">View performance benchmarks</Link>
@@ -274,7 +274,7 @@ export default function FeaturesPage() {
             <div className="container mx-auto px-4 py-16 max-w-4xl">
               <div className="text-center mb-10">
                 <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
-                <p className="text-slate-400">Common questions about Databuddy's features</p>
+                <p className="text-slate-400">Common questions about Databuddy&apos;s features</p>
               </div>
 
               <div className="grid gap-6 md:grid-cols-2">

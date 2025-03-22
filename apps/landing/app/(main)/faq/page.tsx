@@ -289,7 +289,7 @@ export default function FAQPage() {
                   <CardContent className="relative p-8 text-center">
                     <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-300 mb-4">Still have questions?</h2>
                     <p className="text-slate-300 mb-6 max-w-lg mx-auto">
-                      We're here to help! Reach out to our team for answers to any other questions you may have about Databuddy Analytics.
+                      We&apos;re here to help! Reach out to our team for answers to any other questions you may have about Databuddy Analytics.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                       <Button asChild className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-lg shadow-sky-500/20 border-0">
