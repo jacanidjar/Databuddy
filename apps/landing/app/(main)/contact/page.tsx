@@ -55,21 +55,22 @@ export default function ContactPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
                 {contactInfo.map((item, index) => (
-                  <div 
+                  <a 
                     key={index} 
-                    className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:border-sky-500/50 transition-all duration-300 text-center"
+                    href={item.title === "Email Us" ? `mailto:${item.details}` : item.details}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`${item.title}: ${item.details}`}
+                    className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:border-sky-500/50 hover:bg-slate-900/70 hover:shadow-lg hover:shadow-sky-500/10 transition-all duration-300 text-center block relative group"
                   >
+                    <div className="absolute inset-0 bg-gradient-to-r from-sky-400/0 via-sky-400/0 to-blue-500/0 opacity-0 group-hover:opacity-10 rounded-xl transition-opacity duration-300"></div>
                     <div className="mx-auto w-12 h-12 bg-sky-500/10 rounded-full flex items-center justify-center mb-4">
                       {item.icon}
                     </div>
                     <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
-                      {item.title === "Book a meeting" ? (
-                      <a href={item.details} target="_blank" rel="noopener noreferrer" className="text-sky-400 font-medium mb-2 text-wrap break-words hover:text-sky-300 transition-colors">{item.details}</a>
-                    ) : (
-                      <a href={item.details} target="_blank" rel="noopener noreferrer" className="text-sky-400 font-medium mb-2 text-wrap break-words hover:text-sky-300 transition-colors">{item.details}</a>
-                    )}
+                    <p className="text-sky-400 font-medium mb-2 text-wrap break-words">{item.details}</p>
                     <p className="text-slate-300 text-sm">{item.description}</p>
-                  </div>
+                  </a>
                 ))}
               </div>
             </div>
@@ -77,7 +78,7 @@ export default function ContactPage() {
 
           <FadeIn delay={100}>
             <div className="bg-slate-900/30 py-16">
-              <div className="container mx-auto px-4 max-w-6xl">
+              <div className="container mx-auto px-4 rounded-xl">
                 <Contact />
               </div>
             </div>

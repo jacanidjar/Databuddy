@@ -34,7 +34,7 @@ export default function EarlyAccessPopup({ typeformUrl }: EarlyAccessPopupProps)
           spread: 70,
           origin: { y: 0.6 }
         });
-      }, 5000);
+      }, 60000);
       
       return () => clearTimeout(timer);
     }
