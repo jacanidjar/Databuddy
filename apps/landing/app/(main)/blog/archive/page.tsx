@@ -22,15 +22,12 @@ export const metadata: Metadata = {
 // Set ISR revalidation
 export const revalidate = 3600; // Revalidate every hour
 
-interface PageProps {
-  searchParams: {
-    page?: string;
-  };
-}
 
-export default async function ArchivePage({ searchParams }: PageProps) {
+
+export default async function ArchivePage({ params }: { params: Promise<{ page?: string }> }) {
   // Get current page from query params, default to 1
-  const currentPage = Number(searchParams.page) || 1;
+  const { page } = await params;
+  const currentPage = Number(page) || 1;
   const postsPerPage = 8;
   
   // Fetch all data in parallel
