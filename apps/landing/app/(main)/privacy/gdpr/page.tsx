@@ -176,11 +176,6 @@ export default function GDPRPage() {
                 <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto mb-10" itemProp="description">
                   The General Data Protection Regulation and how it impacts user data privacy in the digital age
                 </p>
-                <div className="flex flex-col sm:flex-row justify-center gap-4 max-w-md mx-auto">
-                  <Button asChild className="bg-sky-500 hover:bg-sky-600 text-white">
-                    <Link href="/demo">Try Databuddy Today</Link>
-                  </Button>
-                </div>
               </div>
               
               {/* Scroll indicator */}
@@ -292,7 +287,7 @@ export default function GDPRPage() {
             </FadeIn>
 
             {/* GDPR Principles */}
-            <FadeIn delay={150}>
+            <FadeIn delay={100}>
               <div className="container mx-auto px-4 py-8 max-w-6xl">
                 <div className="text-center mb-12">
                   <span className="inline-block bg-indigo-500/10 text-indigo-400 rounded-full px-3 py-1 text-sm font-medium mb-3">Core Principles</span>
@@ -324,7 +319,7 @@ export default function GDPRPage() {
             </FadeIn>
 
             {/* Individual Rights */}
-            <FadeIn delay={200}>
+            <FadeIn delay={100}>
               <div className="container mx-auto px-4 py-8 max-w-6xl">
                 <div className="text-center mb-12">
                   <span className="inline-block bg-purple-500/10 text-purple-400 rounded-full px-3 py-1 text-sm font-medium mb-3">GDPR Rights</span>
@@ -362,7 +357,7 @@ export default function GDPRPage() {
             </FadeIn>
 
             {/* Web Analytics and GDPR */}
-            <FadeIn delay={250}>
+            <FadeIn delay={100}>
               <div className="container mx-auto px-4 py-8 max-w-4xl">
                 <div className="text-center mb-12">
                   <span className="inline-block bg-teal-500/10 text-teal-400 rounded-full px-3 py-1 text-sm font-medium mb-3">Web Analytics</span>
@@ -485,7 +480,7 @@ export default function GDPRPage() {
             </FadeIn>
 
             {/* How Databuddy Ensures GDPR Compliance */}
-            <FadeIn delay={300}>
+            <FadeIn delay={100}>
               <div className="container mx-auto px-4 py-8 max-w-6xl">
                 <div className="text-center mb-12">
                   <span className="inline-block bg-sky-500/10 text-sky-400 rounded-full px-3 py-1 text-sm font-medium mb-3">The Solution</span>
@@ -517,7 +512,7 @@ export default function GDPRPage() {
             </FadeIn>
 
             {/* CTA section */}
-            <FadeIn delay={350}>
+            <FadeIn delay={100}>
               <div className="container mx-auto px-4 py-16 max-w-5xl">
                 <div className="bg-gradient-to-r from-sky-900/20 to-blue-900/20 rounded-2xl p-8 md:p-12 border border-sky-500/20 relative overflow-hidden shadow-lg">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl -z-10" aria-hidden="true" />

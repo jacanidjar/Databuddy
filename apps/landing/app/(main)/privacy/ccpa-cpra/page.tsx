@@ -183,11 +183,6 @@ export default function CCPACPRAPage() {
                 <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto mb-10" itemProp="description">
                   The California Consumer Privacy Act and California Privacy Rights Act and their impact on data privacy in the digital age
                 </p>
-                <div className="flex flex-col sm:flex-row justify-center gap-4 max-w-md mx-auto">
-                  <Button asChild className="bg-amber-500 hover:bg-amber-600 text-white">
-                    <Link href="/demo">Try Databuddy Today</Link>
-                  </Button>
-                </div>
               </div>
               
               {/* Scroll indicator */}
@@ -289,7 +284,7 @@ export default function CCPACPRAPage() {
             </FadeIn>
 
             {/* Consumer Rights Section */}
-            <FadeIn delay={200}>
+            <FadeIn delay={100}>
               <div className="container mx-auto px-4 py-16 max-w-4xl relative">
                 <div className="text-center mb-12">
                   <div className="inline-flex items-center justify-center p-2 bg-amber-500/10 rounded-full mb-5 border border-amber-500/20" aria-hidden="true">
@@ -320,7 +315,7 @@ export default function CCPACPRAPage() {
             </FadeIn>
 
             {/* Business Obligations Section */}
-            <FadeIn delay={300}>
+            <FadeIn delay={100}>
               <div className="container mx-auto px-4 py-16 max-w-4xl relative">
                 <div className="text-center mb-12">
                   <div className="inline-flex items-center justify-center p-2 bg-amber-500/10 rounded-full mb-5 border border-amber-500/20" aria-hidden="true">
@@ -349,7 +344,7 @@ export default function CCPACPRAPage() {
             </FadeIn>
 
             {/* Web Analytics Impact Section */}
-            <FadeIn delay={400}>
+            <FadeIn delay={100}>
               <div className="container mx-auto px-4 py-16 max-w-4xl relative">
                 <div className="text-center mb-12">
                   <div className="inline-flex items-center justify-center p-2 bg-amber-500/10 rounded-full mb-5 border border-amber-500/20" aria-hidden="true">
@@ -414,7 +409,7 @@ export default function CCPACPRAPage() {
             </FadeIn>
 
             {/* Enforcement & Penalties Section */}
-            <FadeIn delay={500}>
+            <FadeIn delay={100}>
               <div className="container mx-auto px-4 py-16 max-w-4xl relative">
                 <div className="text-center mb-12">
                   <div className="inline-flex items-center justify-center p-2 bg-amber-500/10 rounded-full mb-5 border border-amber-500/20" aria-hidden="true">
@@ -528,7 +523,7 @@ export default function CCPACPRAPage() {
             </FadeIn>
 
             {/* Databuddy Features Section */}
-            <FadeIn delay={600}>
+            <FadeIn delay={100}>
               <div className="container mx-auto px-4 py-16 max-w-4xl relative">
                 <div className="text-center mb-12">
                   <div className="inline-flex items-center justify-center p-2 bg-amber-500/10 rounded-full mb-5 border border-amber-500/20" aria-hidden="true">
@@ -540,7 +535,7 @@ export default function CCPACPRAPage() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {databuddyFeatures.map((feature, index) => (
                     <div key={index} className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 shadow-lg hover:border-amber-500/20 transition-all duration-300">
                       <div className="flex items-start">
@@ -555,17 +550,11 @@ export default function CCPACPRAPage() {
                     </div>
                   ))}
                 </div>
-
-                <div className="flex justify-center mt-8">
-                  <Button asChild className="bg-amber-500 hover:bg-amber-600 text-white">
-                    <Link href="/demo">Try Databuddy Analytics</Link>
-                  </Button>
-                </div>
               </div>
             </FadeIn>
 
             {/* Conclusion Section */}
-            <FadeIn delay={700}>
+            <FadeIn delay={100}>
               <div className="container mx-auto px-4 py-16 max-w-4xl relative">
                 <div className="bg-gradient-to-r from-amber-900/20 to-orange-900/20 rounded-2xl p-8 md:p-12 border border-amber-500/20 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -z-10" aria-hidden="true" />
