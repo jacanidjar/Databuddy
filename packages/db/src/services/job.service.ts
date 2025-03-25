@@ -1,7 +1,7 @@
 import { prisma } from '../client';
 import { Prisma, JobListing, JobApplication, ApplicationStatus } from '../client';
 import { createLogger } from '@databuddy/logger';
-import { cacheable } from '@databuddy/redis';
+// import { cacheable } from '@databuddy/redis';
 
 const logger = createLogger('job-service');
 
@@ -20,7 +20,7 @@ export class JobService {
     }
   }
 
-  static findListingById = cacheable(async (id: string): Promise<JobListingWithApplications | null> => {
+  static findListingById = /*cacheable(*/async (id: string): Promise<JobListingWithApplications | null> => {
     try {
       return await prisma.jobListing.findUnique({
         where: { id },
@@ -32,14 +32,9 @@ export class JobService {
       logger.error('Failed to find job listing', { error, id });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'job-listing',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
-  static findPublishedListings = cacheable(async (): Promise<JobListing[]> => {
+  static findPublishedListings = /*cacheable(*/async (): Promise<JobListing[]> => {
     try {
       return await prisma.jobListing.findMany({
         where: { 
@@ -52,14 +47,9 @@ export class JobService {
       logger.error('Failed to find published job listings', { error });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'job-listings-published',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
-  static findAllListings = cacheable(async (): Promise<JobListingWithApplications[]> => {
+  static findAllListings = /*cacheable(*/async (): Promise<JobListingWithApplications[]> => {
     try {
       return await prisma.jobListing.findMany({
         include: {
@@ -71,12 +61,7 @@ export class JobService {
       logger.error('Failed to find all job listings', { error });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'job-listings-all',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
   static async updateListing(id: string, data: Prisma.JobListingUpdateInput) {
     try {
@@ -88,9 +73,9 @@ export class JobService {
         },
       });
       // Invalidate caches
-      await JobService.findListingById.invalidate(id);
-      await JobService.findPublishedListings.invalidate();
-      await JobService.findAllListings.invalidate();
+      // await JobService.findListingById.invalidate(id);
+      // await JobService.findPublishedListings.invalidate();
+      // await JobService.findAllListings.invalidate();
       return listing;
     } catch (error) {
       logger.error('Failed to update job listing', { error, id });
@@ -108,9 +93,9 @@ export class JobService {
         },
       });
       // Invalidate caches
-      await JobService.findListingById.invalidate(id);
-      await JobService.findPublishedListings.invalidate();
-      await JobService.findAllListings.invalidate();
+      // await JobService.findListingById.invalidate(id);
+      // await JobService.findPublishedListings.invalidate();
+      // await JobService.findAllListings.invalidate();
       return listing;
     } catch (error) {
       logger.error('Failed to publish job listing', { error, id });
@@ -127,9 +112,9 @@ export class JobService {
         },
       });
       // Invalidate caches
-      await JobService.findListingById.invalidate(id);
-      await JobService.findPublishedListings.invalidate();
-      await JobService.findAllListings.invalidate();
+      // await JobService.findListingById.invalidate(id);
+      // await JobService.findPublishedListings.invalidate();
+      // await JobService.findAllListings.invalidate();
       return listing;
     } catch (error) {
       logger.error('Failed to close job listing', { error, id });
@@ -143,9 +128,9 @@ export class JobService {
         where: { id },
       });
       // Invalidate caches
-      await JobService.findListingById.invalidate(id);
-      await JobService.findPublishedListings.invalidate();
-      await JobService.findAllListings.invalidate();
+      // await JobService.findListingById.invalidate(id);
+      // await JobService.findPublishedListings.invalidate();
+      // await JobService.findAllListings.invalidate();
       return listing;
     } catch (error) {
       logger.error('Failed to delete job listing', { error, id });
@@ -158,8 +143,8 @@ export class JobService {
     try {
       const application = await prisma.jobApplication.create({ data });
       // Invalidate listing caches since application count changed
-      await JobService.findListingById.invalidate(application.jobListingId);
-      await JobService.findAllListings.invalidate();
+      // await JobService.findListingById.invalidate(application.jobListingId);
+      // await JobService.findAllListings.invalidate();
       return application;
     } catch (error) {
       logger.error('Failed to create job application', { error });
@@ -167,7 +152,7 @@ export class JobService {
     }
   }
 
-  static findApplicationById = cacheable(async (id: string): Promise<JobApplication | null> => {
+  static findApplicationById = /*cacheable(*/async (id: string): Promise<JobApplication | null> => {
     try {
       return await prisma.jobApplication.findUnique({
         where: { id },
@@ -176,14 +161,9 @@ export class JobService {
       logger.error('Failed to find job application', { error, id });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'job-application',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
-  static findApplicationsByListing = cacheable(async (jobListingId: string): Promise<JobApplication[]> => {
+  static findApplicationsByListing = /*cacheable(*/async (jobListingId: string): Promise<JobApplication[]> => {
     try {
       return await prisma.jobApplication.findMany({
         where: { jobListingId },
@@ -193,12 +173,7 @@ export class JobService {
       logger.error('Failed to find job applications by listing', { error, jobListingId });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'job-applications-by-listing',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
   static async updateApplicationStatus(id: string, status: ApplicationStatus) {
     try {
@@ -210,10 +185,10 @@ export class JobService {
         },
       });
       // Invalidate caches
-      await JobService.findApplicationById.invalidate(id);
-      await JobService.findApplicationsByListing.invalidate(application.jobListingId);
-      await JobService.findListingById.invalidate(application.jobListingId);
-      await JobService.findAllListings.invalidate();
+      // await JobService.findApplicationById.invalidate(id);
+      // await JobService.findApplicationsByListing.invalidate(application.jobListingId);
+      // await JobService.findListingById.invalidate(application.jobListingId);
+      // await JobService.findAllListings.invalidate();
       return application;
     } catch (error) {
       logger.error('Failed to update job application status', { error, id });
@@ -227,10 +202,10 @@ export class JobService {
         where: { id },
       });
       // Invalidate caches
-      await JobService.findApplicationById.invalidate(id);
-      await JobService.findApplicationsByListing.invalidate(application.jobListingId);
-      await JobService.findListingById.invalidate(application.jobListingId);
-      await JobService.findAllListings.invalidate();
+      // await JobService.findApplicationById.invalidate(id);
+      // await JobService.findApplicationsByListing.invalidate(application.jobListingId);
+      // await JobService.findListingById.invalidate(application.jobListingId);
+      // await JobService.findAllListings.invalidate();
       return application;
     } catch (error) {
       logger.error('Failed to delete job application', { error, id });

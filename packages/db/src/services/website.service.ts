@@ -1,7 +1,7 @@
 import { prisma } from '../client';
 import { Prisma, WebsiteStatus, Website } from '../client';
 import { createLogger } from '@databuddy/logger';
-import { cacheable } from '@databuddy/redis';
+// import { cacheable } from '@databuddy/redis';
 
 const logger = createLogger('website-service');
 
@@ -19,7 +19,7 @@ export class WebsiteService {
     }
   }
 
-  static findById = cacheable(async (id: string): Promise<WebsiteWithUser | null> => {
+  static findById = async (id: string): Promise<WebsiteWithUser | null> => {
     try {
       return await prisma.website.findUnique({
         where: { id },
@@ -31,14 +31,9 @@ export class WebsiteService {
       logger.error('Failed to find website', { error, id });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'website',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  };
 
-  static findByDomain = cacheable(async (domain: string): Promise<WebsiteWithUser | null> => {
+  static findByDomain = async (domain: string): Promise<WebsiteWithUser | null> => {
     try {
       return await prisma.website.findUnique({
         where: { domain },
@@ -50,14 +45,9 @@ export class WebsiteService {
       logger.error('Failed to find website by domain', { error, domain });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'website-domain',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  };
 
-  static findByUserId = cacheable(async (userId: string): Promise<WebsiteWithUser[]> => {
+  static findByUserId = async (userId: string): Promise<WebsiteWithUser[]> => {
     try {
       return await prisma.website.findMany({
         where: { userId },
@@ -69,12 +59,7 @@ export class WebsiteService {
       logger.error('Failed to find websites by user', { error, userId });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'website-user',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  };
 
   static async update(id: string, data: Prisma.WebsiteUpdateInput) {
     try {
@@ -83,9 +68,9 @@ export class WebsiteService {
         data,
       });
       // Invalidate caches
-      await WebsiteService.findById.invalidate(id);
-      await WebsiteService.findByDomain.invalidate(website.domain);
-      await WebsiteService.findByUserId.invalidate(website.userId);
+      // await WebsiteService.findById.invalidate(id);
+      // await WebsiteService.findByDomain.invalidate(website.domain);
+      // await WebsiteService.findByUserId.invalidate(website.userId);
       return website;
     } catch (error) {
       logger.error('Failed to update website', { error, id });
@@ -100,9 +85,9 @@ export class WebsiteService {
         data: { status },
       });
       // Invalidate caches
-      await WebsiteService.findById.invalidate(id);
-      await WebsiteService.findByDomain.invalidate(website.domain);
-      await WebsiteService.findByUserId.invalidate(website.userId);
+      // await WebsiteService.findById.invalidate(id);
+      // await WebsiteService.findByDomain.invalidate(website.domain);
+      // await WebsiteService.findByUserId.invalidate(website.userId);
       return website;
     } catch (error) {
       logger.error('Failed to update website status', { error, id });
@@ -117,9 +102,9 @@ export class WebsiteService {
         data: { status: WebsiteStatus.INACTIVE },
       });
       // Invalidate caches
-      await WebsiteService.findById.invalidate(id);
-      await WebsiteService.findByDomain.invalidate(website.domain);
-      await WebsiteService.findByUserId.invalidate(website.userId);
+      // await WebsiteService.findById.invalidate(id);
+      // await WebsiteService.findByDomain.invalidate(website.domain);
+      // await WebsiteService.findByUserId.invalidate(website.userId);
       return website;
     } catch (error) {
       logger.error('Failed to delete website', { error, id });
@@ -134,9 +119,9 @@ export class WebsiteService {
         data: { status: WebsiteStatus.ACTIVE },
       });
       // Invalidate caches
-      await WebsiteService.findById.invalidate(id);
-      await WebsiteService.findByDomain.invalidate(website.domain);
-      await WebsiteService.findByUserId.invalidate(website.userId);
+      // await WebsiteService.findById.invalidate(id);
+      // await WebsiteService.findByDomain.invalidate(website.domain);
+      // await WebsiteService.findByUserId.invalidate(website.userId);
       return website;
     } catch (error) {
       logger.error('Failed to verify website domain', { error, id });

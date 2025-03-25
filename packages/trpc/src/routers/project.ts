@@ -1,8 +1,7 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { ProjectService } from '@databuddy/db/src/services/project.service';
+import { ProjectService, ProjectType } from '@databuddy/db';
 import { router, protectedProcedure } from '../trpc';
-import { ProjectType } from '@databuddy/db/generated/client';
 
 const projectCreateSchema = z.object({
   name: z.string(),

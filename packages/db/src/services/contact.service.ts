@@ -1,7 +1,7 @@
 import { prisma } from '../client';
 import { Prisma, Contact } from '../client';
+// import { cacheable } from '@databuddy/redis';
 import { createLogger } from '@databuddy/logger';
-import { cacheable } from '@databuddy/redis';
 
 const logger = createLogger('contact-service');
 
@@ -15,7 +15,7 @@ export class ContactService {
     }
   }
 
-  static findById = cacheable(async (id: string): Promise<Contact | null> => {
+  static findById = /*cacheable(*/async (id: string): Promise<Contact | null> => {
     try {
       return await prisma.contact.findUnique({
         where: { id },
@@ -24,29 +24,19 @@ export class ContactService {
       logger.error('Failed to find contact', { error, id });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'contact',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
-  static findAll = cacheable(async (status?: string): Promise<Contact[]> => {
+  static findAll = /*cacheable(*/async (status?: string): Promise<Contact[]> => {
     try {
       return await prisma.contact.findMany({
         where: status ? { status } : undefined,
         orderBy: { createdAt: 'desc' },
       });
     } catch (error) {
-      logger.error('Failed to find contacts', { error });
+      logger.error('Failed to find contacts', { error, status });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'contacts',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
   static async update(id: string, data: Prisma.ContactUpdateInput) {
     try {
@@ -55,8 +45,8 @@ export class ContactService {
         data,
       });
       // Invalidate caches
-      await ContactService.findById.invalidate(id);
-      await ContactService.findAll.invalidate();
+      // await ContactService.findById.invalidate(id);
+      // await ContactService.findAll.invalidate();
       return contact;
     } catch (error) {
       logger.error('Failed to update contact', { error, id });
@@ -74,8 +64,8 @@ export class ContactService {
         },
       });
       // Invalidate caches
-      await ContactService.findById.invalidate(id);
-      await ContactService.findAll.invalidate();
+      // await ContactService.findById.invalidate(id);
+      // await ContactService.findAll.invalidate();
       return contact;
     } catch (error) {
       logger.error('Failed to mark contact as replied', { error, id });
@@ -92,8 +82,8 @@ export class ContactService {
         },
       });
       // Invalidate caches
-      await ContactService.findById.invalidate(id);
-      await ContactService.findAll.invalidate();
+      // await ContactService.findById.invalidate(id);
+      // await ContactService.findAll.invalidate();
       return contact;
     } catch (error) {
       logger.error('Failed to mark contact as spam', { error, id });
@@ -107,8 +97,8 @@ export class ContactService {
         where: { id },
       });
       // Invalidate caches
-      await ContactService.findById.invalidate(id);
-      await ContactService.findAll.invalidate();
+      // await ContactService.findById.invalidate(id);
+      // await ContactService.findAll.invalidate();
       return contact;
     } catch (error) {
       logger.error('Failed to delete contact', { error, id });

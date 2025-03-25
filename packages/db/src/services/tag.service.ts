@@ -1,7 +1,7 @@
 import { prisma } from '../client';
 import { Prisma, Tag } from '../client';
+// import { cacheable } from '@databuddy/redis';
 import { createLogger } from '@databuddy/logger';
-import { cacheable } from '@databuddy/redis';
 
 const logger = createLogger('tag-service');
 
@@ -19,14 +19,16 @@ export class TagService {
     }
   }
 
-  static findById = cacheable(async (id: string): Promise<TagWithPosts | null> => {
+  static findById = /*cacheable(*/async (id: string): Promise<TagWithPosts | null> => {
     try {
       return await prisma.tag.findUnique({
         where: { id },
         include: {
           posts: {
-            where: { published: true },
-            orderBy: { publishedAt: 'desc' },
+            where: { 
+              published: true,
+            },
+            orderBy: { createdAt: 'desc' },
           },
         },
       });
@@ -34,21 +36,18 @@ export class TagService {
       logger.error('Failed to find tag', { error, id });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'tag',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
-  static findBySlug = cacheable(async (slug: string): Promise<TagWithPosts | null> => {
+  static findBySlug = /*cacheable(*/async (slug: string): Promise<TagWithPosts | null> => {
     try {
       return await prisma.tag.findUnique({
         where: { slug },
         include: {
           posts: {
-            where: { published: true },
-            orderBy: { publishedAt: 'desc' },
+            where: { 
+              published: true,
+            },
+            orderBy: { createdAt: 'desc' },
           },
         },
       });
@@ -56,34 +55,26 @@ export class TagService {
       logger.error('Failed to find tag by slug', { error, slug });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'tag-slug',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
-  static findAll = cacheable(async (): Promise<TagWithPosts[]> => {
+  static findAll = /*cacheable(*/async (): Promise<TagWithPosts[]> => {
     try {
       return await prisma.tag.findMany({
         include: {
           posts: {
-            where: { published: true },
-            orderBy: { publishedAt: 'desc' },
+            where: { 
+              published: true,
+            },
+            orderBy: { createdAt: 'desc' },
           },
         },
         orderBy: { name: 'asc' },
       });
     } catch (error) {
-      logger.error('Failed to find tags', { error });
+      logger.error('Failed to find all tags', { error });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'tags',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
   static async update(id: string, data: Prisma.TagUpdateInput) {
     try {
@@ -98,9 +89,9 @@ export class TagService {
         },
       });
       // Invalidate caches
-      await TagService.findById.invalidate(id);
-      await TagService.findBySlug.invalidate(tag.slug);
-      await TagService.findAll.invalidate();
+      // await TagService.findById.invalidate(id);
+      // await TagService.findBySlug.invalidate(tag.slug);
+      // await TagService.findAll.invalidate();
       return tag;
     } catch (error) {
       logger.error('Failed to update tag', { error, id });
@@ -114,9 +105,9 @@ export class TagService {
         where: { id },
       });
       // Invalidate caches
-      await TagService.findById.invalidate(id);
-      await TagService.findBySlug.invalidate(tag.slug);
-      await TagService.findAll.invalidate();
+      // await TagService.findById.invalidate(id);
+      // await TagService.findBySlug.invalidate(tag.slug);
+      // await TagService.findAll.invalidate();
       return tag;
     } catch (error) {
       logger.error('Failed to delete tag', { error, id });
@@ -135,9 +126,9 @@ export class TagService {
         },
       });
       // Invalidate caches
-      await TagService.findById.invalidate(tagId);
-      await TagService.findBySlug.invalidate(tag.slug);
-      await TagService.findAll.invalidate();
+      // await TagService.findById.invalidate(tagId);
+      // await TagService.findBySlug.invalidate(tag.slug);
+      // await TagService.findAll.invalidate();
       return tag;
     } catch (error) {
       logger.error('Failed to connect post to tag', { error, tagId, postId });
@@ -156,9 +147,9 @@ export class TagService {
         },
       });
       // Invalidate caches
-      await TagService.findById.invalidate(tagId);
-      await TagService.findBySlug.invalidate(tag.slug);
-      await TagService.findAll.invalidate();
+      // await TagService.findById.invalidate(tagId);
+      // await TagService.findBySlug.invalidate(tag.slug);
+      // await TagService.findAll.invalidate();
       return tag;
     } catch (error) {
       logger.error('Failed to disconnect post from tag', { error, tagId, postId });

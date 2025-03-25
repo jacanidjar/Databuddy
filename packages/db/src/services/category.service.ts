@@ -1,7 +1,7 @@
 import { prisma } from '../client';
 import { Prisma, Category } from '../client';
+// import { cacheable } from '@databuddy/redis';
 import { createLogger } from '@databuddy/logger';
-import { cacheable } from '@databuddy/redis';
 
 const logger = createLogger('category-service');
 
@@ -19,14 +19,16 @@ export class CategoryService {
     }
   }
 
-  static findById = cacheable(async (id: string): Promise<CategoryWithPosts | null> => {
+  static findById = /*cacheable(*/async (id: string): Promise<CategoryWithPosts | null> => {
     try {
       return await prisma.category.findUnique({
         where: { id },
         include: {
           posts: {
-            where: { published: true },
-            orderBy: { publishedAt: 'desc' },
+            where: { 
+              published: true,
+            },
+            orderBy: { createdAt: 'desc' },
           },
         },
       });
@@ -34,21 +36,18 @@ export class CategoryService {
       logger.error('Failed to find category', { error, id });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'category',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
-  static findBySlug = cacheable(async (slug: string): Promise<CategoryWithPosts | null> => {
+  static findBySlug = /*cacheable(*/async (slug: string): Promise<CategoryWithPosts | null> => {
     try {
       return await prisma.category.findUnique({
         where: { slug },
         include: {
           posts: {
-            where: { published: true },
-            orderBy: { publishedAt: 'desc' },
+            where: { 
+              published: true,
+            },
+            orderBy: { createdAt: 'desc' },
           },
         },
       });
@@ -56,34 +55,26 @@ export class CategoryService {
       logger.error('Failed to find category by slug', { error, slug });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'category-slug',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
-  static findAll = cacheable(async (): Promise<CategoryWithPosts[]> => {
+  static findAll = /*cacheable(*/async (): Promise<CategoryWithPosts[]> => {
     try {
       return await prisma.category.findMany({
         include: {
           posts: {
-            where: { published: true },
-            orderBy: { publishedAt: 'desc' },
+            where: { 
+              published: true,
+            },
+            orderBy: { createdAt: 'desc' },
           },
         },
         orderBy: { name: 'asc' },
       });
     } catch (error) {
-      logger.error('Failed to find categories', { error });
+      logger.error('Failed to find all categories', { error });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'categories',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
   static async update(id: string, data: Prisma.CategoryUpdateInput) {
     try {
@@ -98,9 +89,9 @@ export class CategoryService {
         },
       });
       // Invalidate caches
-      await CategoryService.findById.invalidate(id);
-      await CategoryService.findBySlug.invalidate(category.slug);
-      await CategoryService.findAll.invalidate();
+      // await CategoryService.findById.invalidate(id);
+      // await CategoryService.findBySlug.invalidate(category.slug);
+      // await CategoryService.findAll.invalidate();
       return category;
     } catch (error) {
       logger.error('Failed to update category', { error, id });
@@ -114,9 +105,9 @@ export class CategoryService {
         where: { id },
       });
       // Invalidate caches
-      await CategoryService.findById.invalidate(id);
-      await CategoryService.findBySlug.invalidate(category.slug);
-      await CategoryService.findAll.invalidate();
+      // await CategoryService.findById.invalidate(id);
+      // await CategoryService.findBySlug.invalidate(category.slug);
+      // await CategoryService.findAll.invalidate();
       return category;
     } catch (error) {
       logger.error('Failed to delete category', { error, id });

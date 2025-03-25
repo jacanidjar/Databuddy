@@ -219,6 +219,7 @@ enum ApplicationStatus {
 model Website {
   id        String        @id @default(uuid())
   domain    String        @unique
+  name      String?
   userId    String
   user      User          @relation(fields: [userId], references: [id])
   status    WebsiteStatus @default(ACTIVE)

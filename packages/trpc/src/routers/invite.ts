@@ -1,8 +1,7 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { InviteService } from '@databuddy/db/src/services/invite.service';
+import { InviteService, Role } from '@databuddy/db';
 import { router, protectedProcedure } from '../trpc';
-import { Role } from '@databuddy/db/generated/client';
 
 const inviteCreateSchema = z.object({
   email: z.string().email(),

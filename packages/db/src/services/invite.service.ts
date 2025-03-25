@@ -1,8 +1,8 @@
 import { prisma } from '../client';
 import { Prisma, Invite, Role } from '../client';
 import { createLogger } from '@databuddy/logger';
-import { cacheable } from '@databuddy/redis';
-import { randomUUID } from 'crypto';
+// import { cacheable } from '@databuddy/redis';
+import { randomUUID, randomBytes } from 'crypto';
 
 const logger = createLogger('invite-service');
 
@@ -12,6 +12,10 @@ type InviteWithRelations = Invite & {
 };
 
 export class InviteService {
+  static generateToken(): string {
+    return randomBytes(32).toString('hex');
+  }
+
   static async create(data: Omit<Prisma.InviteCreateInput, 'token'>) {
     try {
       const token = randomUUID();
@@ -32,7 +36,7 @@ export class InviteService {
     }
   }
 
-  static findById = cacheable(async (id: string): Promise<InviteWithRelations | null> => {
+  static findById = /*cacheable(*/async (id: string): Promise<InviteWithRelations | null> => {
     try {
       return await prisma.invite.findUnique({
         where: { id },
@@ -45,14 +49,9 @@ export class InviteService {
       logger.error('Failed to find invite', { error, id });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'invite',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
-  static findByToken = cacheable(async (token: string): Promise<InviteWithRelations | null> => {
+  static findByToken = /*cacheable(*/async (token: string): Promise<InviteWithRelations | null> => {
     try {
       return await prisma.invite.findUnique({
         where: { token },
@@ -65,14 +64,9 @@ export class InviteService {
       logger.error('Failed to find invite by token', { error, token });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'invite-token',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
-  static findByOrganization = cacheable(async (organizationId: string): Promise<InviteWithRelations[]> => {
+  static findByOrganization = /*cacheable(*/async (organizationId: string): Promise<InviteWithRelations[]> => {
     try {
       return await prisma.invite.findMany({
         where: { 
@@ -90,14 +84,9 @@ export class InviteService {
       logger.error('Failed to find invites by organization', { error, organizationId });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'invites-org',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
-  static findByEmail = cacheable(async (email: string): Promise<InviteWithRelations[]> => {
+  static findByEmail = /*cacheable(*/async (email: string): Promise<InviteWithRelations[]> => {
     try {
       return await prisma.invite.findMany({
         where: { 
@@ -115,12 +104,7 @@ export class InviteService {
       logger.error('Failed to find invites by email', { error, email });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'invites-email',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
   static async accept(token: string, userId: string) {
     try {
@@ -150,10 +134,10 @@ export class InviteService {
       });
 
       // Invalidate caches
-      await InviteService.findById.invalidate(invite.id);
-      await InviteService.findByToken.invalidate(token);
-      await InviteService.findByOrganization.invalidate(invite.organizationId);
-      await InviteService.findByEmail.invalidate(invite.email);
+      // await InviteService.findById.invalidate(invite.id);
+      // await InviteService.findByToken.invalidate(token);
+      // await InviteService.findByOrganization.invalidate(invite.organizationId);
+      // await InviteService.findByEmail.invalidate(invite.email);
 
       return invite;
     } catch (error) {
@@ -176,10 +160,10 @@ export class InviteService {
       });
 
       // Invalidate caches
-      await InviteService.findById.invalidate(invite.id);
-      await InviteService.findByToken.invalidate(token);
-      await InviteService.findByOrganization.invalidate(invite.organizationId);
-      await InviteService.findByEmail.invalidate(invite.email);
+      // await InviteService.findById.invalidate(invite.id);
+      // await InviteService.findByToken.invalidate(token);
+      // await InviteService.findByOrganization.invalidate(invite.organizationId);
+      // await InviteService.findByEmail.invalidate(invite.email);
 
       return invite;
     } catch (error) {
@@ -198,10 +182,10 @@ export class InviteService {
       });
 
       // Invalidate caches
-      await InviteService.findById.invalidate(id);
-      await InviteService.findByToken.invalidate(invite.token);
-      await InviteService.findByOrganization.invalidate(invite.organizationId);
-      await InviteService.findByEmail.invalidate(invite.email);
+      // await InviteService.findById.invalidate(id);
+      // await InviteService.findByToken.invalidate(invite.token);
+      // await InviteService.findByOrganization.invalidate(invite.organizationId);
+      // await InviteService.findByEmail.invalidate(invite.email);
 
       return invite;
     } catch (error) {
@@ -222,10 +206,10 @@ export class InviteService {
       });
 
       // Invalidate caches
-      await InviteService.findById.invalidate(id);
-      await InviteService.findByToken.invalidate(invite.token);
-      await InviteService.findByOrganization.invalidate(invite.organizationId);
-      await InviteService.findByEmail.invalidate(invite.email);
+      // await InviteService.findById.invalidate(id);
+      // await InviteService.findByToken.invalidate(invite.token);
+      // await InviteService.findByOrganization.invalidate(invite.organizationId);
+      // await InviteService.findByEmail.invalidate(invite.email);
 
       return invite;
     } catch (error) {

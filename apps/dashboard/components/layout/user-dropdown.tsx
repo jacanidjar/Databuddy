@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signOut } from "@databuddy/auth";
+// import { signOut } from "@databuddy/auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,13 +36,13 @@ export function UserDropdown({ user }: UserDropdownProps) {
   const handleSignOut = async () => {
     try {
       setIsSigningOut(true);
-      await signOut({ fetchOptions: {
-        onSuccess: () => {
-          toast.success("Signed out successfully");
-          router.push("/");
-          router.refresh();
-        }
-      } });
+      // await signOut({ fetchOptions: {
+      //   onSuccess: () => {
+      //     toast.success("Signed out successfully");
+      //     router.push("/");
+      //     router.refresh();
+      //   }
+      // } });
       toast.success("Signed out successfully");
       router.push("/");
       router.refresh();

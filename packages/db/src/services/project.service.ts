@@ -1,7 +1,7 @@
 import { prisma } from '../client';
 import { Prisma, Project, ProjectType } from '../client';
 import { createLogger } from '@databuddy/logger';
-import { cacheable } from '@databuddy/redis';
+// import { cacheable } from '@databuddy/redis';
 
 const logger = createLogger('project-service');
 
@@ -22,7 +22,7 @@ export class ProjectService {
     }
   }
 
-  static findById = cacheable(async (id: string): Promise<ProjectWithRelations | null> => {
+  static findById = async (id: string): Promise<ProjectWithRelations | null> => {
     try {
       return await prisma.project.findUnique({
         where: { id },
@@ -37,14 +37,9 @@ export class ProjectService {
       logger.error('Failed to find project', { error, id });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'project',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  };
 
-  static findBySlug = cacheable(async (organizationId: string, slug: string): Promise<ProjectWithRelations | null> => {
+  static findBySlug = async (organizationId: string, slug: string): Promise<ProjectWithRelations | null> => {
     try {
       return await prisma.project.findUnique({
         where: { 
@@ -64,14 +59,9 @@ export class ProjectService {
       logger.error('Failed to find project by slug', { error, organizationId, slug });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'project-slug',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  };
 
-  static findByOrganization = cacheable(async (organizationId: string): Promise<ProjectWithRelations[]> => {
+  static findByOrganization = async (organizationId: string): Promise<ProjectWithRelations[]> => {
     try {
       return await prisma.project.findMany({
         where: { 
@@ -90,14 +80,9 @@ export class ProjectService {
       logger.error('Failed to find projects by organization', { error, organizationId });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'projects-org',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  };
 
-  static findByClient = cacheable(async (clientId: string): Promise<ProjectWithRelations[]> => {
+  static findByClient = async (clientId: string): Promise<ProjectWithRelations[]> => {
     try {
       return await prisma.project.findMany({
         where: { 
@@ -116,12 +101,7 @@ export class ProjectService {
       logger.error('Failed to find projects by client', { error, clientId });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'projects-client',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  };
 
   static async update(id: string, data: Prisma.ProjectUpdateInput) {
     try {
@@ -136,12 +116,12 @@ export class ProjectService {
         },
       });
       // Invalidate caches
-      await ProjectService.findById.invalidate(id);
-      await ProjectService.findBySlug.invalidate(project.organizationId, project.slug);
-      await ProjectService.findByOrganization.invalidate(project.organizationId);
-      if (project.clientId) {
-        await ProjectService.findByClient.invalidate(project.clientId);
-      }
+      // await ProjectService.findById.invalidate(id);
+      // await ProjectService.findBySlug.invalidate(project.organizationId, project.slug);
+      // await ProjectService.findByOrganization.invalidate(project.organizationId);
+      // if (project.clientId) {
+      //   await ProjectService.findByClient.invalidate(project.clientId);
+      // }
       return project;
     } catch (error) {
       logger.error('Failed to update project', { error, id });
@@ -156,12 +136,12 @@ export class ProjectService {
         data: { status },
       });
       // Invalidate caches
-      await ProjectService.findById.invalidate(id);
-      await ProjectService.findBySlug.invalidate(project.organizationId, project.slug);
-      await ProjectService.findByOrganization.invalidate(project.organizationId);
-      if (project.clientId) {
-        await ProjectService.findByClient.invalidate(project.clientId);
-      }
+      // await ProjectService.findById.invalidate(id);
+      // await ProjectService.findBySlug.invalidate(project.organizationId, project.slug);
+      // await ProjectService.findByOrganization.invalidate(project.organizationId);
+      // if (project.clientId) {
+      //   await ProjectService.findByClient.invalidate(project.clientId);
+      // }
       return project;
     } catch (error) {
       logger.error('Failed to update project status', { error, id });
@@ -176,12 +156,12 @@ export class ProjectService {
         data: { deletedAt: new Date() },
       });
       // Invalidate caches
-      await ProjectService.findById.invalidate(id);
-      await ProjectService.findBySlug.invalidate(project.organizationId, project.slug);
-      await ProjectService.findByOrganization.invalidate(project.organizationId);
-      if (project.clientId) {
-        await ProjectService.findByClient.invalidate(project.clientId);
-      }
+      // await ProjectService.findById.invalidate(id);
+      // await ProjectService.findBySlug.invalidate(project.organizationId, project.slug);
+      // await ProjectService.findByOrganization.invalidate(project.organizationId);
+      // if (project.clientId) {
+      //   await ProjectService.findByClient.invalidate(project.clientId);
+      // }
       return project;
     } catch (error) {
       logger.error('Failed to delete project', { error, id });
@@ -200,12 +180,12 @@ export class ProjectService {
       // Invalidate project caches
       const project = await prisma.project.findUnique({ where: { id: projectId } });
       if (project) {
-        await ProjectService.findById.invalidate(projectId);
-        await ProjectService.findBySlug.invalidate(project.organizationId, project.slug);
-        await ProjectService.findByOrganization.invalidate(project.organizationId);
-        if (project.clientId) {
-          await ProjectService.findByClient.invalidate(project.clientId);
-        }
+        // await ProjectService.findById.invalidate(projectId);
+        // await ProjectService.findBySlug.invalidate(project.organizationId, project.slug);
+        // await ProjectService.findByOrganization.invalidate(project.organizationId);
+        // if (project.clientId) {
+        //   await ProjectService.findByClient.invalidate(project.clientId);
+        // }
       }
       return access;
     } catch (error) {
@@ -227,12 +207,12 @@ export class ProjectService {
       // Invalidate project caches
       const project = await prisma.project.findUnique({ where: { id: projectId } });
       if (project) {
-        await ProjectService.findById.invalidate(projectId);
-        await ProjectService.findBySlug.invalidate(project.organizationId, project.slug);
-        await ProjectService.findByOrganization.invalidate(project.organizationId);
-        if (project.clientId) {
-          await ProjectService.findByClient.invalidate(project.clientId);
-        }
+        // await ProjectService.findById.invalidate(projectId);
+        // await ProjectService.findBySlug.invalidate(project.organizationId, project.slug);
+        // await ProjectService.findByOrganization.invalidate(project.organizationId);
+        // if (project.clientId) {
+        //   await ProjectService.findByClient.invalidate(project.clientId);
+        // }
       }
       return access;
     } catch (error) {
@@ -252,12 +232,12 @@ export class ProjectService {
       // Invalidate project caches
       const project = await prisma.project.findUnique({ where: { id: projectId } });
       if (project) {
-        await ProjectService.findById.invalidate(projectId);
-        await ProjectService.findBySlug.invalidate(project.organizationId, project.slug);
-        await ProjectService.findByOrganization.invalidate(project.organizationId);
-        if (project.clientId) {
-          await ProjectService.findByClient.invalidate(project.clientId);
-        }
+        // await ProjectService.findById.invalidate(projectId);
+        // await ProjectService.findBySlug.invalidate(project.organizationId, project.slug);
+        // await ProjectService.findByOrganization.invalidate(project.organizationId);
+        // if (project.clientId) {
+        //   await ProjectService.findByClient.invalidate(project.clientId);
+        // }
       }
       return event;
     } catch (error) {

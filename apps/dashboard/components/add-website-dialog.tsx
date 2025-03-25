@@ -127,10 +127,10 @@ export function AddWebsiteDialog({
             </Button>
             <Button 
               type="submit" 
-              disabled={createWebsite.isPending}
+              disabled={createWebsite.isLoading}
               className="bg-sky-600 hover:bg-sky-700 text-white"
             >
-              {createWebsite.isPending ? "Adding..." : "Add Website"}
+              {createWebsite.isLoading ? "Adding..." : "Add Website"}
             </Button>
           </DialogFooter>
         </form>

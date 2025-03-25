@@ -1,9 +1,10 @@
 import { prisma } from '../client';
 import { Prisma, Client, ClientType } from '../client';
-import { createLogger } from '@databuddy/logger';
-import { cacheable } from '@databuddy/redis';
+// import { createLogger } from '@databuddy/logger';
+// import { cacheable } from '@databuddy/redis';
 
-const logger = createLogger('client-service');
+// const logger = createLogger('client-service');
+const logger = console;
 
 type ClientWithRelations = Client & {
   organization: any;
@@ -20,7 +21,7 @@ export class ClientService {
     }
   }
 
-  static findById = cacheable(async (id: string): Promise<ClientWithRelations | null> => {
+  static findById = async (id: string): Promise<ClientWithRelations | null> => {
     try {
       return await prisma.client.findUnique({
         where: { id },
@@ -36,14 +37,9 @@ export class ClientService {
       logger.error('Failed to find client', { error, id });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'client',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  };
 
-  static findByOrganization = cacheable(async (organizationId: string): Promise<ClientWithRelations[]> => {
+  static findByOrganization = async (organizationId: string): Promise<ClientWithRelations[]> => {
     try {
       return await prisma.client.findMany({
         where: { organizationId },
@@ -60,14 +56,9 @@ export class ClientService {
       logger.error('Failed to find clients by organization', { error, organizationId });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'clients-org',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  };
 
-  static findByType = cacheable(async (organizationId: string, type: ClientType): Promise<ClientWithRelations[]> => {
+  static findByType = async (organizationId: string, type: ClientType): Promise<ClientWithRelations[]> => {
     try {
       return await prisma.client.findMany({
         where: { 
@@ -87,12 +78,7 @@ export class ClientService {
       logger.error('Failed to find clients by type', { error, organizationId, type });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'clients-type',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  };
 
   static async update(id: string, data: Prisma.ClientUpdateInput) {
     try {
@@ -108,9 +94,9 @@ export class ClientService {
         },
       });
       // Invalidate caches
-      await ClientService.findById.invalidate(id);
-      await ClientService.findByOrganization.invalidate(client.organizationId);
-      await ClientService.findByType.invalidate(client.organizationId, client.type);
+      // await ClientService.findById.invalidate(id);
+      // await ClientService.findByOrganization.invalidate(client.organizationId);
+      // await ClientService.findByType.invalidate(client.organizationId, client.type);
       return client;
     } catch (error) {
       logger.error('Failed to update client', { error, id });
@@ -125,9 +111,9 @@ export class ClientService {
         data: { type },
       });
       // Invalidate caches
-      await ClientService.findById.invalidate(id);
-      await ClientService.findByOrganization.invalidate(client.organizationId);
-      await ClientService.findByType.invalidate(client.organizationId, client.type);
+      // await ClientService.findById.invalidate(id);
+      // await ClientService.findByOrganization.invalidate(client.organizationId);
+      // await ClientService.findByType.invalidate(client.organizationId, client.type);
       return client;
     } catch (error) {
       logger.error('Failed to update client type', { error, id });
@@ -141,9 +127,9 @@ export class ClientService {
         where: { id },
       });
       // Invalidate caches
-      await ClientService.findById.invalidate(id);
-      await ClientService.findByOrganization.invalidate(client.organizationId);
-      await ClientService.findByType.invalidate(client.organizationId, client.type);
+      // await ClientService.findById.invalidate(id);
+      // await ClientService.findByOrganization.invalidate(client.organizationId);
+      // await ClientService.findByType.invalidate(client.organizationId, client.type);
       return client;
     } catch (error) {
       logger.error('Failed to delete client', { error, id });

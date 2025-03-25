@@ -1,7 +1,7 @@
 import { prisma } from '../client';
 import { Prisma, Role, UserStatus, User } from '../client';
 import { createLogger } from '@databuddy/logger';
-import { cacheable } from '@databuddy/redis';
+// import { cacheable } from '@databuddy/redis';
 
 const logger = createLogger('user-service');
 
@@ -27,7 +27,7 @@ export class UserService {
     }
   }
 
-  static findById = cacheable(async (id: string): Promise<UserWithRelations | null> => {
+  static findById = async (id: string): Promise<UserWithRelations | null> => {
     try {
       return await prisma.user.findUnique({
         where: { id },
@@ -42,14 +42,9 @@ export class UserService {
       logger.error('Failed to find user', { error, id });
       throw error;
     }
-  }, {
-    expireInSec: 300, // Cache for 5 minutes
-    prefix: 'user',
-    staleWhileRevalidate: true,
-    staleTime: 60 // Start revalidating after 1 minute
-  });
+  };
 
-  static findByEmail = cacheable(async (email: string): Promise<UserWithRelations | null> => {
+  static findByEmail = async (email: string): Promise<UserWithRelations | null> => {
     try {
       return await prisma.user.findUnique({
         where: { email },
@@ -64,12 +59,7 @@ export class UserService {
       logger.error('Failed to find user by email', { error, email });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'user-email',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  };
 
   static async update(id: string, data: Omit<Prisma.UserUpdateInput, 'emailVerified'> & { emailVerified?: boolean }) {
     try {
@@ -81,8 +71,8 @@ export class UserService {
         },
       });
       // Invalidate cache
-      await UserService.findById.invalidate(id);
-      await UserService.findByEmail.invalidate(user.email);
+      // await UserService.findById.invalidate(id);
+      // await UserService.findByEmail.invalidate(user.email);
       return user;
     } catch (error) {
       logger.error('Failed to update user', { error, id });
@@ -96,8 +86,8 @@ export class UserService {
         where: { id },
         data: { status },
       });
-      await UserService.findById.invalidate(id);
-      await UserService.findByEmail.invalidate(user.email);
+      // await UserService.findById.invalidate(id);
+      // await UserService.findByEmail.invalidate(user.email);
       return user;
     } catch (error) {
       logger.error('Failed to update user status', { error, id });
@@ -111,8 +101,8 @@ export class UserService {
         where: { id },
         data: { role },
       });
-      await UserService.findById.invalidate(id);
-      await UserService.findByEmail.invalidate(user.email);
+      // await UserService.findById.invalidate(id);
+      // await UserService.findByEmail.invalidate(user.email);
       return user;
     } catch (error) {
       logger.error('Failed to update user role', { error, id });
@@ -129,8 +119,8 @@ export class UserService {
           status: UserStatus.INACTIVE
         },
       });
-      await UserService.findById.invalidate(id);
-      await UserService.findByEmail.invalidate(user.email);
+      // await UserService.findById.invalidate(id);
+      // await UserService.findByEmail.invalidate(user.email);
       return user;
     } catch (error) {
       logger.error('Failed to delete user', { error, id });
@@ -144,8 +134,8 @@ export class UserService {
         where: { id },
         data: { emailVerified: true },
       });
-      await UserService.findById.invalidate(id);
-      await UserService.findByEmail.invalidate(user.email);
+      // await UserService.findById.invalidate(id);
+      // await UserService.findByEmail.invalidate(user.email);
       return user;
     } catch (error) {
       logger.error('Failed to verify user email', { error, id });

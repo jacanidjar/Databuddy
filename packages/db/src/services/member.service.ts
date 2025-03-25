@@ -1,7 +1,7 @@
 import { prisma, User } from '../client';
 import { Prisma, Member, Role } from '../client';
 import { createLogger } from '@databuddy/logger';
-import { cacheable } from '@databuddy/redis';
+// import { cacheable } from '@databuddy/redis';
 
 const logger = createLogger('member-service');
 
@@ -26,7 +26,7 @@ export class MemberService {
     }
   }
 
-  static findById = cacheable(async (id: string): Promise<MemberWithRelations | null> => {
+  static findById = /*cacheable(*/async (id: string): Promise<MemberWithRelations | null> => {
     try {
       return await prisma.member.findUnique({
         where: { id },
@@ -39,14 +39,9 @@ export class MemberService {
       logger.error('Failed to find member', { error, id });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'member',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
-  static findByOrganization = cacheable(async (organizationId: string): Promise<MemberWithRelations[]> => {
+  static findByOrganization = /*cacheable(*/async (organizationId: string): Promise<MemberWithRelations[]> => {
     try {
       return await prisma.member.findMany({
         where: { organizationId },
@@ -60,14 +55,9 @@ export class MemberService {
       logger.error('Failed to find members by organization', { error, organizationId });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'members-org',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
-  static findByUser = cacheable(async (userId: string): Promise<MemberWithRelations[]> => {
+  static findByUser = /*cacheable(*/async (userId: string): Promise<MemberWithRelations[]> => {
     try {
       return await prisma.member.findMany({
         where: { userId },
@@ -81,12 +71,7 @@ export class MemberService {
       logger.error('Failed to find members by user', { error, userId });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'members-user',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
   static async updateRole(id: string, role: Role) {
     try {
@@ -100,9 +85,9 @@ export class MemberService {
       });
 
       // Invalidate caches
-      await MemberService.findById.invalidate(id);
-      await MemberService.findByOrganization.invalidate(member.organizationId);
-      await MemberService.findByUser.invalidate(member.userId);
+      // await MemberService.findById.invalidate(id);
+      // await MemberService.findByOrganization.invalidate(member.organizationId);
+      // await MemberService.findByUser.invalidate(member.userId);
 
       return member;
     } catch (error) {
@@ -118,9 +103,9 @@ export class MemberService {
       });
 
       // Invalidate caches
-      await MemberService.findById.invalidate(id);
-      await MemberService.findByOrganization.invalidate(member.organizationId);
-      await MemberService.findByUser.invalidate(member.userId);
+      // await MemberService.findById.invalidate(id);
+      // await MemberService.findByOrganization.invalidate(member.organizationId);
+      // await MemberService.findByUser.invalidate(member.userId);
 
       return member;
     } catch (error) {

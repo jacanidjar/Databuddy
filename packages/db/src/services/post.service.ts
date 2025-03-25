@@ -1,27 +1,30 @@
 import { prisma } from '../client';
 import { Prisma, Post } from '../client';
+// import { cacheable } from '@databuddy/redis';
 import { createLogger } from '@databuddy/logger';
-import { cacheable } from '@databuddy/redis';
 
 const logger = createLogger('post-service');
 
 type PostWithRelations = Post & {
   author: any;
-  category?: any;
+  category: any;
   tags: any[];
 };
 
 export class PostService {
-  static async create(data: Prisma.PostUncheckedCreateInput) {
+  static async create(data: Prisma.PostCreateInput) {
     try {
-      return await prisma.post.create({ data });
+      return await prisma.post.create({
+        data,
+        include: { author: true, category: true, tags: true },
+      });
     } catch (error) {
       logger.error('Failed to create post', { error });
       throw error;
     }
   }
 
-  static findById = cacheable(async (id: string): Promise<PostWithRelations | null> => {
+  static findById = /*cacheable(*/async (id: string): Promise<PostWithRelations | null> => {
     try {
       return await prisma.post.findUnique({
         where: { id },
@@ -35,14 +38,9 @@ export class PostService {
       logger.error('Failed to find post', { error, id });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'post',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
-  static findBySlug = cacheable(async (slug: string): Promise<PostWithRelations | null> => {
+  static findBySlug = /*cacheable(*/async (slug: string): Promise<PostWithRelations | null> => {
     try {
       return await prisma.post.findUnique({
         where: { slug },
@@ -56,14 +54,9 @@ export class PostService {
       logger.error('Failed to find post by slug', { error, slug });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'post-slug',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
-  static findByAuthorId = cacheable(async (authorId: string): Promise<PostWithRelations[]> => {
+  static findByAuthorId = /*cacheable(*/async (authorId: string): Promise<PostWithRelations[]> => {
     try {
       return await prisma.post.findMany({
         where: { authorId },
@@ -78,14 +71,9 @@ export class PostService {
       logger.error('Failed to find posts by author', { error, authorId });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'post-author',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
-  static findPublished = cacheable(async (): Promise<PostWithRelations[]> => {
+  static findPublished = /*cacheable(*/async (): Promise<PostWithRelations[]> => {
     try {
       return await prisma.post.findMany({
         where: { published: true },
@@ -94,18 +82,13 @@ export class PostService {
           category: true,
           tags: true,
         },
-        orderBy: { publishedAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
       });
     } catch (error) {
       logger.error('Failed to find published posts', { error });
       throw error;
     }
-  }, {
-    expireInSec: 300,
-    prefix: 'posts-published',
-    staleWhileRevalidate: true,
-    staleTime: 60
-  });
+  }/*)*/;
 
   static async update(id: string, data: Prisma.PostUncheckedUpdateInput) {
     try {
@@ -119,10 +102,10 @@ export class PostService {
         },
       });
       // Invalidate caches
-      await PostService.findById.invalidate(id);
-      await PostService.findBySlug.invalidate(post.slug);
-      await PostService.findByAuthorId.invalidate(post.authorId);
-      await PostService.findPublished.invalidate();
+      // await PostService.findById.invalidate(id);
+      // await PostService.findBySlug.invalidate(post.slug);
+      // await PostService.findByAuthorId.invalidate(post.authorId);
+      // await PostService.findPublished.invalidate();
       return post;
     } catch (error) {
       logger.error('Failed to update post', { error, id });
@@ -145,10 +128,10 @@ export class PostService {
         },
       });
       // Invalidate caches
-      await PostService.findById.invalidate(id);
-      await PostService.findBySlug.invalidate(post.slug);
-      await PostService.findByAuthorId.invalidate(post.authorId);
-      await PostService.findPublished.invalidate();
+      // await PostService.findById.invalidate(id);
+      // await PostService.findBySlug.invalidate(post.slug);
+      // await PostService.findByAuthorId.invalidate(post.authorId);
+      // await PostService.findPublished.invalidate();
       return post;
     } catch (error) {
       logger.error('Failed to publish post', { error, id });
@@ -171,10 +154,10 @@ export class PostService {
         },
       });
       // Invalidate caches
-      await PostService.findById.invalidate(id);
-      await PostService.findBySlug.invalidate(post.slug);
-      await PostService.findByAuthorId.invalidate(post.authorId);
-      await PostService.findPublished.invalidate();
+      // await PostService.findById.invalidate(id);
+      // await PostService.findBySlug.invalidate(post.slug);
+      // await PostService.findByAuthorId.invalidate(post.authorId);
+      // await PostService.findPublished.invalidate();
       return post;
     } catch (error) {
       logger.error('Failed to unpublish post', { error, id });
@@ -188,10 +171,10 @@ export class PostService {
         where: { id },
       });
       // Invalidate caches
-      await PostService.findById.invalidate(id);
-      await PostService.findBySlug.invalidate(post.slug);
-      await PostService.findByAuthorId.invalidate(post.authorId);
-      await PostService.findPublished.invalidate();
+      // await PostService.findById.invalidate(id);
+      // await PostService.findBySlug.invalidate(post.slug);
+      // await PostService.findByAuthorId.invalidate(post.authorId);
+      // await PostService.findPublished.invalidate();
       return post;
     } catch (error) {
       logger.error('Failed to delete post', { error, id });

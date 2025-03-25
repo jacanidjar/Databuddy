@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { UserService } from '@databuddy/db/src/services/user.service';
+import { UserService } from '@databuddy/db';
 import { router, protectedProcedure, adminProcedure } from '../trpc';
 
 const userUpdateSchema = z.object({

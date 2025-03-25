@@ -1,8 +1,7 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { WebsiteService } from '@databuddy/db/src/services/website.service';
+import { WebsiteService, WebsiteStatus } from '@databuddy/db';
 import { router, protectedProcedure } from '../trpc';
-import { WebsiteStatus } from '@databuddy/db/generated/client';
 
 const websiteCreateSchema = z.object({
   domain: z.string().url(),
