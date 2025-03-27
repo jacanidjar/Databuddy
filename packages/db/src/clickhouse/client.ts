@@ -1,9 +1,23 @@
-import { createLogger } from '@/packages/logger/src';
+import { createLogger } from '@databuddy/logger';
 import type { LogParams, ErrorLogParams, WarnLogParams, Logger, ResponseJSON } from '@clickhouse/client';
 import { ClickHouseLogLevel, createClient } from '@clickhouse/client';
 import { NodeClickHouseClientConfigOptions } from '@clickhouse/client/dist/config';
 
 export { createClient };
+
+/**
+ * ClickHouse table names used throughout the application
+ */
+export const TABLE_NAMES = {
+  events: 'analytics.events',
+  sessions: 'analytics.sessions',
+  daily_stats: 'analytics.daily_stats',
+  page_stats: 'analytics.page_stats',
+  referrer_stats: 'analytics.referrer_stats',
+  location_stats: 'analytics.location_stats',
+  device_stats: 'analytics.device_stats',
+  performance_stats: 'analytics.performance_stats'
+};
 
 const logger = createLogger('clickhouse');
 

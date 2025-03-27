@@ -1,6 +1,9 @@
 export { prisma as db, prisma } from './client' // exports instance of prisma 
 export * from "../generated/client" // exports generated types from prisma
 
+export * from './clickhouse/client'
+export * from './clickhouse/schema'
+export * from './sql_builder'
 // Export all services
 export * from './services/client.service'
 export * from './services/user.service'

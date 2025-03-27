@@ -152,7 +152,8 @@ exports.Prisma.UserScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt',
-  role: 'role'
+  role: 'role',
+  twoFactorEnabled: 'twoFactorEnabled'
 };
 
 exports.Prisma.VerificationScalarFieldEnum = {
@@ -251,6 +252,7 @@ exports.Prisma.JobApplicationScalarFieldEnum = {
 exports.Prisma.WebsiteScalarFieldEnum = {
   id: 'id',
   domain: 'domain',
+  name: 'name',
   userId: 'userId',
   status: 'status',
   createdAt: 'createdAt',
@@ -366,6 +368,20 @@ exports.Prisma.ClientScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.TwoFactorScalarFieldEnum = {
+  id: 'id',
+  secret: 'secret',
+  backupCodes: 'backupCodes',
+  userId: 'userId'
+};
+
+exports.Prisma.JwksScalarFieldEnum = {
+  id: 'id',
+  publicKey: 'publicKey',
+  privateKey: 'privateKey',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -461,7 +477,9 @@ exports.Prisma.ModelName = {
   Invite: 'Invite',
   Project: 'Project',
   EventMeta: 'EventMeta',
-  Client: 'Client'
+  Client: 'Client',
+  TwoFactor: 'TwoFactor',
+  Jwks: 'Jwks'
 };
 
 /**

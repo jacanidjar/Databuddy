@@ -1,7 +1,8 @@
 export * from './auth';
-export * from './types';
 export * from './auth-client';
 export * from './auth-helpers';
+export * from './auth-org';
+export * from './types';
 
 // Re-export specific client utilities for convenience
 export { 
@@ -22,5 +23,14 @@ export {
   registerWithEmail,
   logout,
   loginWithGoogle,
-  loginWithGithub
+  loginWithGithub,
+  enableTwoFactor,
+  verifyTwoFactorCode,
+  verifyBackupCode,
+  sendOTP,
+  verifyOTP,
+  generateBackupCodes
 } from './auth-helpers';
+
+// Default export for convenience
+export { auth } from './auth';

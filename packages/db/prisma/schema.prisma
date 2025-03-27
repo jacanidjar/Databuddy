@@ -1,8 +1,10 @@
+
 generator client {
-  provider = "prisma-client-js"
-  output = "../generated/client"
+  provider      = "prisma-client-js"
+  output        = "../generated/client"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -16,18 +18,18 @@ model Email {
 }
 
 model Contact {
-  id        String    @id @default(uuid())
-  name      String
-  email     String
-  phone     String?
-  company   String?
-  website   String?
+  id              String    @id @default(uuid())
+  name            String
+  email           String
+  phone           String?
+  company         String?
+  website         String?
   monthlyVisitors Int?
-  message   String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @default(now()) @updatedAt
-  repliedAt DateTime?
-  status    String    @default("new") // new, replied, spam
+  message         String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @default(now()) @updatedAt
+  repliedAt       DateTime?
+  status          String    @default("new") // new, replied, spam
 
   @@map("contacts")
 }
@@ -47,21 +49,22 @@ model User {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @default(now()) @updatedAt
   deletedAt     DateTime?
-  
   // Relations
   organizations Organization[]  @relation("organizationCreatedBy")
-  subscriptions Organization[] @relation(name: "subscriptionCreatedBy")
+  subscriptions Organization[]  @relation(name: "subscriptionCreatedBy")
   memberships   Member[]
   invitesSent   Member[]        @relation("invitedBy")
   projectAccess ProjectAccess[]
   posts         Post[]
   role          Role            @default(USER)
   websites      Website[]
-  
   // Authentication relations - preserved as requested
   sessions      Session[]
   accounts      Account[]
   invites       Invite[]
+
+  twoFactorEnabled Boolean?
+  twofactors       TwoFactor[]
 
   @@map("user")
 }
@@ -81,8 +84,8 @@ model Session {
   id        String   @id @default(uuid())
   expiresAt DateTime
   token     String   @unique // Ensure token is unique
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   ipAddress String?
   userAgent String?
   userId    String?
@@ -110,21 +113,21 @@ enum Role {
 // Blog models
 
 model Post {
-  id        String    @id @default(uuid())
-  title     String
-  slug      String    @unique
-  content   String
-  excerpt   String?
-  published Boolean   @default(false)
-  authorId  String
-  coverImage String?
-  author    User      @relation(fields: [authorId], references: [id])
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @default(now()) @updatedAt
+  id          String    @id @default(uuid())
+  title       String
+  slug        String    @unique
+  content     String
+  excerpt     String?
+  published   Boolean   @default(false)
+  authorId    String
+  coverImage  String?
+  author      User      @relation(fields: [authorId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
   publishedAt DateTime?
-  categoryId String?
-  category  Category? @relation(fields: [categoryId], references: [id])
-  tags      Tag[]
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  tags        Tag[]
 
   @@index([authorId])
   @@index([categoryId])
@@ -189,17 +192,17 @@ model JobListing {
 }
 
 model JobApplication {
-  id           String     @id @default(uuid())
+  id           String            @id @default(uuid())
   jobListingId String
-  jobListing   JobListing @relation(fields: [jobListingId], references: [id])
+  jobListing   JobListing        @relation(fields: [jobListingId], references: [id])
   name         String
   email        String
   phone        String?
   resume       String?
   coverLetter  String?
   status       ApplicationStatus @default(NEW)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @default(now()) @updatedAt
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @default(now()) @updatedAt
   reviewedAt   DateTime?
 
   @@index([jobListingId])
@@ -348,27 +351,27 @@ model ProjectAccess {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @default(now()) @updatedAt
 
+  Organization Organization[]
+
   @@unique([projectId, userId])
   @@index([projectId])
   @@index([userId])
   @@map("project_access")
-  Organization Organization[]
 }
 
 model Invite {
-  id             String       @id @default(uuid())
+  id             String        @id @default(uuid())
   email          String
   organizationId String
-  role           Role         @default(VIEWER)
-  token          String       @unique
+  role           Role          @default(VIEWER)
+  token          String        @unique
   expires        DateTime
   createdById    String
-  createdBy      User         @relation(fields: [createdById], references: [id])
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @default(now()) @updatedAt
+  createdBy      User          @relation(fields: [createdById], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @default(now()) @updatedAt
   acceptedAt     DateTime?
-  Organization Organization?  @relation(fields: [organizationId], references: [id])
-
+  Organization   Organization? @relation(fields: [organizationId], references: [id])
 
   @@index([createdById])
   @@map("invites")
@@ -390,7 +393,6 @@ model Project {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @default(now()) @updatedAt
   deletedAt      DateTime?
-  
   // Relations
   access         ProjectAccess[]
   events         EventMeta[]
@@ -416,17 +418,36 @@ model EventMeta {
 }
 
 model Client {
-  id             String     @id @default(uuid())
+  id             String       @id @default(uuid())
   name           String
   email          String?
   phone          String?
-  type           ClientType @default(COMPANY)
+  type           ClientType   @default(COMPANY)
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
   projects       Project[]
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @default(now()) @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
 
   @@index([organizationId])
   @@map("clients")
+}
+
+model TwoFactor {
+  id          String @id
+  secret      String
+  backupCodes String
+  userId      String
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("twoFactor")
+}
+
+model Jwks {
+  id         String   @id
+  publicKey  String
+  privateKey String
+  createdAt  DateTime
+
+  @@map("jwks")
 }

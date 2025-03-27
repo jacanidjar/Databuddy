@@ -36,19 +36,18 @@ model Contact {
 // Authentication models
 
 model User {
-  id            String     @id @default(uuid())
-  email         String     @unique
+  id            String          @id @default(uuid())
+  email         String          @unique
   firstName     String?
   lastName      String?
   image         String?
-  emailVerified Boolean    @default(false)
+  emailVerified Boolean         @default(false)
   name          String? // Computed field for display purposes
   password      String?
-  status        UserStatus @default(ACTIVE)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @default(now()) @updatedAt
+  status        UserStatus      @default(ACTIVE)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @default(now()) @updatedAt
   deletedAt     DateTime?
-
   // Relations
   organizations Organization[]  @relation("organizationCreatedBy")
   subscriptions Organization[]  @relation(name: "subscriptionCreatedBy")
@@ -58,11 +57,13 @@ model User {
   posts         Post[]
   role          Role            @default(USER)
   websites      Website[]
-
   // Authentication relations - preserved as requested
-  sessions Session[]
-  accounts Account[]
-  invites  Invite[]
+  sessions      Session[]
+  accounts      Account[]
+  invites       Invite[]
+
+  twoFactorEnabled Boolean?
+  twofactors       TwoFactor[]
 
   @@map("user")
 }
@@ -220,6 +221,7 @@ enum ApplicationStatus {
 model Website {
   id        String        @id @default(uuid())
   domain    String        @unique
+  name      String?
   userId    String
   user      User          @relation(fields: [userId], references: [id])
   status    WebsiteStatus @default(ACTIVE)
@@ -339,14 +341,15 @@ enum AccessLevel {
 }
 
 model ProjectAccess {
-  id           String         @id @default(uuid())
-  projectId    String
-  project      Project        @relation(fields: [projectId], references: [id])
-  userId       String
-  user         User           @relation(fields: [userId], references: [id])
-  level        AccessLevel    @default(VIEWER)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @default(now()) @updatedAt
+  id        String      @id @default(uuid())
+  projectId String
+  project   Project     @relation(fields: [projectId], references: [id])
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  level     AccessLevel @default(VIEWER)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @default(now()) @updatedAt
+
   Organization Organization[]
 
   @@unique([projectId, userId])
@@ -374,25 +377,24 @@ model Invite {
 }
 
 model Project {
-  id             String       @id @default(uuid())
+  id             String          @id @default(uuid())
   name           String
   slug           String
   description    String?
-  type           ProjectType  @default(WEBSITE)
+  type           ProjectType     @default(WEBSITE)
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
+  organization   Organization    @relation(fields: [organizationId], references: [id])
   clientId       String?
-  client         Client?      @relation(fields: [clientId], references: [id])
+  client         Client?         @relation(fields: [clientId], references: [id])
   startDate      DateTime?
   endDate        DateTime?
-  status         String       @default("active") // active, completed, on-hold, cancelled
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @default(now()) @updatedAt
+  status         String          @default("active") // active, completed, on-hold, cancelled
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @default(now()) @updatedAt
   deletedAt      DateTime?
-
   // Relations
-  access ProjectAccess[]
-  events EventMeta[]
+  access         ProjectAccess[]
+  events         EventMeta[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -428,4 +430,23 @@ model Client {
 
   @@index([organizationId])
   @@map("clients")
+}
+
+model TwoFactor {
+  id          String @id
+  secret      String
+  backupCodes String
+  userId      String
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("twoFactor")
+}
+
+model Jwks {
+  id         String   @id
+  publicKey  String
+  privateKey String
+  createdAt  DateTime
+
+  @@map("jwks")
 }

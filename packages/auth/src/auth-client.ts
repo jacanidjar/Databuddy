@@ -1,8 +1,8 @@
-
 import { createAuthClient } from "better-auth/react"
-import { customSessionClient } from "better-auth/client/plugins";
+import { customSessionClient, twoFactorClient, organizationClient } from "better-auth/client/plugins";
 import { auth } from "./auth";
 import { AuthUser, SignInOptions, SignUpOptions } from "./types";
+import { jwt, multiSession } from "better-auth/plugins";
 
 // Define a type for the auth client configuration
 export type AuthClientConfig = {
@@ -19,7 +19,17 @@ const defaultConfig: AuthClientConfig = {
 // Create a singleton instance with the default configuration
 let _authClient = createAuthClient({
   baseURL: defaultConfig.baseURL,
-  plugins: [customSessionClient<typeof auth>()],
+  plugins: [
+    customSessionClient<typeof auth>(),
+    twoFactorClient(),
+    multiSession(),
+    jwt(),
+    organizationClient({
+      teams: {
+        enabled: true
+      }
+    })
+  ],
 });
 
 // Function to initialize or reconfigure the auth client
@@ -28,7 +38,17 @@ export function initAuthClient(config: AuthClientConfig = {}) {
   
   _authClient = createAuthClient({
     baseURL: mergedConfig.baseURL,
-    plugins: [customSessionClient<typeof auth>()],
+    plugins: [
+      customSessionClient<typeof auth>(),
+      twoFactorClient(),
+      multiSession(),
+      jwt(),
+      organizationClient({
+        teams: {
+          enabled: true
+        }
+      })
+    ],
   });
   
   return _authClient;

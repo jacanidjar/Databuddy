@@ -1,10 +1,19 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { customSession } from "better-auth/plugins";
+import { customSession, multiSession, jwt, twoFactor, captcha, organization } from "better-auth/plugins";
+import { getSessionCookie } from "better-auth/cookies";
 import { db } from "@databuddy/db";
 
 export const canManageUsers = (role: string) => {
   return role === 'ADMIN'
+}
+
+export const getSession = async (request: any) => {
+  const sessionCookie = getSessionCookie(request);
+  if (!sessionCookie) {
+    return null;
+  }
+  return sessionCookie;
 }
 
 
@@ -12,6 +21,7 @@ export const auth = betterAuth({
     database: prismaAdapter(db, {
         provider: "postgresql",
     }),
+    appName: "databuddy.cc",
     socialProviders: {
         google: {
             clientId: process.env.GOOGLE_CLIENT_ID as string,
@@ -66,5 +76,21 @@ export const auth = betterAuth({
                 },
             }
         }),
+
+        twoFactor(),
+        multiSession(),
+        jwt(),
+        organization({
+            teams: {
+                enabled: true,
+            },
+            allowUserToCreateOrganization: true,
+            organizationLimit: 1,
+            membershipLimit: 100,
+        }),
+        // captcha({
+        //     provider: "cloudflare-turnstile",
+        //     secretKey: process.env.RECAPTCHA_SECRET_KEY as string,
+        // })
     ]
 })

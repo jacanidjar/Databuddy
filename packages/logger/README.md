@@ -1,6 +1,6 @@
 # @databuddy/logger
 
-A powerful logging utility for the DataBuddy monorepo, built with Pino and Highlight.io integration.
+A powerful logging utility for the Databuddy monorepo, built with Pino and Highlight.io integration.
 
 ## Features
 

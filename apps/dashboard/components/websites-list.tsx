@@ -1,64 +1,86 @@
 "use client";
 
 import Link from "next/link";
-import { PlusCircle } from "lucide-react";
-
-interface Website {
-  id: string;
-  name: string;
-  url: string;
-  slug: string;
-  createdAt: string;
-  isActive: boolean;
-}
+import { Card } from "./ui/card";
+import { Button } from "./ui/button";
+import { ExternalLinkIcon, TrashIcon } from "lucide-react";
+import { deleteWebsite } from "@/app/actions/websites";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import type { Website } from "@/types/website";
 
 interface WebsitesListProps {
   websites: Website[];
+  variant?: "list" | "grid";
 }
 
-export default function WebsitesList({ websites }: WebsitesListProps) {
-  if (websites.length === 0) {
+export function WebsitesList({ websites, variant = "list" }: WebsitesListProps) {
+  const router = useRouter();
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this website?")) return;
+
+    const response = await deleteWebsite(id);
+    
+    if (response.error) {
+      toast.error(response.error);
+      return;
+    }
+
+    toast.success("Website deleted successfully");
+    router.refresh();
+  };
+
+  if (!websites.length) {
     return (
-      <div className="text-center py-12 border rounded-lg">
-        <h2 className="text-xl font-semibold mb-2">No websites yet</h2>
-        <p className="text-gray-500 mb-4">Add your first website to start tracking analytics</p>
-        <Link 
-          href="/dashboard/websites/new"
-          className="inline-flex items-center px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
-        >
-          <PlusCircle className="h-4 w-4 mr-2" />
-          Add Your First Website
-        </Link>
+      <div className="text-center py-12">
+        <p className="text-gray-500">No websites added yet.</p>
       </div>
     );
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className={variant === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
       {websites.map((website) => (
-        <Link 
-          key={website.id} 
-          href={`/dashboard/websites/${website.slug}`}
-          className="block border rounded-lg p-4 hover:border-blue-500 transition-colors"
-        >
-          <h2 className="font-semibold text-lg">{website.name}</h2>
-          <p className="text-gray-500 text-sm">{website.url}</p>
-          <div className="mt-2 flex items-center">
-            <span className={`inline-block w-2 h-2 rounded-full mr-2 ${website.isActive ? 'bg-green-500' : 'bg-gray-400'}`}></span>
-            <span className="text-sm">{website.isActive ? 'Active' : 'Inactive'}</span>
+        <Card key={website.id} className="p-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="font-medium">{website.name}</h3>
+              <p className="text-sm text-gray-500">{website.domain}</p>
+            </div>
+            <div className="flex space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+              >
+                <Link href={website.domain} target="_blank" rel="noopener noreferrer">
+                  <ExternalLinkIcon className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDelete(website.id)}
+              >
+                <TrashIcon className="h-4 w-4 text-red-500" />
+              </Button>
+            </div>
           </div>
-        </Link>
+          {variant === "grid" && website.visitors !== undefined && (
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Visitors</p>
+                <p className="font-medium">{website.visitors.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Page Views</p>
+                <p className="font-medium">{website.pageViews?.toLocaleString() || 0}</p>
+              </div>
+            </div>
+          )}
+        </Card>
       ))}
-      
-      <Link 
-        href="/dashboard/websites/new"
-        className="flex items-center justify-center border rounded-lg p-4 hover:border-blue-500 transition-colors border-dashed"
-      >
-        <div className="text-center">
-          <PlusCircle className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-          <p className="font-medium">Add New Website</p>
-        </div>
-      </Link>
     </div>
   );
 }

@@ -37,6 +37,13 @@ export default function Home() {
           <li>Save and see your changes instantly.</li>
         </ol>
 
+        <h2>Documentation Pages</h2>
+        <ul>
+          <li>
+            <a href="/tracking-options">Tracking Configuration Options</a> - Configure which tracking features are enabled
+          </li>
+        </ul>
+
         <div className={styles.ctas}>
           <a
             className={styles.primary}

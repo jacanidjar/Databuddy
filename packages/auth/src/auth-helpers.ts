@@ -1,6 +1,18 @@
 "use client"
 
-import { signIn, signOut, signUp } from './auth-client';
+import { signIn, signOut, signUp, authClient } from './auth-client';
+import type { AuthUser } from './types';
+
+interface TwoFactorResponse {
+  data?: {
+    totpURI?: string;
+    backupCodes?: string[];
+    twoFactorEnabled: boolean;
+  };
+  error?: {
+    message: string;
+  };
+}
 
 /**
  * Helper function to sign in with email and password with simplified redirect handling
@@ -156,6 +168,176 @@ export function loginWithGithub(
     if (options?.onError) {
       options.onError(error);
     }
+    return { success: false, error };
+  }
+}
+
+/**
+ * Helper function to enable 2FA for a user
+ */
+export async function enableTwoFactor(
+  password: string,
+  options?: {
+    onSuccess?: (data: TwoFactorResponse['data']) => void;
+    onError?: (error: any) => void;
+  }
+) {
+  try {
+    const result = await authClient.twoFactor.enable({
+      password,
+    });
+    
+    if (result.data) {
+      options?.onSuccess?.({
+        ...result.data,
+        twoFactorEnabled: false // Will be true after verification
+      });
+    } else if (result.error) {
+      options?.onError?.(result.error);
+    }
+    
+    return { success: !!result.data, data: result };
+  } catch (error) {
+    options?.onError?.(error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Helper function to verify TOTP code
+ */
+export async function verifyTwoFactorCode(
+  code: string,
+  options?: {
+    trustDevice?: boolean;
+    onSuccess?: () => void;
+    onError?: (error: any) => void;
+  }
+) {
+  try {
+    const result = await authClient.twoFactor.verifyTotp({
+      code,
+      trustDevice: options?.trustDevice,
+    });
+    
+    if (result.data) {
+      options?.onSuccess?.();
+    } else if (result.error) {
+      options?.onError?.(result.error);
+    }
+    
+    return { success: !!result.data, data: result };
+  } catch (error) {
+    options?.onError?.(error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Helper function to verify backup code
+ */
+export async function verifyBackupCode(
+  code: string,
+  options?: {
+    onSuccess?: () => void;
+    onError?: (error: any) => void;
+  }
+) {
+  try {
+    const result = await authClient.twoFactor.verifyBackupCode({
+      code,
+    });
+    
+    if (result.data) {
+      options?.onSuccess?.();
+    } else if (result.error) {
+      options?.onError?.(result.error);
+    }
+    
+    return { success: !!result.data, data: result };
+  } catch (error) {
+    options?.onError?.(error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Helper function to send OTP
+ */
+export async function sendOTP(
+  options?: {
+    onSuccess?: () => void;
+    onError?: (error: any) => void;
+  }
+) {
+  try {
+    const result = await authClient.twoFactor.sendOtp();
+    
+    if (result.data) {
+      options?.onSuccess?.();
+    } else if (result.error) {
+      options?.onError?.(result.error);
+    }
+    
+    return { success: !!result.data, data: result };
+  } catch (error) {
+    options?.onError?.(error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Helper function to verify OTP
+ */
+export async function verifyOTP(
+  code: string,
+  options?: {
+    onSuccess?: () => void;
+    onError?: (error: any) => void;
+  }
+) {
+  try {
+    const result = await authClient.twoFactor.verifyOtp({
+      code,
+    });
+    
+    if (result.data) {
+      options?.onSuccess?.();
+    } else if (result.error) {
+      options?.onError?.(result.error);
+    }
+    
+    return { success: !!result.data, data: result };
+  } catch (error) {
+    options?.onError?.(error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Helper function to generate backup codes
+ */
+export async function generateBackupCodes(
+  password: string,
+  options?: {
+    onSuccess?: (backupCodes: string[]) => void;
+    onError?: (error: any) => void;
+  }
+) {
+  try {
+    const result = await authClient.twoFactor.generateBackupCodes({
+      password,
+    });
+    
+    if (result.data?.backupCodes) {
+      options?.onSuccess?.(result.data.backupCodes);
+    } else if (result.error) {
+      options?.onError?.(result.error);
+    }
+    
+    return { success: !!result.data, data: result };
+  } catch (error) {
+    options?.onError?.(error);
     return { success: false, error };
   }
 } 

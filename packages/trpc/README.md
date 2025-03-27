@@ -1,6 +1,6 @@
 # @databuddy/trpc
 
-This package contains the tRPC server implementation for the DataBuddy API.
+This package contains the tRPC server implementation for the Databuddy API.
 
 ## Overview
 

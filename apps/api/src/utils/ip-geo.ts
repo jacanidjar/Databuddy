@@ -85,3 +85,42 @@ export async function parseIp(req: Request): Promise<GeoLocation> {
   const ip = getClientIp(req);
   return getGeoLocation(ip || '');
 }
+
+/**
+ * Anonymizes an IP address by removing the last octet for IPv4 
+ * or the last 80 bits for IPv6
+ */
+export function anonymizeIp(ip: string): string {
+  if (!ip) {
+    return '';
+  }
+
+  // Check if it's IPv4
+  if (ip.includes('.')) {
+    // Replace last octet with zeros
+    return ip.replace(/\.\d+$/, '.0');
+  } 
+  // Handle IPv6
+  else if (ip.includes(':')) {
+    // Keep first 48 bits (first 3 groups), zero out the rest
+    const parts = ip.split(':');
+    const anonymized = parts.slice(0, 3).concat(Array(parts.length - 3).fill('0000')).join(':');
+    return anonymized;
+  }
+  
+  return ip;
+}
+
+export async function getGeoData(ip: string): Promise<GeoLocation> {
+  const geo = await getGeoLocation(ip);
+  return {
+    ip: geo.ip,
+    city: geo.city,
+    region: geo.region,
+    country: geo.country,
+    loc: geo.loc,
+    org: geo.org,
+    timezone: geo.timezone,
+  };
+}
+

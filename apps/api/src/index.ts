@@ -8,6 +8,9 @@ import { trpcServer } from '@hono/trpc-server'
 import { authMiddleware } from './middleware/auth'
 import { auth } from '@databuddy/auth';
 import { TRPCError } from '@trpc/server';
+import basketRouter from './routes/basket';
+import adminRouter from './routes/admin';
+import analyticsRouter from './routes/analytics';
 
 // Define the Hono app with typed context
 type AppVariables = {
@@ -28,13 +31,15 @@ app.use('*', logger());
 
 // Configure CORS - must be before auth routes
 app.use('*', cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://dashboard.databuddy.cc']
-    : ['http://localhost:3000', 'http://localhost:3001'],
+  origin: ['https://dashboard.databuddy.cc', 'http://localhost:3000'],
+  allowHeaders: [
+    'Content-Type',
+    'databuddy-client-id',
+    'databuddy-sdk-name',
+    'databuddy-sdk-version',
+  ],
+  allowMethods: ['POST', 'OPTIONS',],
   credentials: true,
-  allowHeaders: ['Content-Type', 'Authorization'],
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  exposeHeaders: ['Content-Length'],
   maxAge: 600,
 }));
 
@@ -45,6 +50,16 @@ app.on(['POST', 'GET', 'OPTIONS'], '/api/auth/*', (c) => {
 
 // Health check route
 app.get('/', (c) => c.json({ status: 'ok', version: '1.0.0' }));
+
+// Mount analytics basket endpoint (no auth required)
+app.route('/basket', basketRouter);
+
+// Mount admin routes with auth middleware
+app.use('/admin/*', authMiddleware);
+app.route('/admin', adminRouter);
+
+// Mount analytics routes with auth middleware
+app.route('/analytics', analyticsRouter);
 
 // Add auth middleware for protected routes
 app.use('/trpc/*', authMiddleware);
@@ -57,7 +72,7 @@ app.get('/session', (c) => {
 app.use('/trpc/*', trpcServer({
   router: appRouter,
   createContext: async (opts) => {
-    const c = opts.req.raw as any;
+    const c = opts.req as any;
     return {
       user: c.user,
       session: c.session
@@ -133,7 +148,7 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-// // Export the app for Cloudflare Workers
+// // Export the app for Cloudflare Workers - DONT ENABLE.
 // export default {
 //   fetch: app.fetch,
 //   port: process.env.PORT || 3001,
