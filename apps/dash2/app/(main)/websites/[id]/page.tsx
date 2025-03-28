@@ -209,10 +209,10 @@ function WebsiteDetailsPage() {
     { id: "audience", label: "Audience", component: WebsiteAudienceTab },
     { id: "content", label: "Content", component: WebsiteContentTab },
     { id: "performance", label: "Performance", component: WebsitePerformanceTab },
-    { id: "settings", label: "Settings", component: WebsiteSettingsTab, props: "settings" },
     { id: "sessions", label: "Sessions", component: WebsiteSessionsTab },
     { id: "profiles", label: "Profiles", component: WebsiteProfilesTab },
-    { id: "errors", label: "Errors", component: WebsiteErrorsTab }
+    { id: "errors", label: "Errors", component: WebsiteErrorsTab },
+    { id: "settings", label: "Settings", component: WebsiteSettingsTab, props: "settings" },
   ];
 
   if (isLoading) {

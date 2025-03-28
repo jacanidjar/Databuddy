@@ -56,22 +56,22 @@
         constructor(e) {
             this.options = {
                 disabled: false,
-                waitForProfile: true,
+                waitForProfile: false,
                 
                 trackScreenViews: true,
                 trackHashChanges: false,
-                trackAttributes: true,
-                trackOutgoingLinks: true,
+                trackAttributes: false,
+                trackOutgoingLinks: false,
                 
-                trackSessions: true,
-                trackPerformance: true,
-                trackWebVitals: true,
-                trackEngagement: true,
-                trackScrollDepth: true,
-                trackExitIntent: true,
-                trackInteractions: true,
-                trackErrors: true,
-                trackBounceRate: true,
+                trackSessions: false,
+                trackPerformance: false,
+                trackWebVitals: false,
+                trackEngagement: false,
+                trackScrollDepth: false,
+                trackExitIntent: false,
+                trackInteractions: false,
+                trackErrors: false,
+                trackBounceRate: false,
 
                 ...e
             };
@@ -823,15 +823,20 @@
             // Don't run in Node environment
             if (typeof window === 'undefined') return;
             
-            function initializeDatabuddy() {
+            // Initialize databuddy with configuration from various sources
+            function init() {
                 // Check if a global configuration object exists
                 const config = window.databuddyConfig || {};
                 
-                // Initialize databuddy with the specified client ID from the script
+                // Find the script tag
                 const scripts = document.querySelectorAll('script');
                 let scriptTag = null;
+                
                 for (let i = 0; i < scripts.length; i++) {
-                    if (scripts[i].src && scripts[i].src.includes('/api/tracking')) {
+                    if (scripts[i].src && (
+                        scripts[i].src.includes('/databuddy.js') || 
+                        scripts[i].src.includes('/api/tracking')
+                    )) {
                         scriptTag = scripts[i];
                         break;
                     }
@@ -842,19 +847,56 @@
                     return;
                 }
                 
-                const srcParts = scriptTag.src.split('?');
-                const urlParams = new URLSearchParams(srcParts.length > 1 ? srcParts[1] : '');
-                const clientId = config.clientId || urlParams.get('id');
+                // Get client ID from various sources (in order of precedence):
+                // 1. data-client-id attribute
+                // 2. URL parameter
+                // 3. Global config
+                let clientId = null;
+                
+                // Check for data attribute
+                if (scriptTag.hasAttribute('data-client-id')) {
+                    clientId = scriptTag.getAttribute('data-client-id');
+                }
+                
+                // If not found, check URL params
+                if (!clientId) {
+                    const srcParts = scriptTag.src.split('?');
+                    const urlParams = new URLSearchParams(srcParts.length > 1 ? srcParts[1] : '');
+                    clientId = urlParams.get('id');
+                }
+                
+                // If still not found, check global config
+                if (!clientId) {
+                    clientId = config.clientId;
+                }
                 
                 if (!clientId) {
                     console.error('Databuddy: Missing client ID');
                     return;
                 }
                 
-                // Merge configuration with the client ID
+                // Get all data attributes from script tag
+                const dataAttributes = {};
+                if (scriptTag.dataset) {
+                    Object.keys(scriptTag.dataset).forEach(key => {
+                        // Convert camelCase to proper config case
+                        const configKey = key.replace(/[A-Z]/g, letter => letter.toLowerCase());
+                        
+                        // Convert string values to proper types
+                        let value = scriptTag.dataset[key];
+                        if (value === 'true') value = true;
+                        if (value === 'false') value = false;
+                        if (!isNaN(value) && value !== '') value = Number(value);
+                        
+                        dataAttributes[configKey] = value;
+                    });
+                }
+                
+                // Merge configuration from all sources (in order of precedence)
                 const mergedConfig = {
-                    clientId,
-                    ...config
+                    ...config,                // Global config (lowest precedence)
+                    ...dataAttributes,        // Data attributes (higher precedence)
+                    clientId                  // Client ID (highest precedence)
                 };
                 
                 // Initialize the tracker with the merged configuration
@@ -863,9 +905,9 @@
             
             // Initialize on DOM ready
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initializeDatabuddy);
+                document.addEventListener('DOMContentLoaded', init);
             } else {
-                initializeDatabuddy();
+                init();
             }
         }
         
