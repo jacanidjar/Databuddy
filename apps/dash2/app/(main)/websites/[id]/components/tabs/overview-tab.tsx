@@ -5,22 +5,18 @@ import {
   Globe, 
   Users, 
   MousePointer, 
-  Clock, 
-  Zap,
   AlertTriangle,
+  BarChart,
+  Timer,
+  LayoutDashboard
 } from "lucide-react";
-import { format, differenceInDays } from "date-fns";
-import { toast } from "sonner";
+import { differenceInDays } from "date-fns";
 
 import { StatCard } from "@/components/analytics/stat-card";
 import { MetricsChart } from "@/components/charts/metrics-chart";
 import { DistributionChart } from "@/components/charts/distribution-chart";
 import { DataTable } from "@/components/analytics/data-table";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { useWebsiteAnalytics } from "@/hooks/use-analytics";
-import { DateRange } from "@/hooks/use-analytics";
-import { ExternalLink } from "lucide-react";
 import { 
   formatDateByGranularity, 
   handleDataRefresh, 
@@ -29,8 +25,7 @@ import {
   groupBrowserData,
   formatDomainLink,
   getColorVariant,
-  calculatePercentChange,
-  formatPercentChange
+  calculatePercentChange
 } from "../utils/analytics-helpers";
 import { MetricToggles, ExternalLinkButton, BORDER_RADIUS } from "../utils/ui-components";
 import { FullTabProps, MetricPoint } from "../utils/types";
@@ -48,58 +43,41 @@ export function WebsiteOverviewTab({
   // Local state for adjusted granularity
   const [adjustedDateRange, setAdjustedDateRange] = useState(dateRange);
   
-  // Fetch all analytics data with a single hook
-  const {
-    analytics,
-    loading,
-    refetch
-  } = useWebsiteAnalytics(websiteId, adjustedDateRange);
+  // Fetch analytics data
+  const { analytics, loading, refetch } = useWebsiteAnalytics(websiteId, adjustedDateRange);
 
-  // Add state for chart metric visibility
+  // Chart metric visibility
   const [visibleMetrics, setVisibleMetrics] = useState<Record<string, boolean>>(
     createMetricToggles(['pageviews', 'sessions'])
   );
   
-  // Handler for toggling metrics visibility
+  // Toggle metric visibility
   const toggleMetric = useCallback((metric: string) => {
-    setVisibleMetrics(prev => ({
-      ...prev,
-      [metric]: !prev[metric]
-    }));
+    setVisibleMetrics(prev => ({ ...prev, [metric]: !prev[metric] }));
   }, []);
 
-  // Run refetch when isRefreshing changes to true
+  // Handle refresh
   useEffect(() => {
     handleDataRefresh(isRefreshing, refetch, setIsRefreshing, "Analytics data has been updated");
   }, [isRefreshing, refetch, setIsRefreshing]);
 
-  // Automatically set granularity based on date range
+  // Set granularity based on date range
   useEffect(() => {
-    // Get the date objects
     const start = new Date(dateRange.start_date);
     const end = new Date(dateRange.end_date);
+    const diffHours = Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60);
     
-    // Calculate the time difference in hours
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    const diffHours = diffTime / (1000 * 60 * 60);
-    
-    // Create a new dateRange object with appropriate granularity
-    const newDateRange = { ...dateRange };
-    
-    // Only override granularity if not explicitly set by parent
     if (!dateRange.granularity) {
-      // For 24-hour range or less, use hourly granularity
-      if (diffHours <= 24) {
-        newDateRange.granularity = 'hourly';
-      } else {
-        newDateRange.granularity = 'daily';
-      }
+      setAdjustedDateRange({
+        ...dateRange,
+        granularity: diffHours <= 24 ? 'hourly' : 'daily'
+      });
+    } else {
+      setAdjustedDateRange(dateRange);
     }
-    
-    setAdjustedDateRange(newDateRange);
   }, [dateRange]);
 
-  // Prepare data for charts and tables
+  // Format data for UI
   const deviceData = useMemo(() => 
     formatDistributionData(analytics.device_types, 'device_type'), 
     [analytics.device_types]
@@ -153,32 +131,31 @@ export function WebsiteOverviewTab({
     },
   ], []);
 
-  // Format the chart data
+  // Format chart data
   const chartData = useMemo(() => {
     if (!analytics.events_by_date?.length) return [];
     
     return analytics.events_by_date.map((event: MetricPoint) => {
-      // Create a filtered object with only the visible metrics
-      const filtered: any = {};
+      const filtered: any = { 
+        date: formatDateByGranularity(event.date, adjustedDateRange.granularity) 
+      };
       
-      if (visibleMetrics.pageviews) filtered.pageviews = event.pageviews;
-      if (visibleMetrics.visitors) filtered.visitors = event.visitors;
-      if (visibleMetrics.sessions) filtered.sessions = event.sessions;
-      if (visibleMetrics.bounce_rate) filtered.bounce_rate = event.bounce_rate;
-      
-      // Format the date based on granularity
-      filtered.date = formatDateByGranularity(event.date, adjustedDateRange.granularity);
+      Object.entries(visibleMetrics).forEach(([metric, isVisible]) => {
+        if (isVisible && metric in event) {
+          filtered[metric] = event[metric];
+        }
+      });
       
       return filtered;
     });
   }, [analytics.events_by_date, visibleMetrics, adjustedDateRange.granularity]);
 
-  // Calculate date range duration for warning message
+  // Date range info for warning message
   const dateFrom = useMemo(() => new Date(dateRange.start_date), [dateRange.start_date]);
   const dateTo = useMemo(() => new Date(dateRange.end_date), [dateRange.end_date]);
   const dateDiff = useMemo(() => differenceInDays(dateTo, dateFrom), [dateTo, dateFrom]);
 
-  // Metric toggle colors
+  // Metric colors
   const metricColors = {
     pageviews: 'blue-500',
     visitors: 'emerald-500',
@@ -186,142 +163,168 @@ export function WebsiteOverviewTab({
     bounce_rate: 'red-500'
   };
 
-  // Calculate trends based on events_by_date data
+  // Calculate trends
   const calculateTrends = useMemo(() => {
     if (!analytics.events_by_date?.length || analytics.events_by_date.length < 2) {
       return {
         visitors: undefined,
+        sessions: undefined,
         pageviews: undefined,
         bounce_rate: undefined,
-        session_duration: undefined
+        session_duration: undefined,
+        pages_per_session: undefined
       };
     }
 
-    const events = [...analytics.events_by_date].sort((a, b) => {
-      return new Date(a.date).getTime() - new Date(b.date).getTime();
-    });
+    const events = [...analytics.events_by_date].sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
     
-    const totalEvents = events.length;
+    const midpoint = Math.floor(events.length / 2);
+    const previousPeriod = events.slice(0, midpoint);
+    const currentPeriod = events.slice(midpoint);
     
-    // If we have enough data, compare the second half with the first half of the period
-    if (totalEvents >= 2) {
-      const midpoint = Math.floor(totalEvents / 2);
-      
-      // Calculate sums for the two periods - previous period is first half, current is second half
-      const previousPeriod = events.slice(0, midpoint);
-      const currentPeriod = events.slice(midpoint);
-      
-      // Sum total metrics for each period
-      const currentVisitors = currentPeriod.reduce((sum, day) => sum + (day.visitors || 0), 0);
-      const previousVisitors = previousPeriod.reduce((sum, day) => sum + (day.visitors || 0), 0);
-      
-      const currentPageviews = currentPeriod.reduce((sum, day) => sum + (day.pageviews || 0), 0);
-      const previousPageviews = previousPeriod.reduce((sum, day) => sum + (day.pageviews || 0), 0);
-      
-      // For bounce rate and session duration, calculate weighted averages
-      // Only use entries with non-zero values
-      const currentBounceRateEntries = currentPeriod.filter(day => day.bounce_rate !== undefined && day.bounce_rate > 0);
-      const previousBounceRateEntries = previousPeriod.filter(day => day.bounce_rate !== undefined && day.bounce_rate > 0);
-      
-      const currentBounceRate = currentBounceRateEntries.length > 0 
-        ? currentBounceRateEntries.reduce((sum, day) => sum + (day.bounce_rate || 0), 0) / currentBounceRateEntries.length 
-        : 0;
-      
-      const previousBounceRate = previousBounceRateEntries.length > 0 
-        ? previousBounceRateEntries.reduce((sum, day) => sum + (day.bounce_rate || 0), 0) / previousBounceRateEntries.length 
-        : 0;
-      
-      const currentSessionDurationEntries = currentPeriod.filter(day => day.avg_session_duration !== undefined && day.avg_session_duration > 0);
-      const previousSessionDurationEntries = previousPeriod.filter(day => day.avg_session_duration !== undefined && day.avg_session_duration > 0);
-      
-      const currentSessionDuration = currentSessionDurationEntries.length > 0
-        ? currentSessionDurationEntries.reduce((sum, day) => sum + (day.avg_session_duration || 0), 0) / currentSessionDurationEntries.length
-        : 0;
-      
-      const previousSessionDuration = previousSessionDurationEntries.length > 0
-        ? previousSessionDurationEntries.reduce((sum, day) => sum + (day.avg_session_duration || 0), 0) / previousSessionDurationEntries.length
-        : 0;
-
-      // Round percentages to whole numbers for display
-      const roundPercentage = (value: number) => Math.round(value);
-
-      // Prevent impossible percentages
-      const validatePercentage = (value: number) => {
-        if (value < -100) return -100;
-        if (value > 1000) return 1000; // Cap at 1000% to avoid unrealistic numbers
-        return value;
-      };
-
-      // For bounce rate, lower is better, so invert the trend
-      let bounceRateTrend = undefined;
-      if (previousBounceRate > 0 && currentBounceRate >= 0) {
-        const rawTrend = calculatePercentChange(currentBounceRate, previousBounceRate);
-        // Invert the trend since a decrease in bounce rate is positive
-        bounceRateTrend = -rawTrend;
-      }
-
-      // Only return trends when we have valid data in both periods
-      return {
-        visitors: previousVisitors > 0 ? roundPercentage(validatePercentage(calculatePercentChange(currentVisitors, previousVisitors))) : undefined,
-        pageviews: previousPageviews > 0 ? roundPercentage(validatePercentage(calculatePercentChange(currentPageviews, previousPageviews))) : undefined,
-        bounce_rate: bounceRateTrend !== undefined ? roundPercentage(validatePercentage(bounceRateTrend)) : undefined,
-        session_duration: previousSessionDuration > 0 ? roundPercentage(validatePercentage(calculatePercentChange(currentSessionDuration, previousSessionDuration))) : undefined
-      };
-    }
+    // Calculate metrics for each period
+    const sum = (arr: any[], field: string) => arr.reduce((sum, item) => sum + (item[field] || 0), 0);
     
+    const currentVisitors = sum(currentPeriod, 'visitors');
+    const previousVisitors = sum(previousPeriod, 'visitors');
+    
+    const currentSessions = sum(currentPeriod, 'sessions');
+    const previousSessions = sum(previousPeriod, 'sessions');
+    
+    const currentPageviews = sum(currentPeriod, 'pageviews');
+    const previousPageviews = sum(previousPeriod, 'pageviews');
+    
+    const currentPagesPerSession = currentSessions > 0 ? currentPageviews / currentSessions : 0;
+    const previousPagesPerSession = previousSessions > 0 ? previousPageviews / previousSessions : 0;
+    
+    // Calculate weighted averages for bounce rate and session duration
+    const getWeightedAvg = (arr: any[], field: string) => {
+      const filtered = arr.filter(day => day[field] !== undefined && day[field] > 0);
+      return filtered.length > 0 ? filtered.reduce((sum, day) => sum + (day[field] || 0), 0) / filtered.length : 0;
+    };
+    
+    const currentBounceRate = getWeightedAvg(currentPeriod, 'bounce_rate');
+    const previousBounceRate = getWeightedAvg(previousPeriod, 'bounce_rate');
+    
+    const currentSessionDuration = getWeightedAvg(currentPeriod, 'avg_session_duration');
+    const previousSessionDuration = getWeightedAvg(previousPeriod, 'avg_session_duration');
+
+    // Calculate and round percent changes
+    const calcTrend = (current: number, previous: number, invert = false) => {
+      if (previous <= 0) return undefined;
+      const change = calculatePercentChange(current, previous);
+      const value = Math.round(invert ? -change : change);
+      return Math.max(-100, Math.min(1000, value)); // Limit between -100% and 1000%
+    };
+
     return {
-      visitors: undefined,
-      pageviews: undefined,
-      bounce_rate: undefined,
-      session_duration: undefined
+      visitors: calcTrend(currentVisitors, previousVisitors),
+      sessions: calcTrend(currentSessions, previousSessions),
+      pageviews: calcTrend(currentPageviews, previousPageviews),
+      pages_per_session: calcTrend(currentPagesPerSession, previousPagesPerSession),
+      bounce_rate: calcTrend(currentBounceRate, previousBounceRate, true),
+      session_duration: calcTrend(currentSessionDuration, previousSessionDuration)
     };
   }, [analytics.events_by_date]);
 
   return (
     <>
       {/* Key metrics */}
-      <div className="grid grid-cols-4 gap-1.5">
-        <StatCard 
-          title="Unique Visitors"
-          value={analytics.summary?.unique_visitors || 0}
-          icon={Users}
-          description={`${analytics.today?.visitors || 0} today`}
-          isLoading={loading.summary}
-          variant="info"
-          trend={calculateTrends.visitors}
-          trendLabel={calculateTrends.visitors !== undefined ? "vs previous period" : undefined}
-          className={`shadow-sm ${BORDER_RADIUS.card}`}
-        />
-        <StatCard 
-          title="Page Views"
-          value={analytics.summary?.pageviews || 0}
-          icon={Globe}
-          description={`${analytics.today?.pageviews || 0} today`}
-          isLoading={loading.summary}
-          trend={calculateTrends.pageviews}
-          trendLabel={calculateTrends.pageviews !== undefined ? "vs previous period" : undefined}
-          className={`shadow-sm ${BORDER_RADIUS.card}`}
-        />
-        <StatCard 
-          title="Bounce Rate"
-          value={analytics.summary?.bounce_rate_pct || '0%'}
-          icon={MousePointer}
-          isLoading={loading.summary}
-          trend={calculateTrends.bounce_rate}
-          trendLabel={calculateTrends.bounce_rate !== undefined ? "vs previous period" : undefined}
-          variant={getColorVariant(analytics.summary?.bounce_rate || 0, 70, 50)}
-          invertTrend={true}
-          className={`shadow-sm ${BORDER_RADIUS.card}`}
-        />
-        <StatCard 
-          title="Avg. Session"
-          value={analytics.summary?.avg_session_duration_formatted || '0s'}
-          icon={Clock}
-          isLoading={loading.summary}
-          trend={calculateTrends.session_duration}
-          trendLabel={calculateTrends.session_duration !== undefined ? "vs previous period" : undefined}
-          className={`shadow-sm ${BORDER_RADIUS.card}`}
-        />
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight">Website Analytics</h2>
+            <p className="text-sm text-muted-foreground">Key performance metrics for your website</p>
+          </div>
+        </div>
+        
+        <div className="rounded-2xl border shadow-sm overflow-hidden bg-background">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+            <div className="border-r border-b md:border-b-0 group">
+              <StatCard 
+                title="UNIQUE VISITORS"
+                value={analytics.summary?.unique_visitors || 0}
+                icon={Users}
+                description={`${analytics.today?.visitors || 0} today`}
+                isLoading={loading.summary}
+                variant="default"
+                trend={calculateTrends.visitors}
+                trendLabel={calculateTrends.visitors !== undefined ? "vs previous period" : undefined}
+                className="rounded-none border-0 h-full bg-transparent group-hover:bg-muted/20 transition-colors p-1 md:px-3 md:py-3"
+              />
+            </div>
+            <div className="border-r md:border-r lg:border-r border-b md:border-b-0 group">
+              <StatCard 
+                title="SESSIONS"
+                value={analytics.summary?.sessions || 0}
+                icon={BarChart}
+                description={`${analytics.today?.sessions || 0} today`}
+                isLoading={loading.summary}
+                variant="default"
+                trend={calculateTrends.sessions}
+                trendLabel={calculateTrends.sessions !== undefined ? "vs previous period" : undefined}
+                className="rounded-none border-0 h-full bg-transparent group-hover:bg-muted/20 transition-colors p-1 md:px-3 md:py-3"
+              />
+            </div>
+            <div className="border-r-0 md:border-r border-b md:border-b-0 group">
+              <StatCard 
+                title="PAGE VIEWS"
+                value={analytics.summary?.pageviews || 0}
+                icon={Globe}
+                description={`${analytics.today?.pageviews || 0} today`}
+                isLoading={loading.summary}
+                variant="default"
+                trend={calculateTrends.pageviews}
+                trendLabel={calculateTrends.pageviews !== undefined ? "vs previous period" : undefined}
+                className="rounded-none border-0 h-full bg-transparent group-hover:bg-muted/20 transition-colors p-1 md:px-3 md:py-3"
+              />
+            </div>
+            <div className="border-r border-b-0 md:border-t lg:border-t-0 group">
+              <StatCard 
+                title="PAGES/SESSION"
+                value={analytics.summary ? 
+                  (analytics.summary.sessions > 0 ? 
+                    (analytics.summary.pageviews / analytics.summary.sessions).toFixed(1) : 
+                    '0'
+                  ) : '0'
+                }
+                icon={LayoutDashboard}
+                isLoading={loading.summary}
+                variant="default"
+                trend={calculateTrends.pages_per_session}
+                trendLabel={calculateTrends.pages_per_session !== undefined ? "vs previous period" : undefined}
+                className="rounded-none border-0 h-full bg-transparent group-hover:bg-muted/20 transition-colors p-1 md:px-3 md:py-3"
+              />
+            </div>
+            <div className="border-r md:border-r lg:border-r border-b-0 md:border-t lg:border-t-0 group">
+              <StatCard 
+                title="BOUNCE RATE"
+                value={analytics.summary?.bounce_rate_pct || '0%'}
+                icon={MousePointer}
+                isLoading={loading.summary}
+                trend={calculateTrends.bounce_rate}
+                trendLabel={calculateTrends.bounce_rate !== undefined ? "vs previous period" : undefined}
+                variant={getColorVariant(analytics.summary?.bounce_rate || 0, 70, 50)}
+                invertTrend={true}
+                className="rounded-none border-0 h-full bg-transparent group-hover:bg-muted/20 transition-colors p-1 md:px-3 md:py-3"
+              />
+            </div>
+            <div className="border-r-0 border-b-0 md:border-t lg:border-t-0 group">
+              <StatCard 
+                title="AVG. SESSION"
+                value={analytics.summary?.avg_session_duration_formatted || '0s'}
+                icon={Timer}
+                isLoading={loading.summary}
+                variant="default"
+                trend={calculateTrends.session_duration}
+                trendLabel={calculateTrends.session_duration !== undefined ? "vs previous period" : undefined}
+                className="rounded-none border-0 h-full bg-transparent group-hover:bg-muted/20 transition-colors p-1 md:px-3 md:py-3"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Visitor Trends */}
@@ -342,13 +345,11 @@ export function WebsiteOverviewTab({
           </div>
           
           {/* Metrics toggles */}
-          <div className="flex flex-wrap gap-3 items-center justify-end">
-            <MetricToggles 
-              metrics={visibleMetrics} 
-              onToggle={toggleMetric} 
-              colors={metricColors}
-            />
-          </div>
+          <MetricToggles 
+            metrics={visibleMetrics} 
+            onToggle={toggleMetric} 
+            colors={metricColors}
+          />
         </div>
         <MetricsChart 
           data={chartData} 
@@ -356,7 +357,7 @@ export function WebsiteOverviewTab({
         />
       </div>
 
-      {/* Two column layout for smaller charts and tables */}
+      {/* Two column layout */}
       <div className="grid gap-2 grid-cols-2">
         {/* Left column */}
         <div className="space-y-2">
@@ -406,39 +407,6 @@ export function WebsiteOverviewTab({
           </div>
         </div>
       </div>
-
-      {/* Performance Snapshot */}
-      {/* <div className="grid grid-cols-4 gap-1.5">
-        <StatCard 
-          title="Page Load Time"
-          value={analytics.performance?.avg_load_time_formatted || '0 ms'}
-          icon={Zap}
-          isLoading={loading.summary}
-          variant={getColorVariant(analytics.performance?.avg_load_time || 0, 3000, 1500)}
-          className={`shadow-sm ${BORDER_RADIUS.card}`}
-        />
-        <StatCard 
-          title="Time to First Byte"
-          value={analytics.performance?.avg_ttfb_formatted || '0 ms'}
-          icon={Zap}
-          isLoading={loading.summary}
-          className={`shadow-sm ${BORDER_RADIUS.card}`}
-        />
-        <StatCard 
-          title="DOM Ready"
-          value={analytics.performance?.avg_dom_ready_time_formatted || '0 ms'}
-          icon={Zap}
-          isLoading={loading.summary}
-          className={`shadow-sm ${BORDER_RADIUS.card}`}
-        />
-        <StatCard 
-          title="Render Time"
-          value={analytics.performance?.avg_render_time_formatted || '0 ms'}
-          icon={Zap}
-          isLoading={loading.summary}
-          className={`shadow-sm ${BORDER_RADIUS.card}`}
-        />
-      </div> */}
     </>
   );
 } 

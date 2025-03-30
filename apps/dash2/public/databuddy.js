@@ -112,10 +112,18 @@
                 maxRetries: 3, // Max retry attempts for failed requests
                 initialRetryDelay: 500, // Initial delay before first retry (ms)
                 
+                // Batching configuration
+                enableBatching: false, // Whether to batch events together
+                batchSize: 10, // Max number of events to include in a batch
+                batchTimeout: 2000, // Max time to wait before sending a batch (ms)
+                
                 ...options
             };
             
             this.queue = [];
+            this.batchQueue = [];
+            this.batchTimer = null;
+            
             const headers = {
                 "databuddy-client-id": this.options.clientId
             };
@@ -303,6 +311,11 @@
                 return Promise.resolve();
             }
             
+            // If batching is enabled, add to batch queue
+            if (this.options.enableBatching && !event.isForceSend) {
+                return this.addToBatch(event);
+            }
+            
             // Add keepalive for more reliable delivery, especially near page unload
             const fetchOptions = {
                 keepalive: true,
@@ -311,6 +324,116 @@
             
             // Try to send directly to API with keepalive
             return this.api.fetch("/basket", event, fetchOptions);
+        }
+        
+        addToBatch(event) {
+            // Add event to batch queue
+            this.batchQueue.push(event);
+            
+            const eventName = event.payload.name || event.type;
+            console.log(`Databuddy: Added ${eventName} event to batch queue (${this.batchQueue.length}/${this.options.batchSize})`);
+            
+            // Set a timer to flush the batch if not already set
+            if (this.batchTimer === null) {
+                console.debug(`Databuddy: Starting batch timer for ${this.options.batchTimeout}ms`);
+                this.batchTimer = setTimeout(() => this.flushBatch(), this.options.batchTimeout);
+            }
+            
+            // If batch queue has reached the max size, flush it immediately
+            if (this.batchQueue.length >= this.options.batchSize) {
+                console.debug(`Databuddy: Batch queue reached max size (${this.options.batchSize}), flushing immediately`);
+                this.flushBatch();
+            }
+            
+            return Promise.resolve();
+        }
+        
+        async flushBatch() {
+            // Clear the batch timer
+            if (this.batchTimer) {
+                clearTimeout(this.batchTimer);
+                this.batchTimer = null;
+            }
+            
+            // If there are no events in the batch, do nothing
+            if (this.batchQueue.length === 0) {
+                console.debug("Databuddy: No events to flush in batch queue");
+                return;
+            }
+            
+            // Take current batch queue and reset
+            const batchEvents = [...this.batchQueue];
+            this.batchQueue = [];
+            
+            console.log(`Databuddy: Flushing batch of ${batchEvents.length} events`, {
+                eventTypes: batchEvents.map(e => e.payload.name || e.type).join(', '),
+                batchingEnabled: this.options.enableBatching,
+                queueLength: batchEvents.length
+            });
+            
+            // Send batch to API
+            try {
+                console.debug(`Databuddy: Sending batch of ${batchEvents.length} events`);
+                
+                // Add keepalive for more reliable delivery
+                const fetchOptions = {
+                    keepalive: true,
+                    credentials: 'omit' // Avoid CORS issues
+                };
+                
+                // Use sendBeacon if available for better reliability
+                const beaconResult = await this.sendBatchBeacon(batchEvents);
+                if (beaconResult) {
+                    console.debug(`Databuddy: Successfully sent batch via beacon`);
+                    return beaconResult;
+                }
+                
+                // Fall back to fetch API
+                const result = await this.api.fetch("/basket/batch", batchEvents, fetchOptions);
+                console.debug(`Databuddy: Batch sent successfully via fetch, processed ${result?.processed?.length || 0} events`);
+                return result;
+            } catch (error) {
+                console.error("Databuddy: Error sending batch", error);
+                
+                // If batch fails, try to send events individually
+                console.debug(`Databuddy: Attempting to send ${batchEvents.length} events individually`);
+                batchEvents.forEach(event => {
+                    // Mark event as force send to avoid infinite loop
+                    event.isForceSend = true;
+                    this.send(event).catch(e => {
+                        console.warn(`Databuddy: Failed to send individual event`, e);
+                    });
+                });
+                
+                return null;
+            }
+        }
+        
+        // Send batch events using Beacon API
+        async sendBatchBeacon(events) {
+            if (this.isServer() || !navigator.sendBeacon) return null;
+            
+            try {
+                // Build URL with authentication parameters
+                const baseUrl = this.api.baseUrl;
+                const clientId = this.options.clientId;
+                const sdkName = this.options.sdk || "web";
+                const sdkVersion = this.options.sdkVersion || "1.0.0";
+                
+                const url = `${baseUrl}/basket/batch?client_id=${encodeURIComponent(clientId)}&sdk_name=${encodeURIComponent(sdkName)}&sdk_version=${encodeURIComponent(sdkVersion)}`;
+                const data = JSON.stringify(events);
+                
+                const blob = new Blob([data], { type: 'application/json' });
+                const success = navigator.sendBeacon(url, blob);
+                
+                if (success) {
+                    return { success: true };
+                }
+            } catch (e) {
+                console.warn("Databuddy: Error using Beacon API for batch", e);
+            }
+            
+            return null;
         }
         
         setGlobalProperties(props) {
@@ -371,8 +494,14 @@
                     }
                 }
             };
+
+            // If batching is enabled, route through send method which handles batching
+            if (this.options.enableBatching) {
+                console.debug(`Databuddy: Adding ${eventName} event to batch`);
+                return this.send(payload);
+            }
             
-            // Use sendBeacon for all events by default
+            // Otherwise, use sendBeacon for direct sending
             try {
                 console.debug(`Databuddy: Tracking ${eventName} event with beacon`);
                 const beaconResult = await this.sendBeacon(payload);
@@ -476,6 +605,7 @@
         }
         
         flush() {
+            // Flush regular queue
             this.queue.forEach(event => {
                 this.send({
                     ...event,
@@ -486,6 +616,11 @@
                 });
             });
             this.queue = [];
+            
+            // Also flush batch queue if batching is enabled
+            if (this.options.enableBatching) {
+                this.flushBatch();
+            }
         }
         
         isServer() {
@@ -607,6 +742,12 @@
                     isInternalNavigation: this.isInternalNavigation
                 });
                 
+                // Flush any batched events before handling page exit
+                if (this.options.enableBatching) {
+                    console.log("Databuddy: Flushing batch queue on pagehide");
+                    this.flushBatch();
+                }
+                
                 if (!this.isInternalNavigation) {
                     this.trackExitData();
                 }
@@ -618,6 +759,12 @@
                 console.log("Databuddy: beforeunload event triggered", {
                     isInternalNavigation: this.isInternalNavigation
                 });
+                
+                // Flush any batched events before handling page exit
+                if (this.options.enableBatching) {
+                    console.log("Databuddy: Flushing batch queue on beforeunload");
+                    this.flushBatch();
+                }
                 
                 if (!this.isInternalNavigation) {
                     this.trackExitData();
@@ -631,8 +778,16 @@
                     isInternalNavigation: this.isInternalNavigation
                 });
                 
-                if (document.visibilityState === 'hidden' && !this.isInternalNavigation) {
-                    this.trackExitData();
+                if (document.visibilityState === 'hidden') {
+                    // Flush any batched events when page becomes hidden
+                    if (this.options.enableBatching) {
+                        console.log("Databuddy: Flushing batch queue on visibility hidden");
+                        this.flushBatch();
+                    }
+                    
+                    if (!this.isInternalNavigation) {
+                        this.trackExitData();
+                    }
                 }
             });
         }
@@ -660,8 +815,63 @@
                 utm_content: utm_params.utm_content || ""
             };
             
-            // Track the exit event
-            this.track('page_exit', exit_data);
+            // Create exit event
+            const exitEvent = {
+                type: "track",
+                payload: {
+                    name: "page_exit",
+                    anonymousId: this.anonymousId,
+                    properties: {
+                        ...this.global ?? {},
+                        sessionId: this.sessionId,
+                        sessionStartTime: this.sessionStartTime,
+                        ...exit_data
+                    }
+                },
+                priority: "high" // Mark exit events as high priority
+            };
+            
+            // Check if we should add to batch or send immediately
+            if (this.options.enableBatching) {
+                // If batch queue is empty, try to send immediately for better reliability
+                if (this.batchQueue.length === 0) {
+                    console.log("Databuddy: Sending exit event immediately (batch queue empty)");
+                    this.sendExitEventImmediately(exitEvent);
+                } else {
+                    // Add to front of batch queue to prioritize
+                    console.log("Databuddy: Adding exit event to front of batch queue");
+                    this.batchQueue.unshift(exitEvent);
+                    this.flushBatch(); // Flush immediately
+                }
+            } else {
+                // Use normal tracking if batching is disabled
+                console.log("Databuddy: Tracking exit event (batching disabled)");
+                this.sendExitEventImmediately(exitEvent);
+            }
+        }
+        
+        // Special method for sending exit events reliably
+        async sendExitEventImmediately(exitEvent) {
+            try {
+                // Try sendBeacon first (most reliable for exit events)
+                console.debug("Databuddy: Sending exit event via beacon");
+                const beaconResult = await this.sendBeacon(exitEvent);
+                if (beaconResult) {
+                    console.debug("Databuddy: Successfully sent exit event via beacon");
+                    return beaconResult;
+                }
+                
+                // Fall back to fetch with keepalive
+                console.debug("Databuddy: Beacon failed for exit event, using fetch with keepalive");
+                const fetchOptions = {
+                    keepalive: true,
+                    credentials: 'omit'
+                };
+                return this.api.fetch("/basket", exitEvent, fetchOptions);
+            } catch (e) {
+                console.error("Databuddy: Failed to send exit event", e);
+                return null;
+            }
         }
 
         collectWebVitals(eventName) {
@@ -1037,6 +1247,19 @@
                 if (config.initialRetryDelay > 10000) config.initialRetryDelay = 10000;
             }
             
+            // Validate batching configuration
+            if (config.batchSize !== undefined) {
+                // Keep batch size between 1 and 50
+                if (config.batchSize < 1) config.batchSize = 1;
+                if (config.batchSize > 50) config.batchSize = 50;
+            }
+            
+            if (config.batchTimeout !== undefined) {
+                // Keep batch timeout between 100ms and 30000ms (30 seconds)
+                if (config.batchTimeout < 100) config.batchTimeout = 100;
+                if (config.batchTimeout > 30000) config.batchTimeout = 30000;
+            }
+            
             return config;
         }
         
@@ -1069,6 +1292,9 @@
                 apiUrl: config.apiUrl,
                 samplingRate: config.samplingRate,
                 enableRetries: config.enableRetries,
+                enableBatching: config.enableBatching,
+                batchSize: config.batchSize,
+                batchTimeout: config.batchTimeout,
                 // Don't log all config details to keep log cleaner
                 // ...config
             });
@@ -1106,4 +1332,36 @@
     } else if (typeof exports === 'object') {
         module.exports = d;
     }
+
+    // When page is being unloaded, flush any pending batches
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden' && window.databuddy) {
+            console.log("Databuddy: Page hidden, flushing batch");
+            if (window.databuddy.options.enableBatching) {
+                // Use synchronous flushing to ensure data is sent before page unloads
+                window.databuddy.flushBatch();
+            }
+        }
+    });
+
+    window.addEventListener('pagehide', () => {
+        if (window.databuddy) {
+            console.log("Databuddy: Page hiding, flushing batch");
+            if (window.databuddy.options.enableBatching) {
+                // Use synchronous flushing to ensure data is sent before page unloads
+                window.databuddy.flushBatch();
+            }
+        }
+    });
+    
+    // Also handle the beforeunload event as a last resort
+    window.addEventListener('beforeunload', () => {
+        if (window.databuddy) {
+            console.log("Databuddy: Page unloading, flushing batch");
+            if (window.databuddy.options.enableBatching) {
+                // Use synchronous flushing to ensure data is sent before page unloads
+                window.databuddy.flushBatch();
+            }
+        }
+    });
 })();

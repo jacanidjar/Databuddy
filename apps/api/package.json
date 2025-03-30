@@ -3,6 +3,7 @@
   "version": "1.0.50",
   "scripts": {
     "dev": "bun --watch run src/index.ts",
+    "pm2": "",
     "deploy": "wrangler deploy --minify",
     "dry-run": "wrangler deploy --minify --dry-run",
     "migrate:events": "bun run src/commands/run-events-migration.ts",

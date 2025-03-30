@@ -53,6 +53,9 @@ export default function RootLayout({
         data-track-performance="true"
         data-track-web-vitals="true"
         data-track-errors="true"
+        data-enable-batching="true"
+        data-batch-size="20"
+        data-batch-timeout="5000"
         strategy="afterInteractive"
       />
       <body
