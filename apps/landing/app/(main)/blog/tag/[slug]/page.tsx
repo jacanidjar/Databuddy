@@ -41,6 +41,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   
   return {
     title: `#${tag.name} | Databuddy Blog`,
+    alternates: {
+      canonical: `https://www.databuddy.cc/blog/tag/${slug}`,
+    },
     description: `Browse all posts tagged with #${tag.name}. Discover insights, tutorials, and resources related to ${tag.name} in data analytics.`,
     keywords: [`${tag.name}`, 'data analytics', 'blog', 'insights', 'tutorials'],
     openGraph: {

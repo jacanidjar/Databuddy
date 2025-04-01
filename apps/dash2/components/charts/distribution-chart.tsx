@@ -2,221 +2,158 @@ import { useMemo, useCallback, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Sector } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SkeletonChart } from "./skeleton-chart";
-import { PieChartIcon, SparklesIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { PieChartIcon } from "lucide-react";
 
-// Custom tooltip component for dark mode compatibility
+// Simple color palette
+const COLORS = [
+  '#3b82f6', // Blue
+  '#10b981', // Green
+  '#f59e0b', // Amber
+  '#ef4444', // Red
+  '#8b5cf6', // Purple
+  '#ec4899'  // Pink
+];
+
+interface ChartDataItem {
+  name: string;
+  value: number;
+  color?: string;
+}
+
+interface DistributionChartProps {
+  data: ChartDataItem[] | undefined;
+  isLoading: boolean;
+  title: string;
+  description?: string;
+  height?: number;
+}
+
+// Simple tooltip
 const CustomTooltip = ({ active, payload }: any) => {
-  if (!active || !payload || !payload.length) {
-    return null;
-  }
-
+  if (!active || !payload || !payload.length) return null;
+  
   const data = payload[0];
   return (
-    <div className="bg-white dark:bg-gray-800 border border-border p-2 rounded-md shadow-md text-xs">
-      <p className="font-semibold text-foreground mb-1">{data.name}</p>
-      <div className="flex items-center gap-1">
-        <div 
-          className="w-2 h-2 rounded-full" 
-          style={{ backgroundColor: data.payload.color }}
-        />
+    <div className="bg-background border border-border p-2 rounded-md shadow-md text-xs">
+      <p className="font-semibold">{data.name}</p>
+      <p>
         <span className="text-muted-foreground">Count: </span>
-        <span className="font-medium text-foreground">
-          {data.value.toLocaleString()}
-        </span>
-      </div>
-      {data.payload && data.payload.percent && (
-        <div className="text-foreground mt-0.5">
+        <span className="font-medium">{data.value.toLocaleString()}</span>
+      </p>
+      {data.payload.percent && (
+        <p>
           <span className="text-muted-foreground">Percentage: </span>
-          <span className="font-medium">
-            {(data.payload.percent * 100).toFixed(1)}%
-          </span>
-        </div>
+          <span className="font-medium">{(data.payload.percent * 100).toFixed(1)}%</span>
+        </p>
       )}
     </div>
   );
 };
 
-interface DistributionChartProps {
-  data: Array<{
-    name: string;
-    value: number;
-    color?: string;
-  }> | undefined;
-  isLoading: boolean;
-  title: string;
-  description?: string;
-  height?: number;
-  innerRadius?: number;
-  outerRadius?: number;
-  colors?: string[];
-}
-
-// Enhanced color palette with more vibrant colors
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+// Active shape renderer
+const renderActiveShape = (props: any) => {
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+  
+  return (
+    <g>
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius + 3}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+      />
+    </g>
+  );
+};
 
 export function DistributionChart({ 
   data, 
   isLoading, 
   title, 
   description,
-  height = 240, 
-  innerRadius = 50,
-  outerRadius = 70,
-  colors = COLORS 
+  height = 190
 }: DistributionChartProps) {
-  // Track active index for hover animations
   const [activeIndex, setActiveIndex] = useState<number>(-1);
   
-  // Memoize chart data for better performance
+  // Process chart data
   const chartData = useMemo(() => {
-    if (!data) return [];
+    if (!data || data.length === 0) return [];
     
-    // Sort by value descending for better visualization
-    return [...data]
-      .sort((a, b) => b.value - a.value)
-      .map((item, index) => ({
-        ...item,
-        color: item.color || colors[index % colors.length]
-      }));
-  }, [data, colors]);
-  
-  // Calculate total once for all calculations
-  const total = useMemo(() => 
-    chartData.reduce((sum, item) => sum + item.value, 0), 
-    [chartData]
-  );
-  
-  // Add percent to each item for the tooltip
-  const chartDataWithPercent = useMemo(() => {
-    if (total === 0) return chartData;
-    return chartData.map(item => ({
+    // Sort by value
+    const sortedData = [...data].sort((a, b) => b.value - a.value);
+    const total = sortedData.reduce((sum, item) => sum + item.value, 0);
+    
+    // Add colors and percentages
+    return sortedData.map((item, index) => ({
       ...item,
-      percent: item.value / total
+      color: item.color || COLORS[index % COLORS.length],
+      percent: total > 0 ? item.value / total : 0
     }));
-  }, [chartData, total]);
+  }, [data]);
   
-  // Optimize event handlers with useCallback
-  const handlePieEnter = useCallback((_: any, index: number) => {
+  // Event handlers
+  const onPieEnter = useCallback((_: any, index: number) => {
     setActiveIndex(index);
   }, []);
   
-  const handlePieLeave = useCallback(() => {
+  const onPieLeave = useCallback(() => {
     setActiveIndex(-1);
-  }, []);
-  
-  // Memoize custom label renderer
-  const renderCustomizedLabel = useCallback(
-    ({ name, percent }: { name: string; percent: number }) => {
-      // For small slices, don't show labels to avoid overlap
-      if (percent < 0.05) return null;
-      const displayName = name.length > 10 ? `${name.substring(0, 6)}...` : name;
-      return `${displayName} (${(percent * 100).toFixed(0)}%)`;
-    }, 
-    []
-  );
-  
-  // Memoize active shape renderer
-  const renderActiveShape = useCallback((props: any) => {
-    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
-    
-    return (
-      <g>
-        <Sector
-          cx={cx}
-          cy={cy}
-          innerRadius={innerRadius}
-          outerRadius={outerRadius + 3}
-          startAngle={startAngle}
-          endAngle={endAngle}
-          fill={fill}
-          filter="drop-shadow(0px 2px 3px rgba(0, 0, 0, 0.1))"
-        />
-      </g>
-    );
-  }, []);
-  
-  // Memoize legend formatter
-  const legendFormatter = useCallback((value: string) => {
-    // Truncate long names
-    return value.length > 12 ? `${value.substring(0, 10)}...` : value;
   }, []);
 
   if (isLoading) {
-    return <SkeletonChart height={height} title={title} className="w-full" />;
+    return <SkeletonChart height={height} title={title} />;
   }
 
-  if (!data?.length) {
+  if (!chartData.length) {
     return (
       <Card className="w-full">
-        <CardHeader className="pb-0.5 pt-3 px-3">
-          <CardTitle className="text-xs font-medium">{title}</CardTitle>
+        <CardHeader className="py-3 px-4">
+          <CardTitle className="text-sm font-medium">{title}</CardTitle>
           {description && <CardDescription className="text-xs">{description}</CardDescription>}
         </CardHeader>
-        <CardContent className="h-[180px] flex flex-col items-center justify-center text-muted-foreground p-4">
-          <div className="relative mb-3">
-            <PieChartIcon className="h-10 w-10 text-muted-foreground/40" strokeWidth={1} />
-            <SparklesIcon className="h-4 w-4 text-primary absolute -bottom-1 -right-1" />
+        <CardContent className="flex items-center justify-center p-4">
+          <div className="text-center py-6">
+            <PieChartIcon className="mx-auto h-8 w-8 text-muted-foreground/40" strokeWidth={1.5} />
+            <p className="mt-2 text-sm font-medium">No data available</p>
+            <p className="text-xs text-muted-foreground mt-1">Data will appear as it's collected</p>
           </div>
-          <p className="text-sm font-medium text-center mb-1">No data available yet</p>
-          <p className="text-xs text-center max-w-[240px] mb-3">
-            This chart will populate as visitors interact with your website. Make sure you've added the tracking code to your site.
-          </p>
-          {/* <div className="mt-2 flex items-center gap-2 text-xs">
-            <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
-              <a href="/settings">Check installation</a>
-            </Button>
-            <Button variant="link" size="sm" className="h-7 text-xs px-2" asChild>
-              <a href="/docs/getting-started" target="_blank" rel="noopener noreferrer">
-                Read the docs
-              </a>
-            </Button>
-          </div> */}
         </CardContent>
       </Card>
     );
   }
 
-  // Calculate dimensions for chart
-  const legendHeight = 35; // Approximate height of the legend
-  const effectiveChartHeight = height - legendHeight;
-  const effectiveOuterRadius = Math.min(outerRadius, effectiveChartHeight * 0.3);
-
   return (
     <Card className="w-full">
-      <CardHeader className="pb-0.5 pt-2 px-3">
-        <CardTitle className="text-xs font-medium">{title}</CardTitle>
+      <CardHeader className="py-3 px-4">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
         {description && <CardDescription className="text-xs">{description}</CardDescription>}
       </CardHeader>
-      <CardContent className="pb-2 pt-0 px-1">
-        <div style={{ width: '100%', height: effectiveChartHeight }}>
+      <CardContent className="pt-0 pb-4 px-0">
+        <div style={{ width: '100%', height: height - 50 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart margin={{ top: 10, right: 10, bottom: 30, left: 10 }}>
+            <PieChart>
               <Pie
-                data={chartDataWithPercent}
+                data={chartData}
                 cx="50%"
                 cy="50%"
                 activeIndex={activeIndex}
                 activeShape={renderActiveShape}
-                innerRadius={Math.min(innerRadius, effectiveOuterRadius * 0.65)}
-                outerRadius={effectiveOuterRadius}
+                innerRadius={40}
+                outerRadius={60}
+                paddingAngle={2}
                 dataKey="value"
-                nameKey="name"
-                paddingAngle={1}
-                label={renderCustomizedLabel}
-                labelLine={false}
-                onMouseEnter={handlePieEnter}
-                onMouseLeave={handlePieLeave}
-                animationBegin={0}
-                animationDuration={800}
-                isAnimationActive={true}
+                onMouseEnter={onPieEnter}
+                onMouseLeave={onPieLeave}
               >
-                {chartDataWithPercent.map((entry, index) => (
+                {chartData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`} 
                     fill={entry.color} 
                     stroke="var(--background)"
-                    strokeWidth={0.5}
+                    strokeWidth={1}
                   />
                 ))}
               </Pie>
@@ -225,15 +162,12 @@ export function DistributionChart({
                 layout="horizontal" 
                 verticalAlign="bottom" 
                 align="center"
-                wrapperStyle={{ 
-                  fontSize: '10px', 
-                  paddingTop: '8px',
-                  width: '100%',
-                  bottom: 0
+                formatter={(value, entry: any) => {
+                  const item = entry.payload;
+                  const percentage = item.percent ? ` (${(item.percent * 100).toFixed(0)}%)` : '';
+                  return <span className="text-xs">{value}{percentage}</span>;
                 }}
-                formatter={legendFormatter}
-                iconSize={8}
-                iconType="circle"
+                wrapperStyle={{ fontSize: '10px', bottom: 0 }}
               />
             </PieChart>
           </ResponsiveContainer>

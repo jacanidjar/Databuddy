@@ -38,6 +38,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${category.name} | Databuddy Blog`,
     description: `Browse all posts in the ${category.name} category.`,
+    alternates: {
+      canonical: `https://www.databuddy.cc/blog/category/${slug}`,
+    },
     openGraph: {
       title: `${category.name} | Databuddy Blog`,
       description: `Browse all posts in the ${category.name} category.`,

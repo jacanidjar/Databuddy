@@ -2,18 +2,23 @@ import { useMemo } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SkeletonChart } from "./skeleton-chart";
-import { ChartLineIcon, BrainCircuitIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { LineChart } from "lucide-react";
 
-// Custom tooltip component with enhanced styling
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload || !payload.length) {
-    return null;
-  }
+// Simplified color palette for metrics
+const METRIC_COLORS = {
+  pageviews: "#3b82f6", // Blue-500
+  visitors: "#22c55e", // Green-500
+  unique_visitors: "#10b981", // Emerald-500
+  sessions: "#eab308", // Yellow-500
+  bounce_rate: "#ef4444", // Red-500
+  avg_session_duration: "#a855f7", // Purple-500
+};
 
-  // Helper function to format seconds into a human-readable time format
+// Clean tooltip component
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload || !payload.length) return null;
+
+  // Format duration strings
   const formatDuration = (seconds: number): string => {
     if (seconds < 60) return `${Math.round(seconds)}s`;
     
@@ -30,36 +35,31 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   };
 
   return (
-    <div className="bg-background border border-border/70 p-3 rounded-lg shadow-md text-xs">
-      <p className="font-semibold text-foreground mb-2">{label}</p>
+    <div className="bg-background border border-border p-3 rounded-md shadow-md text-xs">
+      <p className="font-semibold mb-2">{label}</p>
       <div className="space-y-1.5">
         {payload.map((entry: any, index: number) => {
-          // Get the data point that this entry is representing
+          // Get the data point being hovered
           const dataPoint = entry.payload;
           
-          // Get the formatted value based on the data type
+          // Format the value based on its type
           let displayValue;
           if (entry.name.toLowerCase().includes('bounce rate')) {
             displayValue = `${entry.value.toFixed(1)}%`;
           } else if (entry.name.toLowerCase().includes('session duration')) {
-            // Use the pre-formatted duration string if available
             displayValue = dataPoint.avg_session_duration_formatted || formatDuration(entry.value);
           } else {
             displayValue = entry.value.toLocaleString();
           }
           
           return (
-            <div key={`item-${index}`} className="flex items-center gap-2 py-0.5">
+            <div key={`item-${index}`} className="flex items-center gap-2">
               <div 
-                className="w-3 h-3 rounded-full" 
+                className="w-2.5 h-2.5 rounded-full" 
                 style={{ backgroundColor: entry.color }}
               />
-              <span className="text-muted-foreground">
-                {entry.name}: 
-              </span>
-              <span className="font-medium text-foreground">
-                {displayValue}
-              </span>
+              <span className="text-muted-foreground">{entry.name}:</span>
+              <span className="font-medium">{displayValue}</span>
             </div>
           );
         })}
@@ -84,7 +84,6 @@ interface MetricsChartProps {
   title?: string;
   description?: string;
   className?: string;
-  noData?: boolean;
 }
 
 export function MetricsChart({ 
@@ -93,61 +92,42 @@ export function MetricsChart({
   height = 300, 
   title = "Traffic Overview",
   description = "Pageviews, visitors and sessions over time",
-  className,
-  noData
+  className
 }: MetricsChartProps) {
-  const chartData = useMemo(() => {
-    if (!data) return [];
-    return data;
-  }, [data]);
+  const chartData = useMemo(() => data || [], [data]);
 
-  // Custom formatter for values
+  // Formatter for Y axis values
   const valueFormatter = (value: number): string => {
-    if (value >= 1000000) {
-      return `${(value / 1000000).toFixed(1)}M`;
-    }
-    if (value >= 1000) {
-      return `${(value / 1000).toFixed(1)}k`;
-    }
+    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
     return value.toString();
   };
 
-  // Custom formatter for duration values
+  // Formatter for duration values
   const durationFormatter = (seconds: number): string => {
     if (seconds < 60) return `${seconds}s`;
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
     return `${Math.floor(seconds / 3600)}h`;
   };
 
+  // Loading state
   if (isLoading) {
     return <SkeletonChart height={height} title={title} className="w-full" />;
   }
 
-  if (!data?.length) {
+  // Empty state
+  if (!chartData.length) {
     return (
-      <Card className={cn("overflow-hidden", className)}>
-        <CardHeader className="pb-0.5 pt-3 px-3">
-          <CardTitle className="text-xs font-medium">{title}</CardTitle>
-          <CardDescription className="text-xs">No data available</CardDescription>
+      <Card className="w-full">
+        <CardHeader className="py-3 px-4">
+          <CardTitle className="text-sm font-medium">{title}</CardTitle>
+          {description && <CardDescription className="text-xs">{description}</CardDescription>}
         </CardHeader>
-        <CardContent className="p-4">
-          <div className="flex flex-col items-center justify-center h-[280px] text-center">
-            <div className="bg-muted/30 p-3 rounded-full mb-3">
-              <LineChart className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <h3 className="text-sm font-medium mb-1">Waiting for data</h3>
-            <p className="text-xs text-muted-foreground max-w-xs mb-3">
-              This chart will display metrics once visitors begin interacting with your website. 
-              Make sure you've added the tracking code to collect data.
-            </p>
-            {/* <div className="flex items-center gap-2 mt-1">
-              <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
-                <a href="/settings">Check installation</a>
-              </Button>
-              <Button variant="link" size="sm" className="h-7 text-xs" asChild>
-                <a href="/docs/metrics" target="_blank" rel="noopener noreferrer">Learn about metrics</a>
-              </Button>
-            </div> */}
+        <CardContent className="flex items-center justify-center p-4">
+          <div className="text-center py-6">
+            <LineChart className="mx-auto h-8 w-8 text-muted-foreground/40" strokeWidth={1.5} />
+            <p className="mt-2 text-sm font-medium">No data available</p>
+            <p className="text-xs text-muted-foreground mt-1">Data will appear as it's collected</p>
           </div>
         </CardContent>
       </Card>
@@ -155,222 +135,189 @@ export function MetricsChart({
   }
 
   // Determine which metrics are present in the data
-  const hasPageviews = data.some(item => 'pageviews' in item && item.pageviews !== undefined);
-  const hasVisitors = data.some(item => 'visitors' in item && item.visitors !== undefined);
-  const hasUniqueVisitors = data.some(item => 'unique_visitors' in item && item.unique_visitors !== undefined);
-  const hasSessions = data.some(item => 'sessions' in item && item.sessions !== undefined);
-  const hasBounceRate = data.some(item => 'bounce_rate' in item && item.bounce_rate !== undefined);
-  const hasAvgSessionDuration = data.some(item => 'avg_session_duration' in item && item.avg_session_duration !== undefined);
-
-  // Colors and gradients for metrics
-  const metricColors = {
-    pageviews: "#3b82f6", // Blue-500
-    visitors: "#22c55e", // Green-500
-    unique_visitors: "#10b981", // Emerald-500
-    sessions: "#eab308", // Yellow-500
-    bounce_rate: "#ef4444", // Red-500
-    avg_session_duration: "#a855f7", // Purple-500
-  };
+  const hasPageviews = chartData.some(item => 'pageviews' in item && item.pageviews !== undefined);
+  const hasVisitors = chartData.some(item => 'visitors' in item && item.visitors !== undefined);
+  const hasUniqueVisitors = chartData.some(item => 'unique_visitors' in item && item.unique_visitors !== undefined);
+  const hasSessions = chartData.some(item => 'sessions' in item && item.sessions !== undefined);
+  const hasBounceRate = chartData.some(item => 'bounce_rate' in item && item.bounce_rate !== undefined);
+  const hasAvgSessionDuration = chartData.some(item => 'avg_session_duration' in item && item.avg_session_duration !== undefined);
 
   return (
-    <div className="w-full rounded-lg p-0 pb-1">
-      <div style={{ width: '100%', height }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart
-            data={chartData}
-            margin={{ top: 20, right: 20, left: 8, bottom: 20 }}
-          >
-            <defs>
-              {/* Pageviews gradient */}
-              <linearGradient id="colorPageviews" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={metricColors.pageviews} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={metricColors.pageviews} stopOpacity={0.05} />
-              </linearGradient>
+    <Card className="w-full">
+      <CardHeader className="py-3 px-4">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        {description && <CardDescription className="text-xs">{description}</CardDescription>}
+      </CardHeader>
+      <CardContent className="pt-0 px-0 pb-4">
+        <div style={{ width: '100%', height: height - 70 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart
+              data={chartData}
+              margin={{ top: 20, right: 20, left: 8, bottom: 20 }}
+            >
+              <defs>
+                {Object.entries(METRIC_COLORS).map(([key, color]) => (
+                  <linearGradient key={key} id={`color${key.charAt(0).toUpperCase() + key.slice(1)}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={color} stopOpacity={0.25} />
+                    <stop offset="95%" stopColor={color} stopOpacity={0.05} />
+                  </linearGradient>
+                ))}
+              </defs>
               
-              {/* Visitors gradient */}
-              <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={metricColors.visitors} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={metricColors.visitors} stopOpacity={0.05} />
-              </linearGradient>
+              <CartesianGrid 
+                strokeDasharray="3 3" 
+                vertical={false} 
+                stroke="var(--border)" 
+                strokeOpacity={0.5} 
+              />
               
-              {/* Unique Visitors gradient */}
-              <linearGradient id="colorUniqueVisitors" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={metricColors.unique_visitors} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={metricColors.unique_visitors} stopOpacity={0.05} />
-              </linearGradient>
-              
-              {/* Sessions gradient */}
-              <linearGradient id="colorSessions" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={metricColors.sessions} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={metricColors.sessions} stopOpacity={0.05} />
-              </linearGradient>
-              
-              {/* Bounce rate gradient */}
-              <linearGradient id="colorBounceRate" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={metricColors.bounce_rate} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={metricColors.bounce_rate} stopOpacity={0.05} />
-              </linearGradient>
-              
-              {/* Avg Session Duration gradient */}
-              <linearGradient id="colorAvgSessionDuration" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={metricColors.avg_session_duration} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={metricColors.avg_session_duration} stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
-            
-            <CartesianGrid 
-              strokeDasharray="3 3" 
-              vertical={false} 
-              stroke="var(--border)" 
-              strokeOpacity={0.5} 
-              strokeWidth={0.8}
-            />
-            
-            <XAxis 
-              dataKey="date" 
-              tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
-              tickLine={false}
-              axisLine={{ stroke: 'var(--border)' }}
-              dy={8}
-              tickMargin={8}
-            />
-            
-            <YAxis 
-              tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
-              tickLine={false}
-              axisLine={false}
-              width={30}
-              tickFormatter={valueFormatter}
-              yAxisId="left"
-            />
-            
-            {hasBounceRate && (
-              <YAxis 
-                yAxisId="right"
-                orientation="right"
+              <XAxis 
+                dataKey="date" 
                 tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
                 tickLine={false}
                 axisLine={false}
-                width={35}
-                tickFormatter={(value) => `${value}%`}
-                domain={[0, 100]}
+                dy={8}
               />
-            )}
-            
-            {hasAvgSessionDuration && (
+              
               <YAxis 
-                yAxisId="duration"
-                orientation="right"
                 tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
                 tickLine={false}
                 axisLine={false}
-                width={40}
-                tickFormatter={durationFormatter}
-              />
-            )}
-            
-            <Tooltip 
-              content={<CustomTooltip />} 
-              wrapperStyle={{ outline: 'none' }} 
-              cursor={{ stroke: 'var(--muted-foreground)', strokeWidth: 1, strokeOpacity: 0.5 }}
-            />
-            
-            <Legend 
-              wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} 
-              iconSize={8}
-              iconType="circle"
-              formatter={(value) => {
-                return value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, ' ');
-              }}
-            />
-            
-            {/* Plot areas for each metric */}
-            {hasPageviews && (
-              <Area 
-                type="monotone" 
-                dataKey="pageviews" 
-                stroke={metricColors.pageviews} 
-                fillOpacity={1} 
-                fill="url(#colorPageviews)" 
-                strokeWidth={2}
-                activeDot={{ r: 6, strokeWidth: 1, stroke: '#fff' }}
-                name="Pageviews"
+                width={30}
+                tickFormatter={valueFormatter}
                 yAxisId="left"
               />
-            )}
-            
-            {hasVisitors && (
-              <Area 
-                type="monotone" 
-                dataKey="visitors" 
-                stroke={metricColors.visitors} 
-                fillOpacity={1} 
-                fill="url(#colorVisitors)" 
-                strokeWidth={2}
-                activeDot={{ r: 6, strokeWidth: 1, stroke: '#fff' }}
-                name="Visitors"
-                yAxisId="left"
+              
+              {hasBounceRate && (
+                <YAxis 
+                  yAxisId="right"
+                  orientation="right"
+                  tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
+                  tickLine={false}
+                  axisLine={false}
+                  width={35}
+                  tickFormatter={(value) => `${value}%`}
+                  domain={[0, 100]}
+                />
+              )}
+              
+              {hasAvgSessionDuration && (
+                <YAxis 
+                  yAxisId="duration"
+                  orientation="right"
+                  tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
+                  tickLine={false}
+                  axisLine={false}
+                  width={40}
+                  tickFormatter={durationFormatter}
+                />
+              )}
+              
+              <Tooltip 
+                content={<CustomTooltip />} 
+                wrapperStyle={{ outline: 'none' }} 
               />
-            )}
-            
-            {hasUniqueVisitors && (
-              <Area 
-                type="monotone" 
-                dataKey="unique_visitors" 
-                stroke={metricColors.unique_visitors} 
-                fillOpacity={1} 
-                fill="url(#colorUniqueVisitors)" 
-                strokeWidth={2}
-                activeDot={{ r: 6, strokeWidth: 1, stroke: '#fff' }}
-                name="Unique Visitors"
-                yAxisId="left"
+              
+              <Legend 
+                wrapperStyle={{ 
+                  fontSize: '10px', 
+                  paddingTop: '10px',
+                  bottom: 0
+                }}
+                formatter={(value) => (
+                  <span className="text-xs">{value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, ' ')}</span>
+                )}
+                iconType="circle"
+                iconSize={8}
               />
-            )}
-            
-            {hasSessions && (
-              <Area 
-                type="monotone" 
-                dataKey="sessions" 
-                stroke={metricColors.sessions} 
-                fillOpacity={1} 
-                fill="url(#colorSessions)" 
-                strokeWidth={2}
-                activeDot={{ r: 6, strokeWidth: 1, stroke: '#fff' }}
-                name="Sessions"
-                yAxisId="left"
-              />
-            )}
-            
-            {hasBounceRate && (
-              <Area 
-                type="monotone" 
-                dataKey="bounce_rate" 
-                stroke={metricColors.bounce_rate} 
-                fillOpacity={1} 
-                fill="url(#colorBounceRate)" 
-                strokeWidth={2}
-                activeDot={{ r: 6, strokeWidth: 1, stroke: '#fff' }}
-                name="Bounce Rate"
-                yAxisId="right"
-              />
-            )}
-            
-            {hasAvgSessionDuration && (
-              <Area 
-                type="monotone" 
-                dataKey="avg_session_duration" 
-                stroke={metricColors.avg_session_duration} 
-                fillOpacity={1} 
-                fill="url(#colorAvgSessionDuration)" 
-                strokeWidth={2}
-                activeDot={{ r: 6, strokeWidth: 1, stroke: '#fff' }}
-                name="Avg session duration"
-                yAxisId="duration"
-              />
-            )}
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+              
+              {hasPageviews && (
+                <Area 
+                  type="monotone" 
+                  dataKey="pageviews" 
+                  stroke={METRIC_COLORS.pageviews} 
+                  fillOpacity={1} 
+                  fill={`url(#colorPageviews)`} 
+                  strokeWidth={1.5}
+                  activeDot={{ r: 4, strokeWidth: 1 }}
+                  name="Pageviews"
+                  yAxisId="left"
+                />
+              )}
+              
+              {hasVisitors && (
+                <Area 
+                  type="monotone" 
+                  dataKey="visitors" 
+                  stroke={METRIC_COLORS.visitors} 
+                  fillOpacity={1} 
+                  fill={`url(#colorVisitors)`} 
+                  strokeWidth={1.5}
+                  activeDot={{ r: 4, strokeWidth: 1 }}
+                  name="Visitors"
+                  yAxisId="left"
+                />
+              )}
+              
+              {hasUniqueVisitors && (
+                <Area 
+                  type="monotone" 
+                  dataKey="unique_visitors" 
+                  stroke={METRIC_COLORS.unique_visitors} 
+                  fillOpacity={1} 
+                  fill={`url(#colorUniqueVisitors)`} 
+                  strokeWidth={1.5}
+                  activeDot={{ r: 4, strokeWidth: 1 }}
+                  name="Unique visitors"
+                  yAxisId="left"
+                />
+              )}
+              
+              {hasSessions && (
+                <Area 
+                  type="monotone" 
+                  dataKey="sessions" 
+                  stroke={METRIC_COLORS.sessions} 
+                  fillOpacity={1} 
+                  fill={`url(#colorSessions)`} 
+                  strokeWidth={1.5}
+                  activeDot={{ r: 4, strokeWidth: 1 }}
+                  name="Sessions"
+                  yAxisId="left"
+                />
+              )}
+              
+              {hasBounceRate && (
+                <Area 
+                  type="monotone" 
+                  dataKey="bounce_rate" 
+                  stroke={METRIC_COLORS.bounce_rate} 
+                  fillOpacity={1} 
+                  fill={`url(#colorBounceRate)`} 
+                  strokeWidth={1.5}
+                  activeDot={{ r: 4, strokeWidth: 1 }}
+                  name="Bounce rate"
+                  yAxisId="right"
+                />
+              )}
+              
+              {hasAvgSessionDuration && (
+                <Area 
+                  type="monotone" 
+                  dataKey="avg_session_duration" 
+                  stroke={METRIC_COLORS.avg_session_duration} 
+                  fillOpacity={1} 
+                  fill={`url(#colorAvgSessionDuration)`} 
+                  strokeWidth={1.5}
+                  activeDot={{ r: 4, strokeWidth: 1 }}
+                  name="Avg session duration"
+                  yAxisId="duration"
+                />
+              )}
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
   );
 } 

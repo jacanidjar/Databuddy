@@ -11,6 +11,9 @@ const Contact = dynamic(() => import("@/app/components/contact"), { ssr: true })
 export const metadata = {
   title: "Contact Us | Databuddy",
   description: "Get in touch with the Databuddy team for questions, support, or to learn more about our privacy-first analytics solution.",
+  alternates: {
+    canonical: 'https://www.databuddy.cc/contact',
+  },
 };
 
 export default function ContactPage() {
