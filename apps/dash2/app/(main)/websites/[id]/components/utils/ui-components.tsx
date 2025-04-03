@@ -58,38 +58,41 @@ export const MetricToggle: React.FC<MetricToggleProps> = ({
   const colorHex = getColorMap(color);
   
   return (
-          <div 
-            className={cn(
-              "flex items-center gap-2 px-2.5 py-1.5 rounded-full transition-all cursor-pointer border",
-              checked 
-                ? `border-${color} bg-${color}/10 hover:bg-${color}/15` 
-                : "border-border bg-transparent hover:bg-muted/50"
-            )}
-            onClick={onChange}
-            role="button"
-            aria-pressed={checked}
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onChange();
-              }
-            }}
-          >
-            <div 
-              className={cn(
-                "w-2.5 h-2.5 rounded-full transition-all", 
-                checked ? "scale-100" : "scale-75 opacity-50"
-              )}
-              style={{ backgroundColor: colorHex }}
-            />
-            <span className={cn(
-              "text-xs font-medium transition-colors",
-              checked ? `text-${color}` : "text-muted-foreground"
-            )}>
-              {label}
-            </span>
-          </div>
+    <div 
+      className={cn(
+        "group flex items-center gap-2.5 px-3.5 py-2 rounded-lg transition-all duration-200 cursor-pointer border",
+        checked 
+          ? "bg-primary/5 border-primary/20 shadow-sm hover:bg-primary/10 hover:border-primary/30" 
+          : "border-border/50 bg-transparent hover:bg-muted/30 hover:border-border"
+      )}
+      onClick={onChange}
+      role="button"
+      aria-pressed={checked}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onChange();
+        }
+      }}
+    >
+      <div 
+        className={cn(
+          "w-2.5 h-2.5 rounded-full transition-all duration-200", 
+          checked ? "scale-100 shadow-sm" : "scale-75 opacity-50 group-hover:scale-90 group-hover:opacity-75"
+        )}
+        style={{ 
+          backgroundColor: colorHex,
+          boxShadow: checked ? `0 0 0 2px ${colorHex}20` : 'none'
+        }}
+      />
+      <span className={cn(
+        "text-sm font-medium transition-colors duration-200",
+        checked ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+      )}>
+        {label}
+      </span>
+    </div>
   );
 };
 

@@ -10,6 +10,7 @@
     "generate-db": "turbo run generate --filter=@databuddy/db"
   },
   "devDependencies": {
+    "@types/react-image-crop": "^9.0.2",
     "prettier": "^3.5.3",
     "turbo": "^2.4.4",
     "typescript": "5.8.2"
@@ -27,6 +28,7 @@
     "ioredis": "^5.6.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
+    "react-image-crop": "^11.0.7",
     "recharts": "^2.15.1",
     "stripe": "^18.0.0",
     "superjson": "^2.2.2",

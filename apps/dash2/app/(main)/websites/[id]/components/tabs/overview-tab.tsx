@@ -57,9 +57,7 @@ export function WebsiteOverviewTab({
   const [visibleMetrics, setVisibleMetrics] = useState<Record<string, boolean>>({
     pageviews: true,
     visitors: true,
-    sessions: true,
-    bounce_rate: false,
-    avg_session_duration: false
+    sessions: true
   });
   
   // Toggle metric visibility
@@ -191,18 +189,6 @@ export function WebsiteOverviewTab({
         filtered.sessions = event.sessions;
       }
       
-      if (visibleMetrics.bounce_rate) {
-        filtered.bounce_rate = event.bounce_rate;
-      }
-      
-      if (visibleMetrics.avg_session_duration) {
-        // Use the value directly - API already provides duration in seconds
-        filtered.avg_session_duration = event.avg_session_duration || 0;
-        
-        // Also include the formatted string for tooltip use
-        filtered.avg_session_duration_formatted = event.avg_session_duration_formatted || '0s';
-      }
-      
       return filtered;
     });
   }, [analytics.events_by_date, visibleMetrics, adjustedDateRange.granularity]);
@@ -216,9 +202,7 @@ export function WebsiteOverviewTab({
   const metricColors = {
     pageviews: 'blue-500',
     visitors: 'green-500',
-    sessions: 'yellow-500',
-    bounce_rate: 'red-500',
-    avg_session_duration: 'purple-500'
+    sessions: 'yellow-500'
   };
 
   // Calculate trends
@@ -314,108 +298,88 @@ export function WebsiteOverviewTab({
   }, [analytics.events_by_date]);
 
   return (
-    <>
+    <div className="space-y-4">
       {/* Key metrics */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight">Website Analytics</h2>
-            <p className="text-sm text-muted-foreground">Key performance metrics for your website</p>
-          </div>
-        </div>
+      <div>
         
-        <div className="rounded-2xl border shadow-sm overflow-hidden bg-background">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-            <div className="border-r border-b md:border-b-0 group">
-              <StatCard 
-                title="UNIQUE VISITORS"
-                value={analytics.summary?.unique_visitors || 0}
-                icon={Users}
-                description={`${analytics.today?.visitors || 0} today`}
-                isLoading={isLoading}
-                variant="default"
-                trend={calculateTrends.visitors}
-                trendLabel={calculateTrends.visitors !== undefined ? "vs previous period" : undefined}
-                className="rounded-none border-0 h-full bg-transparent group-hover:bg-muted/20 transition-colors p-1 md:px-3 md:py-3"
-              />
-            </div>
-            <div className="border-r md:border-r lg:border-r border-b md:border-b-0 group">
-              <StatCard 
-                title="SESSIONS"
-                value={analytics.summary?.sessions || 0}
-                icon={BarChart}
-                description={`${analytics.today?.sessions || 0} today`}
-                isLoading={isLoading}
-                variant="default"
-                trend={calculateTrends.sessions}
-                trendLabel={calculateTrends.sessions !== undefined ? "vs previous period" : undefined}
-                className="rounded-none border-0 h-full bg-transparent group-hover:bg-muted/20 transition-colors p-1 md:px-3 md:py-3"
-              />
-            </div>
-            <div className="border-r-0 md:border-r border-b md:border-b-0 group">
-              <StatCard 
-                title="PAGE VIEWS"
-                value={analytics.summary?.pageviews || 0}
-                icon={Globe}
-                description={`${analytics.today?.pageviews || 0} today`}
-                isLoading={isLoading}
-                variant="default"
-                trend={calculateTrends.pageviews}
-                trendLabel={calculateTrends.pageviews !== undefined ? "vs previous period" : undefined}
-                className="rounded-none border-0 h-full bg-transparent group-hover:bg-muted/20 transition-colors p-1 md:px-3 md:py-3"
-              />
-            </div>
-            <div className="border-r border-b-0 md:border-t lg:border-t-0 group">
-              <StatCard 
-                title="PAGES/SESSION"
-                value={analytics.summary ? 
-                  (analytics.summary.sessions > 0 ? 
-                    (analytics.summary.pageviews / analytics.summary.sessions).toFixed(1) : 
-                    '0'
-                  ) : '0'
-                }
-                icon={LayoutDashboard}
-                isLoading={isLoading}
-                variant="default"
-                trend={calculateTrends.pages_per_session}
-                trendLabel={calculateTrends.pages_per_session !== undefined ? "vs previous period" : undefined}
-                className="rounded-none border-0 h-full bg-transparent group-hover:bg-muted/20 transition-colors p-1 md:px-3 md:py-3"
-              />
-            </div>
-            <div className="border-r md:border-r lg:border-r border-b-0 md:border-t lg:border-t-0 group">
-              <StatCard 
-                title="BOUNCE RATE"
-                value={analytics.summary?.bounce_rate_pct || '0%'}
-                icon={MousePointer}
-                isLoading={isLoading}
-                trend={calculateTrends.bounce_rate}
-                trendLabel={calculateTrends.bounce_rate !== undefined ? "vs previous period" : undefined}
-                variant={getColorVariant(analytics.summary?.bounce_rate || 0, 70, 50)}
-                invertTrend={true}
-                className="rounded-none border-0 h-full bg-transparent group-hover:bg-muted/20 transition-colors p-1 md:px-3 md:py-3"
-              />
-            </div>
-            <div className="border-r-0 border-b-0 md:border-t lg:border-t-0 group">
-              <StatCard 
-                title="AVG. SESSION"
-                value={analytics.summary?.avg_session_duration_formatted || '0s'}
-                icon={Timer}
-                isLoading={isLoading}
-                variant="default"
-                trend={calculateTrends.session_duration}
-                trendLabel={calculateTrends.session_duration !== undefined ? "vs previous period" : undefined}
-                className="rounded-none border-0 h-full bg-transparent group-hover:bg-muted/20 transition-colors p-1 md:px-3 md:py-3"
-              />
-            </div>
-          </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <StatCard 
+            title="UNIQUE VISITORS"
+            value={analytics.summary?.unique_visitors || 0}
+            icon={Users}
+            description={`${analytics.today?.visitors || 0} today`}
+            isLoading={isLoading}
+            variant="default"
+            trend={calculateTrends.visitors}
+            trendLabel={calculateTrends.visitors !== undefined ? "vs previous period" : undefined}
+            className="h-full"
+          />
+          <StatCard 
+            title="SESSIONS"
+            value={analytics.summary?.sessions || 0}
+            icon={BarChart}
+            description={`${analytics.today?.sessions || 0} today`}
+            isLoading={isLoading}
+            variant="default"
+            trend={calculateTrends.sessions}
+            trendLabel={calculateTrends.sessions !== undefined ? "vs previous period" : undefined}
+            className="h-full"
+          />
+          <StatCard 
+            title="PAGE VIEWS"
+            value={analytics.summary?.pageviews || 0}
+            icon={Globe}
+            description={`${analytics.today?.pageviews || 0} today`}
+            isLoading={isLoading}
+            variant="default"
+            trend={calculateTrends.pageviews}
+            trendLabel={calculateTrends.pageviews !== undefined ? "vs previous period" : undefined}
+            className="h-full"
+          />
+          <StatCard 
+            title="PAGES/SESSION"
+            value={analytics.summary ? 
+              (analytics.summary.sessions > 0 ? 
+                (analytics.summary.pageviews / analytics.summary.sessions).toFixed(1) : 
+                '0'
+              ) : '0'
+            }
+            icon={LayoutDashboard}
+            isLoading={isLoading}
+            variant="default"
+            trend={calculateTrends.pages_per_session}
+            trendLabel={calculateTrends.pages_per_session !== undefined ? "vs previous period" : undefined}
+            className="h-full"
+          />
+          <StatCard 
+            title="BOUNCE RATE"
+            value={analytics.summary?.bounce_rate_pct || '0%'}
+            icon={MousePointer}
+            isLoading={isLoading}
+            trend={calculateTrends.bounce_rate}
+            trendLabel={calculateTrends.bounce_rate !== undefined ? "vs previous period" : undefined}
+            variant={getColorVariant(analytics.summary?.bounce_rate || 0, 70, 50)}
+            invertTrend={true}
+            className="h-full"
+          />
+          <StatCard 
+            title="AVG. SESSION"
+            value={analytics.summary?.avg_session_duration_formatted || '0s'}
+            icon={Timer}
+            isLoading={isLoading}
+            variant="default"
+            trend={calculateTrends.session_duration}
+            trendLabel={calculateTrends.session_duration !== undefined ? "vs previous period" : undefined}
+            className="h-full"
+          />
         </div>
       </div>
 
       {/* Visitor Trends */}
-      <div className="rounded-2xl border shadow-sm overflow-hidden">
+      <div className="rounded-lg border shadow-sm">
         <div className="p-4 border-b flex flex-col sm:flex-row justify-between items-start gap-3">
           <div>
-            <h2 className="text-lg font-medium">Visitor Trends</h2>
+            <h2 className="text-lg font-semibold tracking-tight">Visitor Trends</h2>
             <p className="text-sm text-muted-foreground">
               Website performance metrics over time
               {adjustedDateRange.granularity === 'hourly' ? ' (hourly data)' : ' (daily data)'}
@@ -428,34 +392,35 @@ export function WebsiteOverviewTab({
             )}
           </div>
           
-          {/* Metrics toggles */}
           <MetricToggles 
             metrics={visibleMetrics} 
             onToggle={toggleMetric} 
             colors={metricColors}
           />
         </div>
-        <MetricsChart 
-          data={chartData} 
-          isLoading={isLoading}
-        />
+        <div className="p-4">
+          <MetricsChart 
+            data={chartData} 
+            isLoading={isLoading}
+          />
+        </div>
       </div>
 
       {/* Two column layout */}
-      <div className="grid gap-2 grid-cols-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Left column */}
-        <div className="space-y-2">
-          <div className="rounded-2xl border shadow-sm overflow-hidden">
+        <div className="space-y-4">
+          <div className="rounded-lg border shadow-sm">
             <DistributionChart 
               data={deviceData} 
               isLoading={isLoading}
               title="Device Types"
               description="Visitors by device type"
-              height={190}
+              height={250}
             />
           </div>
           
-          <div className="rounded-2xl border shadow-sm overflow-hidden">  
+          <div className="rounded-lg border shadow-sm">
             <DataTable 
               data={analytics.top_referrers}
               columns={referrerColumns}
@@ -468,18 +433,18 @@ export function WebsiteOverviewTab({
         </div>
         
         {/* Right column */}
-        <div className="space-y-2">
-          <div className="rounded-2xl border shadow-sm overflow-hidden">
+        <div className="space-y-4">
+          <div className="rounded-lg border shadow-sm">
             <DistributionChart 
               data={browserData} 
               isLoading={isLoading}
               title="Browsers"
               description="Visitors by browser"
-              height={190}
+              height={250}
             />
           </div>
           
-          <div className="rounded-2xl border shadow-sm overflow-hidden">
+          <div className="rounded-lg border shadow-sm">
             <DataTable 
               data={analytics.top_pages}
               columns={topPagesColumns}
@@ -491,6 +456,6 @@ export function WebsiteOverviewTab({
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 } 

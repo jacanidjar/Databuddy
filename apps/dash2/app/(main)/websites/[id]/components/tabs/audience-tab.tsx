@@ -74,35 +74,38 @@ export function WebsiteAudienceTab({
   const isLoading = loading.summary || isRefreshing;
 
   return (
-    <div className="pt-2 space-y-3">
-      <h2 className="text-lg font-semibold mb-2">Audience Insights</h2>
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold mb-2">Audience Insights</h2>
+        <p className="text-sm text-muted-foreground">Detailed information about your website visitors</p>
+      </div>
       
       {/* First row - Device and browser info */}
-      <div className="grid gap-2 grid-cols-2">
-        <div className="rounded-2xl border shadow-sm overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="rounded-lg border shadow-sm">
           <DistributionChart 
             data={deviceData} 
             isLoading={isLoading}
             title="Device Types"
             description="Visitors by device type"
-            height={280}
+            height={250}
           />
         </div>
         
-        <div className="rounded-2xl border shadow-sm overflow-hidden">
+        <div className="rounded-lg border shadow-sm">
           <DistributionChart 
             data={browserData} 
             isLoading={isLoading}
             title="Browsers"
             description="Visitors by browser"
-            height={280}
+            height={250}
           />
         </div>
       </div>
       
       {/* Second row - Connection type and language data */}
-      <div className="grid gap-2 grid-cols-2">
-        <div className="rounded-2xl border shadow-sm overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="rounded-lg border shadow-sm">
           <DistributionChart 
             data={connectionData} 
             isLoading={isLoading}
@@ -112,7 +115,7 @@ export function WebsiteAudienceTab({
           />
         </div>
         
-        <div className="rounded-2xl border shadow-sm overflow-hidden">
+        <div className="rounded-lg border shadow-sm">
           <DistributionChart 
             data={languageData} 
             isLoading={isLoading}
@@ -124,7 +127,7 @@ export function WebsiteAudienceTab({
       </div>
       
       {/* Timezones */}
-      <div className="rounded-2xl border shadow-sm overflow-hidden">
+      <div className="rounded-lg border shadow-sm">
         <DataTable 
           data={analytics.timezones?.map(item => ({
             timezone: item.timezone, 
@@ -160,7 +163,7 @@ export function WebsiteAudienceTab({
       </div>
       
       {/* Countries */}
-      <div className="rounded-2xl border shadow-sm overflow-hidden">
+      <div className="rounded-lg border shadow-sm">
         <DataTable 
           data={analytics.countries}
           columns={[
@@ -191,7 +194,7 @@ export function WebsiteAudienceTab({
       </div>
       
       {/* Screen Resolutions */}
-      <div className="rounded-2xl border shadow-sm overflow-hidden">
+      <div className="rounded-lg border shadow-sm">
         <DataTable 
           data={analytics.screen_resolutions}
           columns={[

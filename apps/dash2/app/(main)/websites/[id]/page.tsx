@@ -453,14 +453,14 @@ function WebsiteDetailsPage() {
       </header>
 
       {/* Tabs */}
-      <Tabs defaultValue="overview" value={activeTab} onValueChange={(value) => setActiveTab(value as TabId)} className="mb-3">
-        <div className="border-b mb-3">
-          <TabsList className="h-9 bg-transparent p-0 w-full justify-start gap-1">
+      <Tabs defaultValue="overview" value={activeTab} onValueChange={(value) => setActiveTab(value as TabId)} className="space-y-4">
+        <div className="border-b">
+          <TabsList className="h-10 bg-transparent p-0 w-full justify-start gap-1">
             {tabs.map((tab) => (
               <TabsTrigger 
                 key={tab.id} 
                 value={tab.id} 
-                className="text-xs h-9 px-4 data-[state=active]:bg-background data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none cursor-pointer"
+                className="text-sm h-10 px-4 data-[state=active]:bg-background data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none cursor-pointer hover:bg-muted/50"
               >
                 {tab.label}
               </TabsTrigger>

@@ -2,22 +2,23 @@
 // import "@/app/once-ui/tokens/index.scss";
 
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
+import NextTopLoader from 'nextjs-toploader';
 import "./globals.css";
 import { Toaster } from "sonner";
 import Providers from "./providers";
 import Script from "next/script";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
   display: "swap",
+  variable: "--font-inter",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   display: "swap",
+  variable: "--font-jetbrains-mono",
 });
 
 export const metadata: Metadata = {
@@ -46,7 +47,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className="h-full">
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${jetbrainsMono.variable} h-full`}>
       <head />
       <Script 
         src="http://localhost:3000/databuddy.js"
@@ -62,11 +63,14 @@ export default function RootLayout({
         data-batch-timeout="5000"
         strategy="afterInteractive"
       />
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased h-full min-h-screen bg-background text-foreground flex flex-col`}
-      >
+      <body className="antialiased h-full min-h-screen bg-background text-foreground flex flex-col">
         <Providers>
-            <main className="flex-1">{children}</main>
+          <NextTopLoader 
+            color="hsl(var(--primary))"
+            height={2}
+            showSpinner={false}
+          />
+          <main className="flex-1">{children}</main>
         </Providers>
         <Toaster duration={1500} position="top-center" closeButton richColors />
       </body>
