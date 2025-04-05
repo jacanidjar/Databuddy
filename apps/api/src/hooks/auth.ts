@@ -30,6 +30,25 @@ export const getWebsiteById = cacheable(
   }
 );
 
+// Helper function to check if domain is localhost
+export function isLocalhost(domain: string): boolean {
+  const hostnamePattern = /^localhost(:\d+)?$|^127\.0\.0\.1(:\d+)?$/i;
+  
+  try {
+    // Check if domain is a URL
+    if (domain.startsWith('http://') || domain.startsWith('https://')) {
+      const hostname = new URL(domain).hostname;
+      return hostnamePattern.test(hostname);
+    }
+    
+    // Check domain directly
+    return hostnamePattern.test(domain);
+  } catch (error) {
+    logger.error('Error checking if domain is localhost', { domain, error });
+    return false;
+  }
+}
+
 // Helper function to check if a URL origin is valid for a domain
 export function isValidOrigin(origin: string, domain: string): boolean {
   // If no origin provided, don't validate
@@ -116,6 +135,18 @@ export const websiteAuthHook = (): MiddlewareHandler<{
       if (website.status !== WebsiteStatus.ACTIVE) {
         logger.warn('Inactive website', { clientId, status: website.status });
         return c.json({ error: 'Website is not active' }, 403);
+      }
+      
+      // Check if domain is verified or localhost (localhost domains are exempt from verification)
+      const isLocalhostDomain = isLocalhost(website.domain);
+      const isVerified = website.verificationStatus === 'VERIFIED' || isLocalhostDomain;
+      
+      if (!isVerified) {
+        logger.warn('Unverified domain', { clientId, domain: website.domain });
+        return c.json({ 
+          error: 'Domain not verified',
+          message: 'This domain needs to be verified before collecting analytics data'
+        }, 403);
       }
       
       // Validate origin against domain if origin header is present

@@ -376,7 +376,7 @@ export function WebsiteOverviewTab({
       </div>
 
       {/* Visitor Trends */}
-      <div className="rounded-lg border shadow-sm">
+      <div className="rounded-xl border shadow-sm">
         <div className="p-4 border-b flex flex-col sm:flex-row justify-between items-start gap-3">
           <div>
             <h2 className="text-lg font-semibold tracking-tight">Visitor Trends</h2>
@@ -398,7 +398,7 @@ export function WebsiteOverviewTab({
             colors={metricColors}
           />
         </div>
-        <div className="p-4">
+        <div className="">
           <MetricsChart 
             data={chartData} 
             isLoading={isLoading}
@@ -410,7 +410,6 @@ export function WebsiteOverviewTab({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Left column */}
         <div className="space-y-4">
-          <div className="rounded-lg border shadow-sm">
             <DistributionChart 
               data={deviceData} 
               isLoading={isLoading}
@@ -418,9 +417,7 @@ export function WebsiteOverviewTab({
               description="Visitors by device type"
               height={250}
             />
-          </div>
           
-          <div className="rounded-lg border shadow-sm">
             <DataTable 
               data={analytics.top_referrers}
               columns={referrerColumns}
@@ -429,12 +426,10 @@ export function WebsiteOverviewTab({
               isLoading={isLoading}
               limit={5}
             />
-          </div>
         </div>
         
         {/* Right column */}
         <div className="space-y-4">
-          <div className="rounded-lg border shadow-sm">
             <DistributionChart 
               data={browserData} 
               isLoading={isLoading}
@@ -442,9 +437,7 @@ export function WebsiteOverviewTab({
               description="Visitors by browser"
               height={250}
             />
-          </div>
           
-          <div className="rounded-lg border shadow-sm">
             <DataTable 
               data={analytics.top_pages}
               columns={topPagesColumns}
@@ -453,7 +446,6 @@ export function WebsiteOverviewTab({
               isLoading={isLoading}
               limit={5}
             />
-          </div>
         </div>
       </div>
     </div>

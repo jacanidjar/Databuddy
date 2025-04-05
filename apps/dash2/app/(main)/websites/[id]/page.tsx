@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback, Suspense, lazy } from "react";
+import { useEffect, useState, useMemo, useCallback, Suspense, lazy, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -10,20 +10,23 @@ import {
   Pencil, 
   RefreshCw,
   Calendar,
-  ChevronDown
+  ChevronDown,
+  AlertTriangle
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WebsiteDialog } from "@/components/website-dialog";
-import { getWebsiteById, updateWebsite } from "@/app/actions/websites";
+import { getWebsiteById, updateWebsite, regenerateVerificationToken, checkDomainVerification } from "@/app/actions/websites";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/app/providers";
 import { format, subDays, subHours, differenceInDays } from "date-fns";
 import { DateRange as DayPickerRange } from "react-day-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { VerificationDialog } from "@/components/websites/verification-dialog";
 
 // Tab content components
 import { WebsiteOverviewTab } from "./components/tabs/overview-tab";
@@ -62,6 +65,8 @@ function WebsiteDetailsPage() {
     progress: 0,
     total: 4
   });
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
   
   // Date range state for analytics with default to last 30 days
   const [dateRange, setDateRange] = useState<BaseDateRange>({
@@ -124,7 +129,7 @@ function WebsiteDetailsPage() {
     }
   }, []);
 
-  // Fetch website details with optimized settings
+  // Fetch website details with optimized settings and proper caching
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["website", id],
     queryFn: async () => {
@@ -136,7 +141,17 @@ function WebsiteDetailsPage() {
     },
     staleTime: 5 * 60 * 1000, // 5 min
     gcTime: 10 * 60 * 1000, // 10 min
+    refetchOnWindowFocus: false, // Prevent refetch on focus
+    refetchInterval: false, // Disable automatic refetching
+    retry: 1, // Limit retries to prevent request loops
+    retryDelay: 3000, // Add delay between retries
   });
+
+  // Add a stable reference to website ID to prevent unnecessary re-renders
+  const websiteIdRef = useRef(id);
+  useEffect(() => {
+    websiteIdRef.current = id as string;
+  }, [id]);
 
   // Handle website update
   const updateWebsiteMutation = useMutation({
@@ -185,30 +200,30 @@ function WebsiteDetailsPage() {
   };
 
   // Function to render tab content
-  const renderTabContent = (tabId: TabId) => {
+  const renderTabContent = useCallback((tabId: TabId) => {
     // Only render if this tab is active
     if (tabId !== activeTab) return null;
 
     // Choose which component to render
     switch (tabId) {
       case "overview":
-        return <WebsiteOverviewTab {...tabProps} />;
+        return <WebsiteOverviewTab key={`overview-${websiteIdRef.current}-${dateRange.start_date}`} {...tabProps} />;
       case "audience":
-        return <WebsiteAudienceTab {...tabProps} />;
+        return <WebsiteAudienceTab key={`audience-${websiteIdRef.current}-${dateRange.start_date}`} {...tabProps} />;
       case "content":
-        return <WebsiteContentTab {...tabProps} />;
+        return <WebsiteContentTab key={`content-${websiteIdRef.current}-${dateRange.start_date}`} {...tabProps} />;
       case "performance":
-        return <WebsitePerformanceTab {...tabProps} />;
+        return <WebsitePerformanceTab key={`performance-${websiteIdRef.current}-${dateRange.start_date}`} {...tabProps} />;
       case "settings":
-        return <WebsiteSettingsTab {...settingsProps} />;
+        return <WebsiteSettingsTab key={`settings-${websiteIdRef.current}`} {...settingsProps} />;
       case "sessions":
-        return <WebsiteSessionsTab {...tabProps} />;
+        return <WebsiteSessionsTab key={`sessions-${websiteIdRef.current}-${dateRange.start_date}`} {...tabProps} />;
       case "profiles":
-        return <WebsiteProfilesTab {...tabProps} />;
+        return <WebsiteProfilesTab key={`profiles-${websiteIdRef.current}-${dateRange.start_date}`} {...tabProps} />;
       case "errors":
-        return <WebsiteErrorsTab {...tabProps} />;
+        return <WebsiteErrorsTab key={`errors-${websiteIdRef.current}-${dateRange.start_date}`} {...tabProps} />;
     }
-  };
+  }, [activeTab, tabProps, settingsProps, dateRange.start_date]);
 
   // Define all tabs
   const tabs: TabDefinition[] = [
@@ -251,6 +266,71 @@ function WebsiteDetailsPage() {
       setRefreshDetails({ component: "", progress: 0, total: 4 });
     }
   };
+
+  // After the data query,  check if the website is verified:
+  const isLocalhost = data?.domain?.includes('localhost') || data?.domain?.includes('127.0.0.1');
+  const isVerified = isLocalhost || data?.verificationStatus === "VERIFIED";
+  
+  // Add regenerateToken function
+  const regenerateToken = async (websiteId: string) => {
+    setIsRegenerating(true);
+    try {
+      const result = await regenerateVerificationToken(websiteId);
+      if (result.error) {
+        toast.error(result.error);
+        return { error: result.error };
+      }
+      
+      // Refetch website data
+      queryClient.invalidateQueries({ queryKey: ['website', id] });
+      toast.success("Verification token regenerated");
+      return { data: result.data };
+    } catch (error) {
+      console.error('Error regenerating token:', error);
+      toast.error("Failed to regenerate token");
+      return { error: "Failed to regenerate token" };
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+  
+  // Replace the verifyDomain function with checkDomainVerification:
+  const verifyDomain = async (websiteId: string) => {
+    try {
+      const result = await checkDomainVerification(websiteId);
+      
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      
+      if (result.data?.verified) {
+        // Refetch website data
+        queryClient.invalidateQueries({ queryKey: ['website', id] });
+        toast.success(result.data.message || "Domain verified successfully");
+      } else {
+        toast.error(result.data?.message || "Domain verification failed");
+      }
+    } catch (error) {
+      console.error('Error verifying domain:', error);
+      toast.error("Failed to verify domain");
+    }
+  };
+
+  // Then, in the VerificationDialog section, memoize the callbacks to prevent recreating on each render
+  const memoizedVerifyDomain = useCallback((id: string) => verifyDomain(id), []);
+  const memoizedRegenerateToken = useCallback(async (id: string) => {
+    try {
+      const result = await regenerateToken(id);
+      return result;
+    } catch (error) {
+      console.error('Error regenerating token:', error);
+      return { error: "Failed to regenerate token" };
+    }
+  }, []);
+
+  // Lazy load the verification dialog
+  const LazyVerificationDialog = React.memo(VerificationDialog);
 
   if (isLoading) {
     return (
@@ -296,6 +376,98 @@ function WebsiteDetailsPage() {
             <Link href="/websites">Back to Websites</Link>
           </Button>
         </div>
+      </div>
+    );
+  }
+
+  // Add verification check here
+  if (!isVerified && !isLocalhost && data) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="flex items-center mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/websites")}
+            className="flex items-center mr-2"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
+          <h1 className="text-2xl font-semibold">{data.name || data.domain}</h1>
+        </div>
+        
+        <Card className="mb-8 border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800/50">
+          <CardHeader className="pb-2">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-full">
+                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <CardTitle>Domain Verification Required</CardTitle>
+                <CardDescription className="mt-1">
+                  You need to verify ownership of {data.domain} before you can access analytics.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <p className="text-sm text-muted-foreground mb-4">
+              To verify your domain, you'll need to add a DNS TXT record. This proves that you own the domain
+              and helps prevent unauthorized tracking.
+            </p>
+            <Button 
+              onClick={() => setShowVerificationDialog(true)}
+              className="w-full sm:w-auto"
+            >
+              Verify Domain Now
+            </Button>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>What is domain verification?</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Domain verification is a security measure that ensures only legitimate owners can track analytics
+              for a domain. Here's how it works:
+            </p>
+            <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground pl-2">
+              <li>You add a special TXT record to your domain's DNS settings</li>
+              <li>Our system checks for this record to confirm you control the domain</li>
+              <li>Once verified, you can access all analytics features for your website</li>
+            </ol>
+            <p className="text-sm text-muted-foreground">
+              The verification process is quick and simple, usually taking just a few minutes to complete.
+            </p>
+          </CardContent>
+          <CardFooter className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+            <Button 
+              onClick={() => setShowVerificationDialog(true)}
+              className="w-full sm:w-auto"
+            >
+              Start Verification
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => router.push("/websites")}
+              className="w-full sm:w-auto"
+            >
+              Back to Websites
+            </Button>
+          </CardFooter>
+        </Card>
+        
+        <LazyVerificationDialog
+          website={data}
+          open={showVerificationDialog}
+          onOpenChange={setShowVerificationDialog}
+          onVerify={memoizedVerifyDomain}
+          onRegenerateToken={memoizedRegenerateToken}
+          isVerifying={false}
+          isRegenerating={isRegenerating}
+        />
       </div>
     );
   }
@@ -452,24 +624,37 @@ function WebsiteDetailsPage() {
         </div>
       </header>
 
-      {/* Tabs */}
-      <Tabs defaultValue="overview" value={activeTab} onValueChange={(value) => setActiveTab(value as TabId)} className="space-y-4">
-        <div className="border-b">
+      {/* Tabs with CSS animation */}
+      <Tabs 
+        defaultValue="overview" 
+        value={activeTab} 
+        onValueChange={(value) => setActiveTab(value as TabId)} 
+        className="space-y-4"
+      >
+        <div className="border-b relative">
           <TabsList className="h-10 bg-transparent p-0 w-full justify-start gap-1">
             {tabs.map((tab) => (
               <TabsTrigger 
                 key={tab.id} 
                 value={tab.id} 
-                className="text-sm h-10 px-4 data-[state=active]:bg-background data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none cursor-pointer hover:bg-muted/50"
+                className="text-sm h-10 px-4 rounded-none cursor-pointer hover:bg-muted/50 relative transition-colors"
+                onClick={() => setActiveTab(tab.id)}
               >
                 {tab.label}
+                {activeTab === tab.id && (
+                  <div className="absolute bottom-0 left-0 w-full h-[2px] bg-primary animate-slideIn" />
+                )}
               </TabsTrigger>
             ))}
           </TabsList>
         </div>
 
         {tabs.map((tab) => (
-          <TabsContent key={tab.id} value={tab.id} className={tab.className}>
+          <TabsContent 
+            key={tab.id} 
+            value={tab.id} 
+            className={`${tab.className} transition-all duration-200 animate-fadeIn`}
+          >
             <Suspense fallback={<TabLoadingSkeleton />}>
               {renderTabContent(tab.id)}
             </Suspense>

@@ -35,7 +35,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   };
 
   return (
-    <div className="bg-background border border-border p-3 rounded-md shadow-md text-xs">
+    <div className="bg-background border border-border p-3 shadow-md text-xs">
       <p className="font-semibold mb-2">{label}</p>
       <div className="space-y-1.5">
         {payload.map((entry: any, index: number) => {
@@ -118,7 +118,7 @@ export function MetricsChart({
   // Empty state
   if (!chartData.length) {
     return (
-      <Card className="w-full">
+      <Card className="w-full rounded-none border-none">
         <CardHeader className="py-3 px-4">
           <CardTitle className="text-sm font-medium">{title}</CardTitle>
           {description && <CardDescription className="text-xs">{description}</CardDescription>}
@@ -143,7 +143,7 @@ export function MetricsChart({
   const hasAvgSessionDuration = chartData.some(item => 'avg_session_duration' in item && item.avg_session_duration !== undefined);
 
   return (
-    <Card className="w-full">
+    <Card className="w-full rounded-none border-none rounded-b-xl">
       <CardHeader className="py-3 px-4">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         {description && <CardDescription className="text-xs">{description}</CardDescription>}

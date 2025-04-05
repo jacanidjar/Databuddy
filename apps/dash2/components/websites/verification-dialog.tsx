@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { Check, Copy, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
@@ -24,7 +24,7 @@ interface VerificationDialogProps {
   isRegenerating: boolean;
 }
 
-export function VerificationDialog({
+export const VerificationDialog = memo(function VerificationDialog({
   website,
   open,
   onOpenChange,
@@ -37,12 +37,14 @@ export function VerificationDialog({
   const setSelectedWebsite = useWebsitesStore(state => state.setSelectedWebsite);
   const setShowVerificationDialog = useWebsitesStore(state => state.setShowVerificationDialog);
   
-  // Update token when website changes or dialog opens
+  // Update token when website changes or dialog opens - use state to avoid re-renders
   useEffect(() => {
-    if (website?.verificationToken) {
+    let isMounted = true;
+    if (website?.verificationToken && isMounted) {
       setDisplayToken(website.verificationToken);
     }
-  }, [website?.verificationToken, open]);
+    return () => { isMounted = false; };
+  }, [website?.verificationToken]);
 
   // Reset token when dialog closes
   useEffect(() => {
@@ -51,7 +53,8 @@ export function VerificationDialog({
     }
   }, [open]);
   
-  const getDomainForDNS = (domain: string) => {
+  // Memoize these functions to prevent recreating on each render
+  const getDomainForDNS = useCallback((domain: string) => {
     try {
       // Ensure domain has a protocol
       const domainWithProtocol = domain.startsWith('http') ? domain : `https://${domain}`;
@@ -60,14 +63,14 @@ export function VerificationDialog({
       console.error('Invalid domain:', domain);
       return domain;
     }
-  };
+  }, []);
 
-  const handleVerifyDomain = () => {
+  const handleVerifyDomain = useCallback(() => {
     if (!website) return;
     onVerify(website.id);
-  };
+  }, [website, onVerify]);
   
-  const handleRegenerateToken = async () => {
+  const handleRegenerateToken = useCallback(async () => {
     if (!website) return;
     
     try {
@@ -87,15 +90,18 @@ export function VerificationDialog({
       console.error('Error regenerating token:', error);
       toast.error("Failed to regenerate token");
     }
-  };
+  }, [website, onRegenerateToken]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setSelectedWebsite(null);
     setShowVerificationDialog(false);
     onOpenChange(false);
-  };
+  }, [setSelectedWebsite, setShowVerificationDialog, onOpenChange]);
 
   const isVerified = website?.verificationStatus === "VERIFIED";
+  
+  // If not open, don't render anything (optimization)
+  if (!open) return null;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -205,4 +211,4 @@ export function VerificationDialog({
       </DialogContent>
     </Dialog>
   );
-} 
+}); 

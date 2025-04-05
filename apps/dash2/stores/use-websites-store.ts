@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { shallow } from 'zustand/shallow';
 
 export interface Website {
   id: string;
@@ -43,6 +44,7 @@ interface WebsitesState {
   setIsRegenerating: (regenerating: boolean) => void;
 }
 
+// Use standard Zustand create with better performance
 export const useWebsitesStore = create<WebsitesState>((set) => ({
   // Initial Data
   websites: [],
@@ -71,4 +73,20 @@ export const useWebsitesStore = create<WebsitesState>((set) => ({
   setIsDeleting: (deleting) => set({ isDeleting: deleting }),
   setIsVerifying: (verifying) => set({ isVerifying: verifying }),
   setIsRegenerating: (regenerating) => set({ isRegenerating: regenerating }),
-})); 
+}));
+
+// Helper selectors for more efficient component subscriptions
+export const useSelectedWebsite = () => useWebsitesStore(state => state.selectedWebsite);
+export const useVerificationDialog = () => {
+  const { showVerificationDialog, setShowVerificationDialog } = useWebsitesStore(
+    state => ({
+      showVerificationDialog: state.showVerificationDialog,
+      setShowVerificationDialog: state.setShowVerificationDialog
+    })
+  );
+  
+  return {
+    show: showVerificationDialog,
+    setShow: setShowVerificationDialog
+  };
+}; 
