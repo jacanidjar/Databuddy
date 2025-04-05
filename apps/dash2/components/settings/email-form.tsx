@@ -42,12 +42,18 @@ export function EmailForm() {
   async function onSubmit(data: FormValues) {
     setIsLoading(true);
     try {
-      await authClient.changeEmail({
+      const response = await authClient.changeEmail({
         newEmail: data.newEmail,
       });
+
+      if (response.error) {
+        toast.error(response.error.message || "Failed to update email");
+      } else {
+        form.reset();
+        toast.success("Email update request sent");
+      }
       
       form.reset();
-      toast.success("Email update request sent");
     } catch (error: any) {
       toast.error(error.message || "Failed to update email");
     } finally {

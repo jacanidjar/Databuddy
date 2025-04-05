@@ -82,14 +82,8 @@ export default function SettingsPage() {
   const activeTabData = tabs.find(tab => tab.id === activeTab);
 
   return (
-    <div className="container max-w-6xl py-6 space-y-8">
+    <div className="container max-w-6xl py-3 space-y-8">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your account settings and preferences
-          </p>
-        </div>
         {isMobile && (
           <Button 
             variant="outline" 
@@ -237,11 +231,11 @@ export default function SettingsPage() {
                 <CardContent>
                   <SessionsForm />
                 </CardContent>
-                <CardFooter className="flex justify-end border-t pt-4">
+                {/* <CardFooter className="flex justify-end border-t pt-4">
                   <Button variant="outline" onClick={() => router.push("/security-log")}>
                     View Security Log
                   </Button>
-                </CardFooter>
+                </CardFooter> */}
               </Card>
             </TabsContent>
 

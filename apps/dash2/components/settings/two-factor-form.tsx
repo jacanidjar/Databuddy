@@ -156,14 +156,18 @@ export function TwoFactorForm() {
 
     setIsLoading(true);
     try {
-      await authClient.twoFactor.disable({
+      const response = await authClient.twoFactor.disable({
         password: prompt("Enter your password to confirm") || ""
       });
-      toast.success("Two-factor authentication disabled");
-      setIsEnabled(false);
-      setSetupStep('initial');
-      // Force a session refresh
-      window.location.reload();
+      if (response.error) {
+        toast.error(response.error.message || "Failed to disable 2FA");
+      } else {
+        toast.success("Two-factor authentication disabled");
+        setIsEnabled(false);
+        setSetupStep('initial');
+        // Force a session refresh
+        window.location.reload();
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to disable 2FA");
     } finally {

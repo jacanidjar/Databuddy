@@ -109,6 +109,11 @@ function WebsiteDetailsPage() {
         start_date: format(start, 'yyyy-MM-dd'),
         end_date: format(end, 'yyyy-MM-dd')
       });
+      
+      // Auto-adjust granularity based on date range
+      // 24h = hourly, longer periods = daily
+      const diffHours = Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60);
+      setTimeGranularity(diffHours <= 24 ? 'hourly' : 'daily');
     }
   };
 
@@ -126,6 +131,10 @@ function WebsiteDetailsPage() {
         start_date: format(range.from, 'yyyy-MM-dd'),
         end_date: format(range.to, 'yyyy-MM-dd')
       });
+      
+      // Auto-adjust granularity based on selected date range
+      const diffHours = Math.abs(range.to.getTime() - range.from.getTime()) / (1000 * 60 * 60);
+      setTimeGranularity(diffHours <= 24 ? 'hourly' : 'daily');
     }
   }, []);
 
@@ -510,6 +519,7 @@ function WebsiteDetailsPage() {
               size="sm"
               className={`h-8 text-xs px-3 rounded-none cursor-pointer ${timeGranularity === 'daily' ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground'}`}
               onClick={() => setTimeGranularity('daily')}
+              title="View daily aggregated data"
             >
               Daily
             </Button>
@@ -518,6 +528,7 @@ function WebsiteDetailsPage() {
               size="sm"
               className={`h-8 text-xs px-3 rounded-none cursor-pointer ${timeGranularity === 'hourly' ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground'}`}
               onClick={() => setTimeGranularity('hourly')}
+              title="View hourly data (best for 24h periods)"
             >
               Hourly
             </Button>
@@ -596,6 +607,10 @@ function WebsiteDetailsPage() {
                             start_date: format(date.from, 'yyyy-MM-dd'),
                             end_date: format(date.to, 'yyyy-MM-dd')
                           });
+                          
+                          // Auto-adjust granularity based on selected date range
+                          const diffHours = Math.abs(date.to.getTime() - date.from.getTime()) / (1000 * 60 * 60);
+                          setTimeGranularity(diffHours <= 24 ? 'hourly' : 'daily');
                         }
                       }}
                     >

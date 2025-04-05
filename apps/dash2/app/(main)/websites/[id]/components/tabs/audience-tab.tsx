@@ -82,7 +82,7 @@ export function WebsiteAudienceTab({
       
       {/* First row - Device and browser info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-lg border shadow-sm">
+        <div className="rounded-xl border shadow-sm">
           <DistributionChart 
             data={deviceData} 
             isLoading={isLoading}
@@ -92,7 +92,7 @@ export function WebsiteAudienceTab({
           />
         </div>
         
-        <div className="rounded-lg border shadow-sm">
+        <div className="rounded-xl border shadow-sm">
           <DistributionChart 
             data={browserData} 
             isLoading={isLoading}
@@ -105,7 +105,7 @@ export function WebsiteAudienceTab({
       
       {/* Second row - Connection type and language data */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-lg border shadow-sm">
+        <div className="rounded-xl border shadow-sm">
           <DistributionChart 
             data={connectionData} 
             isLoading={isLoading}
@@ -115,7 +115,7 @@ export function WebsiteAudienceTab({
           />
         </div>
         
-        <div className="rounded-lg border shadow-sm">
+        <div className="rounded-xl border shadow-sm">
           <DistributionChart 
             data={languageData} 
             isLoading={isLoading}
@@ -127,7 +127,7 @@ export function WebsiteAudienceTab({
       </div>
       
       {/* Timezones */}
-      <div className="rounded-lg border shadow-sm">
+      <div className="rounded-xl border shadow-sm">
         <DataTable 
           data={analytics.timezones?.map(item => ({
             timezone: item.timezone, 
@@ -163,7 +163,7 @@ export function WebsiteAudienceTab({
       </div>
       
       {/* Countries */}
-      <div className="rounded-lg border shadow-sm">
+      <div className="rounded-xl border shadow-sm">
         <DataTable 
           data={analytics.countries}
           columns={[
@@ -194,7 +194,7 @@ export function WebsiteAudienceTab({
       </div>
       
       {/* Screen Resolutions */}
-      <div className="rounded-lg border shadow-sm">
+      <div className="rounded-xl border shadow-sm">
         <DataTable 
           data={analytics.screen_resolutions}
           columns={[

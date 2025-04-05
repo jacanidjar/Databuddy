@@ -199,6 +199,8 @@ analyticsRouter.get('/summary', zValidator('query', analyticsQuerySchema), async
       chQuery(timezonesBuilder.getSql()),
       chQuery(performanceBuilder.getSql())
     ]);
+
+    console.log(summaryData);
     
     // Process today's hourly data to make sure we have accurate "today" summary
     const todaySummary = {
@@ -210,14 +212,13 @@ analyticsRouter.get('/summary', zValidator('query', analyticsQuerySchema), async
     };
     
     // Sum up all the pageviews, visitors, and sessions from today's hourly data
-    // This ensures we're using the actual data for today, not just the last hour
     let todayTotalSessions = 0;
     let todayBounceRateSum = 0;
     
     todayHourlyData.forEach(hour => {
       if (hour.pageviews > 0) {
         todaySummary.pageviews += hour.pageviews;
-        todaySummary.visitors += hour.unique_visitors || 0;
+        // Don't sum up visitors here as they'll be double-counted
         todaySummary.sessions += hour.sessions || 0;
         
         // Track total sessions and weighted bounce rate
@@ -227,6 +228,22 @@ analyticsRouter.get('/summary', zValidator('query', analyticsQuerySchema), async
         }
       }
     });
+    
+    // Create a dedicated query to get accurate unique visitor count for today
+    const todayUniqueVisitorsBuilder = createSqlBuilder('events');
+    
+    todayUniqueVisitorsBuilder.sb.select = {
+      unique_visitors: 'COUNT(DISTINCT anonymous_id) as unique_visitors'
+    };
+    
+    todayUniqueVisitorsBuilder.sb.where = {
+      client_filter: `client_id = '${params.website_id}'`,
+      date_filter: `toDate(time) = today()`,
+      event_filter: "event_name = 'screen_view'"
+    };
+    
+    const todayUniqueVisitorsResult = await chQuery(todayUniqueVisitorsBuilder.getSql());
+    todaySummary.visitors = todayUniqueVisitorsResult[0]?.unique_visitors || 0;
     
     // Calculate weighted bounce rate
     if (todayTotalSessions > 0) {
@@ -482,6 +499,22 @@ analyticsRouter.get('/trends', zValidator('query', analyticsQuerySchema), async 
           }
         }
       });
+      
+      // Create a dedicated query to get accurate unique visitor count for today
+      const todayUniqueVisitorsBuilder = createSqlBuilder('events');
+      
+      todayUniqueVisitorsBuilder.sb.select = {
+        unique_visitors: 'COUNT(DISTINCT anonymous_id) as unique_visitors'
+      };
+      
+      todayUniqueVisitorsBuilder.sb.where = {
+        client_filter: `client_id = '${params.website_id}'`,
+        date_filter: `toDate(time) = today()`,
+        event_filter: "event_name = 'screen_view'"
+      };
+      
+      const todayUniqueVisitorsResult = await chQuery(todayUniqueVisitorsBuilder.getSql());
+      todaySummary.visitors = todayUniqueVisitorsResult[0]?.unique_visitors || 0;
       
       // Calculate weighted bounce rate
       if (todayTotalSessions > 0) {

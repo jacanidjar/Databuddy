@@ -92,15 +92,11 @@ export function WebsiteOverviewTab({
 
   // Set granularity based on date range
   useEffect(() => {
-    const start = new Date(dateRange.start_date);
-    const end = new Date(dateRange.end_date);
-    const diffHours = Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60);
-    
+    // Update the adjusted date range with the granularity from props
+    // This granularity is already set based on the date range in the parent component
     const newAdjustedRange = {
       ...dateRange,
-      granularity: !dateRange.granularity ? 
-        (diffHours <= 24 ? 'hourly' : 'daily') : 
-        dateRange.granularity
+      granularity: dateRange.granularity || 'daily'
     };
     
     setAdjustedDateRange(newAdjustedRange);

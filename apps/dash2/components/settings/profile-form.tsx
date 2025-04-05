@@ -47,18 +47,22 @@ export function ProfileForm() {
     
     try {
       // Update user's name
-      await authClient.updateUser({
+      const response = await authClient.updateUser({
         name: data.name,
       });
       
       // Refresh the page to update the session data
       router.refresh();
       
-      toast.success("Profile updated successfully");
-      setIsSaved(true);
-      
+      if (response.error) {
+        toast.error(response.error.message || "Failed to update profile");
+      } else {
+        toast.success("Profile updated successfully");
+        setIsSaved(true);
+        
       // Reset saved indicator after a delay
-      setTimeout(() => setIsSaved(false), 3000);
+        setTimeout(() => setIsSaved(false), 3000);
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to update profile");
     } finally {

@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 
 import { DataTable } from "@/components/analytics/data-table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAnalyticsProfiles } from "@/hooks/use-analytics";
 import { DateRange } from "@/hooks/use-analytics";
 import { AnimatedLoading } from "@/components/analytics/animated-loading";
@@ -241,9 +241,9 @@ export function WebsiteProfilesTab({
                 </span>
               )}
             </DialogTitle>
-            <DialogDescription>
-              {selectedProfile ? (
-                <div className="grid grid-cols-2 gap-4 mt-2 text-sm text-muted-foreground">
+            {selectedProfile ? (
+              <div className="mt-2 text-sm text-muted-foreground">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="font-medium">First visit:</span> {format(new Date(selectedProfile.first_visit), 'MMM d, yyyy HH:mm:ss')}
                   </div>
@@ -269,10 +269,10 @@ export function WebsiteProfilesTab({
                     <span className="font-medium">Total time spent:</span> {selectedProfile.total_duration_formatted}
                   </div>
                 </div>
-              ) : (
-                <p>Loading profile information...</p>
-              )}
-            </DialogDescription>
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-muted-foreground">Loading profile information...</p>
+            )}
           </DialogHeader>
           
           <div className="mt-4">

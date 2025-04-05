@@ -56,9 +56,12 @@ export function SessionsForm() {
   const handleRevoke = async (sessionId: string) => {
     setRevokeLoading(sessionId);
     try {
-      await authClient.revokeSession({ token: sessionId });
-      toast.success("Session revoked successfully");
-      
+      const response = await authClient.revokeSession({ token: sessionId });
+      if (response.error) {
+        toast.error(response.error.message || "Failed to revoke session");
+      } else {
+        toast.success("Session revoked successfully");
+        
       // If current session was revoked, redirect to login
       if (sessionId === session?.session?.id) {
         router.push("/login");
@@ -66,7 +69,8 @@ export function SessionsForm() {
       }
       
       // Refresh the list
-      fetchSessions();
+        fetchSessions();
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to revoke session");
     } finally {
@@ -81,9 +85,13 @@ export function SessionsForm() {
     
     setIsLoading(true);
     try {
-      await authClient.revokeOtherSessions();
-      toast.success("All other sessions revoked successfully");
-      fetchSessions();
+      const response = await authClient.revokeOtherSessions();
+      if (response.error) {
+        toast.error(response.error.message || "Failed to revoke sessions");
+      } else {
+        toast.success("All other sessions revoked successfully");
+        fetchSessions();
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to revoke sessions");
     } finally {

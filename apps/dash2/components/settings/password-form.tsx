@@ -54,14 +54,20 @@ export function PasswordForm() {
   async function onSubmit(data: FormValues) {
     setIsLoading(true);
     try {
-      await authClient.changePassword({
+      const response = await authClient.changePassword({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
         revokeOtherSessions: data.revokeOtherSessions,
       });
-      
+
+      if (response.error) {
+        toast.error(response.error.message || "Failed to update password");
+      } else {
+        form.reset();
+        toast.success("Password updated successfully");
+      }
+
       form.reset();
-      toast.success("Password updated successfully");
     } catch (error: any) {
       toast.error(error.message || "Failed to update password");
     } finally {
