@@ -1,107 +1,208 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { queryClient } from "@/app/providers";
+import { useEffect } from 'react';
+import { useWebsitesStore } from '@/stores/use-websites-store';
+import { toast } from 'sonner';
 import { 
-  createWebsite, 
-  deleteWebsite, 
-  getUserWebsites, 
-  updateWebsite 
+  createWebsite as createWebsiteAction, 
+  deleteWebsite as deleteWebsiteAction, 
+  getUserWebsites,
+  updateWebsite as updateWebsiteAction,
+  checkDomainVerification,
+  regenerateVerificationToken
 } from "@/app/actions/websites";
-import { toast } from "sonner";
+import { useQuery } from '@tanstack/react-query';
 
-// Define website type based on the action return type
-export type Website = {
+export interface Website {
   id: string;
   name: string | null;
   domain: string;
-  userId: string;
+  userId?: string | null;
   createdAt: Date;
   updatedAt: Date;
   status?: string;
-};
+  verificationToken?: string | null;
+  verificationStatus?: "PENDING" | "VERIFIED" | "FAILED";
+  verifiedAt?: Date | null;
+}
+
+interface CreateWebsiteData {
+  name: string;
+  domain: string;
+}
+
+interface UpdateWebsiteData {
+  name?: string;
+  domain?: string;
+}
 
 export function useWebsites() {
-  const websitesQuery = useQuery({
-    queryKey: ["websites"],
-    queryFn: async () => {
+  const store = useWebsitesStore();
+  
+  const fetchWebsites = async () => {
+    store.setIsLoading(true);
+    store.setIsError(false);
+    
+    try {
       const result = await getUserWebsites();
       if (result.error) {
         toast.error(result.error);
-        return [];
+        store.setIsError(true);
+        return;
       }
-      return result.data || [];
-    },
-  });
+      store.setWebsites(result.data || []);
+    } catch (error) {
+      console.error('Error fetching websites:', error);
+      store.setIsError(true);
+    } finally {
+      store.setIsLoading(false);
+    }
+  };
 
-  const createWebsiteMutation = useMutation({
-    mutationFn: async (data: { name: string; domain: string }) => {
-      return createWebsite(data);
-    },
-    onSuccess: (result) => {
+  const createWebsite = async (data: CreateWebsiteData) => {
+    store.setIsCreating(true);
+    
+    try {
+      const result = await createWebsiteAction(data);
       if (result.error) {
         toast.error(result.error);
         return;
       }
       
       toast.success("Website created successfully");
-      queryClient.invalidateQueries({ queryKey: ["websites"] });
-    },
-    onError: (error) => {
+      await fetchWebsites();
+    } catch (error) {
+      console.error('Error creating website:', error);
       toast.error("Failed to create website");
-      console.error(error);
-    },
-  });
+    } finally {
+      store.setIsCreating(false);
+    }
+  };
 
-  const updateWebsiteMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: { name?: string; domain?: string } }) => {
-      return updateWebsite(id, data);
-    },
-    onSuccess: (result) => {
+  const updateWebsite = async ({ id, data }: { id: string; data: UpdateWebsiteData }) => {
+    store.setIsUpdating(true);
+    
+    try {
+      const result = await updateWebsiteAction(id, data);
       if (result.error) {
         toast.error(result.error);
         return;
       }
       
       toast.success("Website updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["websites"] });
-    },
-    onError: (error) => {
+      await fetchWebsites();
+    } catch (error) {
+      console.error('Error updating website:', error);
       toast.error("Failed to update website");
-      console.error(error);
-    },
-  });
+    } finally {
+      store.setIsUpdating(false);
+    }
+  };
 
-  const deleteWebsiteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return deleteWebsite(id);
-    },
-    onSuccess: (result) => {
+  const deleteWebsite = async (id: string) => {
+    store.setIsDeleting(true);
+    
+    try {
+      const result = await deleteWebsiteAction(id);
       if (result.error) {
         toast.error(result.error);
         return;
       }
       
       toast.success("Website deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ["websites"] });
-    },
-    onError: (error) => {
+      await fetchWebsites();
+    } catch (error) {
+      console.error('Error deleting website:', error);
       toast.error("Failed to delete website");
-      console.error(error);
-    },
-  });
+    } finally {
+      store.setIsDeleting(false);
+    }
+  };
+
+  const verifyDomain = async (id: string) => {
+    store.setIsVerifying(true);
+    
+    try {
+      const result = await checkDomainVerification(id);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      
+      if (result.data?.verified) {
+        toast.success(result.data.message);
+      } else {
+        toast.error(result.data?.message || "Verification failed");
+      }
+      
+      await fetchWebsites();
+    } catch (error) {
+      console.error('Error verifying domain:', error);
+      toast.error("Failed to verify domain");
+    } finally {
+      store.setIsVerifying(false);
+    }
+  };
+
+  const regenerateToken = async (id: string) => {
+    store.setIsRegenerating(true);
+    
+    try {
+      const result = await regenerateVerificationToken(id);
+      if (result.error) {
+        toast.error(result.error);
+        return result;
+      }
+      
+      // First update the websites list
+      await fetchWebsites();
+      
+      // Then find the updated website and update the selected website in the store
+      const updatedWebsite = store.websites.find(w => w.id === id);
+      if (updatedWebsite) {
+        store.setSelectedWebsite(updatedWebsite);
+      }
+      
+      toast.success("Verification token regenerated");
+      return result;
+    } catch (error) {
+      console.error('Error regenerating token:', error);
+      toast.error("Failed to regenerate token");
+      throw error;
+    } finally {
+      store.setIsRegenerating(false);
+    }
+  };
+
+  // Fetch websites on mount
+  useEffect(() => {
+    fetchWebsites();
+  }, []);
 
   return {
-    websites: websitesQuery.data || [],
-    isLoading: websitesQuery.isLoading,
-    isError: websitesQuery.isError,
-    createWebsite: createWebsiteMutation.mutate,
-    isCreating: createWebsiteMutation.isPending,
-    updateWebsite: updateWebsiteMutation.mutate,
-    isUpdating: updateWebsiteMutation.isPending,
-    deleteWebsite: deleteWebsiteMutation.mutate,
-    isDeleting: deleteWebsiteMutation.isPending,
-    refetch: websitesQuery.refetch,
+    // Data
+    websites: store.websites,
+    selectedWebsite: store.selectedWebsite,
+    
+    // UI States
+    isLoading: store.isLoading,
+    isError: store.isError,
+    isCreating: store.isCreating,
+    isUpdating: store.isUpdating,
+    isDeleting: store.isDeleting,
+    isVerifying: store.isVerifying,
+    isRegenerating: store.isRegenerating,
+    showVerificationDialog: store.showVerificationDialog,
+    
+    // Actions
+    setSelectedWebsite: store.setSelectedWebsite,
+    setShowVerificationDialog: store.setShowVerificationDialog,
+    createWebsite,
+    updateWebsite,
+    deleteWebsite,
+    verifyDomain,
+    regenerateToken,
+    refetch: fetchWebsites,
   };
 }
 

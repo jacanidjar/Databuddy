@@ -239,10 +239,7 @@ export function WebsiteDialog({
                           className="h-6 px-2"
                           onClick={() => {
                             navigator.clipboard.writeText(`_databuddy.${new URL(website?.domain || '').hostname.replace(/^www\./, '')}`);
-                            toast({
-                              title: "Copied to clipboard",
-                              description: "DNS record name copied to clipboard",
-                            });
+                            toast("DNS record name copied to clipboard");
                           }}
                         >
                           <Copy className="h-3 w-3 mr-1" />
@@ -258,10 +255,7 @@ export function WebsiteDialog({
                           className="h-6 px-2"
                           onClick={() => {
                             navigator.clipboard.writeText(website?.verificationToken || '');
-                            toast({
-                              title: "Copied to clipboard",
-                              description: "Verification token copied to clipboard",
-                            });
+                            toast("Verification token copied to clipboard");
                           }}
                         >
                           <Copy className="h-3 w-3 mr-1" />
@@ -317,14 +311,14 @@ export function WebsiteDialog({
                       <Check className="h-4 w-4" />
                       <span className="text-sm font-medium">Domain verified successfully</span>
                     </div>
-                  )}
-                  {verificationStatus === "unverified" && (
+                  )}  
+                  {verificationStatus === "pending" && (
                     <div className="flex items-center gap-2 text-amber-600">
                       <AlertCircle className="h-4 w-4" />
                       <span className="text-sm font-medium">Domain verification pending</span>
                     </div>
                   )}
-                  {verificationStatus === "failed" && (
+                  {verificationStatus === "unverified" && (
                     <div className="flex items-center gap-2 text-red-600">
                       <X className="h-4 w-4" />
                       <span className="text-sm font-medium">Domain verification failed</span>
