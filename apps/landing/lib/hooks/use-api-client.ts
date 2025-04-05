@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "@databuddy/auth";
+import { useSession } from "@databuddy/auth/client";
 import { useEffect, useState } from "react";
 import { AnalyticsApiClient, createApiClient } from "@/lib/api-client";
 

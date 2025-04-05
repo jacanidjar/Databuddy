@@ -87,34 +87,6 @@ export class AnalyticsApiClient {
 
     return response.json();
   }
-
-  /**
-   * Get website statistics
-   */
-  async getWebsiteStats(websiteId: string, from: string, to: string) {
-    return this.get(`/analytics/dashboard/websites/${websiteId}/stats`, { from, to });
-  }
-
-  /**
-   * Get website summary
-   */
-  async getWebsiteSummary(websiteId: string) {
-    return this.get(`/analytics/dashboard/websites/${websiteId}/summary`);
-  }
-
-  /**
-   * Get dashboard summary for all websites
-   */
-  async getDashboardSummary(from: string, to: string) {
-    return this.get("/analytics/dashboard/summary", { from, to });
-  }
-
-  /**
-   * Get dashboard charts data
-   */
-  async getDashboardCharts(from: string, to: string) {
-    return this.get("/analytics/dashboard/charts", { from, to });
-  }
 }
 
 /**
