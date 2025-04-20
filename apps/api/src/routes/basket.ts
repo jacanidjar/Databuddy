@@ -4,7 +4,7 @@
  */
 
 import { Hono } from 'hono';
-import { createLogger } from '../lib/logger';
+import { createLogger } from '@databuddy/logger';
 import { cors } from 'hono/cors';
 import { z } from 'zod';
 import { websiteAuthHook } from '../hooks/auth';

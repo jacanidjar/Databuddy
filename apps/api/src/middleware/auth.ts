@@ -1,5 +1,5 @@
 import { createMiddleware } from 'hono/factory'
-import { auth } from "../auth"
+import { auth } from "@databuddy/auth"
 
 export const authMiddleware = createMiddleware(async (c, next) => {
   try {

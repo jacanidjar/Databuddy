@@ -228,7 +228,7 @@ export function createSessionsByHourBuilder(websiteId: string, startDate: string
 /**
  * Creates a builder for fetching bounce rate per entry page
  */
-export function createBounceRateByEntryPageBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 10) {
+export function createBounceRateByEntryPageBuilder(websiteId: string, startDate: string, endDate: string, limit = 10) {
   const builder = createSqlBuilder();
   
   const sql = `

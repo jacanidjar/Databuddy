@@ -31,7 +31,7 @@ export interface TopReferrer {
 /**
  * Creates a builder for fetching top referrers data
  */
-export function createTopReferrersBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 5) {
+export function createTopReferrersBuilder(websiteId: string, startDate: string, endDate: string, limit = 5) {
   const builder = createSqlBuilder();
   builder.setTable('events');
   

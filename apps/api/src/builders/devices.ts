@@ -37,7 +37,7 @@ export interface DeviceType {
 /**
  * Creates a builder for fetching screen resolution data
  */
-export function createScreenResolutionsBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 10) {
+export function createScreenResolutionsBuilder(websiteId: string, startDate: string, endDate: string, limit = 10) {
   const builder = createSqlBuilder();
   builder.setTable('events');
   
@@ -62,7 +62,7 @@ export function createScreenResolutionsBuilder(websiteId: string, startDate: str
 /**
  * Creates a builder for fetching browser version data
  */
-export function createBrowserVersionsBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 10) {
+export function createBrowserVersionsBuilder(websiteId: string, startDate: string, endDate: string, limit = 10) {
   const builder = createSqlBuilder();
   builder.setTable('events');
   
@@ -103,7 +103,7 @@ export function createBrowserVersionsBuilder(websiteId: string, startDate: strin
 /**
  * Creates a builder for fetching device type data
  */
-export function createDeviceTypesBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 5) {
+export function createDeviceTypesBuilder(websiteId: string, startDate: string, endDate: string, limit = 5) {
   const builder = createSqlBuilder();
   builder.setTable('events');
   

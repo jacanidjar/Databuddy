@@ -24,7 +24,7 @@ export interface ErrorData {
 /**
  * Creates a builder for fetching error types data
  */
-export function createErrorTypesBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 10) {
+export function createErrorTypesBuilder(websiteId: string, startDate: string, endDate: string, limit = 10) {
   const builder = createSqlBuilder();
   builder.setTable('events');
   
@@ -54,7 +54,7 @@ export function createErrorTypesBuilder(websiteId: string, startDate: string, en
 /**
  * Creates a builder for fetching detailed error data
  */
-export function createErrorDetailsBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 100) {
+export function createErrorDetailsBuilder(websiteId: string, startDate: string, endDate: string, limit = 100) {
   const builder = createSqlBuilder();
   builder.setTable('events');
   
@@ -84,7 +84,7 @@ export function createErrorDetailsBuilder(websiteId: string, startDate: string, 
 /**
  * Creates a builder for fetching error data for a specific error type
  */
-export function createErrorTypeDetailsBuilder(websiteId: string, errorType: string, startDate: string, endDate: string, limit: number = 100) {
+export function createErrorTypeDetailsBuilder(websiteId: string, errorType: string, startDate: string, endDate: string, limit = 100) {
   const builder = createSqlBuilder();
   builder.setTable('events');
   

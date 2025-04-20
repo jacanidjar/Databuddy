@@ -5,8 +5,8 @@
  */
 
 import type { Context } from 'hono';
-import { createLogger } from '../lib/logger';
-import { clickHouse } from '../clickhouse/client';
+import { createLogger } from '@databuddy/logger';
+import { clickHouse } from '@databuddy/db';
 import { AppVariables } from '../types';
 import { parseUserAgent } from '../utils/user-agent';
 import { getGeoData } from '../utils/ip-geo';

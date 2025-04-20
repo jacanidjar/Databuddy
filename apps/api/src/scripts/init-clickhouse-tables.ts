@@ -22,14 +22,14 @@ async function initTables() {
       logger.info(`Success: ${result.message}`);
       
       // Handle details with type safety
-      if (result.details && result.details.database) {
+      if (result.details?.database) {
         logger.info(`Database: ${result.details.database}`);
         
         if (result.details.tables) {
           logger.info('Tables created:');
-          result.details.tables.forEach(table => {
+          for (const table of result.details.tables) {
             logger.info(`- ${table}`);
-          });
+          }
         }
       }
       

@@ -22,7 +22,7 @@ export interface Country {
 /**
  * Creates a builder for fetching country data
  */
-export function createCountriesBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 5) {
+export function createCountriesBuilder(websiteId: string, startDate: string, endDate: string, limit = 5) {
   const builder = createSqlBuilder();
   builder.setTable('events');
   
@@ -46,7 +46,7 @@ export function createCountriesBuilder(websiteId: string, startDate: string, end
 /**
  * Creates a builder for fetching city data
  */
-export function createCitiesBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 10) {
+export function createCitiesBuilder(websiteId: string, startDate: string, endDate: string, limit = 10) {
   const builder = createSqlBuilder();
   builder.setTable('events');
   
@@ -75,7 +75,7 @@ export function createCitiesBuilder(websiteId: string, startDate: string, endDat
 /**
  * Creates a builder for fetching region/state data
  */
-export function createRegionsBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 10) {
+export function createRegionsBuilder(websiteId: string, startDate: string, endDate: string, limit = 10) {
   const builder = createSqlBuilder();
   builder.setTable('events');
   

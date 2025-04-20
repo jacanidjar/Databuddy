@@ -33,7 +33,7 @@ export function buildCommonOrderBy(fields: Record<string, string>) {
 // Common utility functions for analytics data processing
 export function parseReferrers(
   referrers: Array<{ referrer: string; visitors: number; pageviews: number }>,
-  filterInternal: boolean = false,
+  filterInternal = false,
   isInternalReferrerFn?: (referrer: string) => boolean
 ) {
   // First map all referrers with parsed data

@@ -9,7 +9,7 @@
  */
 
 import initClickhouseTables from '../scripts/init-clickhouse-tables';
-import { createLogger } from '../lib/logger';
+import { createLogger } from '@databuddy/logger';
 
 const logger = createLogger('init-tables-command');
 

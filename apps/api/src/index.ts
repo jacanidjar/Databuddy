@@ -1,12 +1,12 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-// import { createLogger } from '@databuddy/logger';
+import { createLogger } from '@databuddy/logger';
 // import { highlightMiddleware } from '@highlight-run/hono'
-// import { appRouter } from '@databuddy/trpc';
-// import { trpcServer } from '@hono/trpc-server'
+import { appRouter } from '@databuddy/trpc';
+import { trpcServer } from '@hono/trpc-server'
 import { authMiddleware } from './middleware/auth'
-import { auth, type User, type Session} from './auth';
+import { auth, type AuthUser, type SessionData } from '@databuddy/auth';
 import { TRPCError } from '@trpc/server';
 import basketRouter from './routes/basket';
 import adminRouter from './routes/admin';
@@ -15,8 +15,8 @@ import analyticsRouter from './routes/analytics';
 // Define the Hono app with typed context
 type AppVariables = {
   Variables: {
-    user: User; // Replace 'any' with your actual user type
-    session: Session; // Replace 'any' with your actual session type
+    user: AuthUser; // Replace 'any' with your actual user type
+    session: SessionData; // Replace 'any' with your actual session type
   }
 }
 
@@ -100,23 +100,23 @@ app.get('/session', (c) => {
 });
 
 // Mount tRPC routes
-// app.use('/trpc/*', trpcServer({
-//   router: appRouter,
-//   createContext: async (opts) => {
-//     const c = opts.req as any;
-//     return {
-//       user: c.user,
-//       session: c.session
-//     };
-//   },
-//   onError: ({ error, path }) => {
-//     if (error instanceof TRPCError) {
-//       console.error(`[tRPC] Error in ${path}:`, error.message);
-//       return;
-//     }
-//     console.error(`[tRPC] Unknown error in ${path}:`, error);
-//   }
-// }));
+app.use('/trpc/*', trpcServer({
+  router: appRouter,
+  createContext: async (opts) => {
+    const c = opts.req as any;
+    return {
+      user: c.user,
+      session: c.session
+    };
+  },
+  onError: ({ error, path }) => {
+    if (error instanceof TRPCError) {
+      console.error(`[tRPC] Error in ${path}:`, error.message);
+      return;
+    }
+    console.error(`[tRPC] Unknown error in ${path}:`, error);
+  }
+}));
 
 // Error handling
 app.onError((err, c) => {

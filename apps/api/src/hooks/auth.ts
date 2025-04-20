@@ -6,9 +6,9 @@
  */
 
 import type { MiddlewareHandler } from 'hono';
-import { createLogger } from '../lib/logger';
-import { prisma, WebsiteStatus, type Website } from '../lib/db';
-import { cacheable } from '../lib/redis';
+import { createLogger } from '@databuddy/logger';
+import { dbEdge as prisma, WebsiteStatus, type Website } from '@databuddy/db';
+import { cacheable } from '@databuddy/redis';
 import type { AppVariables } from '../types';
 
 // Initialize logger

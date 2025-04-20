@@ -2,7 +2,7 @@
  * Utility functions for analytics data processing
  */
 
-import dayjs from 'dayjs';
+import { format } from 'date-fns';
 
 /**
  * Calculate weighted bounce rate from two sets of data
@@ -30,13 +30,13 @@ export function calculateWeightedBounceRate(
  * Carefully detects if the value is in milliseconds and converts appropriately
  */
 export function formatTime(timeValue: number): string {
-  if (!timeValue || Number.isNaN(timeValue)) {
+  if (!timeValue || isNaN(timeValue)) {
     return '0s';
   }
   
   // Always assume values over 1000 are milliseconds and convert them
   // This ensures consistency across the application
-  const seconds = timeValue;
+  let seconds = timeValue;
   
   // Now format the seconds value
   if (seconds < 60) {
@@ -56,23 +56,23 @@ export function formatTime(timeValue: number): string {
 /**
  * Format performance metrics with appropriate units
  */
-export function formatPerformanceMetric(value: number, unit= 'ms'): string {
-  if (!value || Number.isNaN(value)) {
+export function formatPerformanceMetric(value: number, unit: string = 'ms'): string {
+  if (!value || isNaN(value)) {
     return `0${unit}`;
   }
   
   if (value < 1000 || unit !== 'ms') {
     return `${Math.round(value)}${unit}`;
+  } else {
+    return `${(value / 1000).toFixed(2)}s`;
   }
-  
-  return `${(value / 1000).toFixed(2)}s`;
 }
 
 /**
  * Format analytics data entry with standardized fields
  * Ensures consistent data formatting across all analytics endpoints
  */
-export function formatAnalyticsEntry(entry: any, dateField = 'date'): any {
+export function formatAnalyticsEntry(entry: any, dateField: string = 'date'): any {
   const duration = entry.avg_session_duration || 0;
   
   return {
@@ -110,7 +110,7 @@ export function isToday(date: string): boolean {
  * Get the current hour formatted for matching with hourly data
  */
 export function getCurrentHourFormatted(): string {
-  return dayjs().format('YYYY-MM-DD HH:00:00');
+  return format(new Date(), 'yyyy-MM-dd HH:00:00');
 }
 
 /**
@@ -134,7 +134,7 @@ export function formatCleanPath(path: string): string {
 /**
  * Create error response object
  */
-export function createErrorResponse(error: unknown, statusCode = 500) {
+export function createErrorResponse(error: unknown, statusCode: number = 500) {
   return {
     success: false,
     error: error instanceof Error ? error.message : 'Unknown error occurred',

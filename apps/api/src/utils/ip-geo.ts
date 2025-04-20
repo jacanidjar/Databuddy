@@ -1,5 +1,5 @@
-import { cacheable } from '../lib/redis';
-import { createLogger } from '../lib/logger';
+import { cacheable } from '@databuddy/redis';
+import { createLogger } from '@databuddy/logger';
 import { z } from 'zod';
 
 const logger = createLogger('ip-geo');

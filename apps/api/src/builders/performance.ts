@@ -97,7 +97,7 @@ export function createPerformanceTimeSeriesBuilder(websiteId: string, startDate:
 /**
  * Creates a builder for fetching performance metrics by page
  */
-export function createPerformanceByPageBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 20) {
+export function createPerformanceByPageBuilder(websiteId: string, startDate: string, endDate: string, limit = 20) {
   const builder = createSqlBuilder();
   builder.setTable('events');
   

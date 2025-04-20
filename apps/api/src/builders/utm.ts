@@ -24,7 +24,7 @@ export interface UTMData {
 /**
  * Creates a builder for fetching UTM source data
  */
-export function createUTMSourceBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 10) {
+export function createUTMSourceBuilder(websiteId: string, startDate: string, endDate: string, limit = 10) {
   const builder = createSqlBuilder();
   builder.setTable('events');
   
@@ -49,7 +49,7 @@ export function createUTMSourceBuilder(websiteId: string, startDate: string, end
 /**
  * Creates a builder for fetching UTM medium data
  */
-export function createUTMMediumBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 10) {
+export function createUTMMediumBuilder(websiteId: string, startDate: string, endDate: string, limit = 10) {
   const builder = createSqlBuilder();
   builder.setTable('events');
   
@@ -74,7 +74,7 @@ export function createUTMMediumBuilder(websiteId: string, startDate: string, end
 /**
  * Creates a builder for fetching UTM campaign data
  */
-export function createUTMCampaignBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 10) {
+export function createUTMCampaignBuilder(websiteId: string, startDate: string, endDate: string, limit = 10) {
   const builder = createSqlBuilder();
   builder.setTable('events');
   
@@ -99,7 +99,7 @@ export function createUTMCampaignBuilder(websiteId: string, startDate: string, e
 /**
  * Creates a builder for fetching combined UTM data
  */
-export function createCombinedUTMBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 10) {
+export function createCombinedUTMBuilder(websiteId: string, startDate: string, endDate: string, limit = 10) {
   const builder = createSqlBuilder();
   builder.setTable('events');
   
@@ -131,7 +131,7 @@ export function createCombinedUTMBuilder(websiteId: string, startDate: string, e
 /**
  * Creates a builder for fetching UTM content data
  */
-export function createUTMContentBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 10) {
+export function createUTMContentBuilder(websiteId: string, startDate: string, endDate: string, limit = 10) {
   const builder = createSqlBuilder();
   builder.setTable('events');
   
@@ -156,7 +156,7 @@ export function createUTMContentBuilder(websiteId: string, startDate: string, en
 /**
  * Creates a builder for fetching UTM term data
  */
-export function createUTMTermBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 10) {
+export function createUTMTermBuilder(websiteId: string, startDate: string, endDate: string, limit = 10) {
   const builder = createSqlBuilder();
   builder.setTable('events');
   

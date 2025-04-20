@@ -2,8 +2,8 @@ export { prisma as db, prisma, createClientWithContext } from './client' // expo
 export * from "../generated/client" // exports generated types from prisma
 // export { createAuditMiddleware, withAuditContext } from './middleware' // exports audit middleware
 
-export * from '../../../apps/api/src/clickhouse/client'
-export * from '../../../apps/api/src/clickhouse/schema'
+export * from './clickhouse/client'
+export * from './clickhouse/schema'
 export * from './sql_builder'
 // Export all services
 export * from './services/client.service'

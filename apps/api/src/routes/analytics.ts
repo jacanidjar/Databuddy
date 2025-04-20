@@ -5,10 +5,10 @@
  */
 
 import { Hono } from 'hono';
-import { createLogger } from '../lib/logger';
+import { createLogger } from '@databuddy/logger';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
-import { chQuery, createSqlBuilder } from '../clickhouse/client';
+import { chQuery, createSqlBuilder } from '@databuddy/db';
 import type { AppVariables } from '../types';
 import { authMiddleware } from '../middleware/auth';
 import { UAParser } from 'ua-parser-js';

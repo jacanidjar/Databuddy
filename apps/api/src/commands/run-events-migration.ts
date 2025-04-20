@@ -10,7 +10,7 @@
  */
 
 import migrateEventsSchema from '../scripts/migrate-events-schema';
-import { createLogger } from '../lib/logger';
+import { createLogger } from '@databuddy/logger';
 
 const logger = createLogger('migration-runner');
 

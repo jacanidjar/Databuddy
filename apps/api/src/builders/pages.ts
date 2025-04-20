@@ -29,7 +29,7 @@ export interface TopPage {
 /**
  * Creates a builder for fetching top pages data
  */
-export function createTopPagesBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 5) {
+export function createTopPagesBuilder(websiteId: string, startDate: string, endDate: string, limit = 5) {
   const builder = createSqlBuilder();
   builder.setTable('events');
   
@@ -118,7 +118,7 @@ export function createPageTimeSeriesBuilder(websiteId: string, path: string, sta
 /**
  * Creates a builder for fetching entry pages data
  */
-export function createEntryPagesBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 10) {
+export function createEntryPagesBuilder(websiteId: string, startDate: string, endDate: string, limit = 10) {
   const builder = createSqlBuilder();
   
   const sql = `
@@ -166,7 +166,7 @@ export function createEntryPagesBuilder(websiteId: string, startDate: string, en
 /**
  * Creates a builder for fetching exit pages data
  */
-export function createExitPagesBuilder(websiteId: string, startDate: string, endDate: string, limit: number = 10) {
+export function createExitPagesBuilder(websiteId: string, startDate: string, endDate: string, limit = 10) {
   const builder = createSqlBuilder();
   
   const sql = `
