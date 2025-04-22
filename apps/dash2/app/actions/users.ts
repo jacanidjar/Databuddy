@@ -157,12 +157,9 @@ export async function deactivateUserAccount(formData: FormData) {
       data: {
         deletedAt: new Date(),
         // Store scheduled deletion date in database
-        // This record is used by a cleanup job to permanently delete after grace period
+        // This record is used by a cleanup job to permanently delete after grace period (ensuring user has time to cancel)
       }
     });
-
-    // You might want to also terminate all sessions
-    // await db.session.deleteMany({ where: { userId: user.id } });
 
     revalidatePath("/settings");
     return { success: true };

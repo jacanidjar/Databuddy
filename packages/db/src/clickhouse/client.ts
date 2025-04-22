@@ -1,4 +1,3 @@
-import { createLogger } from '@databuddy/logger';
 import type { LogParams, ErrorLogParams, WarnLogParams, Logger, ResponseJSON } from '@clickhouse/client';
 import { ClickHouseLogLevel, createClient } from '@clickhouse/client';
 import type { NodeClickHouseClientConfigOptions } from '@clickhouse/client/dist/config';
@@ -19,7 +18,7 @@ export const TABLE_NAMES = {
   performance_stats: 'analytics.performance_stats'
 };
 
-const logger = createLogger('clickhouse');
+const logger = console;
 
 class CustomLogger implements Logger {
     trace({ message, args }: LogParams) {
@@ -123,11 +122,6 @@ class CustomLogger implements Logger {
       return value;
     },
   });
-
-  const cleanQuery = (query?: string) =>
-    typeof query === 'string'
-      ? query.replace(/\n/g, "").replace(/\s+/g, " ").trim()
-      : undefined;
 
   export async function chQueryWithMeta<T extends Record<string, any>>(
     query: string,
