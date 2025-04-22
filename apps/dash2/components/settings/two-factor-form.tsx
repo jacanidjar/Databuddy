@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSession, authClient, useUser } from "@databuddy/auth/client";
+import { useSession, authClient } from "@databuddy/auth/client";
 import { enableTwoFactor, verifyTwoFactorCode, generateBackupCodes } from "@databuddy/auth/client";
 import { toast } from "sonner";
 import { Loader2, Copy, Check, Key, Shield, Download } from "lucide-react";
@@ -36,7 +36,6 @@ type VerifyFormValues = z.infer<typeof verifyFormSchema>;
 
 export function TwoFactorForm() {
   const { data: session } = useSession();
-//   const { user, isLoading: userLoading } = useUser();
   const [isLoading, setIsLoading] = useState(false);
   const [isEnabled, setIsEnabled] = useState(false);
   const [setupStep, setSetupStep] = useState<'initial' | 'qrcode' | 'verify' | 'complete'>('initial');
