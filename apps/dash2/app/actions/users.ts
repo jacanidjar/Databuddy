@@ -5,12 +5,10 @@ import { db } from "@databuddy/db";
 import { auth } from "@databuddy/auth";
 import { headers } from "next/headers";
 import { cache } from "react";
-import { createLogger } from "@databuddy/logger";
 import { z } from "zod";
 import { uploadOptimizedImage } from "@/lib/supabase";
-import { CropData, ImageEditOptions } from "@/types/image";
-
-const logger = createLogger("users-actions");
+import type { CropData, ImageEditOptions } from "@/types/image";
+import { logger } from "@sentry/nextjs";
 
 // Helper to get authenticated user
 const getUser = cache(async () => {
@@ -58,7 +56,7 @@ export async function uploadProfileImage(formData: FormData) {
       try {
         cropData = JSON.parse(cropDataStr);
       } catch (e) {
-        logger.error("Failed to parse crop data", e);
+        console.error("Failed to parse crop data", e);
       }
     }
 
@@ -69,7 +67,7 @@ export async function uploadProfileImage(formData: FormData) {
       try {
         edits = JSON.parse(editsStr);
       } catch (e) {
-        logger.error("Failed to parse edit options", e);
+        console.error("Failed to parse edit options", e);
       }
     }
 
@@ -85,7 +83,7 @@ export async function uploadProfileImage(formData: FormData) {
     
     return { url: result.medium };
   } catch (error) {
-    logger.error("Profile image upload error:", error);
+    console.error("Profile image upload error:", error);
     return { error: "Failed to upload image" };
   }
 }
@@ -125,7 +123,7 @@ export async function updateUserProfile(formData: FormData) {
     revalidatePath("/settings");
     return { success: true };
   } catch (error) {
-    logger.error("Profile update error:", error);
+    console.error("Profile update error:", error);
     if (error instanceof z.ZodError) {
       return { error: error.errors[0].message };
     }
@@ -169,7 +167,7 @@ export async function deactivateUserAccount(formData: FormData) {
     revalidatePath("/settings");
     return { success: true };
   } catch (error) {
-    logger.error("Account deletion error:", error);
+    console.error("Account deletion error:", error);
     return { error: "Failed to process account deletion" };
   }
 } 

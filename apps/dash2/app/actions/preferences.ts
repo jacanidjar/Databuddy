@@ -5,10 +5,7 @@ import { db } from "@databuddy/db";
 import { auth } from "@databuddy/auth";
 import { headers } from "next/headers";
 import { cache } from "react";
-import { createLogger } from "@databuddy/logger";
 import { z } from "zod";
-
-const logger = createLogger("preferences-actions");
 
 // Helper to get authenticated user
 const getUser = cache(async () => {
@@ -53,7 +50,7 @@ export async function getUserPreferences() {
     
     return { data: preferences };
   } catch (error) {
-    logger.error('Failed to get user preferences', { error });
+    console.error('Failed to get user preferences', { error });
     return { error: "Failed to get user preferences" };
   }
 }
@@ -108,7 +105,7 @@ export async function updateUserPreferences(formData: FormData) {
     revalidatePath("/settings");
     return { success: true, data: preferences };
   } catch (error) {
-    logger.error("Preferences update error:", error);
+    console.error("Preferences update error:", error);
     if (error instanceof z.ZodError) {
       return { error: error.errors[0].message };
     }
