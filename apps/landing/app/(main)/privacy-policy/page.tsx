@@ -4,7 +4,7 @@ import Footer from "@/app/components/footer";
 import FadeIn from "@/app/components/FadeIn";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import { 
   Shield, 
   Mail,
@@ -265,7 +265,7 @@ export default function PrivacyPolicyPage() {
                     </h2>
                     
                     {section.content.map((contentBlock, index) => (
-                      <div key={index} className="mb-6">
+                      <div key={contentBlock.subtitle} className="mb-6">
                         {contentBlock.subtitle && (
                           <h3 className="text-xl font-semibold mb-2 text-slate-100">{contentBlock.subtitle}</h3>
                         )}
@@ -277,9 +277,10 @@ export default function PrivacyPolicyPage() {
                         {contentBlock.items && contentBlock.items.length > 0 && (
                           <ul className="space-y-2 mb-4">
                             {contentBlock.items.map((item, i) => (
-                              <li key={i} className="flex items-start">
+                              <li key={item} className="flex items-start">
                                 <span className="text-sky-400 mr-2 mt-1.5">•</span>
-                                <span className="text-slate-300" dangerouslySetInnerHTML={{ __html: item }}></span>
+                                {/* biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation> */}
+                                <span className="text-slate-300" dangerouslySetInnerHTML={{ __html: item }}/>
                               </li>
                             ))}
                           </ul>
@@ -294,7 +295,8 @@ export default function PrivacyPolicyPage() {
                         )}
                         
                         {contentBlock.additionalText && (
-                          <p className="text-slate-300 mt-2" dangerouslySetInnerHTML={{ __html: contentBlock.additionalText }}></p>
+                          // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+                          <p className="text-slate-300 mt-2" dangerouslySetInnerHTML={{ __html: contentBlock.additionalText }}/>
                         )}
                       </div>
                     ))}
@@ -319,12 +321,6 @@ export default function PrivacyPolicyPage() {
                       <Mail className="h-5 w-5 mr-2" />
                       <a href="mailto:privacy@databuddy.cc" className="hover:underline">privacy@databuddy.cc</a>
                     </p>
-                    {/* <p className="text-slate-300">
-                      Databuddy<br />
-                      123 Data Street<br />
-                      Analytics City, AC 12345<br />
-                      United States
-                    </p> */}
                   </div>
                 </div>
               </div>
@@ -340,17 +336,6 @@ export default function PrivacyPolicyPage() {
                     <ArrowRight className="h-4 w-4 ml-1" />
                   </Link>
                 </Button>
-              </div>
-              
-              {/* Back to top button */}
-              <div className="flex justify-center mt-12">
-                <a 
-                  href="#" 
-                  className="inline-flex items-center gap-1 px-4 py-2 rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
-                >
-                  <ArrowRight className="h-4 w-4 -rotate-90" />
-                  Back to top
-                </a>
               </div>
             </div>
           </FadeIn>
