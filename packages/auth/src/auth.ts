@@ -29,24 +29,25 @@ export const auth = betterAuth({
         provider: "postgresql",
     }),
     appName: "databuddy.cc",
-    user: {
-        deleteUser: {
-            enabled: true,
-            beforeDelete: async (user) => {
-                // Add any cleanup logic here
-            },
-        },
-    },
     advanced: {
         crossSubDomainCookies: {
             enabled: true,
-        }
+            domain: ".databuddy.cc"
+        },
+        defaultCookieAttributes: {
+            httpOnly: true,
+            secure: isProduction(),
+            sameSite: "none",
+            partitioned: true
+        },
+        cookiePrefix: "databuddy",
+        useSecureCookies: isProduction()
     },
-    cookie: {
-        domain: isProduction() ? ".databuddy.cc" : undefined,
-        secure: isProduction(),
-        sameSite: "lax"
-    },
+    trustedOrigins: [
+        'https://databuddy.cc',
+        'https://app.databuddy.cc',
+        'https://api.databuddy.cc'
+    ],
     socialProviders: {
         google: {
             clientId: process.env.GOOGLE_CLIENT_ID as string,
