@@ -31,14 +31,8 @@ export const auth = betterAuth({
     appName: "databuddy.cc",
     advanced: {
         crossSubDomainCookies: {
-            enabled: true,
+            enabled: isProduction(),
             domain: ".databuddy.cc"
-        },
-        defaultCookieAttributes: {
-            httpOnly: true,
-            secure: isProduction(),
-            sameSite: "none",
-            partitioned: true
         },
         cookiePrefix: "databuddy",
         useSecureCookies: isProduction()
