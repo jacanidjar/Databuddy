@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Website } from "@/hooks/use-websites";
+import type { Website } from "@/stores/use-websites-store";
 import { useWebsitesStore } from "@/stores/use-websites-store";
 
 interface VerificationDialogProps {
@@ -37,15 +37,6 @@ export const VerificationDialog = memo(function VerificationDialog({
   const setSelectedWebsite = useWebsitesStore(state => state.setSelectedWebsite);
   const setShowVerificationDialog = useWebsitesStore(state => state.setShowVerificationDialog);
   
-  // Update token when website changes or dialog opens - use state to avoid re-renders
-  useEffect(() => {
-    let isMounted = true;
-    if (website?.verificationToken && isMounted) {
-      setDisplayToken(website.verificationToken);
-    }
-    return () => { isMounted = false; };
-  }, [website?.verificationToken]);
-
   // Reset token when dialog closes
   useEffect(() => {
     if (!open) {
