@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { customSession, multiSession, twoFactor, organization, emailOTP, magicLink } from "better-auth/plugins";
+import { customSession, multiSession, twoFactor, emailOTP, magicLink, bearer } from "better-auth/plugins";
 import { getSessionCookie } from "better-auth/cookies";
 import { db } from "@databuddy/db";
 import { Resend } from "resend";
@@ -153,6 +153,7 @@ export const auth = betterAuth({
         }),
         twoFactor(),
         multiSession(),
+        bearer(),
         // captcha({
         //     provider: "cloudflare-turnstile",
         //     secretKey: process.env.RECAPTCHA_SECRET_KEY as string,

@@ -15,7 +15,8 @@ import {
   Users, 
   Plug, 
   ChevronLeft,
-  Menu
+  Menu,
+  Link as LinkIcon
 } from "lucide-react";
 import { useState } from "react";
 import { TopHeader } from "./top-header";
@@ -39,6 +40,7 @@ const mainNavigation: NavigationSection[] = [
     title: "Main",
     items: [
       { name: "Websites", icon: <Globe className="h-4 w-4" />, href: "/websites", rootLevel: true },
+      { name: "Domains", icon: <LinkIcon className="h-4 w-4" />, href: "/domains", rootLevel: true },
       // { name: "Analytics", icon: <BarChart className="h-4 w-4" />, href: "/analytics", rootLevel: true },
       { name: "Settings", icon: <Settings className="h-4 w-4" />, href: "/settings", rootLevel: true },
       { name: "Billing", icon: <CreditCard className="h-4 w-4" />, href: "/billing", rootLevel: true },

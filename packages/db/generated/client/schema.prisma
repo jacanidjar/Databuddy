@@ -65,6 +65,9 @@ model User {
   // User preferences relation
   preferences UserPreference?
 
+  // Domain verification relation
+  domains Domain[]
+
   @@map("user")
 }
 
@@ -197,24 +200,53 @@ model Website {
   domain String        @unique
   name   String?
   status WebsiteStatus @default(ACTIVE)
-  // Can belong to either a user (personal site) or a project (org site)
 
+  // Reference to the verified domain
+  domainId       String?
+  verifiedDomain Domain? @relation(fields: [domainId], references: [id])
+
+  // User-owned website
+  userId    String?
+  user      User?     @relation(fields: [userId], references: [id])
+  // Project-owned website (represents connection to organizations)
+  projectId String?   @unique // One project can have one website
+  project   Project?  @relation(fields: [projectId], references: [id])
+  // Timestamps & soft delete
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId])
+  @@index([domainId])
+  @@map("websites")
+}
+
+// New Domain model for verified top-level domains
+model Domain {
+  id                 String             @id @default(uuid())
+  name               String             @unique // The top-level domain (e.g., example.com)
   verificationStatus VerificationStatus @default(PENDING)
   verificationToken  String?            @unique @default(uuid())
   verifiedAt         DateTime?
-  // User-owned website
-  userId             String?
-  user               User?              @relation(fields: [userId], references: [id])
-  // Project-owned website (represents connection to organizations)
-  projectId          String?            @unique // One project can have one website
-  project            Project?           @relation(fields: [projectId], references: [id])
-  // Timestamps & soft delete
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @default(now()) @updatedAt
-  deletedAt          DateTime?
+
+  // Domain can be owned by either a user or a project
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+
+  // DNS records for verification
+  dnsRecords Json? // Store DNS records for verification
+  // Timestamps
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now()) @updatedAt
+  deletedAt  DateTime?
+  // Relation to websites using this domain (including subdomains)
+  websites   Website[]
 
   @@index([userId])
-  @@map("websites")
+  @@index([projectId])
+  @@map("domains")
 }
 
 enum WebsiteStatus {
@@ -320,6 +352,7 @@ model Project {
   access      ProjectAccess[]
   events      EventMeta[]
   website     Website? // New: A project of type WEBSITE can have an associated website
+  domains     Domain[] // Domains owned by this project
 
   @@map("projects")
 }

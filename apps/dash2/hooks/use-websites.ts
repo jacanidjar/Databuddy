@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useWebsitesStore } from '@/stores/use-websites-store';
 import { toast } from 'sonner';
 import { 
@@ -8,8 +8,6 @@ import {
   deleteWebsite as deleteWebsiteAction, 
   getUserWebsites,
   updateWebsite as updateWebsiteAction,
-  checkDomainVerification,
-  regenerateVerificationToken
 } from "@/app/actions/websites";
 import { useQuery } from '@tanstack/react-query';
 
@@ -18,46 +16,54 @@ export interface Website {
   name: string | null;
   domain: string;
   userId?: string | null;
+  projectId?: string | null;
+  domainId?: string | null;
   createdAt: Date;
   updatedAt: Date;
   status?: string;
-  verificationToken?: string | null;
-  verificationStatus?: "PENDING" | "VERIFIED" | "FAILED";
-  verifiedAt?: Date | null;
 }
 
 interface CreateWebsiteData {
   name: string;
   domain: string;
+  domainId?: string;
 }
 
 interface UpdateWebsiteData {
   name?: string;
   domain?: string;
+  domainId?: string | null;
 }
 
 export function useWebsites() {
   const store = useWebsitesStore();
+  const storeRef = useRef(store);
   
-  const fetchWebsites = async () => {
-    store.setIsLoading(true);
-    store.setIsError(false);
+  // Update the ref when store changes
+  useEffect(() => {
+    storeRef.current = store;
+  }, [store]);
+  
+  const fetchWebsites = useCallback(async () => {
+    const currentStore = storeRef.current;
+    currentStore.setIsLoading(true);
+    currentStore.setIsError(false);
     
     try {
       const result = await getUserWebsites();
       if (result.error) {
         toast.error(result.error);
-        store.setIsError(true);
+        currentStore.setIsError(true);
         return;
       }
-      store.setWebsites(result.data || []);
+      currentStore.setWebsites(result.data || []);
     } catch (error) {
       console.error('Error fetching websites:', error);
-      store.setIsError(true);
+      currentStore.setIsError(true);
     } finally {
-      store.setIsLoading(false);
+      currentStore.setIsLoading(false);
     }
-  };
+  }, []); // No dependencies needed
 
   const createWebsite = async (data: CreateWebsiteData) => {
     store.setIsCreating(true);
@@ -119,65 +125,10 @@ export function useWebsites() {
     }
   };
 
-  const verifyDomain = async (id: string) => {
-    store.setIsVerifying(true);
-    
-    try {
-      const result = await checkDomainVerification(id);
-      if (result.error) {
-        toast.error(result.error);
-        return;
-      }
-      
-      if (result.data?.verified) {
-        toast.success(result.data.message);
-      } else {
-        toast.error(result.data?.message || "Verification failed");
-      }
-      
-      await fetchWebsites();
-    } catch (error) {
-      console.error('Error verifying domain:', error);
-      toast.error("Failed to verify domain");
-    } finally {
-      store.setIsVerifying(false);
-    }
-  };
-
-  const regenerateToken = async (id: string) => {
-    store.setIsRegenerating(true);
-    
-    try {
-      const result = await regenerateVerificationToken(id);
-      if (result.error) {
-        toast.error(result.error);
-        return result;
-      }
-      
-      // First update the websites list
-      await fetchWebsites();
-      
-      // Then find the updated website and update the selected website in the store
-      const updatedWebsite = store.websites.find(w => w.id === id);
-      if (updatedWebsite) {
-        store.setSelectedWebsite(updatedWebsite);
-      }
-      
-      toast.success("Verification token regenerated");
-      return result;
-    } catch (error) {
-      console.error('Error regenerating token:', error);
-      toast.error("Failed to regenerate token");
-      throw error;
-    } finally {
-      store.setIsRegenerating(false);
-    }
-  };
-
   // Fetch websites on mount
   useEffect(() => {
     fetchWebsites();
-  }, []);
+  }, [fetchWebsites]);
 
   return {
     // Data
@@ -190,18 +141,12 @@ export function useWebsites() {
     isCreating: store.isCreating,
     isUpdating: store.isUpdating,
     isDeleting: store.isDeleting,
-    isVerifying: store.isVerifying,
-    isRegenerating: store.isRegenerating,
-    showVerificationDialog: store.showVerificationDialog,
     
     // Actions
     setSelectedWebsite: store.setSelectedWebsite,
-    setShowVerificationDialog: store.setShowVerificationDialog,
     createWebsite,
     updateWebsite,
     deleteWebsite,
-    verifyDomain,
-    regenerateToken,
     refetch: fetchWebsites,
   };
 }

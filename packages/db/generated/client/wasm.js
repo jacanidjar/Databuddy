@@ -215,11 +215,23 @@ exports.Prisma.WebsiteScalarFieldEnum = {
   domain: 'domain',
   name: 'name',
   status: 'status',
+  domainId: 'domainId',
+  userId: 'userId',
+  projectId: 'projectId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.DomainScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
   verificationStatus: 'verificationStatus',
   verificationToken: 'verificationToken',
   verifiedAt: 'verifiedAt',
   userId: 'userId',
   projectId: 'projectId',
+  dnsRecords: 'dnsRecords',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'
@@ -428,6 +440,7 @@ exports.Prisma.ModelName = {
   Category: 'Category',
   Tag: 'Tag',
   Website: 'Website',
+  Domain: 'Domain',
   Account: 'Account',
   Subscription: 'Subscription',
   ProjectAccess: 'ProjectAccess',

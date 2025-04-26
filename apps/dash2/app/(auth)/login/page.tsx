@@ -34,6 +34,18 @@ function LoginPage() {
     try {
       const { error } = await authClient.magicLink.verify({
         query: { token },
+        fetchOptions: {
+          onSuccess: (ctx) => {
+            const authToken = ctx.response.headers.get("set-auth-token")
+            if (authToken) {
+              localStorage.setItem("authToken", authToken);
+            }
+          },
+          onError: () => {
+            toast.error("Failed to verify magic link. Please try again.");
+            router.push("/login");
+          }
+        }
       });
 
       if (error) {
@@ -57,8 +69,12 @@ function LoginPage() {
       provider: "google",
       callbackURL: "/home",
       fetchOptions: {
-        onSuccess: () => {
+        onSuccess: (ctx) => {
           toast.success("Login successful!");
+          const authToken = ctx.response.headers.get("set-auth-token")
+          if (authToken) {
+            localStorage.setItem("authToken", authToken);
+          }
         },
         onError: () => {
           setIsLoading(false);
@@ -82,8 +98,12 @@ function LoginPage() {
         password,
         callbackURL: "/home",
         fetchOptions: {
-          onSuccess: () => {
+          onSuccess: (ctx) => {
             toast.success("Login successful!");
+            const authToken = ctx.response.headers.get("set-auth-token")
+            if (authToken) {
+              localStorage.setItem("authToken", authToken);
+            }
           },
           onError: (error: any) => {
             setIsLoading(false);
@@ -139,7 +159,11 @@ function LoginPage() {
         email,
         callbackURL: "/home",
         fetchOptions: {
-          onSuccess: () => {
+          onSuccess: (ctx) => {
+            const authToken = ctx.response.headers.get("set-auth-token")
+            if (authToken) {
+              localStorage.setItem("authToken", authToken);
+            }
             setIsLoading(false);
             toast.success("Magic link sent! Please check your email.");
             setView("magic-sent");

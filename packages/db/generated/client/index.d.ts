@@ -59,6 +59,11 @@ export type Tag = $Result.DefaultSelection<Prisma.$TagPayload>
  */
 export type Website = $Result.DefaultSelection<Prisma.$WebsitePayload>
 /**
+ * Model Domain
+ * 
+ */
+export type Domain = $Result.DefaultSelection<Prisma.$DomainPayload>
+/**
  * Model Account
  * 
  */
@@ -451,6 +456,16 @@ export class PrismaClient<
     * ```
     */
   get website(): Prisma.WebsiteDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.domain`: Exposes CRUD operations for the **Domain** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Domains
+    * const domains = await prisma.domain.findMany()
+    * ```
+    */
+  get domain(): Prisma.DomainDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.account`: Exposes CRUD operations for the **Account** model.
@@ -990,6 +1005,7 @@ export namespace Prisma {
     Category: 'Category',
     Tag: 'Tag',
     Website: 'Website',
+    Domain: 'Domain',
     Account: 'Account',
     Subscription: 'Subscription',
     ProjectAccess: 'ProjectAccess',
@@ -1017,7 +1033,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "email" | "contact" | "user" | "verification" | "session" | "post" | "category" | "tag" | "website" | "account" | "subscription" | "projectAccess" | "project" | "eventMeta" | "client" | "auditLog" | "twoFactor" | "userPreference"
+      modelProps: "email" | "contact" | "user" | "verification" | "session" | "post" | "category" | "tag" | "website" | "domain" | "account" | "subscription" | "projectAccess" | "project" | "eventMeta" | "client" | "auditLog" | "twoFactor" | "userPreference"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1684,6 +1700,80 @@ export namespace Prisma {
           count: {
             args: Prisma.WebsiteCountArgs<ExtArgs>
             result: $Utils.Optional<WebsiteCountAggregateOutputType> | number
+          }
+        }
+      }
+      Domain: {
+        payload: Prisma.$DomainPayload<ExtArgs>
+        fields: Prisma.DomainFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.DomainFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DomainPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.DomainFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DomainPayload>
+          }
+          findFirst: {
+            args: Prisma.DomainFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DomainPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.DomainFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DomainPayload>
+          }
+          findMany: {
+            args: Prisma.DomainFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DomainPayload>[]
+          }
+          create: {
+            args: Prisma.DomainCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DomainPayload>
+          }
+          createMany: {
+            args: Prisma.DomainCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.DomainCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DomainPayload>[]
+          }
+          delete: {
+            args: Prisma.DomainDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DomainPayload>
+          }
+          update: {
+            args: Prisma.DomainUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DomainPayload>
+          }
+          deleteMany: {
+            args: Prisma.DomainDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.DomainUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.DomainUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DomainPayload>[]
+          }
+          upsert: {
+            args: Prisma.DomainUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DomainPayload>
+          }
+          aggregate: {
+            args: Prisma.DomainAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateDomain>
+          }
+          groupBy: {
+            args: Prisma.DomainGroupByArgs<ExtArgs>
+            result: $Utils.Optional<DomainGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.DomainCountArgs<ExtArgs>
+            result: $Utils.Optional<DomainCountAggregateOutputType> | number
           }
         }
       }
@@ -2446,6 +2536,7 @@ export namespace Prisma {
     category?: CategoryOmit
     tag?: TagOmit
     website?: WebsiteOmit
+    domain?: DomainOmit
     account?: AccountOmit
     subscription?: SubscriptionOmit
     projectAccess?: ProjectAccessOmit
@@ -2557,6 +2648,7 @@ export namespace Prisma {
     accounts: number
     auditLogs: number
     twofactors: number
+    domains: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2568,6 +2660,7 @@ export namespace Prisma {
     accounts?: boolean | UserCountOutputTypeCountAccountsArgs
     auditLogs?: boolean | UserCountOutputTypeCountAuditLogsArgs
     twofactors?: boolean | UserCountOutputTypeCountTwofactorsArgs
+    domains?: boolean | UserCountOutputTypeCountDomainsArgs
   }
 
   // Custom InputTypes
@@ -2635,6 +2728,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountTwofactorsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: TwoFactorWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountDomainsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: DomainWhereInput
   }
 
 
@@ -2732,17 +2832,50 @@ export namespace Prisma {
 
 
   /**
+   * Count Type DomainCountOutputType
+   */
+
+  export type DomainCountOutputType = {
+    websites: number
+  }
+
+  export type DomainCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    websites?: boolean | DomainCountOutputTypeCountWebsitesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * DomainCountOutputType without action
+   */
+  export type DomainCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DomainCountOutputType
+     */
+    select?: DomainCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * DomainCountOutputType without action
+   */
+  export type DomainCountOutputTypeCountWebsitesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WebsiteWhereInput
+  }
+
+
+  /**
    * Count Type ProjectCountOutputType
    */
 
   export type ProjectCountOutputType = {
     access: number
     events: number
+    domains: number
   }
 
   export type ProjectCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     access?: boolean | ProjectCountOutputTypeCountAccessArgs
     events?: boolean | ProjectCountOutputTypeCountEventsArgs
+    domains?: boolean | ProjectCountOutputTypeCountDomainsArgs
   }
 
   // Custom InputTypes
@@ -2768,6 +2901,13 @@ export namespace Prisma {
    */
   export type ProjectCountOutputTypeCountEventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: EventMetaWhereInput
+  }
+
+  /**
+   * ProjectCountOutputType without action
+   */
+  export type ProjectCountOutputTypeCountDomainsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: DomainWhereInput
   }
 
 
@@ -5153,6 +5293,7 @@ export namespace Prisma {
     auditLogs?: boolean | User$auditLogsArgs<ExtArgs>
     twofactors?: boolean | User$twofactorsArgs<ExtArgs>
     preferences?: boolean | User$preferencesArgs<ExtArgs>
+    domains?: boolean | User$domainsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -5218,6 +5359,7 @@ export namespace Prisma {
     auditLogs?: boolean | User$auditLogsArgs<ExtArgs>
     twofactors?: boolean | User$twofactorsArgs<ExtArgs>
     preferences?: boolean | User$preferencesArgs<ExtArgs>
+    domains?: boolean | User$domainsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -5235,6 +5377,7 @@ export namespace Prisma {
       auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
       twofactors: Prisma.$TwoFactorPayload<ExtArgs>[]
       preferences: Prisma.$UserPreferencePayload<ExtArgs> | null
+      domains: Prisma.$DomainPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -5654,6 +5797,7 @@ export namespace Prisma {
     auditLogs<T extends User$auditLogsArgs<ExtArgs> = {}>(args?: Subset<T, User$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     twofactors<T extends User$twofactorsArgs<ExtArgs> = {}>(args?: Subset<T, User$twofactorsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TwoFactorPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     preferences<T extends User$preferencesArgs<ExtArgs> = {}>(args?: Subset<T, User$preferencesArgs<ExtArgs>>): Prisma__UserPreferenceClient<$Result.GetResult<Prisma.$UserPreferencePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    domains<T extends User$domainsArgs<ExtArgs> = {}>(args?: Subset<T, User$domainsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DomainPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -6293,6 +6437,30 @@ export namespace Prisma {
      */
     include?: UserPreferenceInclude<ExtArgs> | null
     where?: UserPreferenceWhereInput
+  }
+
+  /**
+   * User.domains
+   */
+  export type User$domainsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Domain
+     */
+    select?: DomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Domain
+     */
+    omit?: DomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DomainInclude<ExtArgs> | null
+    where?: DomainWhereInput
+    orderBy?: DomainOrderByWithRelationInput | DomainOrderByWithRelationInput[]
+    cursor?: DomainWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: DomainScalarFieldEnum | DomainScalarFieldEnum[]
   }
 
   /**
@@ -11838,9 +12006,7 @@ export namespace Prisma {
     domain: string | null
     name: string | null
     status: $Enums.WebsiteStatus | null
-    verificationStatus: $Enums.VerificationStatus | null
-    verificationToken: string | null
-    verifiedAt: Date | null
+    domainId: string | null
     userId: string | null
     projectId: string | null
     createdAt: Date | null
@@ -11853,9 +12019,7 @@ export namespace Prisma {
     domain: string | null
     name: string | null
     status: $Enums.WebsiteStatus | null
-    verificationStatus: $Enums.VerificationStatus | null
-    verificationToken: string | null
-    verifiedAt: Date | null
+    domainId: string | null
     userId: string | null
     projectId: string | null
     createdAt: Date | null
@@ -11868,9 +12032,7 @@ export namespace Prisma {
     domain: number
     name: number
     status: number
-    verificationStatus: number
-    verificationToken: number
-    verifiedAt: number
+    domainId: number
     userId: number
     projectId: number
     createdAt: number
@@ -11885,9 +12047,7 @@ export namespace Prisma {
     domain?: true
     name?: true
     status?: true
-    verificationStatus?: true
-    verificationToken?: true
-    verifiedAt?: true
+    domainId?: true
     userId?: true
     projectId?: true
     createdAt?: true
@@ -11900,9 +12060,7 @@ export namespace Prisma {
     domain?: true
     name?: true
     status?: true
-    verificationStatus?: true
-    verificationToken?: true
-    verifiedAt?: true
+    domainId?: true
     userId?: true
     projectId?: true
     createdAt?: true
@@ -11915,9 +12073,7 @@ export namespace Prisma {
     domain?: true
     name?: true
     status?: true
-    verificationStatus?: true
-    verificationToken?: true
-    verifiedAt?: true
+    domainId?: true
     userId?: true
     projectId?: true
     createdAt?: true
@@ -12003,9 +12159,7 @@ export namespace Prisma {
     domain: string
     name: string | null
     status: $Enums.WebsiteStatus
-    verificationStatus: $Enums.VerificationStatus
-    verificationToken: string | null
-    verifiedAt: Date | null
+    domainId: string | null
     userId: string | null
     projectId: string | null
     createdAt: Date
@@ -12035,14 +12189,13 @@ export namespace Prisma {
     domain?: boolean
     name?: boolean
     status?: boolean
-    verificationStatus?: boolean
-    verificationToken?: boolean
-    verifiedAt?: boolean
+    domainId?: boolean
     userId?: boolean
     projectId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     deletedAt?: boolean
+    verifiedDomain?: boolean | Website$verifiedDomainArgs<ExtArgs>
     user?: boolean | Website$userArgs<ExtArgs>
     project?: boolean | Website$projectArgs<ExtArgs>
   }, ExtArgs["result"]["website"]>
@@ -12052,14 +12205,13 @@ export namespace Prisma {
     domain?: boolean
     name?: boolean
     status?: boolean
-    verificationStatus?: boolean
-    verificationToken?: boolean
-    verifiedAt?: boolean
+    domainId?: boolean
     userId?: boolean
     projectId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     deletedAt?: boolean
+    verifiedDomain?: boolean | Website$verifiedDomainArgs<ExtArgs>
     user?: boolean | Website$userArgs<ExtArgs>
     project?: boolean | Website$projectArgs<ExtArgs>
   }, ExtArgs["result"]["website"]>
@@ -12069,14 +12221,13 @@ export namespace Prisma {
     domain?: boolean
     name?: boolean
     status?: boolean
-    verificationStatus?: boolean
-    verificationToken?: boolean
-    verifiedAt?: boolean
+    domainId?: boolean
     userId?: boolean
     projectId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     deletedAt?: boolean
+    verifiedDomain?: boolean | Website$verifiedDomainArgs<ExtArgs>
     user?: boolean | Website$userArgs<ExtArgs>
     project?: boolean | Website$projectArgs<ExtArgs>
   }, ExtArgs["result"]["website"]>
@@ -12086,9 +12237,7 @@ export namespace Prisma {
     domain?: boolean
     name?: boolean
     status?: boolean
-    verificationStatus?: boolean
-    verificationToken?: boolean
-    verifiedAt?: boolean
+    domainId?: boolean
     userId?: boolean
     projectId?: boolean
     createdAt?: boolean
@@ -12096,16 +12245,19 @@ export namespace Prisma {
     deletedAt?: boolean
   }
 
-  export type WebsiteOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "domain" | "name" | "status" | "verificationStatus" | "verificationToken" | "verifiedAt" | "userId" | "projectId" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["website"]>
+  export type WebsiteOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "domain" | "name" | "status" | "domainId" | "userId" | "projectId" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["website"]>
   export type WebsiteInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    verifiedDomain?: boolean | Website$verifiedDomainArgs<ExtArgs>
     user?: boolean | Website$userArgs<ExtArgs>
     project?: boolean | Website$projectArgs<ExtArgs>
   }
   export type WebsiteIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    verifiedDomain?: boolean | Website$verifiedDomainArgs<ExtArgs>
     user?: boolean | Website$userArgs<ExtArgs>
     project?: boolean | Website$projectArgs<ExtArgs>
   }
   export type WebsiteIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    verifiedDomain?: boolean | Website$verifiedDomainArgs<ExtArgs>
     user?: boolean | Website$userArgs<ExtArgs>
     project?: boolean | Website$projectArgs<ExtArgs>
   }
@@ -12113,6 +12265,7 @@ export namespace Prisma {
   export type $WebsitePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Website"
     objects: {
+      verifiedDomain: Prisma.$DomainPayload<ExtArgs> | null
       user: Prisma.$UserPayload<ExtArgs> | null
       project: Prisma.$ProjectPayload<ExtArgs> | null
     }
@@ -12121,9 +12274,7 @@ export namespace Prisma {
       domain: string
       name: string | null
       status: $Enums.WebsiteStatus
-      verificationStatus: $Enums.VerificationStatus
-      verificationToken: string | null
-      verifiedAt: Date | null
+      domainId: string | null
       userId: string | null
       projectId: string | null
       createdAt: Date
@@ -12523,6 +12674,7 @@ export namespace Prisma {
    */
   export interface Prisma__WebsiteClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    verifiedDomain<T extends Website$verifiedDomainArgs<ExtArgs> = {}>(args?: Subset<T, Website$verifiedDomainArgs<ExtArgs>>): Prisma__DomainClient<$Result.GetResult<Prisma.$DomainPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     user<T extends Website$userArgs<ExtArgs> = {}>(args?: Subset<T, Website$userArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     project<T extends Website$projectArgs<ExtArgs> = {}>(args?: Subset<T, Website$projectArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
@@ -12558,9 +12710,7 @@ export namespace Prisma {
     readonly domain: FieldRef<"Website", 'String'>
     readonly name: FieldRef<"Website", 'String'>
     readonly status: FieldRef<"Website", 'WebsiteStatus'>
-    readonly verificationStatus: FieldRef<"Website", 'VerificationStatus'>
-    readonly verificationToken: FieldRef<"Website", 'String'>
-    readonly verifiedAt: FieldRef<"Website", 'DateTime'>
+    readonly domainId: FieldRef<"Website", 'String'>
     readonly userId: FieldRef<"Website", 'String'>
     readonly projectId: FieldRef<"Website", 'String'>
     readonly createdAt: FieldRef<"Website", 'DateTime'>
@@ -12962,6 +13112,25 @@ export namespace Prisma {
   }
 
   /**
+   * Website.verifiedDomain
+   */
+  export type Website$verifiedDomainArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Domain
+     */
+    select?: DomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Domain
+     */
+    omit?: DomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DomainInclude<ExtArgs> | null
+    where?: DomainWhereInput
+  }
+
+  /**
    * Website.user
    */
   export type Website$userArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -13015,6 +13184,1214 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: WebsiteInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Domain
+   */
+
+  export type AggregateDomain = {
+    _count: DomainCountAggregateOutputType | null
+    _min: DomainMinAggregateOutputType | null
+    _max: DomainMaxAggregateOutputType | null
+  }
+
+  export type DomainMinAggregateOutputType = {
+    id: string | null
+    name: string | null
+    verificationStatus: $Enums.VerificationStatus | null
+    verificationToken: string | null
+    verifiedAt: Date | null
+    userId: string | null
+    projectId: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    deletedAt: Date | null
+  }
+
+  export type DomainMaxAggregateOutputType = {
+    id: string | null
+    name: string | null
+    verificationStatus: $Enums.VerificationStatus | null
+    verificationToken: string | null
+    verifiedAt: Date | null
+    userId: string | null
+    projectId: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    deletedAt: Date | null
+  }
+
+  export type DomainCountAggregateOutputType = {
+    id: number
+    name: number
+    verificationStatus: number
+    verificationToken: number
+    verifiedAt: number
+    userId: number
+    projectId: number
+    dnsRecords: number
+    createdAt: number
+    updatedAt: number
+    deletedAt: number
+    _all: number
+  }
+
+
+  export type DomainMinAggregateInputType = {
+    id?: true
+    name?: true
+    verificationStatus?: true
+    verificationToken?: true
+    verifiedAt?: true
+    userId?: true
+    projectId?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+  }
+
+  export type DomainMaxAggregateInputType = {
+    id?: true
+    name?: true
+    verificationStatus?: true
+    verificationToken?: true
+    verifiedAt?: true
+    userId?: true
+    projectId?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+  }
+
+  export type DomainCountAggregateInputType = {
+    id?: true
+    name?: true
+    verificationStatus?: true
+    verificationToken?: true
+    verifiedAt?: true
+    userId?: true
+    projectId?: true
+    dnsRecords?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+    _all?: true
+  }
+
+  export type DomainAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Domain to aggregate.
+     */
+    where?: DomainWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Domains to fetch.
+     */
+    orderBy?: DomainOrderByWithRelationInput | DomainOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: DomainWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Domains from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Domains.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Domains
+    **/
+    _count?: true | DomainCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: DomainMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: DomainMaxAggregateInputType
+  }
+
+  export type GetDomainAggregateType<T extends DomainAggregateArgs> = {
+        [P in keyof T & keyof AggregateDomain]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateDomain[P]>
+      : GetScalarType<T[P], AggregateDomain[P]>
+  }
+
+
+
+
+  export type DomainGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: DomainWhereInput
+    orderBy?: DomainOrderByWithAggregationInput | DomainOrderByWithAggregationInput[]
+    by: DomainScalarFieldEnum[] | DomainScalarFieldEnum
+    having?: DomainScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: DomainCountAggregateInputType | true
+    _min?: DomainMinAggregateInputType
+    _max?: DomainMaxAggregateInputType
+  }
+
+  export type DomainGroupByOutputType = {
+    id: string
+    name: string
+    verificationStatus: $Enums.VerificationStatus
+    verificationToken: string | null
+    verifiedAt: Date | null
+    userId: string | null
+    projectId: string | null
+    dnsRecords: JsonValue | null
+    createdAt: Date
+    updatedAt: Date
+    deletedAt: Date | null
+    _count: DomainCountAggregateOutputType | null
+    _min: DomainMinAggregateOutputType | null
+    _max: DomainMaxAggregateOutputType | null
+  }
+
+  type GetDomainGroupByPayload<T extends DomainGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<DomainGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof DomainGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], DomainGroupByOutputType[P]>
+            : GetScalarType<T[P], DomainGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type DomainSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    verificationStatus?: boolean
+    verificationToken?: boolean
+    verifiedAt?: boolean
+    userId?: boolean
+    projectId?: boolean
+    dnsRecords?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+    user?: boolean | Domain$userArgs<ExtArgs>
+    project?: boolean | Domain$projectArgs<ExtArgs>
+    websites?: boolean | Domain$websitesArgs<ExtArgs>
+    _count?: boolean | DomainCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["domain"]>
+
+  export type DomainSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    verificationStatus?: boolean
+    verificationToken?: boolean
+    verifiedAt?: boolean
+    userId?: boolean
+    projectId?: boolean
+    dnsRecords?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+    user?: boolean | Domain$userArgs<ExtArgs>
+    project?: boolean | Domain$projectArgs<ExtArgs>
+  }, ExtArgs["result"]["domain"]>
+
+  export type DomainSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    verificationStatus?: boolean
+    verificationToken?: boolean
+    verifiedAt?: boolean
+    userId?: boolean
+    projectId?: boolean
+    dnsRecords?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+    user?: boolean | Domain$userArgs<ExtArgs>
+    project?: boolean | Domain$projectArgs<ExtArgs>
+  }, ExtArgs["result"]["domain"]>
+
+  export type DomainSelectScalar = {
+    id?: boolean
+    name?: boolean
+    verificationStatus?: boolean
+    verificationToken?: boolean
+    verifiedAt?: boolean
+    userId?: boolean
+    projectId?: boolean
+    dnsRecords?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }
+
+  export type DomainOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "verificationStatus" | "verificationToken" | "verifiedAt" | "userId" | "projectId" | "dnsRecords" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["domain"]>
+  export type DomainInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | Domain$userArgs<ExtArgs>
+    project?: boolean | Domain$projectArgs<ExtArgs>
+    websites?: boolean | Domain$websitesArgs<ExtArgs>
+    _count?: boolean | DomainCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type DomainIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | Domain$userArgs<ExtArgs>
+    project?: boolean | Domain$projectArgs<ExtArgs>
+  }
+  export type DomainIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | Domain$userArgs<ExtArgs>
+    project?: boolean | Domain$projectArgs<ExtArgs>
+  }
+
+  export type $DomainPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Domain"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs> | null
+      project: Prisma.$ProjectPayload<ExtArgs> | null
+      websites: Prisma.$WebsitePayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      name: string
+      verificationStatus: $Enums.VerificationStatus
+      verificationToken: string | null
+      verifiedAt: Date | null
+      userId: string | null
+      projectId: string | null
+      dnsRecords: Prisma.JsonValue | null
+      createdAt: Date
+      updatedAt: Date
+      deletedAt: Date | null
+    }, ExtArgs["result"]["domain"]>
+    composites: {}
+  }
+
+  type DomainGetPayload<S extends boolean | null | undefined | DomainDefaultArgs> = $Result.GetResult<Prisma.$DomainPayload, S>
+
+  type DomainCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<DomainFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: DomainCountAggregateInputType | true
+    }
+
+  export interface DomainDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Domain'], meta: { name: 'Domain' } }
+    /**
+     * Find zero or one Domain that matches the filter.
+     * @param {DomainFindUniqueArgs} args - Arguments to find a Domain
+     * @example
+     * // Get one Domain
+     * const domain = await prisma.domain.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends DomainFindUniqueArgs>(args: SelectSubset<T, DomainFindUniqueArgs<ExtArgs>>): Prisma__DomainClient<$Result.GetResult<Prisma.$DomainPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Domain that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {DomainFindUniqueOrThrowArgs} args - Arguments to find a Domain
+     * @example
+     * // Get one Domain
+     * const domain = await prisma.domain.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends DomainFindUniqueOrThrowArgs>(args: SelectSubset<T, DomainFindUniqueOrThrowArgs<ExtArgs>>): Prisma__DomainClient<$Result.GetResult<Prisma.$DomainPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Domain that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DomainFindFirstArgs} args - Arguments to find a Domain
+     * @example
+     * // Get one Domain
+     * const domain = await prisma.domain.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends DomainFindFirstArgs>(args?: SelectSubset<T, DomainFindFirstArgs<ExtArgs>>): Prisma__DomainClient<$Result.GetResult<Prisma.$DomainPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Domain that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DomainFindFirstOrThrowArgs} args - Arguments to find a Domain
+     * @example
+     * // Get one Domain
+     * const domain = await prisma.domain.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends DomainFindFirstOrThrowArgs>(args?: SelectSubset<T, DomainFindFirstOrThrowArgs<ExtArgs>>): Prisma__DomainClient<$Result.GetResult<Prisma.$DomainPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Domains that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DomainFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Domains
+     * const domains = await prisma.domain.findMany()
+     * 
+     * // Get first 10 Domains
+     * const domains = await prisma.domain.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const domainWithIdOnly = await prisma.domain.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends DomainFindManyArgs>(args?: SelectSubset<T, DomainFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DomainPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Domain.
+     * @param {DomainCreateArgs} args - Arguments to create a Domain.
+     * @example
+     * // Create one Domain
+     * const Domain = await prisma.domain.create({
+     *   data: {
+     *     // ... data to create a Domain
+     *   }
+     * })
+     * 
+     */
+    create<T extends DomainCreateArgs>(args: SelectSubset<T, DomainCreateArgs<ExtArgs>>): Prisma__DomainClient<$Result.GetResult<Prisma.$DomainPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Domains.
+     * @param {DomainCreateManyArgs} args - Arguments to create many Domains.
+     * @example
+     * // Create many Domains
+     * const domain = await prisma.domain.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends DomainCreateManyArgs>(args?: SelectSubset<T, DomainCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Domains and returns the data saved in the database.
+     * @param {DomainCreateManyAndReturnArgs} args - Arguments to create many Domains.
+     * @example
+     * // Create many Domains
+     * const domain = await prisma.domain.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Domains and only return the `id`
+     * const domainWithIdOnly = await prisma.domain.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends DomainCreateManyAndReturnArgs>(args?: SelectSubset<T, DomainCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DomainPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Domain.
+     * @param {DomainDeleteArgs} args - Arguments to delete one Domain.
+     * @example
+     * // Delete one Domain
+     * const Domain = await prisma.domain.delete({
+     *   where: {
+     *     // ... filter to delete one Domain
+     *   }
+     * })
+     * 
+     */
+    delete<T extends DomainDeleteArgs>(args: SelectSubset<T, DomainDeleteArgs<ExtArgs>>): Prisma__DomainClient<$Result.GetResult<Prisma.$DomainPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Domain.
+     * @param {DomainUpdateArgs} args - Arguments to update one Domain.
+     * @example
+     * // Update one Domain
+     * const domain = await prisma.domain.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends DomainUpdateArgs>(args: SelectSubset<T, DomainUpdateArgs<ExtArgs>>): Prisma__DomainClient<$Result.GetResult<Prisma.$DomainPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Domains.
+     * @param {DomainDeleteManyArgs} args - Arguments to filter Domains to delete.
+     * @example
+     * // Delete a few Domains
+     * const { count } = await prisma.domain.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends DomainDeleteManyArgs>(args?: SelectSubset<T, DomainDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Domains.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DomainUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Domains
+     * const domain = await prisma.domain.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends DomainUpdateManyArgs>(args: SelectSubset<T, DomainUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Domains and returns the data updated in the database.
+     * @param {DomainUpdateManyAndReturnArgs} args - Arguments to update many Domains.
+     * @example
+     * // Update many Domains
+     * const domain = await prisma.domain.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Domains and only return the `id`
+     * const domainWithIdOnly = await prisma.domain.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends DomainUpdateManyAndReturnArgs>(args: SelectSubset<T, DomainUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DomainPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Domain.
+     * @param {DomainUpsertArgs} args - Arguments to update or create a Domain.
+     * @example
+     * // Update or create a Domain
+     * const domain = await prisma.domain.upsert({
+     *   create: {
+     *     // ... data to create a Domain
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Domain we want to update
+     *   }
+     * })
+     */
+    upsert<T extends DomainUpsertArgs>(args: SelectSubset<T, DomainUpsertArgs<ExtArgs>>): Prisma__DomainClient<$Result.GetResult<Prisma.$DomainPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Domains.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DomainCountArgs} args - Arguments to filter Domains to count.
+     * @example
+     * // Count the number of Domains
+     * const count = await prisma.domain.count({
+     *   where: {
+     *     // ... the filter for the Domains we want to count
+     *   }
+     * })
+    **/
+    count<T extends DomainCountArgs>(
+      args?: Subset<T, DomainCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], DomainCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Domain.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DomainAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends DomainAggregateArgs>(args: Subset<T, DomainAggregateArgs>): Prisma.PrismaPromise<GetDomainAggregateType<T>>
+
+    /**
+     * Group by Domain.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DomainGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends DomainGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: DomainGroupByArgs['orderBy'] }
+        : { orderBy?: DomainGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, DomainGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetDomainGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Domain model
+   */
+  readonly fields: DomainFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Domain.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__DomainClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends Domain$userArgs<ExtArgs> = {}>(args?: Subset<T, Domain$userArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    project<T extends Domain$projectArgs<ExtArgs> = {}>(args?: Subset<T, Domain$projectArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    websites<T extends Domain$websitesArgs<ExtArgs> = {}>(args?: Subset<T, Domain$websitesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WebsitePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Domain model
+   */
+  interface DomainFieldRefs {
+    readonly id: FieldRef<"Domain", 'String'>
+    readonly name: FieldRef<"Domain", 'String'>
+    readonly verificationStatus: FieldRef<"Domain", 'VerificationStatus'>
+    readonly verificationToken: FieldRef<"Domain", 'String'>
+    readonly verifiedAt: FieldRef<"Domain", 'DateTime'>
+    readonly userId: FieldRef<"Domain", 'String'>
+    readonly projectId: FieldRef<"Domain", 'String'>
+    readonly dnsRecords: FieldRef<"Domain", 'Json'>
+    readonly createdAt: FieldRef<"Domain", 'DateTime'>
+    readonly updatedAt: FieldRef<"Domain", 'DateTime'>
+    readonly deletedAt: FieldRef<"Domain", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Domain findUnique
+   */
+  export type DomainFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Domain
+     */
+    select?: DomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Domain
+     */
+    omit?: DomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DomainInclude<ExtArgs> | null
+    /**
+     * Filter, which Domain to fetch.
+     */
+    where: DomainWhereUniqueInput
+  }
+
+  /**
+   * Domain findUniqueOrThrow
+   */
+  export type DomainFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Domain
+     */
+    select?: DomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Domain
+     */
+    omit?: DomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DomainInclude<ExtArgs> | null
+    /**
+     * Filter, which Domain to fetch.
+     */
+    where: DomainWhereUniqueInput
+  }
+
+  /**
+   * Domain findFirst
+   */
+  export type DomainFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Domain
+     */
+    select?: DomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Domain
+     */
+    omit?: DomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DomainInclude<ExtArgs> | null
+    /**
+     * Filter, which Domain to fetch.
+     */
+    where?: DomainWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Domains to fetch.
+     */
+    orderBy?: DomainOrderByWithRelationInput | DomainOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Domains.
+     */
+    cursor?: DomainWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Domains from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Domains.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Domains.
+     */
+    distinct?: DomainScalarFieldEnum | DomainScalarFieldEnum[]
+  }
+
+  /**
+   * Domain findFirstOrThrow
+   */
+  export type DomainFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Domain
+     */
+    select?: DomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Domain
+     */
+    omit?: DomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DomainInclude<ExtArgs> | null
+    /**
+     * Filter, which Domain to fetch.
+     */
+    where?: DomainWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Domains to fetch.
+     */
+    orderBy?: DomainOrderByWithRelationInput | DomainOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Domains.
+     */
+    cursor?: DomainWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Domains from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Domains.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Domains.
+     */
+    distinct?: DomainScalarFieldEnum | DomainScalarFieldEnum[]
+  }
+
+  /**
+   * Domain findMany
+   */
+  export type DomainFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Domain
+     */
+    select?: DomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Domain
+     */
+    omit?: DomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DomainInclude<ExtArgs> | null
+    /**
+     * Filter, which Domains to fetch.
+     */
+    where?: DomainWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Domains to fetch.
+     */
+    orderBy?: DomainOrderByWithRelationInput | DomainOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Domains.
+     */
+    cursor?: DomainWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Domains from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Domains.
+     */
+    skip?: number
+    distinct?: DomainScalarFieldEnum | DomainScalarFieldEnum[]
+  }
+
+  /**
+   * Domain create
+   */
+  export type DomainCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Domain
+     */
+    select?: DomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Domain
+     */
+    omit?: DomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DomainInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Domain.
+     */
+    data: XOR<DomainCreateInput, DomainUncheckedCreateInput>
+  }
+
+  /**
+   * Domain createMany
+   */
+  export type DomainCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Domains.
+     */
+    data: DomainCreateManyInput | DomainCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Domain createManyAndReturn
+   */
+  export type DomainCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Domain
+     */
+    select?: DomainSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Domain
+     */
+    omit?: DomainOmit<ExtArgs> | null
+    /**
+     * The data used to create many Domains.
+     */
+    data: DomainCreateManyInput | DomainCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DomainIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Domain update
+   */
+  export type DomainUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Domain
+     */
+    select?: DomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Domain
+     */
+    omit?: DomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DomainInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Domain.
+     */
+    data: XOR<DomainUpdateInput, DomainUncheckedUpdateInput>
+    /**
+     * Choose, which Domain to update.
+     */
+    where: DomainWhereUniqueInput
+  }
+
+  /**
+   * Domain updateMany
+   */
+  export type DomainUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Domains.
+     */
+    data: XOR<DomainUpdateManyMutationInput, DomainUncheckedUpdateManyInput>
+    /**
+     * Filter which Domains to update
+     */
+    where?: DomainWhereInput
+    /**
+     * Limit how many Domains to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Domain updateManyAndReturn
+   */
+  export type DomainUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Domain
+     */
+    select?: DomainSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Domain
+     */
+    omit?: DomainOmit<ExtArgs> | null
+    /**
+     * The data used to update Domains.
+     */
+    data: XOR<DomainUpdateManyMutationInput, DomainUncheckedUpdateManyInput>
+    /**
+     * Filter which Domains to update
+     */
+    where?: DomainWhereInput
+    /**
+     * Limit how many Domains to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DomainIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Domain upsert
+   */
+  export type DomainUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Domain
+     */
+    select?: DomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Domain
+     */
+    omit?: DomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DomainInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Domain to update in case it exists.
+     */
+    where: DomainWhereUniqueInput
+    /**
+     * In case the Domain found by the `where` argument doesn't exist, create a new Domain with this data.
+     */
+    create: XOR<DomainCreateInput, DomainUncheckedCreateInput>
+    /**
+     * In case the Domain was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<DomainUpdateInput, DomainUncheckedUpdateInput>
+  }
+
+  /**
+   * Domain delete
+   */
+  export type DomainDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Domain
+     */
+    select?: DomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Domain
+     */
+    omit?: DomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DomainInclude<ExtArgs> | null
+    /**
+     * Filter which Domain to delete.
+     */
+    where: DomainWhereUniqueInput
+  }
+
+  /**
+   * Domain deleteMany
+   */
+  export type DomainDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Domains to delete
+     */
+    where?: DomainWhereInput
+    /**
+     * Limit how many Domains to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Domain.user
+   */
+  export type Domain$userArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * Domain.project
+   */
+  export type Domain$projectArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Project
+     */
+    select?: ProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Project
+     */
+    omit?: ProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectInclude<ExtArgs> | null
+    where?: ProjectWhereInput
+  }
+
+  /**
+   * Domain.websites
+   */
+  export type Domain$websitesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Website
+     */
+    select?: WebsiteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Website
+     */
+    omit?: WebsiteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WebsiteInclude<ExtArgs> | null
+    where?: WebsiteWhereInput
+    orderBy?: WebsiteOrderByWithRelationInput | WebsiteOrderByWithRelationInput[]
+    cursor?: WebsiteWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WebsiteScalarFieldEnum | WebsiteScalarFieldEnum[]
+  }
+
+  /**
+   * Domain without action
+   */
+  export type DomainDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Domain
+     */
+    select?: DomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Domain
+     */
+    omit?: DomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DomainInclude<ExtArgs> | null
   }
 
 
@@ -16754,6 +18131,7 @@ export namespace Prisma {
     access?: boolean | Project$accessArgs<ExtArgs>
     events?: boolean | Project$eventsArgs<ExtArgs>
     website?: boolean | Project$websiteArgs<ExtArgs>
+    domains?: boolean | Project$domainsArgs<ExtArgs>
     _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["project"]>
 
@@ -16810,6 +18188,7 @@ export namespace Prisma {
     access?: boolean | Project$accessArgs<ExtArgs>
     events?: boolean | Project$eventsArgs<ExtArgs>
     website?: boolean | Project$websiteArgs<ExtArgs>
+    domains?: boolean | Project$domainsArgs<ExtArgs>
     _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ProjectIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -16826,6 +18205,7 @@ export namespace Prisma {
       access: Prisma.$ProjectAccessPayload<ExtArgs>[]
       events: Prisma.$EventMetaPayload<ExtArgs>[]
       website: Prisma.$WebsitePayload<ExtArgs> | null
+      domains: Prisma.$DomainPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -17238,6 +18618,7 @@ export namespace Prisma {
     access<T extends Project$accessArgs<ExtArgs> = {}>(args?: Subset<T, Project$accessArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectAccessPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     events<T extends Project$eventsArgs<ExtArgs> = {}>(args?: Subset<T, Project$eventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventMetaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     website<T extends Project$websiteArgs<ExtArgs> = {}>(args?: Subset<T, Project$websiteArgs<ExtArgs>>): Prisma__WebsiteClient<$Result.GetResult<Prisma.$WebsitePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    domains<T extends Project$domainsArgs<ExtArgs> = {}>(args?: Subset<T, Project$domainsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DomainPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -17758,6 +19139,30 @@ export namespace Prisma {
      */
     include?: WebsiteInclude<ExtArgs> | null
     where?: WebsiteWhereInput
+  }
+
+  /**
+   * Project.domains
+   */
+  export type Project$domainsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Domain
+     */
+    select?: DomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Domain
+     */
+    omit?: DomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DomainInclude<ExtArgs> | null
+    where?: DomainWhereInput
+    orderBy?: DomainOrderByWithRelationInput | DomainOrderByWithRelationInput[]
+    cursor?: DomainWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: DomainScalarFieldEnum | DomainScalarFieldEnum[]
   }
 
   /**
@@ -23358,9 +24763,7 @@ export namespace Prisma {
     domain: 'domain',
     name: 'name',
     status: 'status',
-    verificationStatus: 'verificationStatus',
-    verificationToken: 'verificationToken',
-    verifiedAt: 'verifiedAt',
+    domainId: 'domainId',
     userId: 'userId',
     projectId: 'projectId',
     createdAt: 'createdAt',
@@ -23369,6 +24772,23 @@ export namespace Prisma {
   };
 
   export type WebsiteScalarFieldEnum = (typeof WebsiteScalarFieldEnum)[keyof typeof WebsiteScalarFieldEnum]
+
+
+  export const DomainScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    verificationStatus: 'verificationStatus',
+    verificationToken: 'verificationToken',
+    verifiedAt: 'verifiedAt',
+    userId: 'userId',
+    projectId: 'projectId',
+    dnsRecords: 'dnsRecords',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    deletedAt: 'deletedAt'
+  };
+
+  export type DomainScalarFieldEnum = (typeof DomainScalarFieldEnum)[keyof typeof DomainScalarFieldEnum]
 
 
   export const AccountScalarFieldEnum: {
@@ -23660,6 +25080,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Json'
+   */
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
+   * Reference to a field of type 'QueryMode'
+   */
+  export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+  /**
    * Reference to a field of type 'SubscriptionStatus'
    */
   export type EnumSubscriptionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SubscriptionStatus'>
@@ -23698,20 +25132,6 @@ export namespace Prisma {
    * Reference to a field of type 'ProjectStatus[]'
    */
   export type ListEnumProjectStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ProjectStatus[]'>
-    
-
-
-  /**
-   * Reference to a field of type 'Json'
-   */
-  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
-    
-
-
-  /**
-   * Reference to a field of type 'QueryMode'
-   */
-  export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -23909,6 +25329,7 @@ export namespace Prisma {
     auditLogs?: AuditLogListRelationFilter
     twofactors?: TwoFactorListRelationFilter
     preferences?: XOR<UserPreferenceNullableScalarRelationFilter, UserPreferenceWhereInput> | null
+    domains?: DomainListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -23935,6 +25356,7 @@ export namespace Prisma {
     auditLogs?: AuditLogOrderByRelationAggregateInput
     twofactors?: TwoFactorOrderByRelationAggregateInput
     preferences?: UserPreferenceOrderByWithRelationInput
+    domains?: DomainOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -23964,6 +25386,7 @@ export namespace Prisma {
     auditLogs?: AuditLogListRelationFilter
     twofactors?: TwoFactorListRelationFilter
     preferences?: XOR<UserPreferenceNullableScalarRelationFilter, UserPreferenceWhereInput> | null
+    domains?: DomainListRelationFilter
   }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -24362,14 +25785,13 @@ export namespace Prisma {
     domain?: StringFilter<"Website"> | string
     name?: StringNullableFilter<"Website"> | string | null
     status?: EnumWebsiteStatusFilter<"Website"> | $Enums.WebsiteStatus
-    verificationStatus?: EnumVerificationStatusFilter<"Website"> | $Enums.VerificationStatus
-    verificationToken?: StringNullableFilter<"Website"> | string | null
-    verifiedAt?: DateTimeNullableFilter<"Website"> | Date | string | null
+    domainId?: StringNullableFilter<"Website"> | string | null
     userId?: StringNullableFilter<"Website"> | string | null
     projectId?: StringNullableFilter<"Website"> | string | null
     createdAt?: DateTimeFilter<"Website"> | Date | string
     updatedAt?: DateTimeFilter<"Website"> | Date | string
     deletedAt?: DateTimeNullableFilter<"Website"> | Date | string | null
+    verifiedDomain?: XOR<DomainNullableScalarRelationFilter, DomainWhereInput> | null
     user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     project?: XOR<ProjectNullableScalarRelationFilter, ProjectWhereInput> | null
   }
@@ -24379,14 +25801,13 @@ export namespace Prisma {
     domain?: SortOrder
     name?: SortOrderInput | SortOrder
     status?: SortOrder
-    verificationStatus?: SortOrder
-    verificationToken?: SortOrderInput | SortOrder
-    verifiedAt?: SortOrderInput | SortOrder
+    domainId?: SortOrderInput | SortOrder
     userId?: SortOrderInput | SortOrder
     projectId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     deletedAt?: SortOrderInput | SortOrder
+    verifiedDomain?: DomainOrderByWithRelationInput
     user?: UserOrderByWithRelationInput
     project?: ProjectOrderByWithRelationInput
   }
@@ -24394,31 +25815,28 @@ export namespace Prisma {
   export type WebsiteWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     domain?: string
-    verificationToken?: string
     projectId?: string
     AND?: WebsiteWhereInput | WebsiteWhereInput[]
     OR?: WebsiteWhereInput[]
     NOT?: WebsiteWhereInput | WebsiteWhereInput[]
     name?: StringNullableFilter<"Website"> | string | null
     status?: EnumWebsiteStatusFilter<"Website"> | $Enums.WebsiteStatus
-    verificationStatus?: EnumVerificationStatusFilter<"Website"> | $Enums.VerificationStatus
-    verifiedAt?: DateTimeNullableFilter<"Website"> | Date | string | null
+    domainId?: StringNullableFilter<"Website"> | string | null
     userId?: StringNullableFilter<"Website"> | string | null
     createdAt?: DateTimeFilter<"Website"> | Date | string
     updatedAt?: DateTimeFilter<"Website"> | Date | string
     deletedAt?: DateTimeNullableFilter<"Website"> | Date | string | null
+    verifiedDomain?: XOR<DomainNullableScalarRelationFilter, DomainWhereInput> | null
     user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     project?: XOR<ProjectNullableScalarRelationFilter, ProjectWhereInput> | null
-  }, "id" | "domain" | "verificationToken" | "projectId">
+  }, "id" | "domain" | "projectId">
 
   export type WebsiteOrderByWithAggregationInput = {
     id?: SortOrder
     domain?: SortOrder
     name?: SortOrderInput | SortOrder
     status?: SortOrder
-    verificationStatus?: SortOrder
-    verificationToken?: SortOrderInput | SortOrder
-    verifiedAt?: SortOrderInput | SortOrder
+    domainId?: SortOrderInput | SortOrder
     userId?: SortOrderInput | SortOrder
     projectId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -24437,14 +25855,103 @@ export namespace Prisma {
     domain?: StringWithAggregatesFilter<"Website"> | string
     name?: StringNullableWithAggregatesFilter<"Website"> | string | null
     status?: EnumWebsiteStatusWithAggregatesFilter<"Website"> | $Enums.WebsiteStatus
-    verificationStatus?: EnumVerificationStatusWithAggregatesFilter<"Website"> | $Enums.VerificationStatus
-    verificationToken?: StringNullableWithAggregatesFilter<"Website"> | string | null
-    verifiedAt?: DateTimeNullableWithAggregatesFilter<"Website"> | Date | string | null
+    domainId?: StringNullableWithAggregatesFilter<"Website"> | string | null
     userId?: StringNullableWithAggregatesFilter<"Website"> | string | null
     projectId?: StringNullableWithAggregatesFilter<"Website"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Website"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Website"> | Date | string
     deletedAt?: DateTimeNullableWithAggregatesFilter<"Website"> | Date | string | null
+  }
+
+  export type DomainWhereInput = {
+    AND?: DomainWhereInput | DomainWhereInput[]
+    OR?: DomainWhereInput[]
+    NOT?: DomainWhereInput | DomainWhereInput[]
+    id?: StringFilter<"Domain"> | string
+    name?: StringFilter<"Domain"> | string
+    verificationStatus?: EnumVerificationStatusFilter<"Domain"> | $Enums.VerificationStatus
+    verificationToken?: StringNullableFilter<"Domain"> | string | null
+    verifiedAt?: DateTimeNullableFilter<"Domain"> | Date | string | null
+    userId?: StringNullableFilter<"Domain"> | string | null
+    projectId?: StringNullableFilter<"Domain"> | string | null
+    dnsRecords?: JsonNullableFilter<"Domain">
+    createdAt?: DateTimeFilter<"Domain"> | Date | string
+    updatedAt?: DateTimeFilter<"Domain"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"Domain"> | Date | string | null
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    project?: XOR<ProjectNullableScalarRelationFilter, ProjectWhereInput> | null
+    websites?: WebsiteListRelationFilter
+  }
+
+  export type DomainOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    verificationStatus?: SortOrder
+    verificationToken?: SortOrderInput | SortOrder
+    verifiedAt?: SortOrderInput | SortOrder
+    userId?: SortOrderInput | SortOrder
+    projectId?: SortOrderInput | SortOrder
+    dnsRecords?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    user?: UserOrderByWithRelationInput
+    project?: ProjectOrderByWithRelationInput
+    websites?: WebsiteOrderByRelationAggregateInput
+  }
+
+  export type DomainWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    name?: string
+    verificationToken?: string
+    AND?: DomainWhereInput | DomainWhereInput[]
+    OR?: DomainWhereInput[]
+    NOT?: DomainWhereInput | DomainWhereInput[]
+    verificationStatus?: EnumVerificationStatusFilter<"Domain"> | $Enums.VerificationStatus
+    verifiedAt?: DateTimeNullableFilter<"Domain"> | Date | string | null
+    userId?: StringNullableFilter<"Domain"> | string | null
+    projectId?: StringNullableFilter<"Domain"> | string | null
+    dnsRecords?: JsonNullableFilter<"Domain">
+    createdAt?: DateTimeFilter<"Domain"> | Date | string
+    updatedAt?: DateTimeFilter<"Domain"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"Domain"> | Date | string | null
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    project?: XOR<ProjectNullableScalarRelationFilter, ProjectWhereInput> | null
+    websites?: WebsiteListRelationFilter
+  }, "id" | "name" | "verificationToken">
+
+  export type DomainOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    verificationStatus?: SortOrder
+    verificationToken?: SortOrderInput | SortOrder
+    verifiedAt?: SortOrderInput | SortOrder
+    userId?: SortOrderInput | SortOrder
+    projectId?: SortOrderInput | SortOrder
+    dnsRecords?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    _count?: DomainCountOrderByAggregateInput
+    _max?: DomainMaxOrderByAggregateInput
+    _min?: DomainMinOrderByAggregateInput
+  }
+
+  export type DomainScalarWhereWithAggregatesInput = {
+    AND?: DomainScalarWhereWithAggregatesInput | DomainScalarWhereWithAggregatesInput[]
+    OR?: DomainScalarWhereWithAggregatesInput[]
+    NOT?: DomainScalarWhereWithAggregatesInput | DomainScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Domain"> | string
+    name?: StringWithAggregatesFilter<"Domain"> | string
+    verificationStatus?: EnumVerificationStatusWithAggregatesFilter<"Domain"> | $Enums.VerificationStatus
+    verificationToken?: StringNullableWithAggregatesFilter<"Domain"> | string | null
+    verifiedAt?: DateTimeNullableWithAggregatesFilter<"Domain"> | Date | string | null
+    userId?: StringNullableWithAggregatesFilter<"Domain"> | string | null
+    projectId?: StringNullableWithAggregatesFilter<"Domain"> | string | null
+    dnsRecords?: JsonNullableWithAggregatesFilter<"Domain">
+    createdAt?: DateTimeWithAggregatesFilter<"Domain"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Domain"> | Date | string
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"Domain"> | Date | string | null
   }
 
   export type AccountWhereInput = {
@@ -24743,6 +26250,7 @@ export namespace Prisma {
     access?: ProjectAccessListRelationFilter
     events?: EventMetaListRelationFilter
     website?: XOR<WebsiteNullableScalarRelationFilter, WebsiteWhereInput> | null
+    domains?: DomainListRelationFilter
   }
 
   export type ProjectOrderByWithRelationInput = {
@@ -24762,6 +26270,7 @@ export namespace Prisma {
     access?: ProjectAccessOrderByRelationAggregateInput
     events?: EventMetaOrderByRelationAggregateInput
     website?: WebsiteOrderByWithRelationInput
+    domains?: DomainOrderByRelationAggregateInput
   }
 
   export type ProjectWhereUniqueInput = Prisma.AtLeast<{
@@ -24784,6 +26293,7 @@ export namespace Prisma {
     access?: ProjectAccessListRelationFilter
     events?: EventMetaListRelationFilter
     website?: XOR<WebsiteNullableScalarRelationFilter, WebsiteWhereInput> | null
+    domains?: DomainListRelationFilter
   }, "id">
 
   export type ProjectOrderByWithAggregationInput = {
@@ -25325,6 +26835,7 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     twofactors?: TwoFactorCreateNestedManyWithoutUserInput
     preferences?: UserPreferenceCreateNestedOneWithoutUserInput
+    domains?: DomainCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -25351,6 +26862,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     twofactors?: TwoFactorUncheckedCreateNestedManyWithoutUserInput
     preferences?: UserPreferenceUncheckedCreateNestedOneWithoutUserInput
+    domains?: DomainUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -25377,6 +26889,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     twofactors?: TwoFactorUpdateManyWithoutUserNestedInput
     preferences?: UserPreferenceUpdateOneWithoutUserNestedInput
+    domains?: DomainUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -25403,6 +26916,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     twofactors?: TwoFactorUncheckedUpdateManyWithoutUserNestedInput
     preferences?: UserPreferenceUncheckedUpdateOneWithoutUserNestedInput
+    domains?: DomainUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -25848,12 +27362,10 @@ export namespace Prisma {
     domain: string
     name?: string | null
     status?: $Enums.WebsiteStatus
-    verificationStatus?: $Enums.VerificationStatus
-    verificationToken?: string | null
-    verifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    verifiedDomain?: DomainCreateNestedOneWithoutWebsitesInput
     user?: UserCreateNestedOneWithoutWebsitesInput
     project?: ProjectCreateNestedOneWithoutWebsiteInput
   }
@@ -25863,9 +27375,7 @@ export namespace Prisma {
     domain: string
     name?: string | null
     status?: $Enums.WebsiteStatus
-    verificationStatus?: $Enums.VerificationStatus
-    verificationToken?: string | null
-    verifiedAt?: Date | string | null
+    domainId?: string | null
     userId?: string | null
     projectId?: string | null
     createdAt?: Date | string
@@ -25878,12 +27388,10 @@ export namespace Prisma {
     domain?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumWebsiteStatusFieldUpdateOperationsInput | $Enums.WebsiteStatus
-    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
-    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
-    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verifiedDomain?: DomainUpdateOneWithoutWebsitesNestedInput
     user?: UserUpdateOneWithoutWebsitesNestedInput
     project?: ProjectUpdateOneWithoutWebsiteNestedInput
   }
@@ -25893,9 +27401,7 @@ export namespace Prisma {
     domain?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumWebsiteStatusFieldUpdateOperationsInput | $Enums.WebsiteStatus
-    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
-    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
-    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    domainId?: NullableStringFieldUpdateOperationsInput | string | null
     userId?: NullableStringFieldUpdateOperationsInput | string | null
     projectId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -25908,9 +27414,7 @@ export namespace Prisma {
     domain: string
     name?: string | null
     status?: $Enums.WebsiteStatus
-    verificationStatus?: $Enums.VerificationStatus
-    verificationToken?: string | null
-    verifiedAt?: Date | string | null
+    domainId?: string | null
     userId?: string | null
     projectId?: string | null
     createdAt?: Date | string
@@ -25923,9 +27427,6 @@ export namespace Prisma {
     domain?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumWebsiteStatusFieldUpdateOperationsInput | $Enums.WebsiteStatus
-    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
-    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
-    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -25936,11 +27437,109 @@ export namespace Prisma {
     domain?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumWebsiteStatusFieldUpdateOperationsInput | $Enums.WebsiteStatus
+    domainId?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type DomainCreateInput = {
+    id?: string
+    name: string
+    verificationStatus?: $Enums.VerificationStatus
+    verificationToken?: string | null
+    verifiedAt?: Date | string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    user?: UserCreateNestedOneWithoutDomainsInput
+    project?: ProjectCreateNestedOneWithoutDomainsInput
+    websites?: WebsiteCreateNestedManyWithoutVerifiedDomainInput
+  }
+
+  export type DomainUncheckedCreateInput = {
+    id?: string
+    name: string
+    verificationStatus?: $Enums.VerificationStatus
+    verificationToken?: string | null
+    verifiedAt?: Date | string | null
+    userId?: string | null
+    projectId?: string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    websites?: WebsiteUncheckedCreateNestedManyWithoutVerifiedDomainInput
+  }
+
+  export type DomainUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    user?: UserUpdateOneWithoutDomainsNestedInput
+    project?: ProjectUpdateOneWithoutDomainsNestedInput
+    websites?: WebsiteUpdateManyWithoutVerifiedDomainNestedInput
+  }
+
+  export type DomainUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
     verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
     verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
     verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     userId?: NullableStringFieldUpdateOperationsInput | string | null
     projectId?: NullableStringFieldUpdateOperationsInput | string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    websites?: WebsiteUncheckedUpdateManyWithoutVerifiedDomainNestedInput
+  }
+
+  export type DomainCreateManyInput = {
+    id?: string
+    name: string
+    verificationStatus?: $Enums.VerificationStatus
+    verificationToken?: string | null
+    verifiedAt?: Date | string | null
+    userId?: string | null
+    projectId?: string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type DomainUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type DomainUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -26273,6 +27872,7 @@ export namespace Prisma {
     access?: ProjectAccessCreateNestedManyWithoutProjectInput
     events?: EventMetaCreateNestedManyWithoutProjectInput
     website?: WebsiteCreateNestedOneWithoutProjectInput
+    domains?: DomainCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateInput = {
@@ -26291,6 +27891,7 @@ export namespace Prisma {
     access?: ProjectAccessUncheckedCreateNestedManyWithoutProjectInput
     events?: EventMetaUncheckedCreateNestedManyWithoutProjectInput
     website?: WebsiteUncheckedCreateNestedOneWithoutProjectInput
+    domains?: DomainUncheckedCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUpdateInput = {
@@ -26309,6 +27910,7 @@ export namespace Prisma {
     access?: ProjectAccessUpdateManyWithoutProjectNestedInput
     events?: EventMetaUpdateManyWithoutProjectNestedInput
     website?: WebsiteUpdateOneWithoutProjectNestedInput
+    domains?: DomainUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateInput = {
@@ -26327,6 +27929,7 @@ export namespace Prisma {
     access?: ProjectAccessUncheckedUpdateManyWithoutProjectNestedInput
     events?: EventMetaUncheckedUpdateManyWithoutProjectNestedInput
     website?: WebsiteUncheckedUpdateOneWithoutProjectNestedInput
+    domains?: DomainUncheckedUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectCreateManyInput = {
@@ -27022,6 +28625,12 @@ export namespace Prisma {
     isNot?: UserPreferenceWhereInput | null
   }
 
+  export type DomainListRelationFilter = {
+    every?: DomainWhereInput
+    some?: DomainWhereInput
+    none?: DomainWhereInput
+  }
+
   export type SubscriptionOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -27051,6 +28660,10 @@ export namespace Prisma {
   }
 
   export type TwoFactorOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type DomainOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -27335,11 +28948,9 @@ export namespace Prisma {
     not?: NestedEnumWebsiteStatusFilter<$PrismaModel> | $Enums.WebsiteStatus
   }
 
-  export type EnumVerificationStatusFilter<$PrismaModel = never> = {
-    equals?: $Enums.VerificationStatus | EnumVerificationStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.VerificationStatus[] | ListEnumVerificationStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.VerificationStatus[] | ListEnumVerificationStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumVerificationStatusFilter<$PrismaModel> | $Enums.VerificationStatus
+  export type DomainNullableScalarRelationFilter = {
+    is?: DomainWhereInput | null
+    isNot?: DomainWhereInput | null
   }
 
   export type ProjectNullableScalarRelationFilter = {
@@ -27352,9 +28963,7 @@ export namespace Prisma {
     domain?: SortOrder
     name?: SortOrder
     status?: SortOrder
-    verificationStatus?: SortOrder
-    verificationToken?: SortOrder
-    verifiedAt?: SortOrder
+    domainId?: SortOrder
     userId?: SortOrder
     projectId?: SortOrder
     createdAt?: SortOrder
@@ -27367,9 +28976,7 @@ export namespace Prisma {
     domain?: SortOrder
     name?: SortOrder
     status?: SortOrder
-    verificationStatus?: SortOrder
-    verificationToken?: SortOrder
-    verifiedAt?: SortOrder
+    domainId?: SortOrder
     userId?: SortOrder
     projectId?: SortOrder
     createdAt?: SortOrder
@@ -27382,9 +28989,7 @@ export namespace Prisma {
     domain?: SortOrder
     name?: SortOrder
     status?: SortOrder
-    verificationStatus?: SortOrder
-    verificationToken?: SortOrder
-    verifiedAt?: SortOrder
+    domainId?: SortOrder
     userId?: SortOrder
     projectId?: SortOrder
     createdAt?: SortOrder
@@ -27402,6 +29007,76 @@ export namespace Prisma {
     _max?: NestedEnumWebsiteStatusFilter<$PrismaModel>
   }
 
+  export type EnumVerificationStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.VerificationStatus | EnumVerificationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.VerificationStatus[] | ListEnumVerificationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.VerificationStatus[] | ListEnumVerificationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumVerificationStatusFilter<$PrismaModel> | $Enums.VerificationStatus
+  }
+  export type JsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type DomainCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    verificationStatus?: SortOrder
+    verificationToken?: SortOrder
+    verifiedAt?: SortOrder
+    userId?: SortOrder
+    projectId?: SortOrder
+    dnsRecords?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type DomainMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    verificationStatus?: SortOrder
+    verificationToken?: SortOrder
+    verifiedAt?: SortOrder
+    userId?: SortOrder
+    projectId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type DomainMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    verificationStatus?: SortOrder
+    verificationToken?: SortOrder
+    verifiedAt?: SortOrder
+    userId?: SortOrder
+    projectId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
   export type EnumVerificationStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.VerificationStatus | EnumVerificationStatusFieldRefInput<$PrismaModel>
     in?: $Enums.VerificationStatus[] | ListEnumVerificationStatusFieldRefInput<$PrismaModel>
@@ -27410,6 +29085,32 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumVerificationStatusFilter<$PrismaModel>
     _max?: NestedEnumVerificationStatusFilter<$PrismaModel>
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
   export type AccountCountOrderByAggregateInput = {
@@ -27709,29 +29410,6 @@ export namespace Prisma {
     _min?: NestedEnumProjectStatusFilter<$PrismaModel>
     _max?: NestedEnumProjectStatusFilter<$PrismaModel>
   }
-  export type JsonNullableFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonNullableFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonNullableFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-  }
 
   export type EventMetaCountOrderByAggregateInput = {
     id?: SortOrder
@@ -27759,32 +29437,6 @@ export namespace Prisma {
     description?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-  }
-  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedJsonNullableFilter<$PrismaModel>
-    _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
   export type EnumClientTypeFilter<$PrismaModel = never> = {
@@ -28018,6 +29670,13 @@ export namespace Prisma {
     connect?: UserPreferenceWhereUniqueInput
   }
 
+  export type DomainCreateNestedManyWithoutUserInput = {
+    create?: XOR<DomainCreateWithoutUserInput, DomainUncheckedCreateWithoutUserInput> | DomainCreateWithoutUserInput[] | DomainUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: DomainCreateOrConnectWithoutUserInput | DomainCreateOrConnectWithoutUserInput[]
+    createMany?: DomainCreateManyUserInputEnvelope
+    connect?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
+  }
+
   export type SubscriptionUncheckedCreateNestedManyWithoutCreatedByInput = {
     create?: XOR<SubscriptionCreateWithoutCreatedByInput, SubscriptionUncheckedCreateWithoutCreatedByInput> | SubscriptionCreateWithoutCreatedByInput[] | SubscriptionUncheckedCreateWithoutCreatedByInput[]
     connectOrCreate?: SubscriptionCreateOrConnectWithoutCreatedByInput | SubscriptionCreateOrConnectWithoutCreatedByInput[]
@@ -28078,6 +29737,13 @@ export namespace Prisma {
     create?: XOR<UserPreferenceCreateWithoutUserInput, UserPreferenceUncheckedCreateWithoutUserInput>
     connectOrCreate?: UserPreferenceCreateOrConnectWithoutUserInput
     connect?: UserPreferenceWhereUniqueInput
+  }
+
+  export type DomainUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<DomainCreateWithoutUserInput, DomainUncheckedCreateWithoutUserInput> | DomainCreateWithoutUserInput[] | DomainUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: DomainCreateOrConnectWithoutUserInput | DomainCreateOrConnectWithoutUserInput[]
+    createMany?: DomainCreateManyUserInputEnvelope
+    connect?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
   }
 
   export type BoolFieldUpdateOperationsInput = {
@@ -28218,6 +29884,20 @@ export namespace Prisma {
     update?: XOR<XOR<UserPreferenceUpdateToOneWithWhereWithoutUserInput, UserPreferenceUpdateWithoutUserInput>, UserPreferenceUncheckedUpdateWithoutUserInput>
   }
 
+  export type DomainUpdateManyWithoutUserNestedInput = {
+    create?: XOR<DomainCreateWithoutUserInput, DomainUncheckedCreateWithoutUserInput> | DomainCreateWithoutUserInput[] | DomainUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: DomainCreateOrConnectWithoutUserInput | DomainCreateOrConnectWithoutUserInput[]
+    upsert?: DomainUpsertWithWhereUniqueWithoutUserInput | DomainUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: DomainCreateManyUserInputEnvelope
+    set?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
+    disconnect?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
+    delete?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
+    connect?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
+    update?: DomainUpdateWithWhereUniqueWithoutUserInput | DomainUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: DomainUpdateManyWithWhereWithoutUserInput | DomainUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: DomainScalarWhereInput | DomainScalarWhereInput[]
+  }
+
   export type SubscriptionUncheckedUpdateManyWithoutCreatedByNestedInput = {
     create?: XOR<SubscriptionCreateWithoutCreatedByInput, SubscriptionUncheckedCreateWithoutCreatedByInput> | SubscriptionCreateWithoutCreatedByInput[] | SubscriptionUncheckedCreateWithoutCreatedByInput[]
     connectOrCreate?: SubscriptionCreateOrConnectWithoutCreatedByInput | SubscriptionCreateOrConnectWithoutCreatedByInput[]
@@ -28338,6 +30018,20 @@ export namespace Prisma {
     delete?: UserPreferenceWhereInput | boolean
     connect?: UserPreferenceWhereUniqueInput
     update?: XOR<XOR<UserPreferenceUpdateToOneWithWhereWithoutUserInput, UserPreferenceUpdateWithoutUserInput>, UserPreferenceUncheckedUpdateWithoutUserInput>
+  }
+
+  export type DomainUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<DomainCreateWithoutUserInput, DomainUncheckedCreateWithoutUserInput> | DomainCreateWithoutUserInput[] | DomainUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: DomainCreateOrConnectWithoutUserInput | DomainCreateOrConnectWithoutUserInput[]
+    upsert?: DomainUpsertWithWhereUniqueWithoutUserInput | DomainUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: DomainCreateManyUserInputEnvelope
+    set?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
+    disconnect?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
+    delete?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
+    connect?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
+    update?: DomainUpdateWithWhereUniqueWithoutUserInput | DomainUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: DomainUpdateManyWithWhereWithoutUserInput | DomainUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: DomainScalarWhereInput | DomainScalarWhereInput[]
   }
 
   export type UserCreateNestedOneWithoutSessionsInput = {
@@ -28504,6 +30198,12 @@ export namespace Prisma {
     deleteMany?: PostScalarWhereInput | PostScalarWhereInput[]
   }
 
+  export type DomainCreateNestedOneWithoutWebsitesInput = {
+    create?: XOR<DomainCreateWithoutWebsitesInput, DomainUncheckedCreateWithoutWebsitesInput>
+    connectOrCreate?: DomainCreateOrConnectWithoutWebsitesInput
+    connect?: DomainWhereUniqueInput
+  }
+
   export type UserCreateNestedOneWithoutWebsitesInput = {
     create?: XOR<UserCreateWithoutWebsitesInput, UserUncheckedCreateWithoutWebsitesInput>
     connectOrCreate?: UserCreateOrConnectWithoutWebsitesInput
@@ -28520,8 +30220,14 @@ export namespace Prisma {
     set?: $Enums.WebsiteStatus
   }
 
-  export type EnumVerificationStatusFieldUpdateOperationsInput = {
-    set?: $Enums.VerificationStatus
+  export type DomainUpdateOneWithoutWebsitesNestedInput = {
+    create?: XOR<DomainCreateWithoutWebsitesInput, DomainUncheckedCreateWithoutWebsitesInput>
+    connectOrCreate?: DomainCreateOrConnectWithoutWebsitesInput
+    upsert?: DomainUpsertWithoutWebsitesInput
+    disconnect?: DomainWhereInput | boolean
+    delete?: DomainWhereInput | boolean
+    connect?: DomainWhereUniqueInput
+    update?: XOR<XOR<DomainUpdateToOneWithWhereWithoutWebsitesInput, DomainUpdateWithoutWebsitesInput>, DomainUncheckedUpdateWithoutWebsitesInput>
   }
 
   export type UserUpdateOneWithoutWebsitesNestedInput = {
@@ -28542,6 +30248,84 @@ export namespace Prisma {
     delete?: ProjectWhereInput | boolean
     connect?: ProjectWhereUniqueInput
     update?: XOR<XOR<ProjectUpdateToOneWithWhereWithoutWebsiteInput, ProjectUpdateWithoutWebsiteInput>, ProjectUncheckedUpdateWithoutWebsiteInput>
+  }
+
+  export type UserCreateNestedOneWithoutDomainsInput = {
+    create?: XOR<UserCreateWithoutDomainsInput, UserUncheckedCreateWithoutDomainsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutDomainsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type ProjectCreateNestedOneWithoutDomainsInput = {
+    create?: XOR<ProjectCreateWithoutDomainsInput, ProjectUncheckedCreateWithoutDomainsInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutDomainsInput
+    connect?: ProjectWhereUniqueInput
+  }
+
+  export type WebsiteCreateNestedManyWithoutVerifiedDomainInput = {
+    create?: XOR<WebsiteCreateWithoutVerifiedDomainInput, WebsiteUncheckedCreateWithoutVerifiedDomainInput> | WebsiteCreateWithoutVerifiedDomainInput[] | WebsiteUncheckedCreateWithoutVerifiedDomainInput[]
+    connectOrCreate?: WebsiteCreateOrConnectWithoutVerifiedDomainInput | WebsiteCreateOrConnectWithoutVerifiedDomainInput[]
+    createMany?: WebsiteCreateManyVerifiedDomainInputEnvelope
+    connect?: WebsiteWhereUniqueInput | WebsiteWhereUniqueInput[]
+  }
+
+  export type WebsiteUncheckedCreateNestedManyWithoutVerifiedDomainInput = {
+    create?: XOR<WebsiteCreateWithoutVerifiedDomainInput, WebsiteUncheckedCreateWithoutVerifiedDomainInput> | WebsiteCreateWithoutVerifiedDomainInput[] | WebsiteUncheckedCreateWithoutVerifiedDomainInput[]
+    connectOrCreate?: WebsiteCreateOrConnectWithoutVerifiedDomainInput | WebsiteCreateOrConnectWithoutVerifiedDomainInput[]
+    createMany?: WebsiteCreateManyVerifiedDomainInputEnvelope
+    connect?: WebsiteWhereUniqueInput | WebsiteWhereUniqueInput[]
+  }
+
+  export type EnumVerificationStatusFieldUpdateOperationsInput = {
+    set?: $Enums.VerificationStatus
+  }
+
+  export type UserUpdateOneWithoutDomainsNestedInput = {
+    create?: XOR<UserCreateWithoutDomainsInput, UserUncheckedCreateWithoutDomainsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutDomainsInput
+    upsert?: UserUpsertWithoutDomainsInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutDomainsInput, UserUpdateWithoutDomainsInput>, UserUncheckedUpdateWithoutDomainsInput>
+  }
+
+  export type ProjectUpdateOneWithoutDomainsNestedInput = {
+    create?: XOR<ProjectCreateWithoutDomainsInput, ProjectUncheckedCreateWithoutDomainsInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutDomainsInput
+    upsert?: ProjectUpsertWithoutDomainsInput
+    disconnect?: ProjectWhereInput | boolean
+    delete?: ProjectWhereInput | boolean
+    connect?: ProjectWhereUniqueInput
+    update?: XOR<XOR<ProjectUpdateToOneWithWhereWithoutDomainsInput, ProjectUpdateWithoutDomainsInput>, ProjectUncheckedUpdateWithoutDomainsInput>
+  }
+
+  export type WebsiteUpdateManyWithoutVerifiedDomainNestedInput = {
+    create?: XOR<WebsiteCreateWithoutVerifiedDomainInput, WebsiteUncheckedCreateWithoutVerifiedDomainInput> | WebsiteCreateWithoutVerifiedDomainInput[] | WebsiteUncheckedCreateWithoutVerifiedDomainInput[]
+    connectOrCreate?: WebsiteCreateOrConnectWithoutVerifiedDomainInput | WebsiteCreateOrConnectWithoutVerifiedDomainInput[]
+    upsert?: WebsiteUpsertWithWhereUniqueWithoutVerifiedDomainInput | WebsiteUpsertWithWhereUniqueWithoutVerifiedDomainInput[]
+    createMany?: WebsiteCreateManyVerifiedDomainInputEnvelope
+    set?: WebsiteWhereUniqueInput | WebsiteWhereUniqueInput[]
+    disconnect?: WebsiteWhereUniqueInput | WebsiteWhereUniqueInput[]
+    delete?: WebsiteWhereUniqueInput | WebsiteWhereUniqueInput[]
+    connect?: WebsiteWhereUniqueInput | WebsiteWhereUniqueInput[]
+    update?: WebsiteUpdateWithWhereUniqueWithoutVerifiedDomainInput | WebsiteUpdateWithWhereUniqueWithoutVerifiedDomainInput[]
+    updateMany?: WebsiteUpdateManyWithWhereWithoutVerifiedDomainInput | WebsiteUpdateManyWithWhereWithoutVerifiedDomainInput[]
+    deleteMany?: WebsiteScalarWhereInput | WebsiteScalarWhereInput[]
+  }
+
+  export type WebsiteUncheckedUpdateManyWithoutVerifiedDomainNestedInput = {
+    create?: XOR<WebsiteCreateWithoutVerifiedDomainInput, WebsiteUncheckedCreateWithoutVerifiedDomainInput> | WebsiteCreateWithoutVerifiedDomainInput[] | WebsiteUncheckedCreateWithoutVerifiedDomainInput[]
+    connectOrCreate?: WebsiteCreateOrConnectWithoutVerifiedDomainInput | WebsiteCreateOrConnectWithoutVerifiedDomainInput[]
+    upsert?: WebsiteUpsertWithWhereUniqueWithoutVerifiedDomainInput | WebsiteUpsertWithWhereUniqueWithoutVerifiedDomainInput[]
+    createMany?: WebsiteCreateManyVerifiedDomainInputEnvelope
+    set?: WebsiteWhereUniqueInput | WebsiteWhereUniqueInput[]
+    disconnect?: WebsiteWhereUniqueInput | WebsiteWhereUniqueInput[]
+    delete?: WebsiteWhereUniqueInput | WebsiteWhereUniqueInput[]
+    connect?: WebsiteWhereUniqueInput | WebsiteWhereUniqueInput[]
+    update?: WebsiteUpdateWithWhereUniqueWithoutVerifiedDomainInput | WebsiteUpdateWithWhereUniqueWithoutVerifiedDomainInput[]
+    updateMany?: WebsiteUpdateManyWithWhereWithoutVerifiedDomainInput | WebsiteUpdateManyWithWhereWithoutVerifiedDomainInput[]
+    deleteMany?: WebsiteScalarWhereInput | WebsiteScalarWhereInput[]
   }
 
   export type UserCreateNestedOneWithoutAccountsInput = {
@@ -28640,6 +30424,13 @@ export namespace Prisma {
     connect?: WebsiteWhereUniqueInput
   }
 
+  export type DomainCreateNestedManyWithoutProjectInput = {
+    create?: XOR<DomainCreateWithoutProjectInput, DomainUncheckedCreateWithoutProjectInput> | DomainCreateWithoutProjectInput[] | DomainUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: DomainCreateOrConnectWithoutProjectInput | DomainCreateOrConnectWithoutProjectInput[]
+    createMany?: DomainCreateManyProjectInputEnvelope
+    connect?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
+  }
+
   export type ProjectAccessUncheckedCreateNestedManyWithoutProjectInput = {
     create?: XOR<ProjectAccessCreateWithoutProjectInput, ProjectAccessUncheckedCreateWithoutProjectInput> | ProjectAccessCreateWithoutProjectInput[] | ProjectAccessUncheckedCreateWithoutProjectInput[]
     connectOrCreate?: ProjectAccessCreateOrConnectWithoutProjectInput | ProjectAccessCreateOrConnectWithoutProjectInput[]
@@ -28658,6 +30449,13 @@ export namespace Prisma {
     create?: XOR<WebsiteCreateWithoutProjectInput, WebsiteUncheckedCreateWithoutProjectInput>
     connectOrCreate?: WebsiteCreateOrConnectWithoutProjectInput
     connect?: WebsiteWhereUniqueInput
+  }
+
+  export type DomainUncheckedCreateNestedManyWithoutProjectInput = {
+    create?: XOR<DomainCreateWithoutProjectInput, DomainUncheckedCreateWithoutProjectInput> | DomainCreateWithoutProjectInput[] | DomainUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: DomainCreateOrConnectWithoutProjectInput | DomainCreateOrConnectWithoutProjectInput[]
+    createMany?: DomainCreateManyProjectInputEnvelope
+    connect?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
   }
 
   export type EnumProjectTypeFieldUpdateOperationsInput = {
@@ -28716,6 +30514,20 @@ export namespace Prisma {
     update?: XOR<XOR<WebsiteUpdateToOneWithWhereWithoutProjectInput, WebsiteUpdateWithoutProjectInput>, WebsiteUncheckedUpdateWithoutProjectInput>
   }
 
+  export type DomainUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<DomainCreateWithoutProjectInput, DomainUncheckedCreateWithoutProjectInput> | DomainCreateWithoutProjectInput[] | DomainUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: DomainCreateOrConnectWithoutProjectInput | DomainCreateOrConnectWithoutProjectInput[]
+    upsert?: DomainUpsertWithWhereUniqueWithoutProjectInput | DomainUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: DomainCreateManyProjectInputEnvelope
+    set?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
+    disconnect?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
+    delete?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
+    connect?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
+    update?: DomainUpdateWithWhereUniqueWithoutProjectInput | DomainUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: DomainUpdateManyWithWhereWithoutProjectInput | DomainUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: DomainScalarWhereInput | DomainScalarWhereInput[]
+  }
+
   export type ProjectAccessUncheckedUpdateManyWithoutProjectNestedInput = {
     create?: XOR<ProjectAccessCreateWithoutProjectInput, ProjectAccessUncheckedCreateWithoutProjectInput> | ProjectAccessCreateWithoutProjectInput[] | ProjectAccessUncheckedCreateWithoutProjectInput[]
     connectOrCreate?: ProjectAccessCreateOrConnectWithoutProjectInput | ProjectAccessCreateOrConnectWithoutProjectInput[]
@@ -28752,6 +30564,20 @@ export namespace Prisma {
     delete?: WebsiteWhereInput | boolean
     connect?: WebsiteWhereUniqueInput
     update?: XOR<XOR<WebsiteUpdateToOneWithWhereWithoutProjectInput, WebsiteUpdateWithoutProjectInput>, WebsiteUncheckedUpdateWithoutProjectInput>
+  }
+
+  export type DomainUncheckedUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<DomainCreateWithoutProjectInput, DomainUncheckedCreateWithoutProjectInput> | DomainCreateWithoutProjectInput[] | DomainUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: DomainCreateOrConnectWithoutProjectInput | DomainCreateOrConnectWithoutProjectInput[]
+    upsert?: DomainUpsertWithWhereUniqueWithoutProjectInput | DomainUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: DomainCreateManyProjectInputEnvelope
+    set?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
+    disconnect?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
+    delete?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
+    connect?: DomainWhereUniqueInput | DomainWhereUniqueInput[]
+    update?: DomainUpdateWithWhereUniqueWithoutProjectInput | DomainUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: DomainUpdateManyWithWhereWithoutProjectInput | DomainUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: DomainScalarWhereInput | DomainScalarWhereInput[]
   }
 
   export type ProjectCreateNestedOneWithoutEventsInput = {
@@ -29086,13 +30912,6 @@ export namespace Prisma {
     not?: NestedEnumWebsiteStatusFilter<$PrismaModel> | $Enums.WebsiteStatus
   }
 
-  export type NestedEnumVerificationStatusFilter<$PrismaModel = never> = {
-    equals?: $Enums.VerificationStatus | EnumVerificationStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.VerificationStatus[] | ListEnumVerificationStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.VerificationStatus[] | ListEnumVerificationStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumVerificationStatusFilter<$PrismaModel> | $Enums.VerificationStatus
-  }
-
   export type NestedEnumWebsiteStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.WebsiteStatus | EnumWebsiteStatusFieldRefInput<$PrismaModel>
     in?: $Enums.WebsiteStatus[] | ListEnumWebsiteStatusFieldRefInput<$PrismaModel>
@@ -29103,6 +30922,13 @@ export namespace Prisma {
     _max?: NestedEnumWebsiteStatusFilter<$PrismaModel>
   }
 
+  export type NestedEnumVerificationStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.VerificationStatus | EnumVerificationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.VerificationStatus[] | ListEnumVerificationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.VerificationStatus[] | ListEnumVerificationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumVerificationStatusFilter<$PrismaModel> | $Enums.VerificationStatus
+  }
+
   export type NestedEnumVerificationStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.VerificationStatus | EnumVerificationStatusFieldRefInput<$PrismaModel>
     in?: $Enums.VerificationStatus[] | ListEnumVerificationStatusFieldRefInput<$PrismaModel>
@@ -29111,6 +30937,29 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumVerificationStatusFilter<$PrismaModel>
     _max?: NestedEnumVerificationStatusFilter<$PrismaModel>
+  }
+  export type NestedJsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type NestedEnumSubscriptionStatusFilter<$PrismaModel = never> = {
@@ -29189,29 +31038,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumProjectStatusFilter<$PrismaModel>
     _max?: NestedEnumProjectStatusFilter<$PrismaModel>
-  }
-  export type NestedJsonNullableFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
-        Required<NestedJsonNullableFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
-
-  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type NestedEnumClientTypeFilter<$PrismaModel = never> = {
@@ -29352,12 +31178,10 @@ export namespace Prisma {
     domain: string
     name?: string | null
     status?: $Enums.WebsiteStatus
-    verificationStatus?: $Enums.VerificationStatus
-    verificationToken?: string | null
-    verifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    verifiedDomain?: DomainCreateNestedOneWithoutWebsitesInput
     project?: ProjectCreateNestedOneWithoutWebsiteInput
   }
 
@@ -29366,9 +31190,7 @@ export namespace Prisma {
     domain: string
     name?: string | null
     status?: $Enums.WebsiteStatus
-    verificationStatus?: $Enums.VerificationStatus
-    verificationToken?: string | null
-    verifiedAt?: Date | string | null
+    domainId?: string | null
     projectId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -29532,6 +31354,44 @@ export namespace Prisma {
     create: XOR<UserPreferenceCreateWithoutUserInput, UserPreferenceUncheckedCreateWithoutUserInput>
   }
 
+  export type DomainCreateWithoutUserInput = {
+    id?: string
+    name: string
+    verificationStatus?: $Enums.VerificationStatus
+    verificationToken?: string | null
+    verifiedAt?: Date | string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    project?: ProjectCreateNestedOneWithoutDomainsInput
+    websites?: WebsiteCreateNestedManyWithoutVerifiedDomainInput
+  }
+
+  export type DomainUncheckedCreateWithoutUserInput = {
+    id?: string
+    name: string
+    verificationStatus?: $Enums.VerificationStatus
+    verificationToken?: string | null
+    verifiedAt?: Date | string | null
+    projectId?: string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    websites?: WebsiteUncheckedCreateNestedManyWithoutVerifiedDomainInput
+  }
+
+  export type DomainCreateOrConnectWithoutUserInput = {
+    where: DomainWhereUniqueInput
+    create: XOR<DomainCreateWithoutUserInput, DomainUncheckedCreateWithoutUserInput>
+  }
+
+  export type DomainCreateManyUserInputEnvelope = {
+    data: DomainCreateManyUserInput | DomainCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
   export type SubscriptionUpsertWithWhereUniqueWithoutCreatedByInput = {
     where: SubscriptionWhereUniqueInput
     update: XOR<SubscriptionUpdateWithoutCreatedByInput, SubscriptionUncheckedUpdateWithoutCreatedByInput>
@@ -29658,9 +31518,7 @@ export namespace Prisma {
     domain?: StringFilter<"Website"> | string
     name?: StringNullableFilter<"Website"> | string | null
     status?: EnumWebsiteStatusFilter<"Website"> | $Enums.WebsiteStatus
-    verificationStatus?: EnumVerificationStatusFilter<"Website"> | $Enums.VerificationStatus
-    verificationToken?: StringNullableFilter<"Website"> | string | null
-    verifiedAt?: DateTimeNullableFilter<"Website"> | Date | string | null
+    domainId?: StringNullableFilter<"Website"> | string | null
     userId?: StringNullableFilter<"Website"> | string | null
     projectId?: StringNullableFilter<"Website"> | string | null
     createdAt?: DateTimeFilter<"Website"> | Date | string
@@ -29819,6 +31677,39 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type DomainUpsertWithWhereUniqueWithoutUserInput = {
+    where: DomainWhereUniqueInput
+    update: XOR<DomainUpdateWithoutUserInput, DomainUncheckedUpdateWithoutUserInput>
+    create: XOR<DomainCreateWithoutUserInput, DomainUncheckedCreateWithoutUserInput>
+  }
+
+  export type DomainUpdateWithWhereUniqueWithoutUserInput = {
+    where: DomainWhereUniqueInput
+    data: XOR<DomainUpdateWithoutUserInput, DomainUncheckedUpdateWithoutUserInput>
+  }
+
+  export type DomainUpdateManyWithWhereWithoutUserInput = {
+    where: DomainScalarWhereInput
+    data: XOR<DomainUpdateManyMutationInput, DomainUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type DomainScalarWhereInput = {
+    AND?: DomainScalarWhereInput | DomainScalarWhereInput[]
+    OR?: DomainScalarWhereInput[]
+    NOT?: DomainScalarWhereInput | DomainScalarWhereInput[]
+    id?: StringFilter<"Domain"> | string
+    name?: StringFilter<"Domain"> | string
+    verificationStatus?: EnumVerificationStatusFilter<"Domain"> | $Enums.VerificationStatus
+    verificationToken?: StringNullableFilter<"Domain"> | string | null
+    verifiedAt?: DateTimeNullableFilter<"Domain"> | Date | string | null
+    userId?: StringNullableFilter<"Domain"> | string | null
+    projectId?: StringNullableFilter<"Domain"> | string | null
+    dnsRecords?: JsonNullableFilter<"Domain">
+    createdAt?: DateTimeFilter<"Domain"> | Date | string
+    updatedAt?: DateTimeFilter<"Domain"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"Domain"> | Date | string | null
+  }
+
   export type UserCreateWithoutSessionsInput = {
     id?: string
     email: string
@@ -29842,6 +31733,7 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     twofactors?: TwoFactorCreateNestedManyWithoutUserInput
     preferences?: UserPreferenceCreateNestedOneWithoutUserInput
+    domains?: DomainCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutSessionsInput = {
@@ -29867,6 +31759,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     twofactors?: TwoFactorUncheckedCreateNestedManyWithoutUserInput
     preferences?: UserPreferenceUncheckedCreateNestedOneWithoutUserInput
+    domains?: DomainUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutSessionsInput = {
@@ -29908,6 +31801,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     twofactors?: TwoFactorUpdateManyWithoutUserNestedInput
     preferences?: UserPreferenceUpdateOneWithoutUserNestedInput
+    domains?: DomainUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -29933,6 +31827,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     twofactors?: TwoFactorUncheckedUpdateManyWithoutUserNestedInput
     preferences?: UserPreferenceUncheckedUpdateOneWithoutUserNestedInput
+    domains?: DomainUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutPostsInput = {
@@ -29958,6 +31853,7 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     twofactors?: TwoFactorCreateNestedManyWithoutUserInput
     preferences?: UserPreferenceCreateNestedOneWithoutUserInput
+    domains?: DomainCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutPostsInput = {
@@ -29983,6 +31879,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     twofactors?: TwoFactorUncheckedCreateNestedManyWithoutUserInput
     preferences?: UserPreferenceUncheckedCreateNestedOneWithoutUserInput
+    domains?: DomainUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutPostsInput = {
@@ -30070,6 +31967,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     twofactors?: TwoFactorUpdateManyWithoutUserNestedInput
     preferences?: UserPreferenceUpdateOneWithoutUserNestedInput
+    domains?: DomainUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPostsInput = {
@@ -30095,6 +31993,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     twofactors?: TwoFactorUncheckedUpdateManyWithoutUserNestedInput
     preferences?: UserPreferenceUncheckedUpdateOneWithoutUserNestedInput
+    domains?: DomainUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type CategoryUpsertWithoutPostsInput = {
@@ -30265,6 +32164,39 @@ export namespace Prisma {
     data: XOR<PostUpdateManyMutationInput, PostUncheckedUpdateManyWithoutTagsInput>
   }
 
+  export type DomainCreateWithoutWebsitesInput = {
+    id?: string
+    name: string
+    verificationStatus?: $Enums.VerificationStatus
+    verificationToken?: string | null
+    verifiedAt?: Date | string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    user?: UserCreateNestedOneWithoutDomainsInput
+    project?: ProjectCreateNestedOneWithoutDomainsInput
+  }
+
+  export type DomainUncheckedCreateWithoutWebsitesInput = {
+    id?: string
+    name: string
+    verificationStatus?: $Enums.VerificationStatus
+    verificationToken?: string | null
+    verifiedAt?: Date | string | null
+    userId?: string | null
+    projectId?: string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type DomainCreateOrConnectWithoutWebsitesInput = {
+    where: DomainWhereUniqueInput
+    create: XOR<DomainCreateWithoutWebsitesInput, DomainUncheckedCreateWithoutWebsitesInput>
+  }
+
   export type UserCreateWithoutWebsitesInput = {
     id?: string
     email: string
@@ -30288,6 +32220,7 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     twofactors?: TwoFactorCreateNestedManyWithoutUserInput
     preferences?: UserPreferenceCreateNestedOneWithoutUserInput
+    domains?: DomainCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutWebsitesInput = {
@@ -30313,6 +32246,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     twofactors?: TwoFactorUncheckedCreateNestedManyWithoutUserInput
     preferences?: UserPreferenceUncheckedCreateNestedOneWithoutUserInput
+    domains?: DomainUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutWebsitesInput = {
@@ -30335,6 +32269,7 @@ export namespace Prisma {
     client?: ClientCreateNestedOneWithoutProjectsInput
     access?: ProjectAccessCreateNestedManyWithoutProjectInput
     events?: EventMetaCreateNestedManyWithoutProjectInput
+    domains?: DomainCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateWithoutWebsiteInput = {
@@ -30352,11 +32287,51 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     access?: ProjectAccessUncheckedCreateNestedManyWithoutProjectInput
     events?: EventMetaUncheckedCreateNestedManyWithoutProjectInput
+    domains?: DomainUncheckedCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectCreateOrConnectWithoutWebsiteInput = {
     where: ProjectWhereUniqueInput
     create: XOR<ProjectCreateWithoutWebsiteInput, ProjectUncheckedCreateWithoutWebsiteInput>
+  }
+
+  export type DomainUpsertWithoutWebsitesInput = {
+    update: XOR<DomainUpdateWithoutWebsitesInput, DomainUncheckedUpdateWithoutWebsitesInput>
+    create: XOR<DomainCreateWithoutWebsitesInput, DomainUncheckedCreateWithoutWebsitesInput>
+    where?: DomainWhereInput
+  }
+
+  export type DomainUpdateToOneWithWhereWithoutWebsitesInput = {
+    where?: DomainWhereInput
+    data: XOR<DomainUpdateWithoutWebsitesInput, DomainUncheckedUpdateWithoutWebsitesInput>
+  }
+
+  export type DomainUpdateWithoutWebsitesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    user?: UserUpdateOneWithoutDomainsNestedInput
+    project?: ProjectUpdateOneWithoutDomainsNestedInput
+  }
+
+  export type DomainUncheckedUpdateWithoutWebsitesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type UserUpsertWithoutWebsitesInput = {
@@ -30393,6 +32368,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     twofactors?: TwoFactorUpdateManyWithoutUserNestedInput
     preferences?: UserPreferenceUpdateOneWithoutUserNestedInput
+    domains?: DomainUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutWebsitesInput = {
@@ -30418,6 +32394,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     twofactors?: TwoFactorUncheckedUpdateManyWithoutUserNestedInput
     preferences?: UserPreferenceUncheckedUpdateOneWithoutUserNestedInput
+    domains?: DomainUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type ProjectUpsertWithoutWebsiteInput = {
@@ -30446,6 +32423,7 @@ export namespace Prisma {
     client?: ClientUpdateOneWithoutProjectsNestedInput
     access?: ProjectAccessUpdateManyWithoutProjectNestedInput
     events?: EventMetaUpdateManyWithoutProjectNestedInput
+    domains?: DomainUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutWebsiteInput = {
@@ -30463,6 +32441,265 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     access?: ProjectAccessUncheckedUpdateManyWithoutProjectNestedInput
     events?: EventMetaUncheckedUpdateManyWithoutProjectNestedInput
+    domains?: DomainUncheckedUpdateManyWithoutProjectNestedInput
+  }
+
+  export type UserCreateWithoutDomainsInput = {
+    id?: string
+    email: string
+    firstName?: string | null
+    lastName?: string | null
+    image?: string | null
+    emailVerified?: boolean
+    name?: string | null
+    password?: string | null
+    status?: $Enums.UserStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    role?: $Enums.Role
+    twoFactorEnabled?: boolean | null
+    subscriptions?: SubscriptionCreateNestedManyWithoutCreatedByInput
+    projectAccess?: ProjectAccessCreateNestedManyWithoutUserInput
+    posts?: PostCreateNestedManyWithoutAuthorInput
+    websites?: WebsiteCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    twofactors?: TwoFactorCreateNestedManyWithoutUserInput
+    preferences?: UserPreferenceCreateNestedOneWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutDomainsInput = {
+    id?: string
+    email: string
+    firstName?: string | null
+    lastName?: string | null
+    image?: string | null
+    emailVerified?: boolean
+    name?: string | null
+    password?: string | null
+    status?: $Enums.UserStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    role?: $Enums.Role
+    twoFactorEnabled?: boolean | null
+    subscriptions?: SubscriptionUncheckedCreateNestedManyWithoutCreatedByInput
+    projectAccess?: ProjectAccessUncheckedCreateNestedManyWithoutUserInput
+    posts?: PostUncheckedCreateNestedManyWithoutAuthorInput
+    websites?: WebsiteUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    twofactors?: TwoFactorUncheckedCreateNestedManyWithoutUserInput
+    preferences?: UserPreferenceUncheckedCreateNestedOneWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutDomainsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutDomainsInput, UserUncheckedCreateWithoutDomainsInput>
+  }
+
+  export type ProjectCreateWithoutDomainsInput = {
+    id?: string
+    name: string
+    slug: string
+    description?: string | null
+    type?: $Enums.ProjectType
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    status?: $Enums.ProjectStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    client?: ClientCreateNestedOneWithoutProjectsInput
+    access?: ProjectAccessCreateNestedManyWithoutProjectInput
+    events?: EventMetaCreateNestedManyWithoutProjectInput
+    website?: WebsiteCreateNestedOneWithoutProjectInput
+  }
+
+  export type ProjectUncheckedCreateWithoutDomainsInput = {
+    id?: string
+    name: string
+    slug: string
+    description?: string | null
+    type?: $Enums.ProjectType
+    clientId?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    status?: $Enums.ProjectStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    access?: ProjectAccessUncheckedCreateNestedManyWithoutProjectInput
+    events?: EventMetaUncheckedCreateNestedManyWithoutProjectInput
+    website?: WebsiteUncheckedCreateNestedOneWithoutProjectInput
+  }
+
+  export type ProjectCreateOrConnectWithoutDomainsInput = {
+    where: ProjectWhereUniqueInput
+    create: XOR<ProjectCreateWithoutDomainsInput, ProjectUncheckedCreateWithoutDomainsInput>
+  }
+
+  export type WebsiteCreateWithoutVerifiedDomainInput = {
+    id?: string
+    domain: string
+    name?: string | null
+    status?: $Enums.WebsiteStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    user?: UserCreateNestedOneWithoutWebsitesInput
+    project?: ProjectCreateNestedOneWithoutWebsiteInput
+  }
+
+  export type WebsiteUncheckedCreateWithoutVerifiedDomainInput = {
+    id?: string
+    domain: string
+    name?: string | null
+    status?: $Enums.WebsiteStatus
+    userId?: string | null
+    projectId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type WebsiteCreateOrConnectWithoutVerifiedDomainInput = {
+    where: WebsiteWhereUniqueInput
+    create: XOR<WebsiteCreateWithoutVerifiedDomainInput, WebsiteUncheckedCreateWithoutVerifiedDomainInput>
+  }
+
+  export type WebsiteCreateManyVerifiedDomainInputEnvelope = {
+    data: WebsiteCreateManyVerifiedDomainInput | WebsiteCreateManyVerifiedDomainInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserUpsertWithoutDomainsInput = {
+    update: XOR<UserUpdateWithoutDomainsInput, UserUncheckedUpdateWithoutDomainsInput>
+    create: XOR<UserCreateWithoutDomainsInput, UserUncheckedCreateWithoutDomainsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutDomainsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutDomainsInput, UserUncheckedUpdateWithoutDomainsInput>
+  }
+
+  export type UserUpdateWithoutDomainsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    twoFactorEnabled?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    subscriptions?: SubscriptionUpdateManyWithoutCreatedByNestedInput
+    projectAccess?: ProjectAccessUpdateManyWithoutUserNestedInput
+    posts?: PostUpdateManyWithoutAuthorNestedInput
+    websites?: WebsiteUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    twofactors?: TwoFactorUpdateManyWithoutUserNestedInput
+    preferences?: UserPreferenceUpdateOneWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutDomainsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    emailVerified?: BoolFieldUpdateOperationsInput | boolean
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    twoFactorEnabled?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    subscriptions?: SubscriptionUncheckedUpdateManyWithoutCreatedByNestedInput
+    projectAccess?: ProjectAccessUncheckedUpdateManyWithoutUserNestedInput
+    posts?: PostUncheckedUpdateManyWithoutAuthorNestedInput
+    websites?: WebsiteUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    twofactors?: TwoFactorUncheckedUpdateManyWithoutUserNestedInput
+    preferences?: UserPreferenceUncheckedUpdateOneWithoutUserNestedInput
+  }
+
+  export type ProjectUpsertWithoutDomainsInput = {
+    update: XOR<ProjectUpdateWithoutDomainsInput, ProjectUncheckedUpdateWithoutDomainsInput>
+    create: XOR<ProjectCreateWithoutDomainsInput, ProjectUncheckedCreateWithoutDomainsInput>
+    where?: ProjectWhereInput
+  }
+
+  export type ProjectUpdateToOneWithWhereWithoutDomainsInput = {
+    where?: ProjectWhereInput
+    data: XOR<ProjectUpdateWithoutDomainsInput, ProjectUncheckedUpdateWithoutDomainsInput>
+  }
+
+  export type ProjectUpdateWithoutDomainsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: EnumProjectTypeFieldUpdateOperationsInput | $Enums.ProjectType
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    client?: ClientUpdateOneWithoutProjectsNestedInput
+    access?: ProjectAccessUpdateManyWithoutProjectNestedInput
+    events?: EventMetaUpdateManyWithoutProjectNestedInput
+    website?: WebsiteUpdateOneWithoutProjectNestedInput
+  }
+
+  export type ProjectUncheckedUpdateWithoutDomainsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: EnumProjectTypeFieldUpdateOperationsInput | $Enums.ProjectType
+    clientId?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    access?: ProjectAccessUncheckedUpdateManyWithoutProjectNestedInput
+    events?: EventMetaUncheckedUpdateManyWithoutProjectNestedInput
+    website?: WebsiteUncheckedUpdateOneWithoutProjectNestedInput
+  }
+
+  export type WebsiteUpsertWithWhereUniqueWithoutVerifiedDomainInput = {
+    where: WebsiteWhereUniqueInput
+    update: XOR<WebsiteUpdateWithoutVerifiedDomainInput, WebsiteUncheckedUpdateWithoutVerifiedDomainInput>
+    create: XOR<WebsiteCreateWithoutVerifiedDomainInput, WebsiteUncheckedCreateWithoutVerifiedDomainInput>
+  }
+
+  export type WebsiteUpdateWithWhereUniqueWithoutVerifiedDomainInput = {
+    where: WebsiteWhereUniqueInput
+    data: XOR<WebsiteUpdateWithoutVerifiedDomainInput, WebsiteUncheckedUpdateWithoutVerifiedDomainInput>
+  }
+
+  export type WebsiteUpdateManyWithWhereWithoutVerifiedDomainInput = {
+    where: WebsiteScalarWhereInput
+    data: XOR<WebsiteUpdateManyMutationInput, WebsiteUncheckedUpdateManyWithoutVerifiedDomainInput>
   }
 
   export type UserCreateWithoutAccountsInput = {
@@ -30488,6 +32725,7 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     twofactors?: TwoFactorCreateNestedManyWithoutUserInput
     preferences?: UserPreferenceCreateNestedOneWithoutUserInput
+    domains?: DomainCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAccountsInput = {
@@ -30513,6 +32751,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     twofactors?: TwoFactorUncheckedCreateNestedManyWithoutUserInput
     preferences?: UserPreferenceUncheckedCreateNestedOneWithoutUserInput
+    domains?: DomainUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAccountsInput = {
@@ -30554,6 +32793,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     twofactors?: TwoFactorUpdateManyWithoutUserNestedInput
     preferences?: UserPreferenceUpdateOneWithoutUserNestedInput
+    domains?: DomainUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAccountsInput = {
@@ -30579,6 +32819,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     twofactors?: TwoFactorUncheckedUpdateManyWithoutUserNestedInput
     preferences?: UserPreferenceUncheckedUpdateOneWithoutUserNestedInput
+    domains?: DomainUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutSubscriptionsInput = {
@@ -30604,6 +32845,7 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     twofactors?: TwoFactorCreateNestedManyWithoutUserInput
     preferences?: UserPreferenceCreateNestedOneWithoutUserInput
+    domains?: DomainCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutSubscriptionsInput = {
@@ -30629,6 +32871,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     twofactors?: TwoFactorUncheckedCreateNestedManyWithoutUserInput
     preferences?: UserPreferenceUncheckedCreateNestedOneWithoutUserInput
+    domains?: DomainUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutSubscriptionsInput = {
@@ -30670,6 +32913,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     twofactors?: TwoFactorUpdateManyWithoutUserNestedInput
     preferences?: UserPreferenceUpdateOneWithoutUserNestedInput
+    domains?: DomainUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSubscriptionsInput = {
@@ -30695,6 +32939,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     twofactors?: TwoFactorUncheckedUpdateManyWithoutUserNestedInput
     preferences?: UserPreferenceUncheckedUpdateOneWithoutUserNestedInput
+    domains?: DomainUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type ProjectCreateWithoutAccessInput = {
@@ -30712,6 +32957,7 @@ export namespace Prisma {
     client?: ClientCreateNestedOneWithoutProjectsInput
     events?: EventMetaCreateNestedManyWithoutProjectInput
     website?: WebsiteCreateNestedOneWithoutProjectInput
+    domains?: DomainCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateWithoutAccessInput = {
@@ -30729,6 +32975,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     events?: EventMetaUncheckedCreateNestedManyWithoutProjectInput
     website?: WebsiteUncheckedCreateNestedOneWithoutProjectInput
+    domains?: DomainUncheckedCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectCreateOrConnectWithoutAccessInput = {
@@ -30759,6 +33006,7 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     twofactors?: TwoFactorCreateNestedManyWithoutUserInput
     preferences?: UserPreferenceCreateNestedOneWithoutUserInput
+    domains?: DomainCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutProjectAccessInput = {
@@ -30784,6 +33032,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     twofactors?: TwoFactorUncheckedCreateNestedManyWithoutUserInput
     preferences?: UserPreferenceUncheckedCreateNestedOneWithoutUserInput
+    domains?: DomainUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutProjectAccessInput = {
@@ -30817,6 +33066,7 @@ export namespace Prisma {
     client?: ClientUpdateOneWithoutProjectsNestedInput
     events?: EventMetaUpdateManyWithoutProjectNestedInput
     website?: WebsiteUpdateOneWithoutProjectNestedInput
+    domains?: DomainUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutAccessInput = {
@@ -30834,6 +33084,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     events?: EventMetaUncheckedUpdateManyWithoutProjectNestedInput
     website?: WebsiteUncheckedUpdateOneWithoutProjectNestedInput
+    domains?: DomainUncheckedUpdateManyWithoutProjectNestedInput
   }
 
   export type UserUpsertWithoutProjectAccessInput = {
@@ -30870,6 +33121,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     twofactors?: TwoFactorUpdateManyWithoutUserNestedInput
     preferences?: UserPreferenceUpdateOneWithoutUserNestedInput
+    domains?: DomainUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutProjectAccessInput = {
@@ -30895,6 +33147,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     twofactors?: TwoFactorUncheckedUpdateManyWithoutUserNestedInput
     preferences?: UserPreferenceUncheckedUpdateOneWithoutUserNestedInput
+    domains?: DomainUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type ClientCreateWithoutProjectsInput = {
@@ -30985,12 +33238,10 @@ export namespace Prisma {
     domain: string
     name?: string | null
     status?: $Enums.WebsiteStatus
-    verificationStatus?: $Enums.VerificationStatus
-    verificationToken?: string | null
-    verifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    verifiedDomain?: DomainCreateNestedOneWithoutWebsitesInput
     user?: UserCreateNestedOneWithoutWebsitesInput
   }
 
@@ -30999,9 +33250,7 @@ export namespace Prisma {
     domain: string
     name?: string | null
     status?: $Enums.WebsiteStatus
-    verificationStatus?: $Enums.VerificationStatus
-    verificationToken?: string | null
-    verifiedAt?: Date | string | null
+    domainId?: string | null
     userId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -31011,6 +33260,44 @@ export namespace Prisma {
   export type WebsiteCreateOrConnectWithoutProjectInput = {
     where: WebsiteWhereUniqueInput
     create: XOR<WebsiteCreateWithoutProjectInput, WebsiteUncheckedCreateWithoutProjectInput>
+  }
+
+  export type DomainCreateWithoutProjectInput = {
+    id?: string
+    name: string
+    verificationStatus?: $Enums.VerificationStatus
+    verificationToken?: string | null
+    verifiedAt?: Date | string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    user?: UserCreateNestedOneWithoutDomainsInput
+    websites?: WebsiteCreateNestedManyWithoutVerifiedDomainInput
+  }
+
+  export type DomainUncheckedCreateWithoutProjectInput = {
+    id?: string
+    name: string
+    verificationStatus?: $Enums.VerificationStatus
+    verificationToken?: string | null
+    verifiedAt?: Date | string | null
+    userId?: string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    websites?: WebsiteUncheckedCreateNestedManyWithoutVerifiedDomainInput
+  }
+
+  export type DomainCreateOrConnectWithoutProjectInput = {
+    where: DomainWhereUniqueInput
+    create: XOR<DomainCreateWithoutProjectInput, DomainUncheckedCreateWithoutProjectInput>
+  }
+
+  export type DomainCreateManyProjectInputEnvelope = {
+    data: DomainCreateManyProjectInput | DomainCreateManyProjectInput[]
+    skipDuplicates?: boolean
   }
 
   export type ClientUpsertWithoutProjectsInput = {
@@ -31107,12 +33394,10 @@ export namespace Prisma {
     domain?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumWebsiteStatusFieldUpdateOperationsInput | $Enums.WebsiteStatus
-    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
-    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
-    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verifiedDomain?: DomainUpdateOneWithoutWebsitesNestedInput
     user?: UserUpdateOneWithoutWebsitesNestedInput
   }
 
@@ -31121,13 +33406,27 @@ export namespace Prisma {
     domain?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumWebsiteStatusFieldUpdateOperationsInput | $Enums.WebsiteStatus
-    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
-    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
-    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    domainId?: NullableStringFieldUpdateOperationsInput | string | null
     userId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type DomainUpsertWithWhereUniqueWithoutProjectInput = {
+    where: DomainWhereUniqueInput
+    update: XOR<DomainUpdateWithoutProjectInput, DomainUncheckedUpdateWithoutProjectInput>
+    create: XOR<DomainCreateWithoutProjectInput, DomainUncheckedCreateWithoutProjectInput>
+  }
+
+  export type DomainUpdateWithWhereUniqueWithoutProjectInput = {
+    where: DomainWhereUniqueInput
+    data: XOR<DomainUpdateWithoutProjectInput, DomainUncheckedUpdateWithoutProjectInput>
+  }
+
+  export type DomainUpdateManyWithWhereWithoutProjectInput = {
+    where: DomainScalarWhereInput
+    data: XOR<DomainUpdateManyMutationInput, DomainUncheckedUpdateManyWithoutProjectInput>
   }
 
   export type ProjectCreateWithoutEventsInput = {
@@ -31145,6 +33444,7 @@ export namespace Prisma {
     client?: ClientCreateNestedOneWithoutProjectsInput
     access?: ProjectAccessCreateNestedManyWithoutProjectInput
     website?: WebsiteCreateNestedOneWithoutProjectInput
+    domains?: DomainCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateWithoutEventsInput = {
@@ -31162,6 +33462,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     access?: ProjectAccessUncheckedCreateNestedManyWithoutProjectInput
     website?: WebsiteUncheckedCreateNestedOneWithoutProjectInput
+    domains?: DomainUncheckedCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectCreateOrConnectWithoutEventsInput = {
@@ -31195,6 +33496,7 @@ export namespace Prisma {
     client?: ClientUpdateOneWithoutProjectsNestedInput
     access?: ProjectAccessUpdateManyWithoutProjectNestedInput
     website?: WebsiteUpdateOneWithoutProjectNestedInput
+    domains?: DomainUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutEventsInput = {
@@ -31212,6 +33514,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     access?: ProjectAccessUncheckedUpdateManyWithoutProjectNestedInput
     website?: WebsiteUncheckedUpdateOneWithoutProjectNestedInput
+    domains?: DomainUncheckedUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectCreateWithoutClientInput = {
@@ -31229,6 +33532,7 @@ export namespace Prisma {
     access?: ProjectAccessCreateNestedManyWithoutProjectInput
     events?: EventMetaCreateNestedManyWithoutProjectInput
     website?: WebsiteCreateNestedOneWithoutProjectInput
+    domains?: DomainCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateWithoutClientInput = {
@@ -31246,6 +33550,7 @@ export namespace Prisma {
     access?: ProjectAccessUncheckedCreateNestedManyWithoutProjectInput
     events?: EventMetaUncheckedCreateNestedManyWithoutProjectInput
     website?: WebsiteUncheckedCreateNestedOneWithoutProjectInput
+    domains?: DomainUncheckedCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectCreateOrConnectWithoutClientInput = {
@@ -31315,6 +33620,7 @@ export namespace Prisma {
     accounts?: AccountCreateNestedManyWithoutUserInput
     twofactors?: TwoFactorCreateNestedManyWithoutUserInput
     preferences?: UserPreferenceCreateNestedOneWithoutUserInput
+    domains?: DomainCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAuditLogsInput = {
@@ -31340,6 +33646,7 @@ export namespace Prisma {
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     twofactors?: TwoFactorUncheckedCreateNestedManyWithoutUserInput
     preferences?: UserPreferenceUncheckedCreateNestedOneWithoutUserInput
+    domains?: DomainUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAuditLogsInput = {
@@ -31381,6 +33688,7 @@ export namespace Prisma {
     accounts?: AccountUpdateManyWithoutUserNestedInput
     twofactors?: TwoFactorUpdateManyWithoutUserNestedInput
     preferences?: UserPreferenceUpdateOneWithoutUserNestedInput
+    domains?: DomainUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAuditLogsInput = {
@@ -31406,6 +33714,7 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     twofactors?: TwoFactorUncheckedUpdateManyWithoutUserNestedInput
     preferences?: UserPreferenceUncheckedUpdateOneWithoutUserNestedInput
+    domains?: DomainUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutTwofactorsInput = {
@@ -31431,6 +33740,7 @@ export namespace Prisma {
     accounts?: AccountCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     preferences?: UserPreferenceCreateNestedOneWithoutUserInput
+    domains?: DomainCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutTwofactorsInput = {
@@ -31456,6 +33766,7 @@ export namespace Prisma {
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     preferences?: UserPreferenceUncheckedCreateNestedOneWithoutUserInput
+    domains?: DomainUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutTwofactorsInput = {
@@ -31497,6 +33808,7 @@ export namespace Prisma {
     accounts?: AccountUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     preferences?: UserPreferenceUpdateOneWithoutUserNestedInput
+    domains?: DomainUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutTwofactorsInput = {
@@ -31522,6 +33834,7 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     preferences?: UserPreferenceUncheckedUpdateOneWithoutUserNestedInput
+    domains?: DomainUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutPreferencesInput = {
@@ -31547,6 +33860,7 @@ export namespace Prisma {
     accounts?: AccountCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     twofactors?: TwoFactorCreateNestedManyWithoutUserInput
+    domains?: DomainCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutPreferencesInput = {
@@ -31572,6 +33886,7 @@ export namespace Prisma {
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     twofactors?: TwoFactorUncheckedCreateNestedManyWithoutUserInput
+    domains?: DomainUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutPreferencesInput = {
@@ -31613,6 +33928,7 @@ export namespace Prisma {
     accounts?: AccountUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     twofactors?: TwoFactorUpdateManyWithoutUserNestedInput
+    domains?: DomainUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPreferencesInput = {
@@ -31638,6 +33954,7 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     twofactors?: TwoFactorUncheckedUpdateManyWithoutUserNestedInput
+    domains?: DomainUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type SubscriptionCreateManyCreatedByInput = {
@@ -31687,9 +34004,7 @@ export namespace Prisma {
     domain: string
     name?: string | null
     status?: $Enums.WebsiteStatus
-    verificationStatus?: $Enums.VerificationStatus
-    verificationToken?: string | null
-    verifiedAt?: Date | string | null
+    domainId?: string | null
     projectId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -31736,6 +34051,19 @@ export namespace Prisma {
     id: string
     secret: string
     backupCodes: string
+  }
+
+  export type DomainCreateManyUserInput = {
+    id?: string
+    name: string
+    verificationStatus?: $Enums.VerificationStatus
+    verificationToken?: string | null
+    verifiedAt?: Date | string | null
+    projectId?: string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
   }
 
   export type SubscriptionUpdateWithoutCreatedByInput = {
@@ -31871,12 +34199,10 @@ export namespace Prisma {
     domain?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumWebsiteStatusFieldUpdateOperationsInput | $Enums.WebsiteStatus
-    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
-    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
-    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verifiedDomain?: DomainUpdateOneWithoutWebsitesNestedInput
     project?: ProjectUpdateOneWithoutWebsiteNestedInput
   }
 
@@ -31885,9 +34211,7 @@ export namespace Prisma {
     domain?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumWebsiteStatusFieldUpdateOperationsInput | $Enums.WebsiteStatus
-    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
-    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
-    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    domainId?: NullableStringFieldUpdateOperationsInput | string | null
     projectId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -31899,9 +34223,7 @@ export namespace Prisma {
     domain?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumWebsiteStatusFieldUpdateOperationsInput | $Enums.WebsiteStatus
-    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
-    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
-    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    domainId?: NullableStringFieldUpdateOperationsInput | string | null
     projectId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -32032,6 +34354,47 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     secret?: StringFieldUpdateOperationsInput | string
     backupCodes?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type DomainUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    project?: ProjectUpdateOneWithoutDomainsNestedInput
+    websites?: WebsiteUpdateManyWithoutVerifiedDomainNestedInput
+  }
+
+  export type DomainUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    websites?: WebsiteUncheckedUpdateManyWithoutVerifiedDomainNestedInput
+  }
+
+  export type DomainUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type TagUpdateWithoutPostsInput = {
@@ -32171,6 +34534,54 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
+  export type WebsiteCreateManyVerifiedDomainInput = {
+    id?: string
+    domain: string
+    name?: string | null
+    status?: $Enums.WebsiteStatus
+    userId?: string | null
+    projectId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type WebsiteUpdateWithoutVerifiedDomainInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    domain?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumWebsiteStatusFieldUpdateOperationsInput | $Enums.WebsiteStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    user?: UserUpdateOneWithoutWebsitesNestedInput
+    project?: ProjectUpdateOneWithoutWebsiteNestedInput
+  }
+
+  export type WebsiteUncheckedUpdateWithoutVerifiedDomainInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    domain?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumWebsiteStatusFieldUpdateOperationsInput | $Enums.WebsiteStatus
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type WebsiteUncheckedUpdateManyWithoutVerifiedDomainInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    domain?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumWebsiteStatusFieldUpdateOperationsInput | $Enums.WebsiteStatus
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
   export type ProjectAccessCreateManyProjectInput = {
     id?: string
     userId: string
@@ -32187,6 +34598,19 @@ export namespace Prisma {
     data?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
+  }
+
+  export type DomainCreateManyProjectInput = {
+    id?: string
+    name: string
+    verificationStatus?: $Enums.VerificationStatus
+    verificationToken?: string | null
+    verifiedAt?: Date | string | null
+    userId?: string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
   }
 
   export type ProjectAccessUpdateWithoutProjectInput = {
@@ -32243,6 +34667,47 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type DomainUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    user?: UserUpdateOneWithoutDomainsNestedInput
+    websites?: WebsiteUpdateManyWithoutVerifiedDomainNestedInput
+  }
+
+  export type DomainUncheckedUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    websites?: WebsiteUncheckedUpdateManyWithoutVerifiedDomainNestedInput
+  }
+
+  export type DomainUncheckedUpdateManyWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verificationStatus?: EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+    verificationToken?: NullableStringFieldUpdateOperationsInput | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    dnsRecords?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
   export type ProjectCreateManyClientInput = {
     id?: string
     name: string
@@ -32272,6 +34737,7 @@ export namespace Prisma {
     access?: ProjectAccessUpdateManyWithoutProjectNestedInput
     events?: EventMetaUpdateManyWithoutProjectNestedInput
     website?: WebsiteUpdateOneWithoutProjectNestedInput
+    domains?: DomainUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutClientInput = {
@@ -32289,6 +34755,7 @@ export namespace Prisma {
     access?: ProjectAccessUncheckedUpdateManyWithoutProjectNestedInput
     events?: EventMetaUncheckedUpdateManyWithoutProjectNestedInput
     website?: WebsiteUncheckedUpdateOneWithoutProjectNestedInput
+    domains?: DomainUncheckedUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateManyWithoutClientInput = {

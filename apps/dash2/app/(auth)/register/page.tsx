@@ -58,7 +58,11 @@ export default function RegisterPage() {
         password: formData.password,
         name: formData.name,
         fetchOptions: {
-          onSuccess: () => {
+          onSuccess: (ctx) => {
+            const authToken = ctx.response.headers.get("set-auth-token")
+            if (authToken) {
+              localStorage.setItem("authToken", authToken);
+            }
             toast.success("Account created! Please check your email to verify your account.");
             router.push(`/verify?email=${encodeURIComponent(formData.email)}`);
           },
@@ -81,7 +85,11 @@ export default function RegisterPage() {
       await authClient.signIn.social({ 
         provider: provider, 
         fetchOptions: {
-          onSuccess: () => {
+          onSuccess: (ctx) => {
+            const authToken = ctx.response.headers.get("set-auth-token")
+            if (authToken) {
+              localStorage.setItem("authToken", authToken);
+            }
             toast.success("Login successful!");
             router.push("/home");
           },
