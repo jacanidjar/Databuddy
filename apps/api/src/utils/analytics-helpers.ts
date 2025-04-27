@@ -41,16 +41,18 @@ export function formatTime(timeValue: number): string {
   // Now format the seconds value
   if (seconds < 60) {
     return `${Math.round(seconds)}s`;
-  } else if (seconds < 3600) {
+  } 
+  
+  if (seconds < 3600) {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.round(seconds % 60);
     return `${minutes}m ${remainingSeconds}s`;
-  } else {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = Math.round(seconds % 60);
-    return `${hours}h ${minutes}m ${remainingSeconds}s`;
-  }
+  } 
+  
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = Math.round(seconds % 60);
+  return `${hours}h ${minutes}m ${remainingSeconds}s`;
 }
 
 /**
@@ -110,7 +112,7 @@ export function isToday(date: string): boolean {
  * Get the current hour formatted for matching with hourly data
  */
 export function getCurrentHourFormatted(): string {
-  return dayjs().format('yyyy-MM-dd HH:00:00');
+  return dayjs().format('YYYY-MM-DD HH:00:00');
 }
 
 /**

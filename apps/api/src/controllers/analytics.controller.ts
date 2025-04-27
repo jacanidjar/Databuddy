@@ -10,6 +10,7 @@ import { AppVariables } from '../types';
 import { parseUserAgent } from '../utils/user-agent';
 import { getGeoData } from '../utils/ip-geo';
 import { parseReferrer } from '../utils/referrer';
+import { cacheable, getRedisCache } from '@databuddy/redis';
 
 // Initialize logger
 const logger = console;
@@ -23,6 +24,39 @@ function extractVersion(ua: string, browser: string): string {
   const match = ua.match(new RegExp(`${browser}\\/([\\d.]+)`)) || 
                 ua.match(new RegExp(`${browser} ([\\d.]+)`));
   return match ? match[1] : '';
+}
+
+/**
+ * Redis client wrapper for recent events cache
+ */
+const recentEventsCache = {
+  async get(key: string): Promise<string | null> {
+    try {
+      // Use Redis directly for checking duplicates
+      const redis = getRedisCache();
+      return await redis.get(`recent_events:${key}`);
+    } catch (error) {
+      logger.warn('Error getting from cache', { key, error });
+      return null;
+    }
+  },
+  async set(key: string, value: string): Promise<void> {
+    try {
+      // Use Redis directly for setting values
+      const redis = getRedisCache();
+      await redis.setex(`recent_events:${key}`, 300, value);
+    } catch (error) {
+      logger.warn('Error setting cache', { key, error });
+    }
+  }
+};
+
+/**
+ * Create a unique key for an event based on its properties
+ * This key is used to detect duplicate events
+ */
+function createEventKey(websiteId: string, sessionId: string, url: string, eventName: string, timestamp: number): string {
+  return `${websiteId}:${sessionId}:${url}:${eventName}:${Math.floor(timestamp / 1000)}`;
 }
 
 /**
@@ -45,6 +79,31 @@ export async function processEvent(c: Context) {
     // Get exact event time from timestamp_ms
     const eventTimestamp = properties.__timestamp_ms || enriched.timestamp_ms || now.getTime();
     const eventTime = new Date(eventTimestamp);
+    
+    // Create a unique key for this event to detect duplicates
+    const eventKey = createEventKey(
+      website.id,
+      properties.sessionId || '',
+      properties.__path || enriched.url || '',
+      payload.name || event.type,
+      eventTimestamp
+    );
+    
+    // Check if this is a duplicate event (processed in the last 5 minutes)
+    try {
+      const existing = await recentEventsCache.get(eventKey);
+      if (existing) {
+        // This is a duplicate, log it and return success without inserting
+        logger.debug('Skipping duplicate event', { eventKey });
+        return c.json({ status: 'success', duplicate: true });
+      }
+      
+      // Mark this event as processed
+      await recentEventsCache.set(eventKey, now.toISOString());
+    } catch (cacheError) {
+      // If cache fails, log and continue (better to risk duplicates than lose events)
+      logger.warn('Event deduplication cache failed', { error: cacheError });
+    }
     
     // Parse user agent
     const userAgent = parseUserAgent(enriched.user_agent || '');

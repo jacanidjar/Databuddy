@@ -319,7 +319,7 @@ analyticsRouter.get('/summary', zValidator('query', analyticsQuerySchema), async
     // Update events_by_date to include today's data
     const updatedEventsByDate = updateEventsWithTodayData(
       eventsByDate as AnalyticsEntry[], 
-      todaySummary, 
+      todaySummary,
       params.granularity as 'hourly' | 'daily'
     );
     

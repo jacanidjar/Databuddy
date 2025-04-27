@@ -13,7 +13,8 @@
     "deploy": "wrangler deploy --minify",
     "dry-run": "wrangler deploy --minify --dry-run",
     "migrate:events": "bun run src/commands/run-events-migration.ts",
-    "init:tables": "bun run src/commands/init-tables.ts"
+    "init:tables": "bun run src/commands/init-tables.ts",
+    "test": "bun run src/scripts/test.ts"
   },
   "dependencies": {
     "@clickhouse/client": "^1.10.1",

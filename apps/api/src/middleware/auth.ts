@@ -3,12 +3,9 @@ import { auth } from "@databuddy/auth"
 
 export const authMiddleware = createMiddleware(async (c, next) => {
   try {
-    console.log('Auth middleware', c.req.raw.headers);
     const session = await auth.api.getSession({ 
       headers: c.req.raw.headers 
     });
-    console.log('Session', session);
-    console.log('User', session?.user);
 
     if (!session) {
       c.set('user', null);
