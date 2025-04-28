@@ -1,10 +1,9 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { logger } from 'hono/logger';
-import { authMiddleware } from './middleware/auth'
 import { auth, type AuthUser, type SessionData } from '@databuddy/auth';
 import basketRouter from './routes/basket';
 import analyticsRouter from './routes/analytics';
+import { logger } from './lib/logger';
 
 // Define the Hono app with typed context
 type AppVariables = {
@@ -15,13 +14,6 @@ type AppVariables = {
 }
 
 const app = new Hono<AppVariables>();
-
-// // Add core middleware
-// app.use(highlightMiddleware({
-//   projectID: 'ney0p09d'
-// }));
-
-// app.use('*', logger());
 
 // Configure CORS - must be before auth routes
 app.use('*', cors({
@@ -62,7 +54,7 @@ app.on(['POST', 'GET', 'OPTIONS'], '/api/auth/*', async (c) => {
     const response = await auth.handler(c.req.raw);
     return response;
   } catch (error: any) {
-    console.error('[Auth Handler Error]:', error);
+    logger.error('[Auth Handler Error]:', error);
     return new Response(JSON.stringify({ 
       error: 'Authentication error', 
       message: error?.message || 'An error occurred in the authentication service' 
@@ -89,7 +81,7 @@ app.get('/session', (c) => {
 
 // Error handling
 app.onError((err, c) => {
-  console.error('[API Error]:', err);
+  logger.error('[API Error]:', err);
   return new Response(JSON.stringify({ 
     error: err.message || 'Internal Server Error',
     status: 500
@@ -105,6 +97,7 @@ app.notFound((c) => {
     headers: { 'Content-Type': 'application/json' }
   });
 });
+
 // Helper function to access environment variables in both Node.js and Cloudflare Workers
 function getEnv(key: string) {
   return process.env[key] || 
@@ -112,7 +105,6 @@ function getEnv(key: string) {
          (typeof globalThis !== 'undefined' && key in globalThis ? (globalThis as Record<string, any>)[key] : null);
 }
 
-// Export the app for Cloudflare Workers - DONT ENABLE.
 export default {
   fetch: app.fetch,
   port: getEnv('PORT') || 3001,

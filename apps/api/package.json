@@ -18,24 +18,24 @@
     "test": "bun run src/scripts/test.ts"
   },
   "dependencies": {
-    "@clickhouse/client": "^1.10.1",
+    "@clickhouse/client": "^1.11.1",
     "@databuddy/auth": "../../packages/auth",
     "@databuddy/redis": "../../packages/redis",
-    "@highlight-run/hono": "^1.0.3",
-    "@hono/node-server": "^1.8.2",
+    "@highlight-run/hono": "^1.0.4",
+    "@hono/node-server": "^1.14.1",
     "@hono/zod-validator": "^0.4.3",
-    "@logtail/edge": "^0.5.2",
+    "@logtail/edge": "^0.5.4",
     "@types/ua-parser-js": "^0.7.39",
-    "better-auth": "^1.2.2",
-    "hono": "^4.7.2",
+    "better-auth": "^1.2.7",
+    "hono": "^4.7.8",
     "pg": "^8.15.6",
     "react": "19.0.0",
-    "ua-parser-js": "^2.0.2",
-    "zod": "^3.24.2"
+    "ua-parser-js": "^2.0.3",
+    "zod": "^3.24.3"
   },
   "devDependencies": {
     "bun-types": "latest",
-    "wrangler": "4"
+    "wrangler": "^4.13.2"
   },
   "module": "src/index.js"
 }

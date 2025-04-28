@@ -1,7 +1,38 @@
-# Git / Version Control
-.git
-.gitignore
-.gitattributes
+# Dependencies
+**/node_modules
+**/.next
+**/dist
+
+# Development
+**/.git
+**/.github
+**/.vscode
+**/.idea
+**/*.log
+**/.env*
+**/.dev.vars
+
+# Build outputs
+**/build
+**/.turbo
+**/.wrangler
+
+# Test files
+**/__tests__
+**/*.test.*
+**/*.spec.*
+
+# Documentation
+**/*.md
+**/docs
+**/LICENSE
+
+# Other
+**/.DS_Store
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
 
 # Node Dependencies (these should be installed *inside* the Docker image)
 # Matches node_modules at the root and in any subdirectory (apps/*, packages/*)
