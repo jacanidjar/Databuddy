@@ -42,13 +42,13 @@ export default function NotFound() {
           <span className="text-8xl md:text-9xl font-bold text-primary">4</span>
           <div className="relative mx-2">
             <span className="text-8xl md:text-9xl font-bold text-primary animate-pulse">{randomDigit}</span>
-            <div className="absolute inset-0 bg-primary/10 blur-xl -z-10 rounded-full"></div>
+            <div className="absolute inset-0 bg-primary/10 blur-xl -z-10 rounded-full"/>
           </div>
           <span className="text-8xl md:text-9xl font-bold text-primary">4</span>
         </div>
         
         {/* Horizontal line */}
-        <div className="w-16 h-px bg-border mb-4"></div>
+        <div className="w-16 h-px bg-border mb-4"/>
         
         {/* Simple mascot */}
         <div className="mb-6 text-4xl">
@@ -92,8 +92,8 @@ export default function NotFound() {
       
       {/* Subtle brand pattern */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-5">
-        <div className="absolute -right-24 -top-24 w-96 h-96 rounded-full border-8 border-dashed border-primary"></div>
-        <div className="absolute -left-24 -bottom-24 w-96 h-96 rounded-full border-8 border-dashed border-primary"></div>
+        <div className="absolute -right-24 -top-24 w-96 h-96 rounded-full border-8 border-dashed border-primary"/>
+        <div className="absolute -left-24 -bottom-24 w-96 h-96 rounded-full border-8 border-dashed border-primary"/>
       </div>
     </div>
   );

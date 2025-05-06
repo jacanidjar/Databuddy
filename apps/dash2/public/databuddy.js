@@ -1,7 +1,6 @@
-"use strict";
 ( () => {
     // HTTP Client
-    var c = class {
+    const c = class {
         constructor(config) {
             this.baseUrl = config.baseUrl;
             this.headers = {
@@ -66,14 +65,14 @@
                 if (retryCount < this.maxRetries && isRetryableError) {
                     // Add jitter to retry delay to prevent thundering herd
                     const jitter = Math.random() * 0.3 + 0.85; // 0.85-1.15 randomization factor
-                    const delay = this.initialRetryDelay * Math.pow(2, retryCount) * jitter;
+                    const delay = this.initialRetryDelay * (2 ** retryCount) * jitter;
                     
                     console.debug(`Databuddy: Retrying request (${retryCount+1}/${this.maxRetries}) in ${Math.round(delay)}ms`);
                     await new Promise(resolve => setTimeout(resolve, delay));
                     return this.post(url, data, options, retryCount + 1);
                 }
                 
-                console.error(`Databuddy: ${this.maxRetries > 0 ? `Max retries (${this.maxRetries}) reached for` : `Error with no retries for`} ${url}:`, error);
+                console.error(`Databuddy: ${this.maxRetries > 0 ? `Max retries (${this.maxRetries}) reached for` : "Error with no retries for"} ${url}:`, error);
                 return null;
             }
         }
@@ -85,7 +84,7 @@
     };
 
     // Base Tracker
-    var l = class {
+    const l = class {
         constructor(options) {
             this.options = {
                 disabled: false,
@@ -183,8 +182,7 @@
         }
         
         generateAnonymousId() {
-            return 'anon_' + Math.random().toString(36).substring(2, 15) + 
-                Math.random().toString(36).substring(2, 15);
+            return `anon_${Math.random().toString(36).substring(2, 15)}_${Math.random().toString(36).substring(2, 15)}`;
         }
         
         getOrCreateSessionId() {
@@ -203,8 +201,7 @@
         }
         
         generateSessionId() {
-            return 'sess_' + this.anonymousId.substring(5, 10) + '_' + 
-                Date.now().toString(36);
+            return `sess_${this.anonymousId.substring(5, 10)}_${Date.now().toString(36)}`;
         }
         
         getSessionStartTime() {
@@ -214,7 +211,7 @@
 
             const storedTime = sessionStorage.getItem('did_session_start');
             if (storedTime) {
-                return parseInt(storedTime, 10);
+                return Number.parseInt(storedTime, 10);
             }
             
             const now = Date.now();
@@ -231,7 +228,7 @@
                 this.sessionStartTime = this.getSessionStartTime();
                 this.lastActivityTime = Date.now();
                 
-                ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(eventType => {
+                for (const eventType of ['mousedown', 'keydown', 'scroll', 'touchstart']) {
                     window.addEventListener(eventType, () => {
                         this.lastActivityTime = Date.now();
                         
@@ -239,7 +236,7 @@
                             this.interactionCount++;
                         }
                     }, { passive: true });
-                });
+                }
             } else {
                 this.anonymousId = this.getOrCreateAnonymousId();
             }
@@ -307,22 +304,22 @@
 
         async send(event) {
             // Prepare event data
-            event = this.prepareEventData(event);
+            const pEvent = this.prepareEventData(event);
             
             // Skip sending if disabled or filtered out
-            if (this.options.disabled || (this.options.filter && !this.options.filter(event))) {
+            if (this.options.disabled || (this.options.filter && !this.options.filter(pEvent))) {
                 return Promise.resolve();
             }
             
             // Queue event if waiting for profile
             if (this.options.waitForProfile && !this.anonymousId) {
-                this.queue.push(event);
+                this.queue.push(pEvent);
                 return Promise.resolve();
             }
             
             // If batching is enabled, add to batch queue
             if (this.options.enableBatching && !event.isForceSend) {
-                return this.addToBatch(event);
+                return this.addToBatch(pEvent);
             }
             
             // Add keepalive for more reliable delivery, especially near page unload
@@ -332,7 +329,7 @@
             };
             
             // Try to send directly to API with keepalive
-            return this.api.fetch("/basket", event, fetchOptions);
+            return this.api.fetch("/basket", pEvent, fetchOptions);
         }
         
         addToBatch(event) {
@@ -393,7 +390,7 @@
                 // Use sendBeacon if available for better reliability
                 const beaconResult = await this.sendBatchBeacon(batchEvents);
                 if (beaconResult) {
-                    console.debug(`Databuddy: Successfully sent batch via beacon`);
+                    console.debug("Databuddy: Successfully sent batch via beacon");
                     return beaconResult;
                 }
                 
@@ -411,15 +408,15 @@
                 if (isNetworkError) {
                     // If batch failed due to network error, try to send events individually
                     console.debug(`Databuddy: Network error detected, attempting to send ${batchEvents.length} events individually`);
-                    batchEvents.forEach(event => {
+                    for (const event of batchEvents) {
                         // Mark event as force send to avoid infinite loop
                         event.isForceSend = true;
                         this.send(event).catch(e => {
-                            console.warn(`Databuddy: Failed to send individual event`, e);
+                            console.warn("Databuddy: Failed to send individual event", e);
                         });
-                    });
+                    }
                 } else {
-                    console.debug(`Databuddy: Server error detected - will not retry to avoid duplicates`);
+                    console.debug("Databuddy: Server error detected - will not retry to avoid duplicates");
                 }
                 
                 return null;
@@ -542,10 +539,10 @@
             
             try {
                 // Prepare event data
-                event = this.prepareEventData(event);
+                const pEvent = this.prepareEventData(event);
                 
                 // Skip sending if disabled or filtered out
-                if (this.options.disabled || (this.options.filter && !this.options.filter(event))) {
+                if (this.options.disabled || (this.options.filter && !this.options.filter(pEvent))) {
                     return null;
                 }
                 
@@ -557,7 +554,7 @@
                 
                 // Build URL with query parameters for authentication
                 const url = `${baseUrl}/basket?client_id=${encodeURIComponent(clientId)}&sdk_name=${encodeURIComponent(sdkName)}&sdk_version=${encodeURIComponent(sdkVersion)}`;
-                const data = JSON.stringify(event);
+                const data = JSON.stringify(pEvent);
                 
                 // Only try sendBeacon if it's available
                 if (navigator.sendBeacon) {
@@ -616,7 +613,7 @@
         
         flush() {
             // Flush regular queue
-            this.queue.forEach(event => {
+                for (const event of this.queue) {
                 this.send({
                     ...event,
                     payload: {
@@ -624,7 +621,7 @@
                         anonymousId: this.anonymousId
                     }
                 });
-            });
+            }
             this.queue = [];
             
             // Also flush batch queue if batching is enabled
@@ -641,10 +638,8 @@
             if (this.isServer() || !this.options.trackPerformance) return {};
             
             try {
-                // Prioritize newer Navigation Timing API
-                let perfData = {};
                 
-                if (window.performance && window.performance.getEntriesByType) {
+                if (window.performance?.getEntriesByType) {
                     const navEntries = window.performance.getEntriesByType('navigation');
                     if (navEntries && navEntries.length > 0) {
                         const navEntry = navEntries[0];
@@ -659,7 +654,7 @@
                 }
                 
                 // Fallback to older timing API if needed
-                if (window.performance && window.performance.timing) {
+                if (window.performance?.timing) {
                     const timing = window.performance.timing;
                     const navigationStart = timing.navigationStart;
                     
@@ -704,9 +699,9 @@
             }, { passive: true });
 
             const interactionEvents = ['click', 'keypress', 'mousemove', 'touchstart'];
-            interactionEvents.forEach(event => {
+            for (const event of interactionEvents) {
                 window.addEventListener(event, () => this.interactionCount++, { once: true });
-            });
+            }
 
             window.addEventListener('mouseout', (e) => {
                 if (e.clientY <= 0) this.hasExitIntent = true;
@@ -714,17 +709,17 @@
 
             document.addEventListener('click', (e) => {
                 const link = e.target.closest('a[href]');
-                if (link && link.href) {
-                    try {
+                if (link?.href) {
+                    try {   
                         const linkUrl = new URL(link.href);
                         if (linkUrl.origin === window.location.origin) this.isInternalNavigation = true;
                     } catch (err) {}
                 }
             });
 
-            ['popstate', 'pushstate', 'replacestate'].forEach(event => {
+            for (const event of ['popstate', 'pushstate', 'replacestate']) {
                 window.addEventListener(event, () => this.isInternalNavigation = true);
-            });
+            }
 
             const exitHandler = (event) => {
                 // Flushes batch but doesn't track exit if we're just temporarily hidden (tabbed out)
@@ -858,8 +853,7 @@
                 
                 // Get LCP (Largest Contentful Paint) if possible
                 let lcpTime = null;
-                if (PerformanceObserver.supportedEntryTypes && 
-                    PerformanceObserver.supportedEntryTypes.includes('largest-contentful-paint')) {
+                if (PerformanceObserver.supportedEntryTypes?.includes('largest-contentful-paint')) {
                     const lcpEntries = performance.getEntriesByType('largest-contentful-paint');
                     if (lcpEntries && lcpEntries.length > 0) {
                         lcpTime = Math.round(lcpEntries[lcpEntries.length - 1].startTime);
@@ -868,8 +862,7 @@
                 
                 // Get CLS (Cumulative Layout Shift) if possible
                 let cls = null;
-                if (PerformanceObserver.supportedEntryTypes && 
-                    PerformanceObserver.supportedEntryTypes.includes('layout-shift')) {
+                if (PerformanceObserver.supportedEntryTypes?.includes('layout-shift')) {
                     const layoutShifts = performance.getEntriesByType('layout-shift');
                     if (layoutShifts && layoutShifts.length > 0) {
                         cls = layoutShifts.reduce((sum, entry) => sum + entry.value, 0).toFixed(3);
@@ -965,7 +958,7 @@
         return a.replace(/([-_][a-z])/gi, e => e.toUpperCase().replace("-", "").replace("_", ""))
     }
     
-    var d = class extends l {
+    const d = class extends l {
         constructor(t) {
             super({
                 sdk: "web",
@@ -999,15 +992,15 @@
             this.init();
         }
         debounce(t, r) {
-            clearTimeout(this.debounceTimer),
+            clearTimeout(this.debounceTimer)
             this.debounceTimer = setTimeout(t, r)
         }
         trackOutgoingLinks() {
             this.isServer() || document.addEventListener("click", t => {
                 let r = t.target
-                  , i = r.closest("a");
+                  , i = r.closest("a"); 
                 if (i && r) {
-                    let n = i.getAttribute("href");
+                    const n = i.getAttribute("href");
                     if (n) {
                         try {
                             const url = new URL(n, window.location.origin);
@@ -1029,17 +1022,17 @@
         trackScreenViews() {
             if (this.isServer()) return;
             
-            let t = history.pushState;
+            const t = history.pushState;
             history.pushState = function(...s) {
-                let o = t.apply(this, s);
+                const o = t.apply(this, s);
                 window.dispatchEvent(new Event("pushstate"));
                 window.dispatchEvent(new Event("locationchange"));
                 return o;
             };
             
-            let r = history.replaceState;
+            const r = history.replaceState;
             history.replaceState = function(...s) {
-                let o = r.apply(this, s);
+                const o = r.apply(this, s);
                 window.dispatchEvent(new Event("replacestate"));
                 window.dispatchEvent(new Event("locationchange"));
                 return o;
@@ -1051,7 +1044,7 @@
             
             this.pageEngagementStart = Date.now();
             
-            let i = () => this.debounce(() => {
+            const i = () => this.debounce(() => {
                 const previous_path = this.lastPath || window.location.href;
                 this.setGlobalProperties({
                     __referrer: previous_path
@@ -1069,10 +1062,10 @@
                   , n = r.closest("a")
                   , s = i?.getAttribute("data-track") ? i : n?.getAttribute("data-track") ? n : null;
                 if (s) {
-                    let o = {};
-                    for (let p of s.attributes)
+                    const o = {};
+                    for (const p of s.attributes)
                         p.name.startsWith("data-") && p.name !== "data-track" && (o[h(p.name.replace(/^data-/, ""))] = p.value);
-                    let u = s.getAttribute("data-track");
+                    const u = s.getAttribute("data-track");
                     u && this.track(u, o)
                 }
             })
@@ -1098,7 +1091,7 @@
             
             this.pageEngagementStart = Date.now();
             
-            typeof t == "string" ? (i = t, n = r) : (i = window.location.href, n = t);
+            typeof t === "string" ? (i = t, n = r) : (i = window.location.href, n = t);
             
             if (this.lastPath !== i) {
                 this.lastPath = i;
@@ -1148,7 +1141,7 @@
             
             // Get all data attributes
             const dataAttributes = {};
-            Array.from(currentScript.attributes).forEach(attr => {
+            for (const attr of currentScript.attributes) {
                 if (attr.name.startsWith('data-')) {
                     // Convert kebab-case to camelCase
                     const key = attr.name.substring(5).replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
@@ -1157,11 +1150,11 @@
                     let value = attr.value;
                     if (value === 'true') value = true;
                     if (value === 'false') value = false;
-                    if (!isNaN(value) && value !== '') value = Number(value);
+                    if (!Number.isNaN(value) && value !== '') value = Number(value);
                     
                     dataAttributes[key] = value;
                 }
-            });
+            }
             
             // Extract URL parameters from script src
             const urlParams = {};
@@ -1173,7 +1166,7 @@
                     // Convert string values to appropriate types
                     if (value === 'true') value = true;
                     if (value === 'false') value = false;
-                    if (!isNaN(value) && value !== '') value = Number(value);
+                    if (!Number.isNaN(value) && value !== '') value = Number(value);
                     
                     urlParams[key] = value;
                 });
@@ -1229,7 +1222,7 @@
             }
             
             // Then check for data-client-id attr directly (for backwards compatibility)
-            if (currentScript && currentScript.getAttribute('data-client-id')) {
+            if (currentScript?.getAttribute('data-client-id')) {
                 return currentScript.getAttribute('data-client-id');
             }
             
@@ -1255,8 +1248,6 @@
             window.db = (method, ...args) => {
                 if (window.databuddy && typeof window.databuddy[method] === 'function') {
                     return window.databuddy[method](...args);
-                } else {
-                    console.warn(`Databuddy: ${method} is not a function`);
                 }
             };
         }

@@ -330,8 +330,27 @@ export async function checkDomainVerification(id: string) {
       return { error: "Domain not found" };
     }
 
+    // Check if domain is localhost
+    const isLocalhost = domain.name.includes('localhost') || domain.name.includes('127.0.0.1');
+    if (isLocalhost) {
+      // Auto-verify localhost domains
+      await db.update(domains)
+        .set({
+          verifiedAt: new Date().toISOString(),
+          verificationStatus: "VERIFIED"
+        })
+        .where(eq(domains.id, id));
+      
+      return { 
+        data: { 
+          verified: true, 
+          message: "Localhost domain automatically verified" 
+        } 
+      };
+    }
+
     // If already verified, return success
-    if (domain.verifiedAt) {
+    if (domain.verificationStatus === "VERIFIED" && domain.verifiedAt) {
       console.log(`[Verification] Already verified: ${domain.name}`);
       return { data: { verified: true, message: "Domain already verified" } };
     }
@@ -382,15 +401,32 @@ export async function checkDomainVerification(id: string) {
           } 
         };
       }
+      
       console.log(`[Verification] Failed: ${domain.name} - token not found`);
+      
+      // Update domain as failed
+      await db.update(domains)
+        .set({
+          verificationStatus: "FAILED"
+        })
+        .where(eq(domains.id, id));
+      
       return { 
         data: { 
-            verified: false, 
-            message: "Verification token not found in DNS records. Your domain will remain unverified until verified." 
-          } 
+          verified: false, 
+          message: "Verification token not found in DNS records. Your domain will remain unverified until verified." 
+        } 
       };
     } catch (error) {
       console.error("[Verification] DNS lookup error:", error);
+      
+      // Update domain as failed
+      await db.update(domains)
+        .set({
+          verificationStatus: "FAILED"
+        })
+        .where(eq(domains.id, id));
+      
       return { 
         data: { 
           verified: false, 

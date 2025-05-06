@@ -250,14 +250,14 @@ analyticsRouter.get('/summary', zValidator('query', analyticsQuerySchema), async
     }
     
     // Process browser data to include browser version and OS info
-    const processedBrowserVersions = formatBrowserData(browserVersions as Array<{ 
+    const processedBrowserVersions = browserVersions.length > 0 ? formatBrowserData(browserVersions as Array<{ 
       browser_name: string; 
       browser_version: string; 
       os_name: string;
       os_version: string;
       count: number; 
       visitors: number 
-    }>);
+    }>) : [];
     
     // Process referrer data to extract domain and source info
     // Filter out internal referrers

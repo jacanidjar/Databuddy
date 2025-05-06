@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db, websites, domains, projectAccess, eq, and, or, inArray } from "@databuddy/db";
+import { db, websites, domains, projectAccess, eq, and, or, inArray, sql } from "@databuddy/db";
 import { auth } from "@databuddy/auth";
 import { headers } from "next/headers";
 import { cache } from "react";
@@ -111,7 +111,10 @@ async function verifyDomainAccess(domainId: string, ownerId: string | null, isPr
     const domain = await db.query.domains.findFirst({
       where: and(
         eq(domains.id, domainId),
-        eq(domains.verificationStatus, "VERIFIED"),
+        or(
+          eq(domains.verificationStatus, "VERIFIED"),
+          sql`${domains.name} LIKE '%localhost%' OR ${domains.name} LIKE '%127.0.0.1%'`
+        ),
         isProject ? 
           eq(domains.projectId, ownerId) : 
           eq(domains.userId, ownerId)

@@ -10,15 +10,26 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import type { WebsiteDataTabProps } from "../utils/types";
-import { Check, Clipboard, Code, ExternalLink, Globe, Info, Laptop, Settings2, Zap, HelpCircle, ChevronRight, AlertCircle, Pencil, FileCode, BookOpen, Activity, Sliders, BarChart, TableProperties, Server } from "lucide-react";
+import { Check, Clipboard, Code, ExternalLink, Globe, Info, Laptop, Settings2, Zap, HelpCircle, ChevronRight, AlertCircle, Pencil, FileCode, BookOpen, Activity, Sliders, BarChart, TableProperties, Server, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { WebsiteDialog } from "@/components/website-dialog";
-import { updateWebsite } from "@/app/actions/websites";
+import { updateWebsite, deleteWebsite } from "@/app/actions/websites";
 import { queryClient } from "@/app/providers";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Slider } from "@/components/ui/slider";
+import { useRouter } from "next/navigation";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface WebsiteFormData {
   name?: string;
@@ -58,8 +69,11 @@ export function WebsiteSettingsTab({
   websiteId,
   websiteData,
 }: WebsiteDataTabProps) {
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [installMethod, setInstallMethod] = useState<"script" | "npm">("script");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   // Active configuration tab
   const [activeTab, setActiveTab] = useState<"tracking" | "basic" | "advanced" | "optimization">("tracking");
@@ -117,6 +131,30 @@ export function WebsiteSettingsTab({
       ...prev,
       [option]: !prev[option]
     }));
+  };
+
+  const handleDeleteWebsite = async () => {
+    setIsDeleting(true);
+    try {
+      const result = await deleteWebsite(websiteId);
+      
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      
+      toast.success("Website deleted successfully");
+      
+      // Invalidate queries and redirect
+      queryClient.invalidateQueries({ queryKey: ["websites"] });
+      router.push("/websites");
+    } catch (error) {
+      console.error("Error deleting website:", error);
+      toast.error("Failed to delete website");
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
   };
 
   // Layout with sidebar navigation
@@ -227,8 +265,12 @@ export function WebsiteSettingsTab({
               <FileCode className="h-4 w-4" />
               <span>API Reference</span>
             </Button>
-            <Button variant="ghost" className="w-full justify-start gap-2 h-9 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20">
-              <AlertCircle className="h-4 w-4" />
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start gap-2 h-9 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="h-4 w-4" />
               <span>Delete Website</span>
             </Button>
           </div>
@@ -785,6 +827,54 @@ export function WebsiteSettingsTab({
           </Card>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Website</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <p className="text-muted-foreground text-sm">
+                  Are you sure you want to delete <span className="font-medium">{websiteData.name || websiteData.domain}</span>?
+                  This action cannot be undone.
+                </p>
+                
+                <div className="rounded-md bg-amber-50 dark:bg-amber-950/20 p-3 text-amber-700 dark:text-amber-400 text-sm">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-5 w-5 flex-shrink-0 text-amber-500" />
+                    <div className="space-y-1">
+                      <p className="font-medium">Warning:</p>
+                      <ul className="list-disc pl-4 text-xs space-y-1">
+                        <li>All analytics data will be permanently deleted</li>
+                        <li>Tracking will stop immediately</li>
+                        <li>All website settings will be lost</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteWebsite}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 text-white hover:text-white"
+            >
+              {isDeleting ? (
+                <>
+                  <span className="mr-2">Deleting...</span>
+                  <span className="animate-spin">⏳</span>
+                </>
+              ) : (
+                "Delete Website"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 } 

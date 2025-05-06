@@ -193,7 +193,8 @@ function WebsiteDetailsPage() {
 
   // After the data query, check if the website is verified:
   const isLocalhost = data?.domain?.includes('localhost') || data?.domain?.includes('127.0.0.1');
-  const isVerified = isLocalhost || data?.verifiedDomain?.verificationStatus === "VERIFIED";
+  const isVerified = isLocalhost || 
+    (data?.domainData?.verificationStatus === "VERIFIED" && data?.domainData?.verifiedAt);
   
   // Modified implementation of regenerateToken to fix typing issues
   const regenerateToken = async (websiteId: string) => {

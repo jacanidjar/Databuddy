@@ -20,14 +20,64 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://app.databuddy.cc'),
   title: {
     template: "%s | Databuddy Dashboard",
     default: "Databuddy Dashboard",
   },
-  description: "Powerful analytics dashboard for your websites",
-  keywords: ["analytics", "dashboard", "monitoring", "statistics", "web analytics", "tracking"],
-  authors: [{ name: "Databuddy" }],
+  description: "Powerful analytics dashboard for your websites. Track visitors, monitor performance, and gain insights into your audience.",
+  keywords: [
+    "analytics", 
+    "dashboard", 
+    "monitoring", 
+    "statistics", 
+    "web analytics", 
+    "tracking",
+    "website insights",
+    "visitor analytics",
+    "performance monitoring",
+    "user behavior"
+  ],
+  authors: [{ name: "Databuddy", url: 'https://databuddy.cc' }],
   creator: "Databuddy",
+  publisher: "Databuddy",
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://app.databuddy.cc',
+    title: 'Databuddy Dashboard',
+    description: 'Powerful analytics dashboard for your websites. Track visitors, monitor performance, and gain insights into your audience.',
+    siteName: 'Databuddy Dashboard',
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Databuddy Dashboard Preview',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Databuddy Dashboard',
+    description: 'Powerful analytics dashboard for your websites. Track visitors, monitor performance, and gain insights into your audience.',
+    images: ['/og-image.jpg'],
+    creator: '@databuddy',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    }
+  },
+  alternates: {
+    canonical: 'https://app.databuddy.cc',
+  },
 };
 
 export const viewport: Viewport = {
@@ -37,6 +87,8 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
   initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default function RootLayout({

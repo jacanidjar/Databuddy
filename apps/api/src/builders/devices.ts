@@ -79,7 +79,11 @@ export function createBrowserVersionsBuilder(websiteId: string, startDate: strin
     client_filter: `client_id = '${websiteId}'`,
     date_filter: `time >= parseDateTimeBestEffort('${startDate}') AND time <= parseDateTimeBestEffort('${endDate} 23:59:59')`,
     event_filter: "event_name = 'screen_view'",
-    browser_filter: "(browser_name IS NOT NULL AND browser_name != 'Unknown') OR (os_name IS NOT NULL AND os_name != 'Unknown')"
+    browser_filter: "browser_name IS NOT NULL AND browser_name != 'Unknown' AND browser_name != ''"
+  };
+  
+  builder.sb.having = {
+    min_count: 'count > 0'
   };
   
   builder.sb.groupBy = {

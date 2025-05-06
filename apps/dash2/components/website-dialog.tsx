@@ -158,14 +158,19 @@ export function WebsiteDialog({
         }
       }
       
-      form.reset({
+      // Only reset if values have changed
+      const currentValues = form.getValues();
+      const newValues = {
         name: initialValues?.name || website?.name || "",
         subdomain: subdomain || "",
         domain: baseDomain || domain || "",
         domainId: domainId || undefined,
-      });
+      };
       
-      setHasSelectedVerifiedDomain(hasVerified);
+      if (JSON.stringify(currentValues) !== JSON.stringify(newValues)) {
+        form.reset(newValues);
+        setHasSelectedVerifiedDomain(hasVerified);
+      }
     }
   }, [form, initialValues, website, open, verifiedDomains]);
 

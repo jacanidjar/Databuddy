@@ -11,22 +11,6 @@ import { NotificationEmpty } from "./notification-empty";
 import type { AuditNotification } from "./types";
 
 const Notifications: AuditNotification[] = [
-  {
-    id: "1",
-    time: "2 hours ago",
-    read: false,
-    type: "audit",
-    details: {
-      resourceType: "database",
-      resourceId: "1",
-      action: "CREATE",
-      changes: [],
-      website: "https://example.com",
-      environment: "production",
-    },
-    title: "Database created",
-    description: "A new database was created",
-  },
   
 ]
 
