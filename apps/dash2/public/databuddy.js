@@ -1015,8 +1015,8 @@
         }
         trackOutgoingLinks() {
             this.isServer() || document.addEventListener("click", t => {
-                let r = t.target
-                  , i = r.closest("a"); 
+                const r = t.target
+                const i = r.closest("a"); 
                 if (i && r) {
                     const n = i.getAttribute("href");
                     if (n) {
@@ -1075,10 +1075,10 @@
         }
         trackAttributes() {
             this.isServer() || document.addEventListener("click", t => {
-                let r = t.target
-                  , i = r.closest("button") 
-                  , n = r.closest("a")
-                  , s = i?.getAttribute("data-track") ? i : n?.getAttribute("data-track") ? n : null;
+                const r = t.target
+                const i = r.closest("button") 
+                const n = r.closest("a")
+                const s = i?.getAttribute("data-track") ? i : n?.getAttribute("data-track") ? n : null;
                 if (s) {
                     const o = {};
                     for (const p of s.attributes) {
@@ -1113,7 +1113,13 @@
             
             this.pageEngagementStart = Date.now();
             
-            typeof t === "string" ? (i = t, n = r) : (i = window.location.href, n = t); 
+            if (typeof t === "string") {
+                i = t;
+                n = r;
+            } else {
+                i = window.location.href;
+                n = t;
+            }
             
             if (this.lastPath !== i) {
                 this.lastPath = i;
