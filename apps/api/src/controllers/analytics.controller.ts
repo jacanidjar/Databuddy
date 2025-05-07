@@ -175,7 +175,7 @@ export async function processEvent(c: Context) {
 
     return c.json({ status: 'success' });
   } catch (error) {
-    logger.error({message: 'Error processing event:', error });
+    logger.error('Error processing event:', { name: 'AnalyticsController', err: error });
     return c.json({ status: 'error', message: 'Failed to process event' }, 500);
   }
 }

@@ -3,7 +3,6 @@ import { db } from "@databuddy/db";
 import { getRedisCache } from "@databuddy/redis";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
-// Helper to check NODE_ENV
 function isProduction() {
   return process.env.NODE_ENV === 'production';
 }
