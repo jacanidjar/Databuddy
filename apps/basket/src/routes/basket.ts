@@ -4,7 +4,6 @@
  */
 
 import { Hono } from 'hono';
-import { cors } from 'hono/cors';
 import { z } from 'zod';
 import { websiteAuthHook } from '../hooks/auth';
 import { processEvent } from '../controllers/analytics.controller';
@@ -39,19 +38,7 @@ basketRouter.use('*', async (c, next) => {
     method: c.req.method,
     path: c.req.path
   });
-  
-  const corsMiddleware = cors({
-
-    origin: (requestOriginValue) => {
-      return requestOriginValue;
-    },
-    allowMethods: ['POST', 'OPTIONS', 'GET'],
-    exposeHeaders: ['Content-Type'],
-    credentials: false,
-    maxAge: 600,
-  });
-  
-  return corsMiddleware(c, next);
+  await next();
 });
 
 basketRouter.use(websiteAuthHook());

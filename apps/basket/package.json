@@ -1,0 +1,42 @@
+{
+  "name": "basket",
+  "version": "1.0.50",
+  "packageManager": "bun@1.2.12",
+  "scripts": {
+    "dev": "bun --watch run src/index.ts",
+    "clean": "rm -rf dist",
+    "env": "dotenv -e .dev.vars",
+    "build": "bun clean",
+    "start": "bun run src/index.ts",
+    "pm2": "pm2 start src/index.ts --interpreter bun --name databuddy-api",
+    "pm2:stop": "pm2 stop databuddy-api",
+    "pm2:restart": "pm2 restart databuddy-api",
+    "deploy": "wrangler deploy --minify",
+    "dry-run": "wrangler deploy --minify --dry-run",
+    "migrate:events": "bun run src/commands/run-events-migration.ts",
+    "init:tables": "bun run src/commands/init-tables.ts",
+    "test": "bun run src/scripts/test.ts"
+  },
+  "dependencies": {
+    "@clickhouse/client": "^1.11.1",
+    "@clickhouse/client-web": "^1.11.1",
+    "@databuddy/auth": "../../packages/auth",
+    "@databuddy/redis": "../../packages/redis",
+    "@hono/node-server": "^1.14.1",
+    "@hono/sentry": "^1.2.1",
+    "@hono/zod-validator": "^0.4.3",
+    "@logtail/edge": "^0.5.4",
+    "@types/ua-parser-js": "^0.7.39",
+    "better-auth": "^1.2.7",
+    "dayjs": "^1.11.13",
+    "hono": "^4.7.8",
+    "react": "19.0.0",
+    "ua-parser-js": "^2.0.3",
+    "zod": "^3.24.3"
+  },
+  "devDependencies": {
+    "bun-types": "latest",
+    "wrangler": "^4.13.2"
+  },
+  "module": "src/index.js"
+}

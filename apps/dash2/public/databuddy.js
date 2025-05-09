@@ -29,12 +29,12 @@
 
         async post(url, data, options = {}, retryCount = 0) {
             try {
-                // Ensure keepalive is set consistently
                 const fetchOptions = {
                     method: "POST",
                     headers: await this.resolveHeaders(),
                     body: JSON.stringify(data ?? {}),
-                    keepalive: true, // Always use keepalive for better reliability
+                    keepalive: true,
+                    credentials: 'omit',
                     ...options
                 };
                 
@@ -48,11 +48,9 @@
                     throw new Error(`HTTP error! status: ${response.status} for URL: ${url}`);
                 }
 
-                // Try to parse JSON directly if possible
                 try {
                     return await response.json();
                 } catch (e) {
-                    // Fallback to text parsing for non-JSON responses
                     const text = await response.text();
                     return text ? JSON.parse(text) : null;
                 }
@@ -61,10 +59,8 @@
                     error.name === 'TypeError' || 
                     error.name === 'NetworkError';
                 
-                // Only retry if enabled and it's a retryable error
                 if (retryCount < this.maxRetries && isRetryableError) {
-                    // Add jitter to retry delay to prevent thundering herd
-                    const jitter = Math.random() * 0.3 + 0.85; // 0.85-1.15 randomization factor
+                    const jitter = Math.random() * 0.3 + 0.85;
                     const delay = this.initialRetryDelay * (2 ** retryCount) * jitter;
                     
                     await new Promise(resolve => setTimeout(resolve, delay));
@@ -324,7 +320,6 @@
             // Add keepalive for more reliable delivery, especially near page unload
             const fetchOptions = {
                 keepalive: true,
-                credentials: 'omit' // Avoid CORS issues
             };
             
             // Try to send directly to API with keepalive
@@ -365,32 +360,24 @@
             const batchEvents = [...this.batchQueue];
             this.batchQueue = [];
             
-            // Send batch to API
             try {
                 const fetchOptions = {
                     keepalive: true,
-                    credentials: 'omit' // Avoid CORS issues
                 };
                 
-                // Use sendBeacon if available for better reliability
                 const beaconResult = await this.sendBatchBeacon(batchEvents);
                 if (beaconResult) {
                     return beaconResult;
                 }
-                
-                // Fall back to fetch API
+
                 const result = await this.api.fetch("/basket/batch", batchEvents, fetchOptions);
                 return result;
             } catch (error) {
                 
-                // Only retry for specific network errors, not server responses
-                // This helps prevent duplicate events if the server processed the batch but failed to respond
                 const isNetworkError = !error.status && error.name === 'TypeError';
                 
                 if (isNetworkError) {
-                    // If batch failed due to network error, try to send events individually
                     for (const event of batchEvents) {
-                        // Mark event as force send to avoid infinite loop
                         event.isForceSend = true;
                         this.send(event);
                     }
@@ -803,7 +790,6 @@
                 // Fall back to fetch with keepalive
                 return this.api.fetch("/basket", exitEvent, {
                     keepalive: true,
-                    credentials: 'omit'
                 });
             } catch (e) {
                 return null;

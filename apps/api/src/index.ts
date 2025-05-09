@@ -83,7 +83,7 @@ app.get('/health', (c) => c.json({ status: 'ok', version: '1.0.0' }));
 
 // Error handling
 app.onError((err, c) => {
-  logger.error('[API Error]:', err);
+  logger.error(`[API Error]: ${err.message}`, err);
   return new Response(JSON.stringify({ 
     error: err.message || 'Internal Server Error',
     status: 500
