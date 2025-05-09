@@ -74,11 +74,7 @@ export const getGeoLocation = cacheable(fetchIpGeo, {
 
 // Helper to get client IP from request
 export function getClientIp(req: Request): string | undefined {
-  const forwardedFor = req.headers.get('x-forwarded-for');
-  if (forwardedFor) {
-    return forwardedFor.split(',')[0].trim();
-  }
-  return req.headers.get('x-real-ip') || undefined;
+  return req.headers.get('cf-connecting-ip') || undefined;
 }
 
 // Main function to get geo location from request
