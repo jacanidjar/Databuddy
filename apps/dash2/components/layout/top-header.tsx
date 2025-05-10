@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
 import { useSession, signOut } from "@databuddy/auth/client";
 import { toast } from "sonner";
 import { 
@@ -10,20 +9,16 @@ import {
   LayoutDashboard, 
   LogOut, 
   Settings, 
-  Users, 
-  Building2, 
   HelpCircle, 
-  Plus,
-  Home,
   User,
   BookOpen,
   Moon,
   Sun,
   MessageSquare,
   Laptop,
+  Search
 } from "lucide-react";
 
-import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -35,7 +30,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuGroup,
-  DropdownMenuLabel,
   DropdownMenuShortcut
 } from "@/components/ui/dropdown-menu";
 import {
@@ -46,28 +40,45 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { NotificationsPopover } from "@/components/notifications/notifications-popover";
+import { CommandSearch } from "@/components/ui/command-search";
+import { useWebsites } from "@/hooks/use-websites";
+import { redirect } from "next/navigation";
+
+// Interface for website items for CommandSearch
+interface WebsiteItem {
+  id: string;
+  name: string;
+}
 
 interface TopHeaderProps {
   setMobileOpen: (open: boolean) => void;
 }
 
 export function TopHeader({ setMobileOpen }: TopHeaderProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { data: session, isPending } = useSession();
+  const { data: session, isPending: isSessionPending } = useSession();
   const { theme, setTheme } = useTheme();
+  const { websites: fetchedWebsites, isLoading: isLoadingWebsites } = useWebsites();
   
-  // States
   const [mounted, setMounted] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [commandSearchOpen, setCommandSearchOpen] = useState(false);
 
-  // Handle hydration
+  // Transform fetched websites for CommandSearch
+  const commandSearchWebsites = useMemo((): WebsiteItem[] => {
+    if (!fetchedWebsites) return [];
+    return fetchedWebsites
+      .filter((site: { name: string }) => site.name) // Ensure name is not null
+      .map((site: { id: string; name: string }) => ({
+        id: site.id,
+        name: site.name
+      }));
+  }, [fetchedWebsites]);
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Function to get user initials for avatar fallback
   const getUserInitials = () => {
     if (!session?.user?.name) return "U";
     return session.user.name
@@ -78,12 +89,11 @@ export function TopHeader({ setMobileOpen }: TopHeaderProps) {
       .slice(0, 2);
   };
 
-  // Handle logout
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
       await signOut();
-      router.push("/login");
+      redirect("/login");
     } catch (error: any) {
       toast.error(error.message || "Failed to log out");
     } finally {
@@ -114,7 +124,26 @@ export function TopHeader({ setMobileOpen }: TopHeaderProps) {
           </Link>
         </div>
 
-        {/* Right Side - User Controls */}
+        {/* Placeholder for a more central search bar - Step 2 */}
+        <div className="flex-1 flex justify-center px-4">
+          {/* This will be replaced by the styled search bar button */}
+          <Button
+            variant="outline"
+            className="w-full max-w-xs md:max-w-md lg:max-w-lg justify-start text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors duration-200"
+            onClick={() => setCommandSearchOpen(true)}
+            disabled={isLoadingWebsites} // Disable if websites are loading
+          >
+            <Search className="h-4 w-4 mr-2 flex-shrink-0" />
+            <span className="truncate">
+              {isLoadingWebsites ? "Loading websites..." : "Search websites, pages, actions..."}
+            </span>
+            <kbd className="pointer-events-none ml-auto hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 md:flex">
+              <span className="text-xs">⌘</span>K
+            </kbd>
+          </Button>
+        </div>
+
+        {/* Right Side - User Controls - adjusted to remove the small search icon */}
         <div className="flex items-center gap-2 ml-auto">
           {/* Theme toggle */}
           <Button 
@@ -146,7 +175,7 @@ export function TopHeader({ setMobileOpen }: TopHeaderProps) {
           <NotificationsPopover />
 
           {/* User Menu */}
-          {!mounted || isPending ? (
+          {!mounted || isSessionPending ? (
             <div className="flex items-center gap-2">
               <Skeleton className="h-9 w-9 rounded-full" />
             </div>
@@ -268,6 +297,13 @@ export function TopHeader({ setMobileOpen }: TopHeaderProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Command Search Dialog */}
+      <CommandSearch 
+        open={commandSearchOpen} 
+        onOpenChange={setCommandSearchOpen} 
+        userWebsites={commandSearchWebsites} // Pass transformed websites
+      />
     </header>
   );
 } 

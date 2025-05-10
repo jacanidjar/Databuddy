@@ -1,6 +1,5 @@
 import { format, formatDistanceToNow, parseISO, isValid } from "date-fns";
 import { toast } from "sonner";
-import { DateRange } from "@/hooks/use-analytics";
 
 type Granularity = 'daily' | 'hourly';
 
@@ -155,19 +154,16 @@ export const formatMetricNumber = (num: number): string => {
   return num.toString();
 };
 
-// Calculate percentage change
 export const calculatePercentChange = (current: number, previous: number): number => {
   if (previous === 0) return current > 0 ? 100 : 0;
   return ((current - previous) / previous) * 100;
 };
 
-// Format percentage change with + or - sign
 export const formatPercentChange = (change: number): string => {
   const sign = change > 0 ? '+' : '';
   return `${sign}${change.toFixed(1)}%`;
 };
 
-// Performance Metrics Thresholds
 export const PERFORMANCE_THRESHOLDS = {
   load_time: { good: 1500, average: 3000, unit: 'ms' },
   ttfb: { good: 500, average: 1000, unit: 'ms' },

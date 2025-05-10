@@ -2,8 +2,8 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { DialogProps } from "@radix-ui/react-dialog"
-import { Search } from "lucide-react"
+import type { DialogProps } from "@radix-ui/react-dialog"
+import { Search, LayoutDashboard } from "lucide-react"
 
 import {
   CommandDialog,
@@ -14,33 +14,34 @@ import {
   CommandList,
 } from "@/components/ui/command"
 
-// Search items organized by category
-const searchItems = [
+// Define a type for website items
+interface WebsiteItem {
+  id: string;
+  name: string;
+}
+
+// Static Search items organized by category - to be merged with dynamic items
+const staticSearchGroups = [
   {
     category: "Pages",
     items: [
-      { name: "Dashboard", path: "/dashboard" },
-      { name: "Analytics", path: "/analytics" },
-      { name: "Reports", path: "/reports" },
-      { name: "My Websites", path: "/websites" },
-      { name: "Funnels", path: "/funnels" },
-      { name: "Goals", path: "/goals" },
-      { name: "Settings", path: "/settings" },
+      { name: "My Websites", path: "/websites", icon: LayoutDashboard },
+      // Add other main pages if needed, e.g., from a navigation config
+      { name: "Settings", path: "/settings", icon: Search }, // Placeholder icon
     ],
   },
   {
     category: "Actions",
     items: [
-      { name: "Add New Website", path: "/websites/new" },
-      { name: "Create Report", path: "/reports/new" },
-      { name: "View All Funnels", path: "/funnels" },
+      { name: "Add New Website", path: "/websites/new", icon: Search }, // Placeholder icon
+      // { name: "Create Report", path: "/reports/new", icon: Search },
     ],
   },
   {
     category: "Help",
     items: [
-      { name: "Documentation", path: "/docs" },
-      { name: "Support", path: "/support" },
+      { name: "Documentation", path: "/docs", icon: Search }, // Placeholder icon
+      // { name: "Support", path: "/support", icon: Search }, 
     ],
   },
 ]
@@ -48,17 +49,18 @@ const searchItems = [
 interface CommandSearchProps extends DialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  userWebsites?: WebsiteItem[]; // Prop for dynamic user websites
 }
 
 export function CommandSearch({ 
   open: controlledOpen, 
   onOpenChange: setControlledOpen,
+  userWebsites = [], // Default to empty array
   ...props 
 }: CommandSearchProps) {
   const [internalOpen, setInternalOpen] = React.useState(false)
   const router = useRouter()
   
-  // Determine if component is controlled or uncontrolled
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = React.useCallback((value: boolean | ((prevState: boolean) => boolean)) => {
@@ -74,7 +76,7 @@ export function CommandSearch({
     const down = (e: KeyboardEvent) => {
       if ((e.key === "k" && (e.metaKey || e.ctrlKey)) || e.key === "/") {
         e.preventDefault()
-        setOpen((open) => !open)
+        setOpen((prevOpen) => !prevOpen) // Corrected to use functional update
       }
     }
 
@@ -82,12 +84,41 @@ export function CommandSearch({
     return () => document.removeEventListener("keydown", down)
   }, [setOpen])
 
+  // Combine static and dynamic search items
+  const allSearchGroups = React.useMemo(() => {
+    const dynamicGroups = [];
+    if (userWebsites.length > 0) {
+      dynamicGroups.push({
+        category: "My Websites",
+        items: userWebsites.map(site => ({
+          name: site.name,
+          path: `/websites/${site.id}`,
+          icon: LayoutDashboard, // Use LayoutDashboard for websites
+        })),
+      });
+    }
+    // Filter out the static "My Websites" link from Pages if dynamic websites are present
+    const filteredStaticGroups = userWebsites.length > 0
+      ? staticSearchGroups.map(group => {
+          if (group.category === "Pages") {
+            return {
+              ...group,
+              items: group.items.filter(item => item.path !== "/websites")
+            };
+          }
+          return group;
+        }).filter(group => group.items.length > 0) // Ensure group still has items
+      : staticSearchGroups;
+
+    return [...dynamicGroups, ...filteredStaticGroups];
+  }, [userWebsites]);
+
   return (
     <CommandDialog open={open} onOpenChange={setOpen} {...props}>
-      <CommandInput placeholder="Search across dashboard..." />
+      <CommandInput placeholder="Search websites, pages, actions..." />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
-        {searchItems.map((group) => (
+        {allSearchGroups.map((group) => (
           <CommandGroup key={group.category} heading={group.category}>
             {group.items.map((item) => (
               <CommandItem
@@ -96,9 +127,10 @@ export function CommandSearch({
                   setOpen(false)
                   router.push(item.path)
                 }}
+                className="cursor-pointer"
               >
-                <Search className="mr-2 h-4 w-4" />
-                {item.name}
+                <item.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                <span>{item.name}</span>
               </CommandItem>
             ))}
           </CommandGroup>
