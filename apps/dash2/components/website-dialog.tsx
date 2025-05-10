@@ -83,10 +83,7 @@ function combineDomain(subdomain: string, domain: string): string {
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   subdomain: z.string().optional(),
-  domain: z.string()
-    .min(1, "Domain is required")
-    .transform(val => normalizeDomain(val)),
-  domainId: z.string().optional(),
+  domainId: z.string().min(1, "Please select a verified domain"),
 });
 
 interface WebsiteDialogProps {
@@ -95,7 +92,7 @@ interface WebsiteDialogProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: z.infer<typeof formSchema>) => void;
   isLoading: boolean;
-  verifiedDomains?: Array<{
+  verifiedDomains: Array<{
     id: string;
     name: string;
     verificationStatus: "PENDING" | "VERIFIED" | "FAILED";
@@ -119,21 +116,19 @@ export function WebsiteDialog({
   initialValues = null,
 }: WebsiteDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasSelectedVerifiedDomain, setHasSelectedVerifiedDomain] = useState(false);
   const [selectedBaseDomain, setSelectedBaseDomain] = useState('');
   const setSelectedWebsite = useWebsitesStore(state => state.setSelectedWebsite);
   const websites = useWebsitesStore(state => state.websites);
   
   // Get domain as string and extract subdomain
   const domainString = website ? getDomainString(website.domain) : '';
-  const { subdomain, domain } = parseDomain(domainString);
+  const { subdomain } = parseDomain(domainString);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: initialValues?.name || website?.name || "",
       subdomain: subdomain || "",
-      domain: initialValues?.domain || domain || "",
       domainId: initialValues?.domainId || website?.domainId || undefined,
     },
   });
@@ -142,17 +137,16 @@ export function WebsiteDialog({
   useEffect(() => {
     if (open) {
       const updatedDomainString = website ? getDomainString(website.domain) : '';
-      const { subdomain, domain } = parseDomain(updatedDomainString);
+      const { subdomain } = parseDomain(updatedDomainString);
       
       // Check for verified domain
-      let baseDomain = domain;
       let hasVerified = false;
       const domainId = initialValues?.domainId || website?.domainId;
       
       if (domainId) {
         const verifiedDomain = verifiedDomains.find(d => d.id === domainId);
         if (verifiedDomain) {
-          baseDomain = normalizeDomain(verifiedDomain.name);
+          const baseDomain = normalizeDomain(verifiedDomain.name);
           hasVerified = true;
           setSelectedBaseDomain(baseDomain);
         }
@@ -163,27 +157,25 @@ export function WebsiteDialog({
       const newValues = {
         name: initialValues?.name || website?.name || "",
         subdomain: subdomain || "",
-        domain: baseDomain || domain || "",
         domainId: domainId || undefined,
       };
       
       if (JSON.stringify(currentValues) !== JSON.stringify(newValues)) {
         form.reset(newValues);
-        setHasSelectedVerifiedDomain(hasVerified);
       }
     }
   }, [form, initialValues, website, open, verifiedDomains]);
 
   const handleClose = () => {
     setSelectedWebsite(null);
-    setHasSelectedVerifiedDomain(false);
     setSelectedBaseDomain('');
     onOpenChange(false);
   };
 
   const handleSubmit = async (data: z.infer<typeof formSchema>) => {
-    // Require domain ID if verified domains available
-    if (verifiedDomains.length > 0 && !data.domainId) {
+    // Get the selected domain
+    const selectedDomain = verifiedDomains.find(d => d.id === data.domainId);
+    if (!selectedDomain) {
       form.setError('domainId', { 
         type: 'required', 
         message: 'Please select a verified domain' 
@@ -192,9 +184,7 @@ export function WebsiteDialog({
     }
     
     // Get full domain
-    const fullDomain = hasSelectedVerifiedDomain 
-      ? combineDomain(data.subdomain || '', selectedBaseDomain) 
-      : data.domain;
+    const fullDomain = combineDomain(data.subdomain || '', normalizeDomain(selectedDomain.name));
     
     // Check for duplicates
     if (!website) {
@@ -205,7 +195,7 @@ export function WebsiteDialog({
       });
       
       if (domainExists) {
-        form.setError(hasSelectedVerifiedDomain ? 'subdomain' : 'domain', {
+        form.setError('subdomain', {
           type: 'manual',
           message: 'A website with this domain already exists'
         });
@@ -266,109 +256,74 @@ export function WebsiteDialog({
               )}
             />
             
-            {/* Domain selection - only show if verified domains exist */}
-            {verifiedDomains.length > 0 && (
-              <FormField
-                control={form.control}
-                name="domainId"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <FormLabel className="text-xs font-medium">Domain</FormLabel>
-                      {field.value && (
-                        <Badge variant="outline" className="h-5 px-1.5 text-xs font-normal">
-                          Verified
-                        </Badge>
-                      )}
-                    </div>
-                    <Select
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                        
-                        const selectedDomain = verifiedDomains.find(d => d.id === value);
-                        if (selectedDomain) {
-                          const normalizedDomain = normalizeDomain(selectedDomain.name);
-                          form.setValue('domain', normalizedDomain);
-                          setSelectedBaseDomain(normalizedDomain);
-                          setHasSelectedVerifiedDomain(true);
-                        } else {
-                          setHasSelectedVerifiedDomain(false);
-                          setSelectedBaseDomain('');
-                        }
-                      }}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="h-9">
-                          <SelectValue placeholder="Select a verified domain" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {verifiedDomains.map((domain) => (
-                          <SelectItem key={domain.id} value={domain.id}>
-                            {domain.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )}
-              />
-            )}
-            
-            {/* Subdomain/Domain fields */}
-            {hasSelectedVerifiedDomain ? (
-              <div className="space-y-3">
-                <FormField
-                  control={form.control}
-                  name="subdomain"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-medium">Subdomain (Optional)</FormLabel>
-                      <div className="flex items-center">
-                        <FormControl>
-                          <Input 
-                            placeholder="blog" 
-                            {...field} 
-                            disabled={isEditing}
-                            className={`h-9 rounded-r-none border-r-0 ${isEditing ? "bg-muted" : ""}`}
-                          />
-                        </FormControl>
-                        <div className="flex h-9 items-center rounded-r-md border bg-muted px-3 text-sm text-muted-foreground">
-                          .{selectedBaseDomain}
-                        </div>
-                      </div>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            ) : (
-              <FormField
-                control={form.control}
-                name="domain"
-                render={({ field }) => (
-                  <FormItem>
+            {/* Domain selection */}
+            <FormField
+              control={form.control}
+              name="domainId"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between mb-1.5">
                     <FormLabel className="text-xs font-medium">Domain</FormLabel>
+                    {field.value && (
+                      <Badge variant="outline" className="h-5 px-1.5 text-xs font-normal">
+                        Verified
+                      </Badge>
+                    )}
+                  </div>
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      
+                      const selectedDomain = verifiedDomains.find(d => d.id === value);
+                      if (selectedDomain) {
+                        const normalizedDomain = normalizeDomain(selectedDomain.name);
+                        setSelectedBaseDomain(normalizedDomain);
+                      }
+                    }}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Select a verified domain" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {verifiedDomains.map((domain) => (
+                        <SelectItem key={domain.id} value={domain.id}>
+                          {domain.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />
+            
+            {/* Subdomain field */}
+            <FormField
+              control={form.control}
+              name="subdomain"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-medium">Subdomain (Optional)</FormLabel>
+                  <div className="flex items-center">
                     <FormControl>
                       <Input 
-                        placeholder="example.com" 
+                        placeholder="blog" 
                         {...field} 
-                        disabled={isEditing} 
-                        className={`h-9 ${isEditing ? "bg-muted" : ""}`}
+                        disabled={isEditing}
+                        className={`h-9 rounded-r-none border-r-0 ${isEditing ? "bg-muted" : ""}`}
                       />
                     </FormControl>
-                    <FormMessage className="text-xs" />
-                    {!isEditing && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Enter without http:// or www (e.g., example.com)
-                      </p>
-                    )}
-                  </FormItem>
-                )}
-              />
-            )}
+                    <div className="flex h-9 items-center rounded-r-md border bg-muted px-3 text-sm text-muted-foreground">
+                      .{selectedBaseDomain}
+                    </div>
+                  </div>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />
             
             <DialogFooter className="pt-2">
               <div className="flex w-full gap-2">

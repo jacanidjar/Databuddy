@@ -130,8 +130,31 @@ export async function createWebsite(data: WebsiteData): Promise<ApiResponse<any>
   if (!user) return { error: "Unauthorized" };
 
   try {
+    // Require domainId for all new websites
+    if (!data.domainId) {
+      return { error: "A verified domain is required" };
+    }
+
+    // Verify domain access
+    const ownerId = data.userId || data.projectId || user.id;
+    const isProject = !!data.projectId;
+    
+    if (!(await verifyDomainAccess(data.domainId, ownerId, isProject))) {
+      return { error: "Domain not found or not verified" };
+    }
+
+    // Get the verified domain
+    const domain = await db.query.domains.findFirst({
+      where: eq(domains.id, data.domainId)
+    });
+
+    if (!domain) {
+      return { error: "Domain not found" };
+    }
+
+    // Combine subdomain with verified domain
     const normalizedDomain = normalizeDomain(data.domain);
-    if (!normalizedDomain) return { error: "Invalid domain" };
+    const baseDomain = normalizeDomain(domain.name);
     
     // Check for existing website with this domain
     const existingWebsite = await db.query.websites.findFirst({
@@ -150,14 +173,6 @@ export async function createWebsite(data: WebsiteData): Promise<ApiResponse<any>
       ownerData.projectId = data.projectId;
     } else {
       ownerData.userId = user.id;
-    }
-
-    // Verify domain access if domainId is provided
-    const ownerId = ownerData.userId || ownerData.projectId;
-    const isProject = !!ownerData.projectId;
-    
-    if (data.domainId && !(await verifyDomainAccess(data.domainId, ownerId, isProject))) {
-      return { error: "Domain not found or not verified" };
     }
 
     // Create website with a unique nanoid ID
@@ -180,22 +195,11 @@ export async function createWebsite(data: WebsiteData): Promise<ApiResponse<any>
       return { error: "Failed to create website. Database operation succeeded but couldn't retrieve the new website." };
     }
     
-    // Fetch domain information if domainId exists
+    // Fetch domain information
     const result: any = { ...website };
-    
-    if (website.domainId) {
-      const domainRecord = await db.query.domains.findFirst({
-        where: eq(domains.id, website.domainId)
-      });
-      
-      if (domainRecord) {
-        // Add domain record under a separate key
-        result.domainData = domainRecord;
-        // Make sure domain property is a string
-        result.domain = website.domain;
-      }
-    }
-    
+    result.domainData = domain;
+    result.domain = website.domain;
+
     revalidatePath("/websites");
     
     return { data: result };

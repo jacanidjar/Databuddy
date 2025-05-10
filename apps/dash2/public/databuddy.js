@@ -121,10 +121,6 @@
                 "databuddy-client-id": this.options.clientId
             };
             
-            if (this.options.clientSecret) {
-                headers["databuddy-client-secret"] = this.options.clientSecret;
-            }
-            
             headers["databuddy-sdk-name"] = this.options.sdk || "web";
             // Use directly provided version or fallback to safe default
             headers["databuddy-sdk-version"] = this.options.sdkVersion || "1.0.0";
