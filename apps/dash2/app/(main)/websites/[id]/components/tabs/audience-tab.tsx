@@ -8,6 +8,7 @@ import { useWebsiteAnalytics } from "@/hooks/use-analytics";
 import { formatDistributionData, groupBrowserData } from "../utils/analytics-helpers";
 import type { RefreshableTabProps } from "../utils/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Globe, Laptop, Smartphone, Tablet, Monitor, HelpCircle, Languages, Wifi, WifiOff } from 'lucide-react';
 
 // Define the structure for API entries (mirroring overview-tab.tsx)
 interface ApiBrowserVersionEntry {
@@ -28,6 +29,89 @@ interface DeviceTypeEntry {
   visitors: number;
   pageviews: number;
 }
+
+// Helper function to get browser icon
+const getBrowserIcon = (browser: string): string => {
+  const browserLower = browser.toLowerCase();
+  if (browserLower.includes('chrome')) return '/icons/chrome.svg';
+  if (browserLower.includes('firefox')) return '/icons/firefox.svg';
+  if (browserLower.includes('safari')) return '/icons/safari.svg';
+  if (browserLower.includes('edge')) return '/icons/edge.svg';
+  if (browserLower.includes('opera')) return '/icons/opera.svg';
+  if (browserLower.includes('ie') || browserLower.includes('internet explorer')) return '/icons/ie.svg';
+  if (browserLower.includes('samsung')) return '/icons/samsung.svg';
+  return '/icons/browser.svg';
+};
+
+// Helper function to get connection icon
+const getConnectionIcon = (connection: string) => {
+  const connectionLower = connection.toLowerCase();
+  if (!connection || connection === 'Unknown') return <HelpCircle className="h-4 w-4 text-muted-foreground" />;
+  if (connectionLower.includes('wifi')) return <Wifi className="h-4 w-4 text-green-500" />;
+  if (connectionLower.includes('4g')) return <Smartphone className="h-4 w-4 text-blue-500" />;
+  if (connectionLower.includes('5g')) return <Smartphone className="h-4 w-4 text-purple-500" />;
+  if (connectionLower.includes('3g')) return <Smartphone className="h-4 w-4 text-yellow-500" />;
+  if (connectionLower.includes('2g')) return <Smartphone className="h-4 w-4 text-orange-500" />;
+  if (connectionLower.includes('ethernet')) return <Laptop className="h-4 w-4 text-blue-400" />;
+  if (connectionLower.includes('cellular')) return <Smartphone className="h-4 w-4 text-blue-500" />;
+  if (connectionLower.includes('offline')) return <WifiOff className="h-4 w-4 text-red-500" />;
+  return <Globe className="h-4 w-4 text-primary" />;
+};
+
+// Helper function to get device icon
+const getDeviceIcon = (deviceType: string) => {
+  const typeLower = deviceType.toLowerCase();
+  if (!deviceType || deviceType === 'Unknown') return <HelpCircle className="h-4 w-4 text-muted-foreground" />;
+  if (typeLower.includes('mobile') || typeLower.includes('phone')) return <Smartphone className="h-4 w-4 text-blue-500" />;
+  if (typeLower.includes('tablet')) return <Tablet className="h-4 w-4 text-purple-500" />;
+  if (typeLower.includes('desktop')) return <Monitor className="h-4 w-4 text-green-500" />;
+  if (typeLower.includes('laptop')) return <Laptop className="h-4 w-4 text-amber-500" />;
+  if (typeLower.includes('tv')) return <Monitor className="h-4 w-4 text-red-500" />;
+  return <Laptop className="h-4 w-4 text-primary" />;
+};
+
+// Format language code to readable name
+const formatLanguage = (code: string): string => {
+  if (!code) return 'Unknown';
+  
+  const languages: Record<string, string> = {
+    'en': 'English',
+    'es': 'Spanish',
+    'fr': 'French',
+    'de': 'German',
+    'it': 'Italian',
+    'pt': 'Portuguese',
+    'ru': 'Russian',
+    'zh': 'Chinese',
+    'ja': 'Japanese',
+    'ko': 'Korean',
+    'ar': 'Arabic',
+    'hi': 'Hindi',
+    'bn': 'Bengali',
+    'pa': 'Punjabi',
+    'tr': 'Turkish',
+    'nl': 'Dutch',
+    'pl': 'Polish',
+    'sv': 'Swedish',
+    'da': 'Danish',
+    'fi': 'Finnish',
+    'no': 'Norwegian',
+    'th': 'Thai',
+    'vi': 'Vietnamese',
+  };
+  
+  // Check if it's a language code (en) or language-region code (en-US)
+  const parts = code.split('-');
+  const langCode = parts[0].toLowerCase();
+  const langName = languages[langCode] || code;
+  
+  // If it's a language-region code, add the region
+  if (parts.length > 1 && parts[1]) {
+    return `${langName} (${parts[1].toUpperCase()})`;
+  }
+  
+  return langName;
+};
 
 export function WebsiteAudienceTab({
   websiteId,
@@ -67,7 +151,7 @@ export function WebsiteAudienceTab({
     };
   }, [isRefreshing, refetch, setIsRefreshing]);
 
-  // Prepare device data with descriptive names
+  // Prepare device data with descriptive names and icons
   const deviceData = useMemo(() => { 
     if (!analytics.device_types?.length) return [];
 
@@ -84,20 +168,30 @@ export function WebsiteAudienceTab({
       } else if (model !== 'Unknown') {
         name += ` - ${model}`;
       }
+      
+      // Add icon property 
+      const icon = getDeviceIcon(item.device_type);
+      
       return {
         ...item,
-        descriptiveName: name 
+        descriptiveName: name,
+        icon
       };
     });
     
     return formatDistributionData(processedDeviceData, 'descriptiveName');
   }, [analytics.device_types]);
 
-  // Prepare browser data (remains as is, OS is separate)
-  const browserData = useMemo(() => 
-    groupBrowserData(analytics.browser_versions), 
-    [analytics.browser_versions]
-  );
+  // Prepare browser data with icons
+  const browserData = useMemo(() => {
+    const data = groupBrowserData(analytics.browser_versions);
+    
+    // Add icon property to each browser
+    return data.map(item => ({
+      ...item,
+      icon: getBrowserIcon(item.name),
+    }));
+  }, [analytics.browser_versions]);
 
   // Prepare OS distribution data
   const osDistributionData = useMemo(() => {
@@ -118,17 +212,31 @@ export function WebsiteAudienceTab({
       .slice(0, 7); // Display top 7 for clarity
   }, [analytics.browser_versions]);
 
-  // Prepare connection types data
-  const connectionData = useMemo(() => 
-    formatDistributionData(analytics.connection_types, 'connection_type'), 
-    [analytics.connection_types]
-  );
+  // Prepare connection types data with icons
+  const connectionData = useMemo(() => {
+    if (!analytics.connection_types?.length) return [];
+    
+    const processedData = analytics.connection_types.map(item => ({
+      ...item,
+      connectionName: item.connection_type || 'Unknown',
+      icon: getConnectionIcon(item.connection_type || '')
+    }));
+    
+    return formatDistributionData(processedData, 'connectionName');
+  }, [analytics.connection_types]);
 
-  // Prepare language data
-  const languageData = useMemo(() => 
-    formatDistributionData(analytics.languages, 'language'), 
-    [analytics.languages]
-  );
+  // Prepare language data with better formatting
+  const languageData = useMemo(() => {
+    if (!analytics.languages?.length) return [];
+    
+    const processedData = analytics.languages.map(item => ({
+      ...item,
+      formattedLanguage: formatLanguage(item.language || ''),
+      icon: <Languages className="h-4 w-4 text-primary" />
+    }));
+    
+    return formatDistributionData(processedData, 'formattedLanguage');
+  }, [analytics.languages]);
 
   // Combine loading states
   const isLoading = loading.summary || isRefreshing;
@@ -222,7 +330,7 @@ export function WebsiteAudienceTab({
         />
       </div>
       
-      {/* Countries */}
+      {/* Countries with flags */}
       <div className="rounded-xl border shadow-sm">
         <DataTable 
           data={analytics.countries}
@@ -231,9 +339,25 @@ export function WebsiteAudienceTab({
               accessorKey: 'country',
               header: 'Country',
               cell: (value: string) => (
-                <span className="font-medium">
-                  {value || 'Unknown'}
-                </span>
+                <div className="flex items-center gap-2">
+                  {value ? (
+                    <div className="w-5 h-4 relative overflow-hidden rounded-sm bg-muted">
+                      <img 
+                        src={`https://purecatamphetamine.github.io/country-flag-icons/3x2/${value.toUpperCase()}.svg`} 
+                        alt={value}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-5 h-4 flex items-center justify-center rounded-sm bg-muted">
+                      <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                    </div>
+                  )}
+                  <span className="font-medium">{value || 'Unknown'}</span>
+                </div>
               )
             },
             {

@@ -285,28 +285,33 @@ function WebsiteDetailsPage() {
     setIsRefreshing(true);
     
     try {
-      // Display progress through different components
-      setRefreshDetails({ component: "Overview data", progress: 1, total: 4 });
-      await new Promise(r => setTimeout(r, 400)); // Simulate network request
+      // Find active tab component and only refresh the currently visible tab
+      const activeTabDef = tabs.find(tab => tab.id === activeTab);
+      setRefreshDetails({ 
+        component: `${activeTabDef?.label || "Current"} data`, 
+        progress: 1, 
+        total: 1 
+      });
       
-      setRefreshDetails({ component: "Audience data", progress: 2, total: 4 });
-      await new Promise(r => setTimeout(r, 400)); // Simulate network request
-      
-      setRefreshDetails({ component: "Content data", progress: 3, total: 4 });
-      await new Promise(r => setTimeout(r, 400)); // Simulate network request
-      
-      setRefreshDetails({ component: "Finishing up", progress: 4, total: 4 });
-      await new Promise(r => setTimeout(r, 300)); // Simulate network request
+      // Allow the active component to handle its own refresh via isRefreshing prop
+      // We don't need to execute any refetch logic here - each tab component has its own useEffect
+      // that will detect isRefreshing=true and call its own refetch() function
+      await new Promise(r => setTimeout(r, 1000)); // Give component time to react
       
       // Success message
-      toast.success("All dashboard data refreshed successfully");
+      toast.success(`${activeTabDef?.label || "Dashboard"} data refreshed`);
     } catch (error) {
-      toast.error("Failed to refresh some dashboard data");
+      toast.error("Failed to refresh data");
       console.error(error);
     } finally {
-      // Reset states
-      setIsRefreshing(false);
-      setRefreshDetails({ component: "", progress: 0, total: 4 });
+      // Component will set isRefreshing to false when done, but set it here as a fallback
+      setRefreshDetails({ component: "", progress: 0, total: 1 });
+      
+      // Add a timeout safety to ensure isRefreshing is always reset
+      // This handles edge cases where the component might fail to reset isRefreshing
+      setTimeout(() => {
+        setIsRefreshing(false);
+      }, 5000); // 5 second safety timeout
     }
   };
 

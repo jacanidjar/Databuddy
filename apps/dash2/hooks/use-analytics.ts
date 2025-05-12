@@ -457,7 +457,7 @@ export function useWebsiteAnalytics(websiteId: string, dateRange: DateRange) {
       any: summaryQuery.isError
     },
     queries: { summary: summaryQuery },
-    refetch: () => summaryQuery.refetch({ cancelRefetch: true })
+    refetch: () => summaryQuery.refetch()
   };
 }
 

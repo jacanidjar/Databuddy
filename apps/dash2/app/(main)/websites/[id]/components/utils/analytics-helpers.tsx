@@ -23,12 +23,15 @@ export const handleDataRefresh = async (
   if (!isRefreshing) return;
   
   try {
-    await refetchFn();
-    // toast(successMessage);
+    // Do the actual data refetch
+    const result = await refetchFn();
+    return result;
   } catch (error) {
     toast.error("Failed to refresh data");
     console.error(error);
+    throw error;
   } finally {
+    // Always reset the refreshing state when done
     setIsRefreshing(false);
   }
 };

@@ -26,8 +26,6 @@ interface TooltipPosition {
   y: number;
 }
 
-// Defining the FilterParameter type since it's missing
-type FilterParameter = "country" | "region" | "path" | "city" | "browser" | "os" | "device_type" | "referrer";
 
 const roundToTwo = (num: number): number => {
   return Math.round((num + Number.EPSILON) * 100) / 100;
