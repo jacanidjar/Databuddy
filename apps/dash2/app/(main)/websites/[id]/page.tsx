@@ -27,6 +27,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { VerificationDialog } from "@/components/websites/verification-dialog";
+import { useAtom } from "jotai";
+import {
+  dateRangeAtom,
+  timeGranularityAtom,
+  setDateRangeAndAdjustGranularityAtom,
+  formattedDateRangeAtom,
+} from "@/stores/jotai/filterAtoms";
 
 // Tab content components
 import { WebsiteOverviewTab } from "./components/tabs/overview-tab";
@@ -36,8 +43,6 @@ import { WebsitePerformanceTab } from "./components/tabs/performance-tab";
 import { WebsiteSettingsTab } from "./components/tabs/settings-tab";
 import { WebsiteErrorsTab } from "./components/tabs/errors-tab";
 
-// Shared types
-import type { DateRange as BaseDateRange } from "@/hooks/use-analytics";
 import React from "react";
 
 // Add type for tab ID
@@ -65,20 +70,17 @@ function WebsiteDetailsPage() {
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   
-  // Date range state for analytics with default to last 30 days
-  const [dateRange, setDateRange] = useState<BaseDateRange>({
-    start_date: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
-    end_date: format(new Date(), 'yyyy-MM-dd')
-  });
-  
-  // Initialize date picker state with the same values
-  const [date, setDate] = useState<DayPickerRange | undefined>({
-    from: subDays(new Date(), 30),
-    to: new Date(),
-  });
+  // Replace useState with Jotai atoms
+  const [currentDateRange, setCurrentDateRangeState] = useAtom(dateRangeAtom);
+  const [currentGranularity, setCurrentGranularityAtomState] = useAtom(timeGranularityAtom);
+  const [, setDateRangeAction] = useAtom(setDateRangeAndAdjustGranularityAtom);
+  const [formattedDateRangeState] = useAtom(formattedDateRangeAtom); // For passing string dates to tabs
 
-  // Add time range granularity state
-  const [timeGranularity, setTimeGranularity] = useState<'daily' | 'hourly'>('daily');
+  // The DayPickerRange uses 'from' and 'to', while our atom uses 'startDate' and 'endDate'
+  const dayPickerSelectedRange: DayPickerRange | undefined = useMemo(() => ({
+    from: currentDateRange.startDate,
+    to: currentDateRange.endDate,
+  }), [currentDateRange]);
   
   // Quick date range options
   const quickRanges = [
@@ -101,39 +103,24 @@ function WebsiteDetailsPage() {
     const selectedRange = quickRanges.find(r => r.value === rangeValue);
     if (selectedRange) {
       const { start, end } = selectedRange.fn();
-      setDate({ from: start, to: end });
-      setDateRange({
-        start_date: format(start, 'yyyy-MM-dd'),
-        end_date: format(end, 'yyyy-MM-dd')
-      });
-      
-      // Auto-adjust granularity based on date range
-      // 24h = hourly, longer periods = daily
-      const diffHours = Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60);
-      setTimeGranularity(diffHours <= 24 ? 'hourly' : 'daily');
+      setDateRangeAction({ startDate: start, endDate: end });
     }
   };
 
   // Memoize date range to prevent unnecessary re-renders
-  const memoizedDateRange = useMemo(() => ({
-    ...dateRange,
-    granularity: timeGranularity
-  }), [dateRange, timeGranularity]);
+  // This will now be passed to tabs, using the string-formatted dates from Jotai
+  const memoizedDateRangeForTabs = useMemo(() => ({
+    start_date: formattedDateRangeState.startDate,
+    end_date: formattedDateRangeState.endDate,
+    granularity: currentGranularity,
+  }), [formattedDateRangeState, currentGranularity]);
 
-  // Callback for date range updates
+  // Callback for date range updates from Calendar
   const handleDateRangeChange = useCallback((range: DayPickerRange | undefined) => {
     if (range?.from && range?.to) {
-      setDate(range);
-      setDateRange({
-        start_date: format(range.from, 'yyyy-MM-dd'),
-        end_date: format(range.to, 'yyyy-MM-dd')
-      });
-      
-      // Auto-adjust granularity based on selected date range
-      const diffHours = Math.abs(range.to.getTime() - range.from.getTime()) / (1000 * 60 * 60);
-      setTimeGranularity(diffHours <= 24 ? 'hourly' : 'daily');
+      setDateRangeAction({ startDate: range.from, endDate: range.to });
     }
-  }, []);
+  }, [setDateRangeAction]);
 
   // Fetch website details with optimized settings and proper caching
   const { data, isLoading, isError, error } = useQuery({
@@ -234,19 +221,19 @@ function WebsiteDetailsPage() {
   // Create stable versions of the props objects before using in dependencies
   const stableTabProps = useMemo(() => ({
     websiteId: id as string,
-    dateRange: memoizedDateRange,
+    dateRange: memoizedDateRangeForTabs,
     websiteData: data,
     isRefreshing,
     setIsRefreshing: (value: boolean) => {
       setIsRefreshing(value);
     }
-  }), [id, memoizedDateRange, data, isRefreshing]);
+  }), [id, memoizedDateRangeForTabs, data, isRefreshing]);
 
   const stableSettingsProps = useMemo(() => ({
     websiteId: id as string,
-    dateRange: memoizedDateRange,
+    dateRange: memoizedDateRangeForTabs,
     websiteData: data
-  }), [id, memoizedDateRange, data]);
+  }), [id, memoizedDateRangeForTabs, data]);
 
   // Function to render tab content with stable props
   const renderTabContent = useCallback((tabId: TabId) => {
@@ -256,19 +243,19 @@ function WebsiteDetailsPage() {
     // Choose which component to render
     switch (tabId) {
       case "overview":
-        return <WebsiteOverviewTab key={`overview-${websiteIdRef.current}-${dateRange.start_date}`} {...stableTabProps} />;
+        return <WebsiteOverviewTab key={`overview-${websiteIdRef.current}-${memoizedDateRangeForTabs.start_date}`} {...stableTabProps} />;
       case "audience":
-        return <WebsiteAudienceTab key={`audience-${websiteIdRef.current}-${dateRange.start_date}`} {...stableTabProps} />;
+        return <WebsiteAudienceTab key={`audience-${websiteIdRef.current}-${memoizedDateRangeForTabs.start_date}`} {...stableTabProps} />;
       case "content":
-        return <WebsiteContentTab key={`content-${websiteIdRef.current}-${dateRange.start_date}`} {...stableTabProps} />;
+        return <WebsiteContentTab key={`content-${websiteIdRef.current}-${memoizedDateRangeForTabs.start_date}`} {...stableTabProps} />;
       case "performance":
-        return <WebsitePerformanceTab key={`performance-${websiteIdRef.current}-${dateRange.start_date}`} {...stableTabProps} />;
+        return <WebsitePerformanceTab key={`performance-${websiteIdRef.current}-${memoizedDateRangeForTabs.start_date}`} {...stableTabProps} />;
       case "settings":
         return <WebsiteSettingsTab key={`settings-${websiteIdRef.current}`} {...stableSettingsProps} />;
       case "errors":
-        return <WebsiteErrorsTab key={`errors-${websiteIdRef.current}-${dateRange.start_date}`} {...stableTabProps} />;
+        return <WebsiteErrorsTab key={`errors-${websiteIdRef.current}-${memoizedDateRangeForTabs.start_date}`} {...stableTabProps} />;
     }
-  }, [activeTab, stableTabProps, stableSettingsProps, dateRange.start_date]);
+  }, [activeTab, stableTabProps, stableSettingsProps, memoizedDateRangeForTabs.start_date]);
 
   // Define all tabs
   const tabs: TabDefinition[] = [
@@ -486,8 +473,8 @@ function WebsiteDetailsPage() {
             <Button
               variant="ghost"
               size="sm"
-              className={`h-8 text-xs px-3 rounded-none cursor-pointer ${timeGranularity === 'daily' ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground'}`}
-              onClick={() => setTimeGranularity('daily')}
+              className={`h-8 text-xs px-3 rounded-none cursor-pointer ${currentGranularity === 'daily' ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground'}`}
+              onClick={() => setCurrentGranularityAtomState('daily')}
               title="View daily aggregated data"
             >
               Daily
@@ -495,8 +482,8 @@ function WebsiteDetailsPage() {
             <Button
               variant="ghost"
               size="sm"
-              className={`h-8 text-xs px-3 rounded-none cursor-pointer ${timeGranularity === 'hourly' ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground'}`}
-              onClick={() => setTimeGranularity('hourly')}
+              className={`h-8 text-xs px-3 rounded-none cursor-pointer ${currentGranularity === 'hourly' ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground'}`}
+              onClick={() => setCurrentGranularityAtomState('hourly')}
               title="View hourly data (best for 24h periods)"
             >
               Hourly
@@ -508,9 +495,10 @@ function WebsiteDetailsPage() {
           {/* Date range preset buttons */}
           <div className="flex items-center gap-1.5 bg-background rounded-md p-1 border shadow-sm overflow-x-auto scrollbar-hide flex-1 max-w-md">
             {quickRanges.map((range) => {
-              const isActive = date?.from && date?.to && 
-                format(date.from, 'yyyy-MM-dd') === format(range.fn().start, 'yyyy-MM-dd') &&
-                format(date.to, 'yyyy-MM-dd') === format(range.fn().end, 'yyyy-MM-dd');
+              const dayPickerCurrentRange = dayPickerSelectedRange;
+              const isActive = dayPickerCurrentRange?.from && dayPickerCurrentRange?.to &&
+                format(dayPickerCurrentRange.from, 'yyyy-MM-dd') === format(range.fn().start, 'yyyy-MM-dd') &&
+                format(dayPickerCurrentRange.to, 'yyyy-MM-dd') === format(range.fn().end, 'yyyy-MM-dd');
               
               return (
                 <Button 
@@ -534,7 +522,7 @@ function WebsiteDetailsPage() {
                 >
                   <Calendar className="h-3.5 w-3.5 text-primary" />
                   <span className="font-medium">
-                    {date?.from ? format(date.from, 'MMM d') : ''} - {date?.to ? format(date.to, 'MMM d') : ''}
+                    {dayPickerSelectedRange?.from ? format(dayPickerSelectedRange.from, 'MMM d') : ''} - {dayPickerSelectedRange?.to ? format(dayPickerSelectedRange.to, 'MMM d') : ''}
                   </span>
                 </Button>
               </PopoverTrigger>
@@ -559,11 +547,11 @@ function WebsiteDetailsPage() {
                   <CalendarComponent
                     initialFocus
                     mode="range"
-                    defaultMonth={date?.from}
-                    selected={date}
+                    defaultMonth={dayPickerSelectedRange?.from}
+                    selected={dayPickerSelectedRange}
                     onSelect={handleDateRangeChange}
                     numberOfMonths={2}
-                    disabled={(date) => date > new Date() || date < new Date(2020, 0, 1)}
+                    disabled={(d) => d > new Date() || d < new Date(2020, 0, 1)}
                     className="rounded-md border"
                   />
                   <div className="flex justify-end">
@@ -571,15 +559,8 @@ function WebsiteDetailsPage() {
                       size="sm" 
                       className="mt-2 cursor-pointer"
                       onClick={() => {
-                        if (date?.from && date?.to) {
-                          setDateRange({
-                            start_date: format(date.from, 'yyyy-MM-dd'),
-                            end_date: format(date.to, 'yyyy-MM-dd')
-                          });
-                          
-                          // Auto-adjust granularity based on selected date range
-                          const diffHours = Math.abs(date.to.getTime() - date.from.getTime()) / (1000 * 60 * 60);
-                          setTimeGranularity(diffHours <= 24 ? 'hourly' : 'daily');
+                        if (dayPickerSelectedRange?.from && dayPickerSelectedRange?.to) {
+                           setDateRangeAction({ startDate: dayPickerSelectedRange.from, endDate: dayPickerSelectedRange.to });
                         }
                       }}
                     >

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useSession, logout } from "@databuddy/auth/client";
+import { useSession, logout, signOut } from "@databuddy/auth/client";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,6 +16,7 @@ import {
 import { UserAvatar } from "./user-avatar";
 import { LogOut, Settings, User } from "lucide-react";
 import { toast } from "sonner";
+import { auth } from "../../../../packages/auth/src/auth";
 
 export interface UserButtonProps {
   afterSignOutUrl?: string;
@@ -27,12 +28,16 @@ export function UserButton({ afterSignOutUrl = "/" }: UserButtonProps) {
 
   const handleSignOut = async () => {
     try {
-      await logout({
-        redirectUrl: afterSignOutUrl,
-        router,
-        onError: (error) => {
-          toast.error("Failed to sign out");
-        }
+      await signOut({
+        
+        fetchOptions: {
+          onSuccess: () => {
+            toast.success("Signed out successfully");
+          },
+          onError: () => {
+            toast.error("Something went wrong");
+          },
+        },
       });
       toast.success("Signed out successfully");
     } catch (error) {

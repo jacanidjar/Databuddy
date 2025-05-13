@@ -9,6 +9,7 @@ import { formatDistributionData, groupBrowserData } from "../utils/analytics-hel
 import type { RefreshableTabProps } from "../utils/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Globe, Laptop, Smartphone, Tablet, Monitor, HelpCircle, Languages, Wifi, WifiOff } from 'lucide-react';
+import { getLanguageName } from "@databuddy/shared";
 
 // Define the structure for API entries (mirroring overview-tab.tsx)
 interface ApiBrowserVersionEntry {
@@ -68,49 +69,6 @@ const getDeviceIcon = (deviceType: string) => {
   if (typeLower.includes('laptop')) return <Laptop className="h-4 w-4 text-amber-500" />;
   if (typeLower.includes('tv')) return <Monitor className="h-4 w-4 text-red-500" />;
   return <Laptop className="h-4 w-4 text-primary" />;
-};
-
-// Format language code to readable name
-const formatLanguage = (code: string): string => {
-  if (!code) return 'Unknown';
-  
-  const languages: Record<string, string> = {
-    'en': 'English',
-    'es': 'Spanish',
-    'fr': 'French',
-    'de': 'German',
-    'it': 'Italian',
-    'pt': 'Portuguese',
-    'ru': 'Russian',
-    'zh': 'Chinese',
-    'ja': 'Japanese',
-    'ko': 'Korean',
-    'ar': 'Arabic',
-    'hi': 'Hindi',
-    'bn': 'Bengali',
-    'pa': 'Punjabi',
-    'tr': 'Turkish',
-    'nl': 'Dutch',
-    'pl': 'Polish',
-    'sv': 'Swedish',
-    'da': 'Danish',
-    'fi': 'Finnish',
-    'no': 'Norwegian',
-    'th': 'Thai',
-    'vi': 'Vietnamese',
-  };
-  
-  // Check if it's a language code (en) or language-region code (en-US)
-  const parts = code.split('-');
-  const langCode = parts[0].toLowerCase();
-  const langName = languages[langCode] || code;
-  
-  // If it's a language-region code, add the region
-  if (parts.length > 1 && parts[1]) {
-    return `${langName} (${parts[1].toUpperCase()})`;
-  }
-  
-  return langName;
 };
 
 export function WebsiteAudienceTab({
@@ -192,26 +150,6 @@ export function WebsiteAudienceTab({
       icon: getBrowserIcon(item.name),
     }));
   }, [analytics.browser_versions]);
-
-  // Prepare OS distribution data
-  const osDistributionData = useMemo(() => {
-    if (!analytics.browser_versions?.length) return [];
-    const osMap = new Map<string, number>();
-
-    for (const item of analytics.browser_versions as ApiBrowserVersionEntry[]) {
-      const osName = item.os_name || 'Unknown';
-      const valueToAdd = item.visitors || item.count || 0;
-      if (valueToAdd > 0) {
-          const currentTotal = osMap.get(osName) || 0;
-          osMap.set(osName, currentTotal + valueToAdd);
-      }
-    }
-
-    return Array.from(osMap, ([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 7); // Display top 7 for clarity
-  }, [analytics.browser_versions]);
-
   // Prepare connection types data with icons
   const connectionData = useMemo(() => {
     if (!analytics.connection_types?.length) return [];
@@ -231,7 +169,7 @@ export function WebsiteAudienceTab({
     
     const processedData = analytics.languages.map(item => ({
       ...item,
-      formattedLanguage: formatLanguage(item.language || ''),
+      formattedLanguage: getLanguageName(item.language),
       icon: <Languages className="h-4 w-4 text-primary" />
     }));
     
