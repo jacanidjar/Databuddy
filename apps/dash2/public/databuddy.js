@@ -1,4 +1,4 @@
-( () => {
+(() => {
     // HTTP Client
     const c = class {
         constructor(config) {
