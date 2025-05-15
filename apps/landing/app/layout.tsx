@@ -83,7 +83,7 @@ export default function RootLayout({
         <Script 
         src="https://app.databuddy.cc/databuddy.js"
         data-client-id="OXmNQsViBT-FOS_wZCTHc"
-        data-api-url="https://api.databuddy.cc"
+        data-api-url="https://basket.databuddy.cc"
         data-track-screen-views="true"
         data-track-performance="true"
         data-track-errors="true"
