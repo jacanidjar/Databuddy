@@ -579,6 +579,21 @@
             }
         }
 
+        prepareEventData(event) {
+            if (event.payload) {
+                // Convert profileId to anonymousId if needed
+                if (event.payload.profileId || this.profileId) {
+                    event.payload.anonymousId = this.anonymousId;
+                    event.payload.profileId = undefined;
+                }
+                // Ensure sessionId is included in properties
+                if (event.payload.properties) {
+                    event.payload.properties.sessionId = this.sessionId;
+                }
+            }
+            return event;
+        }
+
         getUtmParams() {
             if (typeof window === 'undefined') return {};
             
