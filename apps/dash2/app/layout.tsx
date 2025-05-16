@@ -110,10 +110,9 @@ export default function RootLayout({
       <Script
         src={isLocalhost ? "http://localhost:3000/databuddy.js" : "https://app.databuddy.cc/databuddy.js"}
         data-client-id={isLocalhost ? "5ced32e5-0219-4e75-a18a-ad9826f85698" : "3ed1fce1-5a56-4cb6-a977-66864f6d18e3"}
-        data-api-url={isLocalhost ? "https://basket.databuddy.cc" : "https://basket.databuddy.cc"}
+        // data-api-url={isLocalhost ? "https://basket.databuddy.cc" : "https://basket.databuddy.cc"}
         data-track-screen-views="true"
         data-track-performance="true"
-        data-track-web-vitals="false"
         data-track-errors="true"
         // data-enable-batching="true"
         // data-batch-size="20"

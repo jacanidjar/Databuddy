@@ -48,8 +48,10 @@ export function DataTable({
     return (
       <Card className={cn("w-full", className)}>
         <CardHeader className="pb-0.5 pt-3 px-3">
-          <CardTitle className="text-xs font-medium">{title}</CardTitle>
-          {description && <CardDescription className="text-xs">{description}</CardDescription>}
+          <h3 className="font-semibold text-foreground tracking-tight text-sm md:text-base leading-tight">{title}</h3>
+          {description && (
+            <div className="text-xs md:text-sm text-muted-foreground mt-0.5 leading-snug">{description}</div>
+          )}
         </CardHeader>
         <CardContent className="px-3 pb-2 pt-1">
           <div className="space-y-1.5">
@@ -65,11 +67,13 @@ export function DataTable({
 
   return (
     <Card className={cn("w-full", className)}>
-      <CardHeader className="pb-0.5 pt-3 px-3">
-        <CardTitle className="text-xs font-medium">{title}</CardTitle>
-        {description && <CardDescription className="text-xs">{description}</CardDescription>}
+      <CardHeader className="px-3">
+        <h3 className="font-semibold text-foreground tracking-tight text-sm md:text-base leading-tight">{title}</h3>
+        {description && (
+          <div className="text-xs md:text-sm text-muted-foreground mt-0.5 leading-snug">{description}</div>
+        )}
       </CardHeader>
-      <CardContent className="px-3 pb-2 pt-1">
+      <CardContent className="px-3 pb-2">
         {!displayData?.length ? (
           <div className="flex flex-col items-center justify-center py-8 text-muted-foreground text-xs">
             <div className="relative mb-3">

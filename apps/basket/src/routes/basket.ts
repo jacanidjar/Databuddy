@@ -13,6 +13,9 @@ import { parseIp, anonymizeIp } from '../utils/ip-geo';
 import { parseReferrer } from '../utils/referrer';
 import bots from '../lists/bots';
 import { logger } from '../lib/logger';
+import { getRedisCache } from '@databuddy/redis';
+
+const redis = getRedisCache();
 
 const isBot = (userAgent: string): boolean => {
   if (!userAgent) return false;
@@ -36,7 +39,6 @@ const eventSchema = z.object({
   payload: z.object({
     name: z.string().optional(),
     anonymousId: z.string().optional(),
-    profileId: z.string().optional(),
     properties: z.record(z.any()).optional(),
     property: z.string().optional(),
     value: z.number().optional(),
@@ -91,6 +93,7 @@ basketRouter.use('*', async (c, next) => {
   const language = c.req.header('accept-language')?.split(',')[0] || '';
 
   if (isBot(userAgent)) {
+    redis.incr('bot_requests');
     logger.info('Skipping bot request', { userAgent });
     return c.json({ status: 'skipped', message: 'Bot request' }, 200);
   }

@@ -7,7 +7,6 @@ export interface TrackingEvent {
   payload: {
     name?: string;
     anonymousId?: string;
-    profileId?: string;
     properties?: Record<string, unknown>;
     property?: string;
     value?: number;

@@ -127,11 +127,25 @@ export const formatDomainLink = (
   const displayPath = path.length > maxLength 
     ? `${path.slice(0, maxLength - 3)}...` 
     : path;
-  
+
+  if (domain) {
+    // Remove protocol if present
+    const cleanDomain = domain.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    // Ensure path starts with a single slash
+    let cleanPath = path.startsWith("/") ? path : `/${path}`;
+    // Remove duplicate slashes
+    cleanPath = cleanPath.replace(/\/+/g, "/");
+    const href = `https://${cleanDomain}${cleanPath}`;
+    return {
+      href,
+      display: displayPath,
+      title: href
+    };
+  }
   return {
-    href: domain ? `${domain}${path}` : `#${path}`,
+    href: `#${path}`,
     display: displayPath,
-    title: domain ? `${domain}${path}` : path
+    title: path
   };
 };
 
