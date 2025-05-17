@@ -103,19 +103,19 @@ export function StatCard({
     <Card className={cn("overflow-hidden transition-all hover:shadow-md py-1 sm:py-2", getVariantClasses(), className)}>
       <div className="p-1 sm:p-2">
         <div className="flex items-center justify-between">
-          <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-tight line-clamp-1">{title}</p>
+          <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-tight line-clamp-1 pl-2">{title}</p>
           {Icon && (
             <Icon className="h-4 w-4 text-muted-foreground ml-1 flex-shrink-0" />
           )}
         </div>
         <div className={cn(
-          "font-bold leading-none mt-1 sm:mt-1.5",
+          "font-bold leading-none mt-1 sm:mt-1.5 pl-2",
           isTimeValue ? "text-sm sm:text-base" : "text-lg sm:text-xl",
           typeof value === 'string' && value.length > 8 ? "text-sm sm:text-base" : ""
         )}>
           {formatValue(value)}
         </div>
-        <div className="flex items-center text-[10px] sm:text-xs mt-1 leading-none">
+        <div className="flex items-center text-[10px] sm:text-xs mt-1 leading-none pl-2">
           {trend !== undefined && !Number.isNaN(trend) && (
             <span className={cn("font-medium whitespace-nowrap", getTrendColor())}>
               {trend > 0 ? "↑" : trend < 0 ? "↓" : "→"} {Math.abs(trend)}%
