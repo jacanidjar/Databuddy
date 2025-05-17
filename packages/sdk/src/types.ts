@@ -35,7 +35,7 @@ export interface DatabuddyConfig {
   sdk?: string;
 
   /**
-   * SDK version (default: '1.0.0').
+   * SDK version (defaults to package.json version).
    * Only override for custom builds.
    */
   sdkVersion?: string;

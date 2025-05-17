@@ -1,5 +1,6 @@
 'use client';
 
+import pkg from '../package.json';
 import { useEffect } from 'react';
 import type { DatabuddyConfig } from './types';
 
@@ -11,15 +12,26 @@ import type { DatabuddyConfig } from './types';
 export function Databuddy(props: DatabuddyConfig) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (props.disabled) return;
     if (document.querySelector('script[data-databuddy-injected]')) return;
     const script = document.createElement('script');
     script.src = props.scriptUrl || 'https://app.databuddy.cc/databuddy.js';
     script.defer = true;
     script.setAttribute('data-databuddy-injected', 'true');
+    // Always set sdkVersion from package.json unless explicitly overridden
+    const sdkVersion = props.sdkVersion || pkg.version;
+    script.setAttribute('data-sdk-version', sdkVersion);
     for (const [key, value] of Object.entries(props)) {
-      if (value !== undefined) {
+      if (value !== undefined && key !== 'sdkVersion') {
         const dataKey = `data-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
-        script.setAttribute(dataKey, String(value));
+        // Convert booleans and numbers to string for HTML attributes
+        if (typeof value === 'boolean') {
+          script.setAttribute(dataKey, value ? 'true' : 'false');
+        } else if (typeof value === 'number') {
+          script.setAttribute(dataKey, value.toString());
+        } else {
+          script.setAttribute(dataKey, String(value));
+        }
       }
     }
     document.head.appendChild(script);

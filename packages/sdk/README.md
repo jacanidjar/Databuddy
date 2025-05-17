@@ -1,8 +1,14 @@
-# Databuddy SDK
+# Databuddy SDK & React Component
 
-A modern, type-safe analytics SDK and React component for integrating [Databuddy](https://www.databuddy.cc) into your web apps.
+[![npm version](https://img.shields.io/npm/v/@databuddy/sdk?style=flat-square)](https://www.npmjs.com/package/@databuddy/sdk)
+[![License](https://img.shields.io/npm/l/@databuddy/sdk?style=flat-square)](./LICENSE)
+[![Docs](https://img.shields.io/badge/docs-databuddy.cc-blue?style=flat-square)](https://docs.databuddy.cc)
 
-## Features
+> **The easiest, privacy-first way to add analytics to your web app.**
+
+---
+
+## ✨ Features
 
 - 📊 **Automatic page/screen view tracking**
 - ⚡ **Performance, Web Vitals, and error tracking**
@@ -13,7 +19,7 @@ A modern, type-safe analytics SDK and React component for integrating [Databuddy
 
 ---
 
-## Installation
+## 🚀 Quickstart
 
 ```sh
 bun add @databuddy/sdk
@@ -21,13 +27,7 @@ bun add @databuddy/sdk
 npm install @databuddy/sdk
 ```
 
----
-
-## Usage
-
-### 1. **React/Next.js: Drop-in Component**
-
-Add the `<Databuddy />` component to your root layout (e.g. `app/layout.tsx`):
+Add to your root layout (Next.js/React):
 
 ```tsx
 import { Databuddy } from '@databuddy/sdk';
@@ -50,63 +50,62 @@ export default function RootLayout({ children }) {
 }
 ```
 
-- **All config options are type-safe and passed as data attributes to the script.**
-- **No need to manually add `<Script />` or manage the script tag.**
-
-### 2. **Script Tag (Vanilla HTML/JS)**
-
-If you don't use React, you can add the script directly:
-
-```html
-<script
-  src="https://app.databuddy.cc/databuddy.js"
-  data-client-id="YOUR_CLIENT_ID"
-  data-track-screen-views="true"
-  data-track-performance="true"
-  defer
-></script>
-```
-
 ---
 
-## Configuration Options
+## 🛠️ Configuration Options
 
 All options are type-safe and documented in `DatabuddyConfig`:
 
-| Option              | Type      | Default      | Description |
-|---------------------|-----------|--------------|-------------|
-| `clientId`          | string    | —            | **Required.** Your Databuddy project client ID. |
-| `clientSecret`      | string    | —            | (Advanced) For server-side use only. |
-| `apiUrl`            | string    | `https://api.databuddy.cc` | Custom API endpoint. |
-| `scriptUrl`         | string    | `https://app.databuddy.cc/databuddy.js` | Custom script URL. |
-| `sdk`               | string    | `web`        | SDK name. Only override for custom builds. |
-| `sdkVersion`        | string    | `1.0.0`      | SDK version. Only override for custom builds. |
-| `disabled`          | boolean   | `false`      | Disable all tracking. |
-| `waitForProfile`    | boolean   | `false`      | Wait for user profile before sending events. |
-| `trackScreenViews`  | boolean   | `true`       | Auto-track page/screen views. |
-| `trackHashChanges`  | boolean   | `false`      | Track hash changes in URL. |
-| `trackAttributes`   | boolean   | `false`      | Track data-* attributes. |
-| `trackOutgoingLinks`| boolean   | `false`      | Track outgoing link clicks. |
-| `trackSessions`     | boolean   | `false`      | Track user sessions. |
-| `trackPerformance`  | boolean   | `true`       | Track page performance. |
-| `trackWebVitals`    | boolean   | `true`       | Track Web Vitals. |
-| `trackEngagement`   | boolean   | `false`      | Track engagement metrics. |
-| `trackScrollDepth`  | boolean   | `false`      | Track scroll depth. |
-| `trackExitIntent`   | boolean   | `false`      | Track exit intent. |
-| `trackInteractions` | boolean   | `false`      | Track user interactions. |
-| `trackErrors`       | boolean   | `true`       | Track JS errors. |
-| `trackBounceRate`   | boolean   | `false`      | Track bounce rate. |
-| `samplingRate`      | number    | `1.0`        | Sampling rate (0.0–1.0). |
-| `enableRetries`     | boolean   | `true`       | Retry failed requests. |
-| `maxRetries`        | number    | `3`          | Max retries. |
-| `initialRetryDelay` | number    | `500`        | Initial retry delay (ms). |
-| `enableBatching`    | boolean   | `true`       | Enable event batching. |
-| `batchSize`         | number    | `20`         | Events per batch (1–50). |
-| `batchTimeout`      | number    | `5000`       | Batch timeout (ms, 100–30000). |
+| Option                | Type      | Default      | Description |
+|-----------------------|-----------|--------------|-------------|
+| `clientId`            | string    | —            | **Required.** Your Databuddy project client ID. |
+| `clientSecret`        | string    | —            | (Advanced) For server-side use only. |
+| `apiUrl`              | string    | `https://api.databuddy.cc` | Custom API endpoint. |
+| `scriptUrl`           | string    | `https://app.databuddy.cc/databuddy.js` | Custom script URL. |
+| `sdk`                 | string    | `web`        | SDK name. Only override for custom builds. |
+| `sdkVersion`          | string    | *auto*       | SDK version. Defaults to package version. |
+| `disabled`            | boolean   | `false`      | Disable all tracking. |
+| `waitForProfile`      | boolean   | `false`      | Wait for user profile before sending events. |
+| `trackScreenViews`    | boolean   | `true`       | Auto-track page/screen views. |
+| `trackHashChanges`    | boolean   | `false`      | Track hash changes in URL. |
+| `trackAttributes`     | boolean   | `false`      | Track data-* attributes. |
+| `trackOutgoingLinks`  | boolean   | `false`      | Track outgoing link clicks. |
+| `trackSessions`       | boolean   | `false`      | Track user sessions. |
+| `trackPerformance`    | boolean   | `true`       | Track page performance. |
+| `trackWebVitals`      | boolean   | `true`       | Track Web Vitals. |
+| `trackEngagement`     | boolean   | `false`      | Track engagement metrics. |
+| `trackScrollDepth`    | boolean   | `false`      | Track scroll depth. |
+| `trackExitIntent`     | boolean   | `false`      | Track exit intent. |
+| `trackInteractions`   | boolean   | `false`      | Track user interactions. |
+| `trackErrors`         | boolean   | `true`       | Track JS errors. |
+| `trackBounceRate`     | boolean   | `false`      | Track bounce rate. |
+| `samplingRate`        | number    | `1.0`        | Sampling rate (0.0–1.0). |
+| `enableRetries`       | boolean   | `true`       | Retry failed requests. |
+| `maxRetries`          | number    | `3`          | Max retries. |
+| `initialRetryDelay`   | number    | `500`        | Initial retry delay (ms). |
+| `enableBatching`      | boolean   | `true`       | Enable event batching. |
+| `batchSize`           | number    | `20`         | Events per batch (1–50). |
+| `batchTimeout`        | number    | `5000`       | Batch timeout (ms, 100–30000). |
 
 ---
 
-## Troubleshooting
+## 💡 FAQ
+
+**Q: Is Databuddy privacy-friendly?**  
+A: Yes! All analytics are anonymized by default. No cookies, no fingerprinting, no PII.
+
+**Q: Can I use this in Next.js, Remix, or plain React?**  
+A: Yes! `<Databuddy />` works in any React app. For non-React, use the script tag directly.
+
+**Q: How do I disable analytics in development?**  
+A: Use the `disabled` prop: `<Databuddy disabled={process.env.NODE_ENV === 'development'} ... />`
+
+**Q: Where do I find my `clientId`?**  
+A: In your [Databuddy dashboard](https://app.databuddy.cc).
+
+---
+
+## 🧑‍💻 Troubleshooting
 
 - **Script not loading?**
   - Make sure your `clientId` is correct and the script URL is reachable.
@@ -119,7 +118,7 @@ All options are type-safe and documented in `DatabuddyConfig`:
 
 ---
 
-## Documentation & Support
+## 📚 Documentation & Support
 
 - [Databuddy Docs](https://docs.databuddy.cc)
 - [Dashboard](https://app.databuddy.cc)

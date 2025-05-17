@@ -1,2 +1,2 @@
-export * from './DatabuddyProvider';
+export * from './Databuddy';
 export * from './types';
