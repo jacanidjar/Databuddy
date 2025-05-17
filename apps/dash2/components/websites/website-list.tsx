@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { MoreVertical, ExternalLink, ChevronRight, Check, AlertCircle, Clock, BarChart3 } from "lucide-react";
-import Link from "next/link";
+import { Check, AlertCircle, Clock } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
 import { WebsiteDialog } from "@/components/website-dialog";
 import { 
   Table, 
@@ -17,16 +16,7 @@ import {
 import type { Website } from "@/hooks/use-websites";
 import { useWebsitesStore } from "@/stores/use-websites-store";
 import { MiniChart } from "@/components/websites/mini-chart";
-import type { MiniChartDataPoint } from "@/hooks/use-analytics";
 import { cn } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 
 type VerifiedDomain = {
   id: string;
@@ -48,13 +38,12 @@ export function WebsiteList({
   verifiedDomains
 }: WebsiteListProps) {
   return (
-    <div className="rounded-md border overflow-hidden bg-card shadow-sm">
-      <Table className="table-modern">
+    <div className="rounded-xl border border-border bg-card/80 shadow-lg overflow-x-auto">
+      <Table className="min-w-full text-sm">
         <TableHeader>
-          <TableRow className="bg-secondary/80 hover:bg-secondary/80">
-            <TableHead className="w-[40%] text-secondary-foreground text-xs font-medium">WEBSITE</TableHead>
-            <TableHead className="w-[40%] text-secondary-foreground text-xs font-medium">TRAFFIC</TableHead>
-            <TableHead className="text-right text-secondary-foreground text-xs font-medium">ACTIONS</TableHead>
+          <TableRow className="bg-muted/80 hover:bg-muted/80 border-b border-border/60">
+            <TableHead className="w-[40%] text-secondary-foreground text-xs font-bold uppercase tracking-wider py-4 px-6">Website</TableHead>
+            <TableHead className="w-[40%] text-secondary-foreground text-xs font-bold uppercase tracking-wider py-4 px-6">Traffic</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -73,6 +62,7 @@ export function WebsiteList({
   );
 }
 
+
 interface WebsiteRowProps {
   website: Website;
   onUpdate: (id: string, name: string) => void;
@@ -88,6 +78,7 @@ function WebsiteRow({
 }: WebsiteRowProps) {
   const setSelectedWebsite = useWebsitesStore(state => state.setSelectedWebsite);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const router = useRouter();
   
   const domainValue = typeof website.domain === 'string' 
     ? website.domain 
@@ -160,81 +151,58 @@ function WebsiteRow({
 
   const viewAnalyticsLink = `/websites/${website.id}`;
 
+  const handleRowClick = (e: React.MouseEvent) => {
+    // Only navigate if the click is not on a button or link
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('button') ||
+      target.closest('a') ||
+      target.closest('[role="menu"]')
+    ) {
+      return;
+    }
+    router.push(viewAnalyticsLink);
+  };
+
   return (
     <>
-      <TableRow className="table-row-hover border-b last:border-0 cursor-pointer group transition-colors">
-        <TableCell className="py-3.5">
+      <TableRow
+        className="border-b border-border/50 cursor-pointer group transition-all duration-150 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-within:ring-2 focus-within:ring-primary/60 rounded-lg"
+        tabIndex={0}
+        aria-label={`View analytics for ${website.name || 'website'}`}
+        onClick={handleRowClick}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            handleRowClick(e as any);
+          }
+        }}
+      >
+        <TableCell className="py-4 px-6 align-middle">
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
-              <span className="font-medium text-sm group-hover:text-primary transition-colors">
+              <span className="font-medium text-base group-hover:text-primary transition-colors truncate max-w-[180px]">
                 {website.name || 'Unnamed Website'}
               </span>
               <div className={cn(
-                "text-[0.65rem] py-0.5 px-1.5 h-4 rounded-full flex items-center gap-1 font-medium",
+                "text-[0.7rem] py-0.5 px-2 h-5 rounded-full flex items-center gap-1 font-medium",
                 badgeClass[status.variant]
               )}>
                 {status.icon && <span>{status.icon}</span>}
                 <span>{status.label}</span>
               </div>
             </div>
-            
-            <span className="text-xs text-muted-foreground mt-1 truncate max-w-[300px]">
+            <span className="text-xs text-muted-foreground mt-1 truncate max-w-[220px]">
               {domainValue}
             </span>
           </div>
         </TableCell>
-        
-        <TableCell className="py-3.5">
+        <TableCell className="py-4 px-6 align-middle">
           <MiniChart
             websiteId={website.id}
             className="h-12"
           />
         </TableCell>
-        
-        <TableCell className="py-3.5" align="right">
-          <div className="flex items-center justify-end gap-1.5">
-            <Button 
-              asChild
-              variant="outline" 
-              size="sm" 
-              className="h-8 text-xs font-medium border-primary/20 text-primary hover:text-primary hover:bg-primary/5 hover:border-primary/30 btn-hover-effect"
-            >
-              <Link href={viewAnalyticsLink} className="flex items-center gap-1.5">
-                <BarChart3 className="h-3.5 w-3.5" />
-                <span>Analytics</span>
-              </Link>
-            </Button>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  className="h-8 w-8 p-0"
-                  type="button"
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[180px]">
-                <DropdownMenuItem onClick={handleOpenDialog}>
-                  Edit Website
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href={viewAnalyticsLink}>View Analytics</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={`${viewAnalyticsLink}/settings`}>Settings</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={`${viewAnalyticsLink}/code`}>Get Tracking Code</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </TableCell>
       </TableRow>
-
       <WebsiteDialog
         website={website}
         verifiedDomains={verifiedDomains}

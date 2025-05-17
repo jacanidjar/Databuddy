@@ -6,42 +6,35 @@ export function LoadingState() {
   const loadingRowIds = ['loading-row-1', 'loading-row-2', 'loading-row-3'];
   
   return (
-    <div className="rounded-md border overflow-hidden bg-card shadow-sm">
-      <Table className="table-modern">
+    <div className="rounded-xl border border-border bg-card/80 shadow-lg overflow-x-auto">
+      <Table className="min-w-full text-sm">
         <TableHeader>
-          <TableRow className="bg-secondary/80 hover:bg-secondary/80">
-            <TableHead className="w-[40%] text-secondary-foreground text-xs font-medium">WEBSITE</TableHead>
-            <TableHead className="w-[40%] text-secondary-foreground text-xs font-medium">TRAFFIC</TableHead>
-            <TableHead className="text-right text-secondary-foreground text-xs font-medium">ACTIONS</TableHead>
+          <TableRow className="bg-muted/80 border-b border-border/60">
+            <TableHead className="w-[40%] text-secondary-foreground text-xs font-bold uppercase tracking-wider py-4 px-6">Website</TableHead>
+            <TableHead className="w-[40%] text-secondary-foreground text-xs font-bold uppercase tracking-wider py-4 px-6">Traffic</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {loadingRowIds.map((id, index) => (
             <TableRow key={id} 
-              className="border-b last:border-0"
+              className="border-b border-border/50"
               style={{ 
                 animationDelay: `${index * 100}ms`,
                 opacity: 0,
                 animation: 'fadeIn 0.5s ease forwards'
               }}
             >
-              <TableCell className="py-3.5">
-                <div className="flex flex-col space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-4 w-16 rounded-full" />
+              <TableCell className="py-4 px-6 align-middle">
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-5 w-14 rounded-full" />
                   </div>
-                  <Skeleton className="h-3 w-48" />
+                  <Skeleton className="h-4 w-40" />
                 </div>
               </TableCell>
-              <TableCell className="py-3.5">
-                <Skeleton className="h-12 w-full rounded-md" />
-              </TableCell>
-              <TableCell className="py-3.5" align="right">
-                <div className="flex items-center justify-end gap-1.5">
-                  <Skeleton className="h-8 w-24 rounded-md" />
-                  <Skeleton className="h-8 w-8 rounded-md" />
-                </div>
+              <TableCell className="py-4 px-6 align-middle">
+                <Skeleton className="h-12 w-full rounded" />
               </TableCell>
             </TableRow>
           ))}
