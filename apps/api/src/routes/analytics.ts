@@ -184,58 +184,24 @@ analyticsRouter.get('/summary', zValidator('query', analyticsQuerySchema), async
       return c.json({ error: 'Website not found' }, 404);
     }
     
-    // Process today's hourly data to make sure we have accurate "today" summary
-    const todaySummary = {
+    // Process today's summary data directly from the todayBuilder result
+    const rawTodaySummary = todayData?.[0] || {
       pageviews: 0,
-      visitors: 0,
+      unique_visitors: 0,
       sessions: 0,
       bounce_rate: 0,
-      bounce_rate_pct: "0%"
+      avg_session_duration: 0
     };
-    
-    // Sum up all the pageviews, visitors, and sessions from today's hourly data
-    let todayTotalSessions = 0;
-    let todayBounceRateSum = 0;
-    
-    for (const hour of todayHourlyData) {
-      if (hour.pageviews > 0) {
-        todaySummary.pageviews += hour.pageviews;
-        // Don't sum up visitors here as they'll be double-counted
-        todaySummary.sessions += hour.sessions || 0;
-        
-        // Track total sessions and weighted bounce rate
-        if (hour.sessions > 0 && hour.bounce_rate > 0) {
-          todayTotalSessions += hour.sessions;
-          todayBounceRateSum += (hour.sessions * hour.bounce_rate);
-        }
-      }
-    }
-    
-    // Create a dedicated query to get accurate unique visitor count for today
-    const todayUniqueVisitorsBuilder = createSqlBuilder('events');
-    
-    todayUniqueVisitorsBuilder.sb.select = {
-      unique_visitors: 'uniqExact(anonymous_id) as unique_visitors'
+
+    const todaySummary = {
+      pageviews: rawTodaySummary.pageviews || 0,
+      visitors: rawTodaySummary.unique_visitors || 0, // createTodayBuilder uses 'unique_visitors'
+      sessions: rawTodaySummary.sessions || 0,
+      bounce_rate: rawTodaySummary.bounce_rate || 0,
+      bounce_rate_pct: `${Math.round((rawTodaySummary.bounce_rate || 0) * 10) / 10}%`,
+      // avg_session_duration is already provided by todayBuilder, ensure it's handled if needed later for todaySummary object
+      // For now, keeping it consistent with previous structure where avg_session_duration was part of the main summary, not specifically 'todaySummary' display object
     };
-    
-    todayUniqueVisitorsBuilder.sb.where = {
-      client_filter: `client_id = '${params.website_id}'`,
-      date_filter: "toDate(time) = today()",
-      event_filter: "event_name = 'screen_view'"
-    };
-    
-    const todayUniqueVisitorsResult = await chQuery(todayUniqueVisitorsBuilder.getSql());
-    todaySummary.visitors = todayUniqueVisitorsResult[0]?.unique_visitors || 0;
-    
-    // Calculate weighted bounce rate
-    if (todayTotalSessions > 0) {
-      todaySummary.bounce_rate = todayBounceRateSum / todayTotalSessions;
-      todaySummary.bounce_rate_pct = `${Math.round(todaySummary.bounce_rate * 10) / 10}%`;
-    } else {
-      // Ensure consistency if no sessions, bounce_rate remains 0 and bounce_rate_pct remains "0%" from initialization
-      todaySummary.bounce_rate = 0;
-      todaySummary.bounce_rate_pct = "0%";
-    }
     
     // Process browser data to include browser version and OS info
     const processedBrowserVersions = browserVersions.length > 0 ? formatBrowserData(browserVersions as Array<{ 
