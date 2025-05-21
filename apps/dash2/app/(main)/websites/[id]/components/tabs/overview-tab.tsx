@@ -501,6 +501,7 @@ export function WebsiteOverviewTab({
               description="Sources of your traffic"
               isLoading={isLoading}
               initialPageSize={5}
+              minHeight={230}
             />
         </div>
         
@@ -521,6 +522,7 @@ export function WebsiteOverviewTab({
               description="Most viewed content"
               isLoading={isLoading}
               initialPageSize={5}
+              minHeight={230}
             />
         </div>
       </div>

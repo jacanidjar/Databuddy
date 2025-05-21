@@ -23,10 +23,16 @@ import type { domains } from "@databuddy/db";
 
 type Domain = typeof domains.$inferSelect;
 
+// Enhance VerificationResult type to include error details for better handling
 type VerificationResult = {
   verified: boolean;
   message: string;
+  error?: string;
+  lastChecked?: Date;
 };
+
+// Enhanced status type to track verification attempts
+type VerificationStatus = "VERIFIED" | "PENDING" | "FAILED" | "RETRYING";
 
 // Reusable copy field for DNS info
 function CopyField({ label, value, onCopy }: { label: string; value: string; onCopy: () => void }) {
@@ -57,9 +63,14 @@ export default function DomainsPage() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedDomainId, setExpandedDomainId] = useState<string | null>(null);
+  const [verificationProgress, setVerificationProgress] = useState<Record<string, number>>({});
+  const [retryingDomains, setRetryingDomains] = useState<Record<string, boolean>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [domainsPerPage] = useState(10);
+  const [hasError, setHasError] = useState(false);
   const router = useRouter();
 
-  // Helper function to clean domain input
+  // Clean domain input
   const cleanDomainInput = (input: string): string => {
     // Remove protocol if present
     let cleaned = input.replace(/^(https?:\/\/)?(www\.)?/, '');
@@ -78,18 +89,34 @@ export default function DomainsPage() {
     fetchDomains();
   }, []);
 
+  // Fetch domains with error handling
   const fetchDomains = async () => {
     setIsLoading(true);
+    setHasError(false);
     try {
       const result = await getUserDomains();
       if (result.error) {
-        toast.error(result.error);
+        setHasError(true);
+        toast.error(result.error, {
+          action: {
+            label: "Retry",
+            onClick: () => fetchDomains()
+          }
+        });
         return;
       }
       setDomains(result.data || []);
+      // Reset to first page when refreshing data
+      setCurrentPage(1);
     } catch (error) {
       console.error("Error fetching domains:", error);
-      toast.error("Failed to fetch domains");
+      setHasError(true);
+      toast.error("Failed to fetch domains", {
+        action: {
+          label: "Retry",
+          onClick: () => fetchDomains()
+        }
+      });
     } finally {
       setIsLoading(false);
     }
@@ -138,17 +165,51 @@ export default function DomainsPage() {
       return;
     }
 
+    // Set domain as verifying and reset any previous results
     setIsVerifying(prev => ({ ...prev, [domainId]: true }));
+    setVerificationProgress(prev => ({ ...prev, [domainId]: 25 }));
     
     try {
+      // Find the domain we're verifying
+      const domainToVerify = domains.find(d => d.id === domainId);
+      
+      // Start verification with progress indicators
+      setVerificationProgress(prev => ({ ...prev, [domainId]: 50 }));
+      
+      // Check if we're retrying a failed domain
+      if (domainToVerify?.verificationStatus === "FAILED") {
+        setRetryingDomains(prev => ({ ...prev, [domainId]: true }));
+      }
+      
       // Wrap in try-catch to prevent unhandled exceptions
       const result = await checkDomainVerification(domainId);
       
+      // Update verification progress
+      setVerificationProgress(prev => ({ ...prev, [domainId]: 75 }));
+      
       // Handle error case first
       if (!result || result.error) {
-        toast.error(result?.error || "Verification failed - no response from server");
+        setVerificationResult(prev => ({ 
+          ...prev, 
+          [domainId]: {
+            verified: false,
+            message: result?.error || "Verification failed - no response from server",
+            error: result?.error,
+            lastChecked: new Date()
+          }
+        }));
+        
+        toast.error(result?.error || "Verification failed - please try again", {
+          action: {
+            label: "Retry",
+            onClick: () => handleVerifyDomain(domainId)
+          }
+        });
         return;
       }
+      
+      // Update verification progress
+      setVerificationProgress(prev => ({ ...prev, [domainId]: 90 }));
       
       // Safely handle the result data
       if (result.data) {
@@ -157,7 +218,8 @@ export default function DomainsPage() {
           ...prev, 
           [domainId]: {
             verified: Boolean(result.data.verified),
-            message: String(result.data.message || "")
+            message: String(result.data.message || ""),
+            lastChecked: new Date()
           }
         }));
         
@@ -167,12 +229,25 @@ export default function DomainsPage() {
           // Wait a moment before refreshing to ensure UI updates properly
           setTimeout(() => fetchDomains(), 500);
         } else {
-          toast.error(result.data.message || "Verification failed");
+          toast.error(result.data.message || "Verification failed", {
+            action: {
+              label: "Retry",
+              onClick: () => handleVerifyDomain(domainId)
+            }
+          });
         }
       } else {
         // Handle case where result.data is undefined
-        toast.error("Verification returned invalid data");
+        toast.error("Verification returned invalid data", {
+          action: {
+            label: "Retry",
+            onClick: () => handleVerifyDomain(domainId)
+          }
+        });
       }
+      
+      // Final progress update
+      setVerificationProgress(prev => ({ ...prev, [domainId]: 100 }));
     } catch (error) {
       // Log detailed error and show user-friendly message
       console.error("Error verifying domain:", error);
@@ -182,10 +257,32 @@ export default function DomainsPage() {
         errorMessage += `: ${error.message}`;
       }
       
-      toast.error(errorMessage);
+      // Update verification result with error info
+      setVerificationResult(prev => ({ 
+        ...prev, 
+        [domainId]: {
+          verified: false,
+          message: errorMessage,
+          error: error instanceof Error ? error.message : String(error),
+          lastChecked: new Date()
+        }
+      }));
+      
+      toast.error(errorMessage, {
+        action: {
+          label: "Retry",
+          onClick: () => handleVerifyDomain(domainId)
+        }
+      });
     } finally {
-      // Always reset the loading state
+      // Always reset the loading states
       setIsVerifying(prev => ({ ...prev, [domainId]: false }));
+      setRetryingDomains(prev => ({ ...prev, [domainId]: false }));
+      
+      // Clear progress state after a delay to allow for animation
+      setTimeout(() => {
+        setVerificationProgress(prev => ({ ...prev, [domainId]: 0 }));
+      }, 1000);
     }
   };
 
@@ -235,7 +332,17 @@ export default function DomainsPage() {
     toast.success("Copied to clipboard");
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, domainId: string) => {
+    // Handle special retrying state
+    if (retryingDomains[domainId]) {
+      return (
+        <Badge className="bg-blue-100 text-blue-800">
+          <RefreshCw className="mr-1 h-3 w-3 animate-spin" />
+          Retrying
+        </Badge>
+      );
+    }
+    
     switch (status) {
       case "VERIFIED":
         return (
@@ -263,6 +370,7 @@ export default function DomainsPage() {
     }
   };
 
+  // Get filtered domains with pagination
   const filteredDomains = () => {
     let filtered = domains;
     
@@ -282,8 +390,55 @@ export default function DomainsPage() {
     return filtered;
   };
 
+  // Get current page of domains
+  const getCurrentPageDomains = () => {
+    const filtered = filteredDomains();
+    const indexOfLastDomain = currentPage * domainsPerPage;
+    const indexOfFirstDomain = indexOfLastDomain - domainsPerPage;
+    return filtered.slice(indexOfFirstDomain, indexOfLastDomain);
+  };
+
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredDomains().length / domainsPerPage);
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Auto-collapse any expanded domains when changing pages
+    setExpandedDomainId(null);
+  };
+
   const handleCreateWebsite = (domainId: string, domainName: string) => {
     router.push(`/websites?new=true&domain=${domainName}&domainId=${domainId}`);
+  };
+
+  const handleRetryFailedDomain = async (domainId: string) => {
+    try {
+      // First regenerate the verification token
+      setIsRegenerating(prev => ({ ...prev, [domainId]: true }));
+      
+      const regenerateResult = await regenerateVerificationToken(domainId);
+      
+      if (regenerateResult.error) {
+        toast.error(`Failed to regenerate token: ${regenerateResult.error}`);
+        return;
+      }
+      
+      toast.success("Verification token regenerated", {
+        description: "Try adding the new DNS record and verify again"
+      });
+      
+      // Refresh domains list to get the new token
+      await fetchDomains();
+      
+      // Auto-expand the domain details
+      setExpandedDomainId(domainId);
+    } catch (error) {
+      console.error("Error retrying failed domain:", error);
+      toast.error("Failed to retry domain verification");
+    } finally {
+      setIsRegenerating(prev => ({ ...prev, [domainId]: false }));
+    }
   };
 
   const renderDomainRow = (domain: Domain) => {
@@ -291,8 +446,10 @@ export default function DomainsPage() {
     const domainIsDeleting = isDeleting[domain.id] || false;
     const domainIsRegenerating = isRegenerating[domain.id] || false;
     const domainVerificationResult = verificationResult[domain.id];
+    const domainVerificationProgress = verificationProgress[domain.id] || 0;
     const isExpanded = expandedDomainId === domain.id;
-    const canExpand = domain.verificationStatus === "PENDING";
+    const canExpand = domain.verificationStatus === "PENDING" || domain.verificationStatus === "FAILED";
+    const isRetrying = retryingDomains[domain.id] || false;
     
     return (
       <TableRow key={domain.id}>
@@ -313,7 +470,7 @@ export default function DomainsPage() {
             {domain.name}
           </div>
         </TableCell>
-        <TableCell>{getStatusBadge(domain.verificationStatus)}</TableCell>
+        <TableCell>{getStatusBadge(domain.verificationStatus, domain.id)}</TableCell>
         <TableCell>
           {domain.verifiedAt 
             ? formatDistanceToNow(new Date(domain.verifiedAt), { addSuffix: true })
@@ -337,7 +494,14 @@ export default function DomainsPage() {
                         onClick={() => handleVerifyDomain(domain.id)}
                         disabled={domainIsVerifying}
                       >
-                        {domainIsVerifying ? "Verifying..." : "Verify"}
+                        {domainIsVerifying ? (
+                          <span className="flex items-center">
+                            <RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                            {domainVerificationProgress}%
+                          </span>
+                        ) : (
+                          "Verify"
+                        )}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -355,7 +519,7 @@ export default function DomainsPage() {
                         onClick={() => handleRegenerateToken(domain.id)}
                         disabled={domainIsRegenerating}
                       >
-                        <RefreshCw className="h-4 w-4" />
+                        <RefreshCw className={`h-4 w-4 ${domainIsRegenerating ? "animate-spin" : ""}`} />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -364,6 +528,27 @@ export default function DomainsPage() {
                   </Tooltip>
                 </TooltipProvider>
               </>
+            )}
+            
+            {domain.verificationStatus === "FAILED" && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      size="sm" 
+                      variant="default" 
+                      onClick={() => handleRetryFailedDomain(domain.id)}
+                      disabled={domainIsRegenerating || isRetrying}
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${domainIsRegenerating || isRetrying ? "animate-spin" : ""}`} />
+                      Retry
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Reset and retry verification</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             
             {domain.verificationStatus === "VERIFIED" && (
@@ -433,31 +618,110 @@ export default function DomainsPage() {
   };
 
   const renderVerificationDetails = (domain: Domain) => {
-    if (domain.verificationStatus !== "PENDING" || expandedDomainId !== domain.id) return null;
+    if ((domain.verificationStatus !== "PENDING" && domain.verificationStatus !== "FAILED") || expandedDomainId !== domain.id) return null;
     
     const domainVerificationResult = verificationResult[domain.id];
     const verificationToken = domain.verificationToken;
     const host = `_databuddy.${domain.name}`;
+    const isFailed = domain.verificationStatus === "FAILED";
     
     return (
       <TableRow>
         <TableCell colSpan={5} className="!p-0">
           <div className="rounded-lg border bg-muted/60 p-6 my-2 mx-1 flex flex-col gap-6">
-            <div className="flex flex-col gap-2">
-              <h4 className="font-medium text-base mb-1">Verification Required</h4>
-              <p className="text-sm text-muted-foreground mb-2">
-                Add this TXT record to your DNS settings to verify domain ownership:
-              </p>
-              <div className="flex flex-col md:flex-row gap-4 md:gap-8 w-full">
-                <CopyField label="Name / Host" value={host} onCopy={() => copyToClipboard(host)} />
-                <CopyField label="Value" value={verificationToken || ""} onCopy={() => copyToClipboard(verificationToken || "")} />
-              </div>
-              <div className="mt-2 text-xs text-muted-foreground">
-                Example: <code className="bg-background rounded px-1">{host} IN TXT "{verificationToken}"</code>
+            {/* Verification steps */}
+            <div className="flex flex-col gap-4">
+              <h4 className="font-medium text-base mb-1">
+                {isFailed ? "Verification Failed" : "Verification Required"}
+              </h4>
+              
+              {/* Step-by-step guidance */}
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="bg-primary/10 rounded-full h-6 w-6 flex items-center justify-center mt-0.5">
+                    <span className="text-xs font-medium text-primary">1</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium mb-1">Add this TXT record to your DNS settings</p>
+                    <div className="flex flex-col md:flex-row gap-4 md:gap-8 w-full bg-background rounded-md p-3 border">
+                      <CopyField label="Name / Host" value={host} onCopy={() => copyToClipboard(host)} />
+                      <CopyField label="Value" value={verificationToken || ""} onCopy={() => copyToClipboard(verificationToken || "")} />
+                    </div>
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      Example: <code className="bg-background rounded px-1">{host} IN TXT "{verificationToken}"</code>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="bg-primary/10 rounded-full h-6 w-6 flex items-center justify-center mt-0.5">
+                    <span className="text-xs font-medium text-primary">2</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium mb-1">Wait for DNS propagation</p>
+                    <p className="text-xs text-muted-foreground">
+                      DNS changes can take up to 24-48 hours to propagate worldwide, but often complete within 15-30 minutes.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="bg-primary/10 rounded-full h-6 w-6 flex items-center justify-center mt-0.5">
+                    <span className="text-xs font-medium text-primary">3</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium mb-1">Verify your domain</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleVerifyDomain(domain.id)}
+                        disabled={isVerifying[domain.id]}
+                        className="h-8"
+                      >
+                        {isVerifying[domain.id] ? (
+                          <span className="flex items-center">
+                            <RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                            Verifying...
+                          </span>
+                        ) : (
+                          "Verify Domain"
+                        )}
+                      </Button>
+                      {isFailed && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleRetryFailedDomain(domain.id)}
+                          disabled={isRegenerating[domain.id]}
+                          className="h-8"
+                        >
+                          <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isRegenerating[domain.id] ? "animate-spin" : ""}`} />
+                          Reset & Try Again
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
+            
+            {/* Troubleshooting section */}
+            {isFailed && (
+              <div className="mt-2 border-t pt-4 border-border">
+                <h5 className="font-medium text-sm mb-2">Troubleshooting</h5>
+                <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4">
+                  <li>Make sure the TXT record is added to the correct domain zone</li>
+                  <li>Verify the host/name field includes the underscore: <code className="bg-background rounded px-1">_databuddy</code></li>
+                  <li>Check that the value matches exactly (copy/paste recommended)</li>
+                  <li>Some DNS providers may require you to enter only <code className="bg-background rounded px-1">_databuddy</code> as the host</li>
+                  <li>Try using a <a href="https://mxtoolbox.com/TXTLookup.aspx" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">DNS lookup tool</a> to verify your record is visible</li>
+                </ul>
+              </div>
+            )}
+            
+            {/* Error message */}
             {domainVerificationResult && !domainVerificationResult.verified && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="mt-2">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Verification Failed</AlertTitle>
                 <AlertDescription>
@@ -468,6 +732,126 @@ export default function DomainsPage() {
           </div>
         </TableCell>
       </TableRow>
+    );
+  };
+
+  // Render pagination controls
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+    
+    return (
+      <div className="flex items-center justify-between border-t pt-4 mt-4">
+        <div className="text-sm text-muted-foreground">
+          Showing {((currentPage - 1) * domainsPerPage) + 1} to {Math.min(currentPage * domainsPerPage, filteredDomains().length)} of {filteredDomains().length} domains
+        </div>
+        <div className="flex items-center space-x-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="h-8 w-8 p-0"
+          >
+            &lt;
+          </Button>
+          
+          {/* Page numbers */}
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            // Show pages around current page
+            let pageNum = currentPage;
+            if (totalPages <= 5) {
+              // If 5 or fewer pages, show all
+              pageNum = i + 1;
+            } else if (currentPage <= 3) {
+              // If near start, show first 5
+              pageNum = i + 1;
+            } else if (currentPage >= totalPages - 2) {
+              // If near end, show last 5
+              pageNum = totalPages - 4 + i;
+            } else {
+              // Otherwise show 2 before and 2 after current
+              pageNum = currentPage - 2 + i;
+            }
+            
+            return (
+              <Button 
+                key={`page-${pageNum}`}
+                variant={currentPage === pageNum ? "default" : "outline"} 
+                size="sm" 
+                onClick={() => handlePageChange(pageNum)}
+                className="h-8 w-8 p-0"
+              >
+                {pageNum}
+              </Button>
+            );
+          })}
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="h-8 w-8 p-0"
+          >
+            &gt;
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  // Render empty state with better UX
+  const renderEmptyState = () => {
+    const isFiltering = searchQuery || filterStatus !== "all";
+    
+    return (
+      <div className="py-12 text-center">
+        {isFiltering ? (
+          <>
+            <div className="bg-muted/30 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
+              <Filter className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-medium mb-2">No matching domains</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              No domains match your current filters. Try adjusting your search or filter criteria.
+            </p>
+            <Button variant="outline" onClick={() => {
+              setSearchQuery("");
+              setFilterStatus("all");
+            }}>
+              Clear Filters
+            </Button>
+          </>
+        ) : hasError ? (
+          <>
+            <div className="bg-red-100 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="h-8 w-8 text-red-500" />
+            </div>
+            <h3 className="text-lg font-medium mb-2">Failed to load domains</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              There was a problem loading your domains. Please try again.
+            </p>
+            <Button onClick={fetchDomains}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </>
+        ) : (
+          <>
+            <div className="bg-muted/30 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
+              <Globe className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-medium mb-2">No domains yet</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              Add your first domain to get started with DataBuddy. Once verified, you can create websites and track analytics.
+            </p>
+            <Button onClick={() => setAddDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Your First Domain
+            </Button>
+          </>
+        )}
+      </div>
     );
   };
 
@@ -545,6 +929,19 @@ export default function DomainsPage() {
                   <SelectItem value="FAILED">Failed</SelectItem>
                 </SelectContent>
               </Select>
+              {(searchQuery || filterStatus !== "all") && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => {
+                    setSearchQuery("");
+                    setFilterStatus("all");
+                  }}
+                  className="h-9"
+                >
+                  Clear
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -569,41 +966,32 @@ export default function DomainsPage() {
               ))}
             </div>
           ) : filteredDomains().length === 0 ? (
-            <div className="py-8 text-center">
-              <Globe className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-1">No domains found</h3>
-              <p className="text-muted-foreground mb-4">
-                {searchQuery || filterStatus !== "all" 
-                  ? "Try adjusting your search or filter" 
-                  : "Add your first domain to get started"}
-              </p>
-              {!searchQuery && filterStatus === "all" && (
-                <Button onClick={() => setAddDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Domain
-                </Button>
-              )}
-            </div>
+            renderEmptyState()
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Domain</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Verified</TableHead>
-                  <TableHead>Added</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredDomains().map(domain => (
-                  <React.Fragment key={domain.id}>
-                    {renderDomainRow(domain)}
-                    {renderVerificationDetails(domain)}
-                  </React.Fragment>
-                ))}
-              </TableBody>
-            </Table>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Domain</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Verified</TableHead>
+                    <TableHead>Added</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {getCurrentPageDomains().map(domain => (
+                    <React.Fragment key={domain.id}>
+                      {renderDomainRow(domain)}
+                      {renderVerificationDetails(domain)}
+                    </React.Fragment>
+                  ))}
+                </TableBody>
+              </Table>
+              
+              {/* Pagination */}
+              {renderPagination()}
+            </>
           )}
         </CardContent>
       </Card>

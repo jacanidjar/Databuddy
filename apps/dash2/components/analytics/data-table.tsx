@@ -26,6 +26,7 @@ interface DataTableProps<TData extends RowData, TValue> {
   emptyMessage?: string;
   className?: string;
   onRowClick?: (row: TData) => void;
+  minHeight?: string | number;
 }
 
 export function DataTable<TData extends RowData, TValue>(
@@ -38,7 +39,8 @@ export function DataTable<TData extends RowData, TValue>(
     initialPageSize,
     emptyMessage = "No data available",
     className,
-    onRowClick
+    onRowClick,
+    minHeight = 200
   }: DataTableProps<TData, TValue>
 ) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -85,7 +87,7 @@ export function DataTable<TData extends RowData, TValue>(
           />
         </CardHeader>
         <CardContent className="px-3 pb-2">
-          <div className="space-y-1.5">
+          <div className="space-y-1.5" style={{ minHeight }}>
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-8 w-full" />
             <Skeleton className="h-8 w-full" />
@@ -114,7 +116,7 @@ export function DataTable<TData extends RowData, TValue>(
       </CardHeader>
       <CardContent className="px-3 pb-2">
         {!table.getRowModel().rows.length ? (
-          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground text-xs">
+          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground text-xs" style={{ minHeight }}>
             <div className="relative mb-3">
               <ListFilterIcon className="h-10 w-10 text-muted-foreground/30" strokeWidth={1} />
               <DatabaseIcon className="h-4 w-4 text-primary absolute -bottom-1 -right-1" />
@@ -125,7 +127,7 @@ export function DataTable<TData extends RowData, TValue>(
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-md border">
+          <div className="overflow-hidden rounded-md border" style={{ minHeight }}>
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map(headerGroup => (
