@@ -139,21 +139,24 @@ export function WebsiteOverviewTab({
 
   // Check if tracking is not set up
   const trackingNotSetup = useMemo(() => {
-    if (loading.summary || !analytics || currentTab === 'settings' || isOverlayDismissed) {
+    // If there's an error, or still loading, or no analytics data, or not on overview, or overlay dismissed, don't show.
+    if (error || loading.summary || !analytics || currentTab === 'settings' || isOverlayDismissed) {
       return false;
     }
     
-    const result = isTrackingNotSetup(analytics);
+    // Use the utility function to check for tracking setup issues based on data patterns
+    const isUtilIndicatingNotSetup = isTrackingNotSetup(analytics);
     
-    // Fallback check for zero data
+    // Fallback direct check for absolutely zero data across key metrics
     const summary = analytics.summary;
-    const directCheck = summary && 
+    const hasZeroData = summary && 
       (summary.pageviews || 0) === 0 && 
       (summary.visitors || summary.unique_visitors || 0) === 0 && 
       (summary.sessions || 0) === 0;
     
-    return result || directCheck;
-  }, [analytics, loading.summary, currentTab, isOverlayDismissed]);
+    // Show overlay if either the utility function or the direct zero data check is true
+    return isUtilIndicatingNotSetup || hasZeroData;
+  }, [analytics, loading.summary, currentTab, isOverlayDismissed, error]); // Added error to dependency array
 
   // Show tracking overlay when data loads and no tracking is detected
   useEffect(() => {
