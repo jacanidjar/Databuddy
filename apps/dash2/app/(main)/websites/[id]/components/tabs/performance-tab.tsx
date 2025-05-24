@@ -14,6 +14,7 @@ import { useWebsiteAnalytics } from "@/hooks/use-analytics";
 import { getColorVariant, PERFORMANCE_THRESHOLDS } from "../utils/analytics-helpers";
 import type { FullTabProps } from "../utils/types";
 import { EmptyState, MetricTooltip } from "../utils/ui-components";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PerformanceData {
   avg_load_time: number;
@@ -32,6 +33,33 @@ interface PerformanceData {
   avg_cls_formatted: string | null;
 }
 
+// Skeleton for the performance tab content
+function PerformanceTabSkeleton() {
+  return (
+    <div className="space-y-4 pt-2">
+      <div className="flex items-center justify-between mb-3">
+        <Skeleton className="h-7 w-40" />
+        <Skeleton className="h-9 w-52" />
+      </div>
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+        {/* Using a more unique key prefix to satisfy linter for static list */}
+        {["skel1", "skel2", "skel3", "skel4"].map((keySuffix) => (
+          <Card key={`perf-skeleton-${keySuffix}`} className="overflow-hidden">
+            <div className="p-2">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-4 rounded-full" />
+              </div>
+              <Skeleton className="h-7 w-20 mt-2" />
+              <Skeleton className="h-3 w-16 mt-2" />
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function WebsitePerformanceTab({
   websiteId,
   dateRange,
@@ -41,7 +69,6 @@ export function WebsitePerformanceTab({
 }: FullTabProps) {
   const [activeTab, setActiveTab] = useState<string>("core");
   
-  // Fetch analytics data
   const {
     analytics,
     loading,
@@ -49,66 +76,60 @@ export function WebsitePerformanceTab({
     refetch
   } = useWebsiteAnalytics(websiteId, dateRange);
 
-  // Debug log
-  console.log('Performance Data:', analytics.performance);
-
-  const hasPerformanceData = Boolean(analytics.performance && (
-    analytics.performance.avg_load_time > 0 ||
-    analytics.performance.avg_ttfb > 0 ||
-    analytics.performance.avg_dom_ready_time > 0 ||
-    analytics.performance.avg_render_time > 0
-  ));
-
-  // Handle refresh
   useEffect(() => {
     let isMounted = true;
-    
     if (isRefreshing) {
       const doRefresh = async () => {
         try {
           await refetch();
-        } catch (error) {
-          console.error("Failed to refresh data:", error);
+        } catch (err) {
+          console.error("Failed to refresh performance data:", err);
         } finally {
           if (isMounted) {
             setIsRefreshing(false);
           }
         }
       };
-      
       doRefresh();
     }
-    
     return () => {
       isMounted = false;
     };
   }, [isRefreshing, refetch, setIsRefreshing]);
 
-  // Combine loading states
-  const isLoading = loading.summary || isRefreshing;
+  // The `loading` object from `useWebsiteAnalytics` has a `summary` flag and potentially others.
+  // We are primarily concerned with `analytics.performance` which should be available if `loading.summary` is false and `analytics` itself is populated.
+  const isLoadingData = loading.summary || isRefreshing;
 
-  // Only show error state when there's a real error with summary data and not loading
-  if (error?.summary && !isLoading) {
+  if (isLoadingData) {
+    return <PerformanceTabSkeleton />;
+  }
+
+  // Adjusted error handling: Check if error exists and if it specifically has a summary message
+  // or if it's a general string error. The hook might return error for specific data points (e.g., error.summary, error.performance)
+  // or a general error string.
+  const hasError = error && (typeof error === 'string' || (typeof error === 'object' && error.summary));
+
+  if (hasError) {
     return (
       <div className="pt-6">
         <EmptyState
           icon={<AlertCircle className="h-10 w-10" />}
           title="Error loading performance data"
-          description="Unable to load performance metrics for this website."
+          description={typeof error === 'string' ? error : (error as any)?.summary || "Unable to load performance metrics. Please try refreshing."}
           action={null}
         />
       </div>
     );
   }
-
-  // Only show empty state when we're not loading and have no data
-  if (!isLoading && !hasPerformanceData) {
+  
+  if (!analytics || !analytics.performance) {
     return (
       <div className="pt-6">
         <EmptyState
           icon={<BarChart className="h-10 w-10" />}
           title="No performance data available"
-          description="We haven't collected any performance metrics for this website yet. Data will appear as users visit your site."
+          description="We haven't collected any performance metrics for this website yet or for the selected period. Data will appear as users visit your site."
           action={null}
         />
       </div>
@@ -116,6 +137,28 @@ export function WebsitePerformanceTab({
   }
 
   const performance = analytics.performance as PerformanceData;
+
+  const hasMeaningfulPerformanceData = 
+    performance.avg_load_time > 0 ||
+    performance.avg_ttfb > 0 ||
+    performance.avg_dom_ready_time > 0 ||
+    performance.avg_render_time > 0 ||
+    (performance.avg_fcp !== null && performance.avg_fcp > 0) ||
+    (performance.avg_lcp !== null && performance.avg_lcp > 0) ||
+    (performance.avg_cls !== null && performance.avg_cls >= 0);
+
+  if (!hasMeaningfulPerformanceData) {
+     return (
+      <div className="pt-6">
+        <EmptyState
+          icon={<BarChart className="h-10 w-10" />}
+          title="Performance data is zero"
+          description="Performance metrics have been collected, but all values are currently zero for the selected period. This might be due to very low traffic or specific configurations."
+          action={null}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 pt-2">
@@ -135,7 +178,7 @@ export function WebsitePerformanceTab({
                 title="Page Load Time"
                 value={performance.avg_load_time_formatted}
                 icon={Zap}
-                isLoading={isLoading}
+                isLoading={isLoadingData}
                 variant={getColorVariant(performance.avg_load_time, PERFORMANCE_THRESHOLDS.load_time.average, PERFORMANCE_THRESHOLDS.load_time.good)}
                 className="shadow-sm h-full"
                 description="Total time to load the page"
@@ -147,7 +190,7 @@ export function WebsitePerformanceTab({
                 title="Time to First Byte"
                 value={performance.avg_ttfb_formatted}
                 icon={Zap}
-                isLoading={isLoading}
+                isLoading={isLoadingData}
                 variant={getColorVariant(performance.avg_ttfb, PERFORMANCE_THRESHOLDS.ttfb.average, PERFORMANCE_THRESHOLDS.ttfb.good)}
                 className="shadow-sm h-full"
                 description="Server response time"
@@ -159,7 +202,7 @@ export function WebsitePerformanceTab({
                 title="DOM Ready"
                 value={performance.avg_dom_ready_time_formatted}
                 icon={Zap}
-                isLoading={isLoading}
+                isLoading={isLoadingData}
                 variant={getColorVariant(performance.avg_dom_ready_time, PERFORMANCE_THRESHOLDS.dom_ready.average, PERFORMANCE_THRESHOLDS.dom_ready.good)}
                 className="shadow-sm h-full"
                 description="Time until DOM is ready"
@@ -171,7 +214,7 @@ export function WebsitePerformanceTab({
                 title="Render Time"
                 value={performance.avg_render_time_formatted}
                 icon={Zap}
-                isLoading={isLoading}
+                isLoading={isLoadingData}
                 variant={getColorVariant(performance.avg_render_time, PERFORMANCE_THRESHOLDS.render_time.average, PERFORMANCE_THRESHOLDS.render_time.good)}
                 className="shadow-sm h-full"
                 description="Time until content renders"
@@ -187,7 +230,7 @@ export function WebsitePerformanceTab({
                 title="First Contentful Paint"
                 value={performance.avg_fcp === null ? 'N/A' : performance.avg_fcp_formatted || '0 ms'}
                 icon={Monitor}
-                isLoading={isLoading}
+                isLoading={isLoadingData}
                 variant={performance.avg_fcp === null ? 'default' : getColorVariant(performance.avg_fcp, PERFORMANCE_THRESHOLDS.fcp.average, PERFORMANCE_THRESHOLDS.fcp.good)}
                 className="shadow-sm h-full"
                 description="When first content is painted"
@@ -199,7 +242,7 @@ export function WebsitePerformanceTab({
                 title="Largest Contentful Paint"
                 value={performance.avg_lcp === null ? 'N/A' : performance.avg_lcp_formatted || '0 ms'}
                 icon={Monitor}
-                isLoading={isLoading}
+                isLoading={isLoadingData}
                 variant={performance.avg_lcp === null ? 'default' : getColorVariant(performance.avg_lcp, PERFORMANCE_THRESHOLDS.lcp.average, PERFORMANCE_THRESHOLDS.lcp.good)}
                 className="shadow-sm h-full"
                 description="When largest content is painted"
@@ -211,7 +254,7 @@ export function WebsitePerformanceTab({
                 title="Cumulative Layout Shift"
                 value={performance.avg_cls === null ? 'N/A' : performance.avg_cls_formatted || '0'}
                 icon={Monitor}
-                isLoading={isLoading}
+                isLoading={isLoadingData}
                 variant={performance.avg_cls === null ? 'default' : getColorVariant(performance.avg_cls, PERFORMANCE_THRESHOLDS.cls.average, PERFORMANCE_THRESHOLDS.cls.good)}
                 className="shadow-sm h-full"
                 description="Visual stability"

@@ -29,61 +29,37 @@ import {
   setDateRangeAndAdjustGranularityAtom,
   formattedDateRangeAtom,
 } from "@/stores/jotai/filterAtoms";
+import { EmptyState } from "./components/utils/ui-components";
 
 import type { FullTabProps, WebsiteDataTabProps } from "./components/utils/types";
 
 type TabId = 'overview' | 'audience' | 'content' | 'performance' | 'settings' | 'errors';
 
-// Dynamic imports with proper loading states and error boundaries
 const WebsiteOverviewTab = dynamic(
   () => import("./components/tabs/overview-tab").then(mod => ({ default: mod.WebsiteOverviewTab })),
-  {
-    loading: () => <TabLoadingSkeleton />,
-    ssr: false
-  }
+  { loading: () => <TabLoadingSkeleton />, ssr: false }
 );
-
 const WebsiteAudienceTab = dynamic(
   () => import("./components/tabs/audience-tab").then(mod => ({ default: mod.WebsiteAudienceTab })),
-  {
-    loading: () => <TabLoadingSkeleton />,
-    ssr: false
-  }
+  { loading: () => <TabLoadingSkeleton />, ssr: false }
 );
-
 const WebsiteContentTab = dynamic(
   () => import("./components/tabs/content-tab").then(mod => ({ default: mod.WebsiteContentTab })),
-  {
-    loading: () => <TabLoadingSkeleton />,
-    ssr: false
-  }
+  { loading: () => <TabLoadingSkeleton />, ssr: false }
 );
-
 const WebsitePerformanceTab = dynamic(
   () => import("./components/tabs/performance-tab").then(mod => ({ default: mod.WebsitePerformanceTab })),
-  {
-    loading: () => <TabLoadingSkeleton />,
-    ssr: false
-  }
+  { loading: () => <TabLoadingSkeleton />, ssr: false }
 );
-
 const WebsiteSettingsTab = dynamic(
   () => import("./components/tabs/settings-tab").then(mod => ({ default: mod.WebsiteSettingsTab })),
-  {
-    loading: () => <TabLoadingSkeleton />,
-    ssr: false
-  }
+  { loading: () => <TabLoadingSkeleton />, ssr: false }
 );
-
 const WebsiteErrorsTab = dynamic(
   () => import("./components/tabs/errors-tab").then(mod => ({ default: mod.WebsiteErrorsTab })),
-  {
-    loading: () => <TabLoadingSkeleton />,
-    ssr: false
-  }
+  { loading: () => <TabLoadingSkeleton />, ssr: false }
 );
 
-// Tab definition structure
 type TabDefinition = {
   id: TabId;
   label: string;
@@ -101,35 +77,22 @@ function WebsiteDetailsPage() {
     progress: 0,
     total: 4
   });
-  // Replace useState with Jotai atoms
   const [currentDateRange, setCurrentDateRangeState] = useAtom(dateRangeAtom);
   const [currentGranularity, setCurrentGranularityAtomState] = useAtom(timeGranularityAtom);
   const [, setDateRangeAction] = useAtom(setDateRangeAndAdjustGranularityAtom);
-  const [formattedDateRangeState] = useAtom(formattedDateRangeAtom); // For passing string dates to tabs
+  const [formattedDateRangeState] = useAtom(formattedDateRangeAtom);
 
-  // The DayPickerRange uses 'from' and 'to', while our atom uses 'startDate' and 'endDate'
   const dayPickerSelectedRange: DayPickerRange | undefined = useMemo(() => ({
     from: currentDateRange.startDate,
     to: currentDateRange.endDate,
   }), [currentDateRange]);
   
-  // Quick date range options - mobile optimized labels
   const quickRanges = [
-    { label: "24h", fullLabel: "Last 24 hours", value: "24h", fn: () => ({
-      start: subHours(new Date(), 24),
-      end: new Date()
-    })},
-    { label: "7d", fullLabel: "Last 7 days", value: "7d", fn: () => ({
-      start: subDays(new Date(), 7),
-      end: new Date()
-    })},
-    { label: "30d", fullLabel: "Last 30 days", value: "30d", fn: () => ({
-      start: subDays(new Date(), 30),
-      end: new Date()
-    })},
+    { label: "24h", fullLabel: "Last 24 hours", value: "24h", fn: () => ({ start: subHours(new Date(), 24), end: new Date() })},
+    { label: "7d", fullLabel: "Last 7 days", value: "7d", fn: () => ({ start: subDays(new Date(), 7), end: new Date() })},
+    { label: "30d", fullLabel: "Last 30 days", value: "30d", fn: () => ({ start: subDays(new Date(), 30), end: new Date() })},
   ];
   
-  // Handler for quick range selection
   const handleQuickRangeSelect = (rangeValue: string) => {
     const selectedRange = quickRanges.find(r => r.value === rangeValue);
     if (selectedRange) {
@@ -138,22 +101,18 @@ function WebsiteDetailsPage() {
     }
   };
 
-  // Memoize date range to prevent unnecessary re-renders
-  // This will now be passed to tabs, using the string-formatted dates from Jotai
   const memoizedDateRangeForTabs = useMemo(() => ({
     start_date: formattedDateRangeState.startDate,
     end_date: formattedDateRangeState.endDate,
     granularity: currentGranularity,
   }), [formattedDateRangeState, currentGranularity]);
 
-  // Callback for date range updates from Calendar
   const handleDateRangeChange = useCallback((range: DayPickerRange | undefined) => {
     if (range?.from && range?.to) {
       setDateRangeAction({ startDate: range.from, endDate: range.to });
     }
   }, [setDateRangeAction]);
 
-  // Fetch website details with optimized settings and proper caching
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["website", id],
     queryFn: async () => {
@@ -163,21 +122,18 @@ function WebsiteDetailsPage() {
       }
       return result.data;
     },
-    staleTime: 5 * 60 * 1000, // 5 min
-    gcTime: 10 * 60 * 1000, // 10 min
-    refetchOnWindowFocus: false, // Prevent refetch on focus
-    refetchInterval: false, // Disable automatic refetching
-    retry: 1, // Limit retries to prevent request loops
-    retryDelay: 3000, // Add delay between retries
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchInterval: false,
+    retry: 1,
+    retryDelay: 3000,
   });
 
-  // Function to render tab content with stable props and lazy loading
   const renderTabContent = useCallback((tabId: TabId) => {
-    // Only render if this tab is active
-    if (tabId !== activeTab) return null;
+    if (tabId !== activeTab) return null; 
 
-    // Settings tab uses different props (no refresh functionality)
-    const key = `${tabId}-${id}-${tabId === "settings" ? "static" : memoizedDateRangeForTabs.start_date}`;
+    const key = `${tabId}-${id as string}-${tabId === "settings" ? "static" : memoizedDateRangeForTabs.start_date ?? 'loading'}`;
 
     const tabProps: FullTabProps = {
       websiteId: id as string,
@@ -201,21 +157,14 @@ function WebsiteDetailsPage() {
       );
     }
 
-    // All other tabs use FullTabProps
     const TabComponent = (() => {
       switch (tabId) {
-        case "overview":
-          return WebsiteOverviewTab;
-        case "audience":
-          return WebsiteAudienceTab;
-        case "content":
-          return WebsiteContentTab;
-        case "performance":
-          return WebsitePerformanceTab;
-        case "errors":
-          return WebsiteErrorsTab;
-        default:
-          return null;
+        case "overview": return WebsiteOverviewTab;
+        case "audience": return WebsiteAudienceTab;
+        case "content": return WebsiteContentTab;
+        case "performance": return WebsitePerformanceTab;
+        case "errors": return WebsiteErrorsTab;
+        default: return null;
       }
     })();
 
@@ -228,7 +177,23 @@ function WebsiteDetailsPage() {
     );
   }, [activeTab, id, memoizedDateRangeForTabs, data, isRefreshing]);
 
-  // Define all tabs
+  if (isLoading) {
+    return <TabLoadingSkeleton />;
+  }
+
+  if (isError || !data) {
+    return (
+      <div className="pt-8">
+        <EmptyState
+          icon={<AlertTriangle className="h-10 w-10" />}
+          title="Website not found"
+          description="The website you are looking for does not exist or you do not have access."
+          action={<Link href="/websites"><Button variant="outline">Back to Websites</Button></Link>}
+        />
+      </div>
+    );
+  }
+
   const tabs: TabDefinition[] = [
     { id: "overview", label: "Overview", component: WebsiteOverviewTab, className: "pt-2 space-y-2" },
     { id: "audience", label: "Audience", component: WebsiteAudienceTab },
@@ -238,104 +203,32 @@ function WebsiteDetailsPage() {
     { id: "settings", label: "Settings", component: WebsiteSettingsTab, props: "settings" },
   ];
 
-  // Add a new handleRefresh function
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    
     try {
-      // Find active tab component and only refresh the currently visible tab
       const activeTabDef = tabs.find(tab => tab.id === activeTab);
       setRefreshDetails({ 
         component: `${activeTabDef?.label || "Current"} data`, 
         progress: 1, 
         total: 1 
       });
-      
-      // Success message
       toast.success(`${activeTabDef?.label || "Dashboard"} data refreshed`);
     } catch (error) {
       toast.error("Failed to refresh data");
       console.error(error);
     } finally {
-      // Component will set isRefreshing to false when done, but set it here as a fallback
       setRefreshDetails({ component: "", progress: 0, total: 1 });
-      
-      // Add a timeout safety to ensure isRefreshing is always reset
-      // This handles edge cases where the component might fail to reset isRefreshing
       setTimeout(() => {
         setIsRefreshing(false);
-      }, 5000); // 5 second safety timeout
+      }, 5000);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="p-3 sm:p-4">
-        {/* Mobile-optimized loading header */}
-        <div className="flex items-center gap-2 mb-3">
-          <Button variant="ghost" size="icon" disabled className="h-8 w-8 touch-manipulation">
-            <ArrowLeft className="h-3.5 w-3.5" />
-          </Button>
-          <Skeleton className="h-4 w-24 sm:w-32" />
-        </div>
-        
-        {/* Mobile-optimized loading controls */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-3">
-          <div>
-            <Skeleton className="h-6 sm:h-7 w-32 sm:w-48 mb-1" />
-            <Skeleton className="h-3 sm:h-3.5 w-24 sm:w-32" />
-          </div>
-          <Skeleton className="h-8 w-full sm:w-32" />
-        </div>
-        
-        <Skeleton className="h-9 w-full mb-4" />
-        
-        {/* Mobile-optimized loading grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-          {[1, 2, 3, 4].map((num) => (
-            <Skeleton key={`loading-skeleton-${num}`} className="h-20 sm:h-24 w-full" />
-          ))}
-        </div>
-        
-        <Skeleton className="h-48 sm:h-64 w-full mb-4" />
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Skeleton className="h-32 sm:h-40 w-full" />
-          <Skeleton className="h-32 sm:h-40 w-full" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div className="flex items-center justify-center min-h-[80vh] p-3 sm:p-4">
-        <div className="bg-card border rounded-lg shadow-sm p-6 sm:p-8 max-w-md w-full text-center">
-          <div className="bg-muted/50 rounded-full h-12 w-12 sm:h-16 sm:w-16 flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" />
-          </div>
-          <h1 className="text-xl sm:text-2xl font-semibold mb-3">Website Not Found</h1>
-          <p className="text-muted-foreground mb-6 text-sm sm:text-base max-w-xs mx-auto">
-            The website you're looking for doesn't exist or you don't have
-            permission to view it.
-          </p>
-          <Button asChild size="default" className="px-6 touch-manipulation">
-            <Link href="/websites">Back to Websites</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-3 sm:p-4 max-w-[1600px] mx-auto">
-      {/* Mobile-optimized header */}
       <header className="border-b pb-3">
-        {/* Mobile-optimized controls */}
         <div className="flex flex-col gap-3 mt-3 bg-muted/30 rounded-lg p-2.5 border">
-          {/* Top row: Time granularity and refresh button */}
           <div className="flex items-center justify-between gap-3">
-            {/* Time granularity toggle */}
             <div className="bg-background rounded-md border overflow-hidden flex shadow-sm h-8">
               <Button
                 variant="ghost"
@@ -357,7 +250,6 @@ function WebsiteDetailsPage() {
               </Button>
             </div>
             
-            {/* Refresh button */}
             <Button
               variant="outline"
               size="sm"
@@ -375,9 +267,7 @@ function WebsiteDetailsPage() {
             </Button>
           </div>
           
-          {/* Bottom row: Date range controls */}
           <div className="flex items-center gap-2 bg-background rounded-md p-1 border shadow-sm overflow-x-auto">
-            {/* Quick range buttons */}
             {quickRanges.map((range) => {
               const dayPickerCurrentRange = dayPickerSelectedRange;
               const isActive = dayPickerCurrentRange?.from && dayPickerCurrentRange?.to &&
@@ -399,7 +289,6 @@ function WebsiteDetailsPage() {
               );
             })}
             
-            {/* Custom date picker */}
             <Popover>
               <PopoverTrigger asChild>
                 <Button 
@@ -461,7 +350,6 @@ function WebsiteDetailsPage() {
         </div>
       </header>
 
-      {/* Mobile-optimized tabs */}
       <Tabs 
         defaultValue="overview" 
         value={activeTab} 
@@ -490,7 +378,7 @@ function WebsiteDetailsPage() {
           <TabsContent 
             key={tab.id} 
             value={tab.id} 
-            className={`${tab.className} transition-all duration-200 animate-fadeIn`}
+            className={`${tab.className || ''} transition-all duration-200 animate-fadeIn`}
           >
             {renderTabContent(tab.id)}
           </TabsContent>
@@ -500,7 +388,6 @@ function WebsiteDetailsPage() {
   );
 } 
 
-// Mobile-optimized TabLoadingSkeleton
 function TabLoadingSkeleton() {
   return (
     <div className="space-y-3 sm:space-y-4 pt-2">
