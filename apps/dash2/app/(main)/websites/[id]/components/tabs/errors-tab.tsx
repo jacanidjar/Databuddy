@@ -9,12 +9,7 @@ import {
   ChevronRight,
   Code,
   Bug,
-  AlertCircle,
   AlertTriangle,
-  X,
-  ExternalLink,
-  HelpCircle,
-  Globe,
   Monitor,
   Smartphone,
   Calendar,
@@ -23,15 +18,13 @@ import {
   RotateCcw,
   Laptop,
   Tablet,
-  Server,
   Network,
   FileCode,
-  Terminal
+  Terminal,
+  AlertCircle
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Brush } from "recharts";
@@ -192,27 +185,20 @@ export function WebsiteErrorsTab({
 
   // Handle refresh
   useEffect(() => {
-    let isMounted = true;
-    
     if (isRefreshing) {
       const doRefresh = async () => {
         try {
           await errorsRefetch();
         } catch (error) {
           console.error("Failed to refresh data:", error);
+          toast.error("Failed to refresh error data.");
         } finally {
-          if (isMounted) {
-            setIsRefreshing(false);
-          }
+          setIsRefreshing(false);
         }
       };
       
       doRefresh();
     }
-    
-    return () => {
-      isMounted = false;
-    };
   }, [isRefreshing, errorsRefetch, setIsRefreshing]);
 
   // Combine loading states
@@ -604,7 +590,7 @@ export function WebsiteErrorsTab({
                           <div className="text-sm font-semibold">{error.count}</div>
                           <div className="text-xs text-muted-foreground">errors</div>
                         </div>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
                   </button>
