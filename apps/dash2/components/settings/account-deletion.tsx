@@ -86,8 +86,12 @@ export function AccountDeletion() {
       } else {
         toast.error("Failed to process account deletion");
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to process account deletion");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message || "Failed to process account deletion");
+      } else {
+        toast.error("Failed to process account deletion");
+      }
     } finally {
       setIsLoading(false);
     }
