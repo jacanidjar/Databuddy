@@ -75,6 +75,16 @@ const getDeviceIcon = (deviceType: string) => {
   return <Laptop className="h-4 w-4 text-primary" />;
 };
 
+// Helper to create a column with optional cell and meta
+function col<T>(accessorKey: keyof T, header: string, cell?: (info: CellContext<T, unknown>) => React.ReactNode, meta?: object): ColumnDef<T, unknown> {
+  return {
+    accessorKey: accessorKey as string,
+    header,
+    ...(cell && { cell }),
+    ...(meta && { meta }),
+  };
+}
+
 export function WebsiteAudienceTab({
   websiteId,
   dateRange,
@@ -245,24 +255,12 @@ export function WebsiteAudienceTab({
             visitors: item.visitors,
             pageviews: item.pageviews
           })) || []}
-          columns={useMemo((): ColumnDef<TimezoneEntry, any>[] => [
-            {
-              accessorKey: 'timezone',
-              header: 'Timezone',
-              cell: (info: CellContext<TimezoneEntry, string>) => (
-                <span className="font-medium">
-                  {info.getValue() || 'Unknown'}
-                </span>
-              )
-            },
-            {
-              accessorKey: 'visitors',
-              header: 'Visitors',
-            },
-            {
-              accessorKey: 'pageviews',
-              header: 'Pageviews',
-            }
+          columns={useMemo((): ColumnDef<TimezoneEntry, unknown>[] => [
+            col<TimezoneEntry>('timezone', 'Timezone', (info) => (
+              <span className="font-medium">{info.getValue() as string || 'Unknown'}</span>
+            )),
+            col<TimezoneEntry>('visitors', 'Visitors'),
+            col<TimezoneEntry>('pageviews', 'Pageviews'),
           ], [])}
           title="Timezones"
           description="Visitors by timezone"
@@ -279,53 +277,41 @@ export function WebsiteAudienceTab({
             visitors: item.visitors,
             pageviews: item.pageviews
           })) || []}
-          columns={useMemo((): ColumnDef<CountryEntry, any>[] => [
-            {
-              accessorKey: 'country',
-              header: 'Country',
-              cell: (info: CellContext<CountryEntry, string>) => {
-                const countryCode = info.getValue();
-                return (
-                  <div className="flex items-center gap-2">
-                    {countryCode ? (
-                      <div className="w-5 h-4 relative overflow-hidden rounded-sm bg-muted">
-                        <img 
-                          src={`https://purecatamphetamine.github.io/country-flag-icons/3x2/${countryCode.toUpperCase()}.svg`} 
-                          alt={countryCode}
-                          className="absolute inset-0 w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                            const parent = (e.target as HTMLImageElement).parentElement;
-                            if (parent) {
-                              const helpCircle = parent.querySelector('.fallback-icon');
-                              if (helpCircle) (helpCircle as HTMLElement).style.display = 'flex';
-                            }
-                          }}
-                        />
-                        <div className="fallback-icon w-5 h-4 items-center justify-center rounded-sm bg-muted" style={{display: 'none'}}>
-                            <HelpCircle className="h-3 w-3 text-muted-foreground" />
-                        </div>
+          columns={useMemo((): ColumnDef<CountryEntry, unknown>[] => [
+            col<CountryEntry>('country', 'Country', (info) => {
+              const countryCode = info.getValue() as string;
+              return (
+                <div className="flex items-center gap-2">
+                  {countryCode ? (
+                    <div className="w-5 h-4 relative overflow-hidden rounded-sm bg-muted">
+                      <img 
+                        src={`https://purecatamphetamine.github.io/country-flag-icons/3x2/${countryCode.toUpperCase()}.svg`} 
+                        alt={countryCode}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          const parent = (e.target as HTMLImageElement).parentElement;
+                          if (parent) {
+                            const helpCircle = parent.querySelector('.fallback-icon');
+                            if (helpCircle) (helpCircle as HTMLElement).style.display = 'flex';
+                          }
+                        }}
+                      />
+                      <div className="fallback-icon w-5 h-4 items-center justify-center rounded-sm bg-muted" style={{display: 'none'}}>
+                          <HelpCircle className="h-3 w-3 text-muted-foreground" />
                       </div>
-                    ) : (
-                      <div className="w-5 h-4 flex items-center justify-center rounded-sm bg-muted">
-                        <HelpCircle className="h-3 w-3 text-muted-foreground" />
-                      </div>
-                    )}
-                    <span className="font-medium">{countryCode || 'Unknown'}</span>
-                  </div>
-                );
-              }
-            },
-            {
-              accessorKey: 'visitors',
-              header: 'Visitors',
-              meta: { className: 'text-right justify-end' }
-            },
-            {
-              accessorKey: 'pageviews',
-              header: 'Pageviews',
-              meta: { className: 'text-right justify-end' }
-            }
+                    </div>
+                  ) : (
+                    <div className="w-5 h-4 flex items-center justify-center rounded-sm bg-muted">
+                      <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                    </div>
+                  )}
+                  <span className="font-medium">{countryCode || 'Unknown'}</span>
+                </div>
+              );
+            }),
+            col<CountryEntry>('visitors', 'Visitors', undefined, { className: 'text-right justify-end' }),
+            col<CountryEntry>('pageviews', 'Pageviews', undefined, { className: 'text-right justify-end' }),
           ], [])}
           title="Geographic Distribution"
           description="Visitors by location"

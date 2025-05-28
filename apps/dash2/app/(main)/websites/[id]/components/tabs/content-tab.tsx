@@ -29,6 +29,20 @@ interface TopReferrerEntry {
   type?: string;
 }
 
+interface TopPageEntryWithPercent extends TopPageEntry {
+  percentage_of_total: number;
+}
+
+// Helper to create a column with optional cell and meta
+function col<T>(accessorKey: keyof T, header: string, cell?: (info: CellContext<T, unknown>) => React.ReactNode, meta?: object): ColumnDef<T, unknown> {
+  return {
+    accessorKey: accessorKey as string,
+    header,
+    ...(cell && { cell }),
+    ...(meta && { meta }),
+  };
+}
+
 export function WebsiteContentTab({
   websiteId,
   dateRange,
@@ -69,82 +83,40 @@ export function WebsiteContentTab({
 
   const isLoading = loading.summary || isRefreshing;
 
-  const topPagesColumns = useMemo((): ColumnDef<TopPageEntry, any>[] => [
-    {
-      accessorKey: 'path',
-      header: 'Page Path',
-      cell: (info: CellContext<TopPageEntry, string>) => (
-        <PageLinkCell 
-          path={info.getValue()} 
-          websiteDomain={websiteData?.domain} 
-        />
-      )
-    },
-    {
-      accessorKey: 'pageviews',
-      header: 'Views',
-    },
-    {
-      accessorKey: 'visitors',
-      header: 'Visitors',
-      cell: (info: CellContext<TopPageEntry, number | undefined>) => info.getValue() ?? 'N/A'
-    },
-    {
-      accessorKey: 'avg_time_on_page_formatted',
-      header: 'Avg. Time',
-      cell: (info: CellContext<TopPageEntry, string | null | undefined>) => info.getValue() || 'N/A'
-    },
-    {
-        accessorKey: 'percentage_of_total',
-        header: '% Total Views',
-        cell: (info: CellContext<TopPageEntry, number | undefined>) => {
-          const value = info.getValue();
-          return value ? `${value.toFixed(1)}%` : 'N/A';
-        }
-    }
+  const topPagesColumns = useMemo(() => [
+    col<TopPageEntryWithPercent>('path', 'Page Path', (info) => (
+      <PageLinkCell path={info.getValue() as string} websiteDomain={websiteData?.domain} />
+    )),
+    col<TopPageEntryWithPercent>('pageviews', 'Views'),
+    col<TopPageEntryWithPercent>('visitors', 'Visitors', (info) => (info.getValue() as number | undefined) ?? 'N/A'),
+    col<TopPageEntryWithPercent>('avg_time_on_page_formatted', 'Avg. Time', (info) => (info.getValue() as string | null | undefined) || 'N/A'),
+    col<TopPageEntryWithPercent>('percentage_of_total', '% Total Views', (info) => {
+      const value = info.getValue() as number | undefined;
+      return value ? `${value.toFixed(1)}%` : 'N/A';
+    }),
   ], [websiteData?.domain]);
 
-  const topPagesData = useMemo(() => {
+  const topPagesData = useMemo<TopPageEntryWithPercent[]>(() => {
     if (!analytics.top_pages?.length) return [];
     const totalSiteViews = analytics.summary?.pageviews || 1;
     return analytics.top_pages.map((page: TopPageEntry) => ({
       ...page,
-      percentage_of_total: (page.pageviews / totalSiteViews) * 100
-    })).slice(0, 10);
+      percentage_of_total: (page.pageviews / totalSiteViews) * 100,
+    }));
   }, [analytics.top_pages, analytics.summary?.pageviews]);
 
-  const topReferrersColumns = useMemo((): ColumnDef<TopReferrerEntry, any>[] => [
-    {
-      accessorKey: 'name',
-      header: 'Source',
-      cell: (info: CellContext<TopReferrerEntry, string | undefined>) => {
-        const cellData: ReferrerSourceCellData = info.row.original;
-        return <ReferrerSourceCell {...cellData} />;
-      }
-    },
-    {
-        accessorKey: 'type',
-        header: 'Type',
-        meta: { className: 'text-left capitalize' },
-        cell: (info: CellContext<TopReferrerEntry, string | undefined>) => {
-          const value = info.getValue();
-          return value ? value : 'Unknown';
-        }
-    },
-    {
-      accessorKey: 'visitors',
-      header: 'Visitors',
-      meta: { className: 'text-right' },
-    },
-    {
-      accessorKey: 'pageviews',
-      header: 'Pageviews',
-      meta: { className: 'text-right' },
-    },
+  const topReferrersColumns = useMemo(() => [
+    col<TopReferrerEntry>('name', 'Source', (info) => {
+      const cellData: ReferrerSourceCellData = info.row.original;
+      return <ReferrerSourceCell {...cellData} />;
+    }),
+    col<TopReferrerEntry>('type', 'Type', (info) => (info.getValue() as string | undefined) || 'Unknown', { className: 'text-left capitalize' }),
+    col<TopReferrerEntry>('visitors', 'Visitors', undefined),
+    col<TopReferrerEntry>('pageviews', 'Pageviews', undefined),
   ], []);
 
   const topReferrersData = useMemo(() => {
-      return analytics.top_referrers?.slice(0, 10) || [];
+    return analytics.top_referrers || [];
   }, [analytics.top_referrers]);
 
   if (!isLoading && error?.summary) {
