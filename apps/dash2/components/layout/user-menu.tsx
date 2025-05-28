@@ -35,6 +35,7 @@ export function UserMenu() {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
+          toast.success("Logged out successfully");
           redirect("/login");
         },
         onError: (error) => {
