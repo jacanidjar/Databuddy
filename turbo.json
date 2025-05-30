@@ -31,26 +31,26 @@
       "outputs": ["dist/**"]
     },
     "db:generate": {
-      "cache": false
+      "cache": false,
+      "persistent": false
     },
     "db:push": {
       "cache": false,
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "dependsOn": ["^db:generate"]
+      "dependsOn": ["^db:generate"],
+      "persistent": false
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^lint"],
+      "persistent": false
     },
     "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": ["^check-types"],
+      "persistent": false
     },
     "dev": {
       "cache": false,
       "persistent": true
-    },
-    "generate": {
-      "dependsOn": [],
-      "outputs": []
     }
   }
 }

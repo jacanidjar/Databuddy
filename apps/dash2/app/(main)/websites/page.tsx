@@ -11,6 +11,7 @@ import { useDomains } from "@/hooks/use-domains";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { TrialStatusCard } from "@/components/trial/trial-status-card";
 
 // Dynamic imports with proper loading states
 const WebsiteDialog = dynamic(
@@ -178,6 +179,9 @@ function WebsitesPage() {
 
       {/* Mobile-optimized content area */}
       <div className="flex-1 overflow-y-auto p-3 sm:px-4 sm:pt-4 sm:pb-6">
+        {/* Trial Status Card */}
+        <TrialStatusCard />
+
         {/* Show no verified domains message - mobile optimized */}
         {!isLoading && verifiedDomains.length === 0 && (
           <Alert className="mb-3 sm:mb-4 border-warning/40 bg-[color-mix(in_oklch,var(--background),var(--warning)_5%)] text-warning">
