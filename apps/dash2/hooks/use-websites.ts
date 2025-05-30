@@ -14,39 +14,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 export interface Website {
   id: string;
   name: string | null;
-  // The domain can be either a string or an object depending on how it's returned from the API
-  domain: string | { 
-    id: string;
-    name: string;
-    verificationStatus: string;
-    verificationToken: string | null;
-    verifiedAt: string | null;
-    userId: string | null;
-    projectId: string | null;
-    dnsRecords: unknown;
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
-  };
+  domain: string;
   userId?: string | null;
   projectId?: string | null;
   domainId?: string | null;
   createdAt: string;
   updatedAt: string;
-  status?: string;
-  domainData?: {
-    id: string;
-    name: string;
-    verificationStatus: string;
-    verificationToken: string | null;
-    verifiedAt: string | null;
-    userId: string | null;
-    projectId: string | null;
-    dnsRecords: unknown;
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
-  } | null;
+  status?: "ACTIVE" | "INACTIVE" | "PENDING" | "HEALTHY" | "UNHEALTHY";
+  deletedAt?: string | null;
 }
 
 export interface CreateWebsiteData {
@@ -90,11 +65,15 @@ export function useWebsites() {
     }
   }, [isError]);
 
-  const createMutation = useMutation({
+  const createMutation = useMutation<
+    Website | undefined,
+    Error,
+    CreateWebsiteData
+  >({
     mutationFn: async (data: CreateWebsiteData) => {
       const result = await createWebsiteAction(data);
       if (result.error) throw new Error(result.error);
-      return result.data;
+      return result.data as Website | undefined;
     },
     onMutate: () => {
     },

@@ -69,7 +69,7 @@ interface WebsiteDialogProps {
     name?: string;
     domainId?: string;
   } | null;
-  onCreate?: UseMutateFunction<Website, Error, CreateWebsiteData, unknown>;
+  onCreate?: UseMutateFunction<Website | undefined, Error, CreateWebsiteData, unknown>;
 }
 
 export function WebsiteDialog({
