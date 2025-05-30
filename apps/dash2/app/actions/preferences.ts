@@ -7,6 +7,7 @@ import { headers } from "next/headers";
 import { cache } from "react";
 import { z } from "zod";
 import { nanoid } from "nanoid";
+import { logger } from "@/lib/discord-webhook";
 
 // Helper to get authenticated user
 const getUser = cache(async () => {
@@ -49,11 +50,35 @@ export async function getUserPreferences() {
       }).returning();
       
       preferences = inserted[0];
+
+      // Log first-time preferences setup (only when creating, not updating)
+      await logger.info(
+        'User Preferences Initialized',
+        'Default preferences were created for new user',
+        {
+          userId: user.id,
+          userName: user.name || user.email,
+          timezone: preferences.timezone,
+          dateFormat: preferences.dateFormat
+        }
+      );
     }
     
     return { data: preferences };
   } catch (error) {
     console.error('Failed to get user preferences', { error });
+
+    // Log preferences error
+    await logger.error(
+      'Preferences Setup Failed',
+      'Failed to initialize user preferences',
+      {
+        userId: user.id,
+        userName: user.name || user.email,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
+    );
+
     return { error: "Failed to get user preferences" };
   }
 }

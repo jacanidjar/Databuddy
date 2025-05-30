@@ -8,7 +8,7 @@ import { cache } from "react";
 import { z } from "zod";
 // import { uploadOptimizedImage } from "@/lib/supabase";
 // import type { CropData, ImageEditOptions } from "@/types/image";
-import { logger } from "@sentry/nextjs";
+import { logger } from "@/lib/discord-webhook";
 
 // Helper to get authenticated user
 const getUser = cache(async () => {
@@ -120,10 +120,39 @@ export async function updateUserProfile(formData: FormData) {
       .where(eq(user.id, currentUser.id))
       .returning();
 
+    // Log profile update to Discord (only for significant changes)
+    const newFullName = `${validatedData.firstName} ${validatedData.lastName}`;
+    const hasNameChange = currentUser.name !== newFullName;
+    
+    if (hasNameChange) {
+      await logger.info(
+        'Profile Updated',
+        'User updated their profile name',
+        {
+          userId: currentUser.id,
+          oldName: currentUser.name || 'Unknown',
+          newName: newFullName,
+          email: currentUser.email
+        }
+      );
+    }
+
     revalidatePath("/settings");
     return { success: true };
   } catch (error) {
     console.error("Profile update error:", error);
+
+    // Log profile update error
+    await logger.error(
+      'Profile Update Failed',
+      'User profile update encountered an error',
+      {
+        userId: currentUser.id,
+        userName: currentUser.name || currentUser.email,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
+    );
+
     if (error instanceof z.ZodError) {
       return { error: error.errors[0].message };
     }
@@ -160,10 +189,34 @@ export async function deactivateUserAccount(formData: FormData) {
       })
       .where(eq(user.id, currentUser.id));
 
+    // Log account deactivation - this is a critical security event
+    await logger.warning(
+      'Account Deactivated',
+      'User account was deactivated and scheduled for deletion',
+      {
+        userId: currentUser.id,
+        userName: currentUser.name || currentUser.email,
+        email: currentUser.email,
+        deactivatedAt: new Date().toISOString()
+      }
+    );
+
     revalidatePath("/settings");
     return { success: true };
   } catch (error) {
     console.error("Account deletion error:", error);
+
+    // Log account deactivation error
+    await logger.error(
+      'Account Deactivation Failed',
+      'Account deactivation process encountered an error',
+      {
+        userId: currentUser.id,
+        userName: currentUser.name || currentUser.email,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
+    );
+
     return { error: "Failed to process account deletion" };
   }
 } 

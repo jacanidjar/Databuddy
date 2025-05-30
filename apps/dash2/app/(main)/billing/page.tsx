@@ -174,26 +174,52 @@ export default function BillingPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 lg:w-fit">
-          <TabsTrigger value="overview" className="flex items-center gap-1 text-xs">
-            <Activity className="h-3 w-3" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="plans" className="flex items-center gap-1 text-xs">
-            <CreditCard className="h-3 w-3" />
-            Plans
-          </TabsTrigger>
-          <TabsTrigger value="history" className="flex items-center gap-1 text-xs">
-            <History className="h-3 w-3" />
-            History
-          </TabsTrigger>
-          <TabsTrigger value="payment" className="flex items-center gap-1 text-xs">
-            <Settings className="h-3 w-3" />
-            Payment
-          </TabsTrigger>
-        </TabsList>
+        <div className="border-b relative">
+          <TabsList className="h-10 bg-transparent p-0 w-full justify-start overflow-x-auto">
+            <TabsTrigger 
+              value="overview" 
+              className="text-xs sm:text-sm h-10 px-2 sm:px-4 rounded-none touch-manipulation hover:bg-muted/50 relative transition-colors whitespace-nowrap cursor-pointer"
+            >
+              <Activity className="h-3 w-3 mr-1" />
+              <span className="hidden sm:inline">Overview</span>
+              {activeTab === "overview" && (
+                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-primary" />
+              )}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="plans" 
+              className="text-xs sm:text-sm h-10 px-2 sm:px-4 rounded-none touch-manipulation hover:bg-muted/50 relative transition-colors whitespace-nowrap cursor-pointer"
+            >
+              <CreditCard className="h-3 w-3 mr-1" />
+              <span className="hidden sm:inline">Plans</span>
+              {activeTab === "plans" && (
+                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-primary" />
+              )}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="history" 
+              className="text-xs sm:text-sm h-10 px-2 sm:px-4 rounded-none touch-manipulation hover:bg-muted/50 relative transition-colors whitespace-nowrap cursor-pointer"
+            >
+              <History className="h-3 w-3 mr-1" />
+              <span className="hidden sm:inline">History</span>
+              {activeTab === "history" && (
+                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-primary" />
+              )}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="payment" 
+              className="text-xs sm:text-sm h-10 px-2 sm:px-4 rounded-none touch-manipulation hover:bg-muted/50 relative transition-colors whitespace-nowrap cursor-pointer"
+            >
+              <Settings className="h-3 w-3 mr-1" />
+              <span className="hidden sm:inline">Payment</span>
+              {activeTab === "payment" && (
+                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-primary" />
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="overview">
+        <TabsContent value="overview" className="transition-all duration-200 animate-fadeIn">
           <Suspense fallback={<TabSkeleton />}>
             <OverviewTab
               currentPlan={currentPlan}
@@ -206,7 +232,7 @@ export default function BillingPage() {
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="plans">
+        <TabsContent value="plans" className="transition-all duration-200 animate-fadeIn">
           <Suspense fallback={<TabSkeleton />}>
             <PlansTab
               plans={subscriptionPlans}
@@ -217,7 +243,7 @@ export default function BillingPage() {
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="history">
+        <TabsContent value="history" className="transition-all duration-200 animate-fadeIn">
           <Suspense fallback={<TabSkeleton />}>
             <HistoryTab
               billingHistory={billingHistory}
@@ -229,7 +255,7 @@ export default function BillingPage() {
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="payment">
+        <TabsContent value="payment" className="transition-all duration-200 animate-fadeIn">
           <Suspense fallback={<TabSkeleton />}>
             <PaymentTab
               paymentMethods={paymentMethods}

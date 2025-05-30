@@ -7,6 +7,7 @@ import { headers } from "next/headers";
 import { cache } from "react";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { logger } from "@/lib/discord-webhook";
 
 // Types
 type CreateWebsiteData = {
@@ -135,10 +136,33 @@ export async function createWebsite(data: CreateWebsiteData) {
 
     console.log("[Website] Successfully created website:", website);
 
+    // Log website creation to Discord
+    await logger.success(
+      'Website Created',
+      `New website "${data.name}" was successfully created`,
+      {
+        domain: fullDomain,
+        websiteId: website.id,
+        userName: user.name || user.email,
+      }
+    );
+
     revalidatePath("/websites");
     return { success: true, data: website };
   } catch (error) {
     console.error("[Website] Error creating website:", error);
+    
+    // Log error to Discord
+    await logger.error(
+      'Website Creation Failed',
+      `Failed to create website "${data.name}"`,
+      {
+        domain: data.subdomain ? `${data.subdomain}.${data.domain}` : data.domain,
+        userName: user.name || user.email,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
+    );
+
     if (error instanceof Error) {
       return { error: `Failed to create website: ${error.message}` };
     }
@@ -278,10 +302,32 @@ export async function deleteWebsite(id: string): Promise<ApiResponse<{ success: 
     await db.delete(websites)
       .where(eq(websites.id, id));
 
+    // Log website deletion to Discord
+    await logger.warning(
+      'Website Deleted',
+      `Website "${website.name}" was deleted`,
+      {
+        domain: website.domain,
+        websiteId: id,
+        userName: user.name || user.email,
+      }
+    );
+
     revalidatePath("/websites");
     
     return { data: { success: true } };
   } catch (error) {
+    // Log deletion error to Discord
+    await logger.error(
+      'Website Deletion Failed',
+      "Failed to delete website",
+      {
+        websiteId: id,
+        userName: user.name || user.email,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
+    );
+
     return handleError("delete website", error);
   }
 } 
