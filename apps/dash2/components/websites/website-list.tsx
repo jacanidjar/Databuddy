@@ -14,7 +14,6 @@ import {
   TableCell 
 } from "@/components/ui/table";
 import type { Website } from "@/hooks/use-websites";
-import { useWebsitesStore } from "@/stores/use-websites-store";
 import { MiniChart } from "@/components/websites/mini-chart";
 import { cn } from "@/lib/utils";
 
@@ -76,7 +75,6 @@ function WebsiteRow({
   isUpdating,
   verifiedDomains
 }: WebsiteRowProps) {
-  const setSelectedWebsite = useWebsitesStore(state => state.setSelectedWebsite);
   const [dialogOpen, setDialogOpen] = useState(false);
   const router = useRouter();
   
@@ -85,11 +83,6 @@ function WebsiteRow({
     : website.domain?.name || '';
 
   const isLocalhost = domainValue.includes('localhost') || domainValue.includes('127.0.0.1');
-
-  const handleOpenDialog = () => {
-    setSelectedWebsite(website);
-    setDialogOpen(true);
-  };
 
   // Get verification status and badge
   const getVerificationStatus = () => {
@@ -173,7 +166,7 @@ function WebsiteRow({
         onClick={handleRowClick}
         onKeyDown={e => {
           if (e.key === 'Enter' || e.key === ' ') {
-            handleRowClick(e as any);
+            handleRowClick(e as unknown as React.MouseEvent);
           }
         }}
       >

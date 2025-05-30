@@ -6,7 +6,6 @@ import { useSession } from "@databuddy/auth/client"
 import { useState, createContext, useContext, useEffect } from "react";
 import type { ReactNode } from "react";
 import type { session } from "@databuddy/db";
-import { useWebsitesStore } from "@/stores/use-websites-store";
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 
 type Session = typeof session.$inferSelect;
@@ -55,7 +54,6 @@ const SessionProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!session && !isPending) {
       queryClient.clear();
-      useWebsitesStore.getState().reset();
     }
   }, [session, isPending]);
   

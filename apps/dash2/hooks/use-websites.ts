@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from 'react';
-import { useWebsitesStore } from '@/stores/use-websites-store';
 import { toast } from 'sonner';
 import { 
   createWebsite as createWebsiteAction, 
@@ -24,7 +23,7 @@ export interface Website {
     verifiedAt: string | null;
     userId: string | null;
     projectId: string | null;
-    dnsRecords: any;
+    dnsRecords: unknown;
     createdAt: string;
     updatedAt: string;
     deletedAt: string | null;
@@ -43,14 +42,14 @@ export interface Website {
     verifiedAt: string | null;
     userId: string | null;
     projectId: string | null;
-    dnsRecords: any;
+    dnsRecords: unknown;
     createdAt: string;
     updatedAt: string;
     deletedAt: string | null;
   } | null;
 }
 
-interface CreateWebsiteData {
+export interface CreateWebsiteData {
   name: string;
   domainId: string;
   domain: string;
@@ -67,14 +66,6 @@ export const websiteKeys = {
 };
 
 export function useWebsites() {
-  // Get store actions directly. Avoid subscribing to the whole store if only actions are needed.
-  const { 
-    setIsCreating, 
-    setIsUpdating, 
-    setIsDeleting,
-    clearSelectedOnDelete 
-  } = useWebsitesStore.getState(); 
-  
   const queryClient = useQueryClient();
   
   const { data, isLoading, isError, refetch } = useQuery({
@@ -106,7 +97,6 @@ export function useWebsites() {
       return result.data;
     },
     onMutate: () => {
-      setIsCreating(true);
     },
     onSuccess: () => {
       toast.success("Website created successfully");
@@ -116,7 +106,6 @@ export function useWebsites() {
       toast.error(error.message || 'Failed to create website');
     },
     onSettled: () => {
-      setIsCreating(false);
     }
   });
 
@@ -127,7 +116,6 @@ export function useWebsites() {
       return result.data;
     },
     onMutate: () => {
-      setIsUpdating(true);
     },
     onSuccess: () => {
       toast.success("Website updated successfully");
@@ -137,7 +125,6 @@ export function useWebsites() {
       toast.error(error.message || 'Failed to update website');
     },
     onSettled: () => {
-      setIsUpdating(false);
     }
   });
 
@@ -149,18 +136,15 @@ export function useWebsites() {
       return { data: result.data, id }; 
     },
     onMutate: () => {
-      setIsDeleting(true);
     },
     onSuccess: ({ id }) => { // Destructure id from the mutation result
       toast.success("Website deleted successfully");
-      clearSelectedOnDelete(id); // Clear selected if it was the one deleted
       queryClient.invalidateQueries({ queryKey: websiteKeys.all });
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to delete website');
     },
     onSettled: () => {
-      setIsDeleting(false);
     }
   });
 
@@ -177,40 +161,3 @@ export function useWebsites() {
     refetch,
   };
 }
-
-// Hook to get a single website by ID
-// export function useWebsite(id: string) {
-//   const queryClient = useQueryClient();
-  
-//   return useQuery<Website | null, Error>({
-//     queryKey: websiteKeys.detail(id),
-//     queryFn: async () => {
-//       if (!id) return null;
-      
-//       const websitesData = queryClient.getQueryData<Website[]>(websiteKeys.lists());
-//       const cachedWebsite = websitesData?.find(website => website.id === id);
-//       if (cachedWebsite) {
-//         return cachedWebsite;
-//       }
-      
-//       console.log(`Website with ID ${id} not found in cache, fetching from server...`);
-//       const result = await getWebsiteById(id);
-      
-//       if (result.error) {
-//         toast.error(`Failed to fetch website: ${result.error}`);
-//         throw new Error(result.error);
-//       }
-      
-//       if (!result.data) {
-//         // Using toast.message for neutral information. 
-//         // If this should be an error state, toast.error might be more appropriate.
-//         toast.message(`Website with ID ${id} not found on server.`);
-//         return null; 
-//       }
-      
-//       return result.data as Website; // Cast to Website type
-//     },
-//     enabled: !!id,
-//     staleTime: 5 * 60 * 1000, // 5 minutes
-//   });
-// } 

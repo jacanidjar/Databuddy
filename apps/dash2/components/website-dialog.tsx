@@ -6,6 +6,11 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { toast } from "sonner";
 import { Globe, Terminal } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import type { Website } from "@/hooks/use-websites";
+import { createWebsite as createWebsiteAction, updateWebsite } from "@/app/actions/websites";
+import type { CreateWebsiteData } from "@/hooks/use-websites";
+import type { UseMutateFunction } from "@tanstack/react-query";
 
 import {
   Dialog,
@@ -33,10 +38,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import type { Website } from "@/hooks/use-websites";
-import { useWebsitesStore } from "@/stores/use-websites-store";
-import { createWebsite, updateWebsite } from "@/app/actions/websites";
 
 type VerifiedDomain = {
   id: string;
@@ -68,6 +69,7 @@ interface WebsiteDialogProps {
     name?: string;
     domainId?: string;
   } | null;
+  onCreate?: UseMutateFunction<Website, Error, CreateWebsiteData, unknown>;
 }
 
 export function WebsiteDialog({
@@ -78,9 +80,9 @@ export function WebsiteDialog({
   verifiedDomains = [],
   trigger,
   initialValues = null,
+  onCreate,
 }: WebsiteDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const setSelectedWebsite = useWebsitesStore(state => state.setSelectedWebsite);
   const isEditing = !!website;
 
   const form = useForm<CreateFormData | EditFormData>({
@@ -107,49 +109,64 @@ export function WebsiteDialog({
   }, [form, initialValues, website, open, isEditing]);
 
   const handleClose = () => {
-    setSelectedWebsite(null);
     onOpenChange(false);
   };
 
   const handleSubmit = async (data: CreateFormData | EditFormData) => {
     setIsSubmitting(true);
     try {
-      if (!website) {
+      if (!website && onCreate) {
         const createData = data as CreateFormData;
         const selectedDomain = verifiedDomains.find(d => d.id === createData.domainId);
         if (!selectedDomain) {
           toast.error("Please select a verified domain");
+          setIsSubmitting(false);
           return;
         }
 
-        const result = await createWebsite({
+        await onCreate({
           name: createData.name,
           domainId: createData.domainId,
           domain: selectedDomain.name,
           subdomain: createData.subdomain,
+        }, {
+          onSuccess: () => {
+            toast.success("Website created successfully");
+            handleClose();
+          },
+          onError: (error) => {
+            toast.error(error.message || "Failed to create website");
+          },
+          onSettled: () => {
+            setIsSubmitting(false);
+          }
         });
-
-        if (result.error) {
-          toast.error(result.error);
-          return;
-        }
-      } else {
+      } else if (website) {
         const editData = data as EditFormData;
         const result = await updateWebsite(website.id, editData.name);
 
         if (result.error) {
           toast.error(result.error);
+          setIsSubmitting(false);
           return;
         }
+        toast.success("Website updated successfully");
+        handleClose();
+      } else if (!onCreate) {
+        console.error("onCreate prop is required for creating a new website but was not provided.");
+        toast.error("Configuration error: Cannot create website.");
+        setIsSubmitting(false);
+        return;
       }
-
-      toast.success(website ? "Website updated successfully" : "Website created successfully");
-      handleClose();
     } catch (error) {
       console.error("[WebsiteDialog] Unexpected error:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to save website");
+      if (!isSubmitting) {
+          toast.error(error instanceof Error ? error.message : "Failed to save website");
+      }
     } finally {
-      setIsSubmitting(false);
+      if (website || !onCreate) {
+        setIsSubmitting(false);
+      }
     }
   };
 

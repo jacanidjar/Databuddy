@@ -81,7 +81,7 @@ export async function createDomain(data: { name: string; userId?: string; projec
         domain: data.name,
         domainId,
         userName: user.name || user.email,
-        verificationToken: verificationToken.slice(0, 20) + '...' // Show partial token for security
+        verificationToken: `"${verificationToken.slice(0, 20)}..."`
       }
     );
 
@@ -318,7 +318,7 @@ export async function checkDomainVerification(id: string) {
         domainId: id,
         userName: user.name || user.email,
         dnsRecord,
-        expectedToken: expectedToken.slice(0, 20) + '...'
+        expectedToken: `"${expectedToken.slice(0, 20)}..."`
       }
     );
 

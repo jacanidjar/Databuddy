@@ -14,8 +14,7 @@ import { Check, Clipboard, Code, ExternalLink, Globe, Info, Laptop, Settings2, Z
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { WebsiteDialog } from "@/components/website-dialog";
-import { updateWebsite, deleteWebsite } from "@/app/actions/websites";
-import { queryClient } from "@/app/providers";
+import { updateWebsite } from "@/app/actions/websites";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Slider } from "@/components/ui/slider";
@@ -30,7 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useWebsitesStore } from "@/stores/use-websites-store";
+import { useWebsites } from "@/hooks/use-websites";
 
 interface WebsiteFormData {
   name?: string;
@@ -71,9 +70,9 @@ export function WebsiteSettingsTab({
   websiteData,
 }: WebsiteDataTabProps) {
   const router = useRouter();
+  const { deleteWebsite: deleteWebsiteMutation, isDeleting: isMutationDeleting } = useWebsites();
   const [copied, setCopied] = useState(false);
   const [installMethod, setInstallMethod] = useState<"script" | "npm">("script");
-  const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   // Active configuration tab
@@ -168,27 +167,16 @@ ${propsString}
   };
 
   const handleDeleteWebsite = async () => {
-    setIsDeleting(true);
-    try {
-      const result = await deleteWebsite(websiteId);
-      
-      if (result.error) {
-        toast.error(result.error);
-        return;
-      }
-      
-      toast.success("Website deleted successfully");
-      
-      // Invalidate queries and redirect
-      queryClient.invalidateQueries({ queryKey: ["websites"] });
-      router.push("/websites");
-    } catch (error) {
-      console.error("Error deleting website:", error);
-      toast.error("Failed to delete website");
-    } finally {
-      setIsDeleting(false);
-      setShowDeleteDialog(false);
-    }
+    deleteWebsiteMutation(websiteId, {
+      onSuccess: () => {
+        router.push("/websites");
+        setShowDeleteDialog(false);
+      },
+      onError: (error: Error) => {
+        console.error("Error deleting website (from component):", error);
+        setShowDeleteDialog(false);
+      },
+    });
   };
 
   // Layout with sidebar navigation
@@ -894,13 +882,13 @@ Databuddy.track('purchase_completed', {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isMutationDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteWebsite}
-              disabled={isDeleting}
+              disabled={isMutationDeleting}
               className="bg-red-600 hover:bg-red-700 text-white hover:text-white"
             >
-              {isDeleting ? (
+              {isMutationDeleting ? (
                 <>
                   <span className="mr-2">Deleting...</span>
                   <span className="animate-spin">⏳</span>
