@@ -490,7 +490,7 @@ export default function PrivacyPolicyPage() {
                   Want to learn more about our privacy-first approach to analytics and how we're different from traditional analytics services?
                 </p>
                 <Button asChild variant="outline" className="border-sky-500/30 bg-sky-500/10 text-sky-400 hover:bg-sky-500/20">
-                  <Link href="/privacy-focus" className="flex items-center gap-1">
+                  <Link href="/privacy" className="flex items-center gap-1">
                     Learn about our privacy-first analytics
                     <ArrowRight className="h-4 w-4 ml-1" />
                   </Link>
