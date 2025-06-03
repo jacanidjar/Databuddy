@@ -167,6 +167,31 @@ analyticsRouter.get('/summary', zValidator('query', analyticsQuerySchema), async
       chQuery(timezonesBuilder.getSql()),
       chQuery(performanceBuilder.getSql()),
     ]);
+
+    // Check if tracking has been set up (any events exist)
+    const hasEvents = (summaryData[0]?.pageviews > 0) || 
+                     (todayData[0]?.pageviews > 0) || 
+                     (eventsByDate.length > 0 && eventsByDate.some((event: any) => event.pageviews > 0));
+
+    if (!hasEvents) {
+      return c.json({
+        success: true,
+        tracking_setup: false,
+        website_id: params.website_id,
+        message: "No tracking data found. Please install the tracking script to start collecting analytics.",
+        date_range: {
+          start_date: startDate,
+          end_date: endDate,
+          granularity: params.granularity
+        },
+        timezone: {
+          timezone: timezoneInfo.timezone,
+          detected: timezoneInfo.detected,
+          source: timezoneInfo.source,
+          applied: timezoneInfo.timezone !== 'UTC'
+        }
+      });
+    }
     
     // Process today's summary data directly from the todayBuilder result
     const rawTodaySummary = todayData?.[0] || {
@@ -281,6 +306,7 @@ analyticsRouter.get('/summary', zValidator('query', analyticsQuerySchema), async
     
     return c.json({
       success: true,
+      tracking_setup: true,
       website_id: params.website_id,
       date_range: {
         start_date: startDate,

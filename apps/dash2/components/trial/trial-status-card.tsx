@@ -6,11 +6,11 @@ import Link from "next/link";
 export function TrialStatusCard() {
 
   return (
-    <Card className="mb-4 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 dark:border-amber-800/30 relative overflow-hidden">
+    <Card className="mb-3 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 dark:border-amber-800/30 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-100/30 to-transparent dark:from-transparent dark:via-amber-400/5 dark:to-transparent" />
       
-      <CardContent className="relative p-4">
+      <CardContent className="relative p-3">
         <div className="flex items-center gap-3">
           {/* Icon */}
           <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-full flex-shrink-0">

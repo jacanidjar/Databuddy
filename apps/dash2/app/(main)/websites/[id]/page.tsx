@@ -6,18 +6,14 @@ import Link from "next/link";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { useQueryState } from "nuqs";
-import { 
-  ArrowLeft, 
-  RefreshCw,
-  Calendar,
-  AlertTriangle
-} from "lucide-react";
+import { RefreshCw, Calendar, AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getWebsiteById } from "@/app/actions/websites";
 import { useQuery } from "@tanstack/react-query";
+import { useWebsiteAnalytics } from "@/hooks/use-analytics";
 import { format, subDays, subHours } from "date-fns";
 import type { DateRange as DayPickerRange } from "react-day-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -33,7 +29,7 @@ import { EmptyState } from "./components/utils/ui-components";
 
 import type { FullTabProps, WebsiteDataTabProps } from "./components/utils/types";
 
-type TabId = 'overview' | 'audience' | 'content' | 'performance' | 'settings' | 'errors';
+type TabId = 'overview' | 'audience' | 'content' | 'performance' | 'settings' | 'errors' | 'tracking-setup';
 
 const WebsiteOverviewTab = dynamic(
   () => import("./components/tabs/overview-tab").then(mod => ({ default: mod.WebsiteOverviewTab })),
@@ -59,24 +55,21 @@ const WebsiteErrorsTab = dynamic(
   () => import("./components/tabs/errors-tab").then(mod => ({ default: mod.WebsiteErrorsTab })),
   { loading: () => <TabLoadingSkeleton />, ssr: false }
 );
+const WebsiteTrackingSetupTab = dynamic(
+  () => import("./components/tabs/tracking-setup-tab").then(mod => ({ default: mod.WebsiteTrackingSetupTab })),
+  { loading: () => <TabLoadingSkeleton />, ssr: false }
+);
 
 type TabDefinition = {
   id: TabId;
   label: string;
-  component: React.ComponentType<any>;
   className?: string;
-  props?: "settings" | "full";
 };
 
 function WebsiteDetailsPage() {
   const [activeTab, setActiveTab] = useQueryState('tab', { defaultValue: 'overview' as TabId });
   const { id } = useParams();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [refreshDetails, setRefreshDetails] = useState({
-    component: "",
-    progress: 0,
-    total: 4
-  });
   const [currentDateRange, setCurrentDateRangeState] = useAtom(dateRangeAtom);
   const [currentGranularity, setCurrentGranularityAtomState] = useAtom(timeGranularityAtom);
   const [, setDateRangeAction] = useAtom(setDateRangeAndAdjustGranularityAtom);
@@ -87,19 +80,17 @@ function WebsiteDetailsPage() {
     to: currentDateRange.endDate,
   }), [currentDateRange]);
   
-  const quickRanges = [
-    { label: "24h", fullLabel: "Last 24 hours", value: "24h", fn: () => ({ start: subHours(new Date(), 24), end: new Date() })},
-    { label: "7d", fullLabel: "Last 7 days", value: "7d", fn: () => ({ start: subDays(new Date(), 7), end: new Date() })},
-    { label: "30d", fullLabel: "Last 30 days", value: "30d", fn: () => ({ start: subDays(new Date(), 30), end: new Date() })},
-  ];
+  const quickRanges = useMemo(() => [
+    { label: "24h", fullLabel: "Last 24 hours", hours: 24 },
+    { label: "7d", fullLabel: "Last 7 days", days: 7 },
+    { label: "30d", fullLabel: "Last 30 days", days: 30 },
+  ], []);
   
-  const handleQuickRangeSelect = (rangeValue: string) => {
-    const selectedRange = quickRanges.find(r => r.value === rangeValue);
-    if (selectedRange) {
-      const { start, end } = selectedRange.fn();
-      setDateRangeAction({ startDate: start, endDate: end });
-    }
-  };
+  const handleQuickRangeSelect = useCallback((range: typeof quickRanges[0]) => {
+    const now = new Date();
+    const start = range.hours ? subHours(now, range.hours) : subDays(now, range.days || 7);
+    setDateRangeAction({ startDate: start, endDate: now });
+  }, [setDateRangeAction]);
 
   const memoizedDateRangeForTabs = useMemo(() => ({
     start_date: formattedDateRangeState.startDate,
@@ -130,54 +121,70 @@ function WebsiteDetailsPage() {
     retryDelay: 3000,
   });
 
+  // Always call the analytics hook with the websiteId to maintain hook order
+  const { analytics: analyticsData, loading: analyticsLoading } = useWebsiteAnalytics(
+    id as string, 
+    memoizedDateRangeForTabs
+  );
+
+  // Determine tracking status once we have both website and analytics data
+  const isTrackingSetup = useMemo(() => {
+    if (!data || analyticsLoading.summary) return null; // Still loading
+    return analyticsData?.tracking_setup !== false;
+  }, [data, analyticsLoading.summary, analyticsData?.tracking_setup]);
+
+  // Set initial tab based on tracking status, but only once when we first determine the status
+  useEffect(() => {
+    if (isTrackingSetup === false && activeTab === 'overview') {
+      setActiveTab('tracking-setup');
+    }
+  }, [isTrackingSetup, activeTab, setActiveTab]);
+
+  const handleRefresh = useCallback(() => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+      toast.success("Data refreshed");
+    }, 1000);
+  }, []);
+
   const renderTabContent = useCallback((tabId: TabId) => {
     if (tabId !== activeTab) return null; 
 
-    const key = `${tabId}-${id as string}-${tabId === "settings" ? "static" : memoizedDateRangeForTabs.start_date ?? 'loading'}`;
-
-    const tabProps: FullTabProps = {
-      websiteId: id as string,
-      dateRange: memoizedDateRangeForTabs,
-      websiteData: data,
-      isRefreshing,
-      setIsRefreshing,
-    };
-
+    const key = `${tabId}-${id as string}`;
     const settingsProps: WebsiteDataTabProps = {
       websiteId: id as string,
       dateRange: memoizedDateRangeForTabs,
       websiteData: data
     };
 
-    if (tabId === "settings") {
-      return (
-        <Suspense fallback={<TabLoadingSkeleton />}>
-          <WebsiteSettingsTab key={key} {...settingsProps} />
-        </Suspense>
-      );
-    }
+    const tabProps: FullTabProps = {
+      ...settingsProps,
+      isRefreshing,
+      setIsRefreshing,
+    };
 
-    const TabComponent = (() => {
+    const getTabComponent = () => {
       switch (tabId) {
-        case "overview": return WebsiteOverviewTab;
-        case "audience": return WebsiteAudienceTab;
-        case "content": return WebsiteContentTab;
-        case "performance": return WebsitePerformanceTab;
-        case "errors": return WebsiteErrorsTab;
+        case "overview": return <WebsiteOverviewTab {...tabProps} />;
+        case "audience": return <WebsiteAudienceTab {...tabProps} />;
+        case "content": return <WebsiteContentTab {...tabProps} />;
+        case "performance": return <WebsitePerformanceTab {...tabProps} />;
+        case "errors": return <WebsiteErrorsTab {...tabProps} />;
+        case "settings": return <WebsiteSettingsTab {...settingsProps} />;
+        case "tracking-setup": return <WebsiteTrackingSetupTab {...settingsProps} />;
         default: return null;
       }
-    })();
-
-    if (!TabComponent) return null;
+    };
 
     return (
-      <Suspense fallback={<TabLoadingSkeleton />}>
-        <TabComponent key={key} {...tabProps} />
+      <Suspense key={key} fallback={<TabLoadingSkeleton />}>
+        {getTabComponent()}
       </Suspense>
     );
   }, [activeTab, id, memoizedDateRangeForTabs, data, isRefreshing]);
 
-  if (isLoading) {
+  if (isLoading || isTrackingSetup === null) {
     return <TabLoadingSkeleton />;
   }
 
@@ -194,41 +201,25 @@ function WebsiteDetailsPage() {
     );
   }
 
-  const tabs: TabDefinition[] = [
-    { id: "overview", label: "Overview", component: WebsiteOverviewTab, className: "pt-2 space-y-2" },
-    { id: "audience", label: "Audience", component: WebsiteAudienceTab },
-    { id: "content", label: "Content", component: WebsiteContentTab },
-    { id: "performance", label: "Performance", component: WebsitePerformanceTab },
-    { id: "errors", label: "Errors", component: WebsiteErrorsTab },
-    { id: "settings", label: "Settings", component: WebsiteSettingsTab, props: "settings" },
+  const tabs: TabDefinition[] = isTrackingSetup ? [
+    { id: "overview", label: "Overview", className: "pt-2 space-y-2" },
+    { id: "audience", label: "Audience" },
+    { id: "content", label: "Content" },
+    { id: "performance", label: "Performance" },
+    { id: "errors", label: "Errors" },
+    { id: "settings", label: "Settings" },
+  ] : [
+    { id: "tracking-setup", label: "Setup Tracking" },
+    { id: "settings", label: "Settings" },
   ];
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      const activeTabDef = tabs.find(tab => tab.id === activeTab);
-      setRefreshDetails({ 
-        component: `${activeTabDef?.label || "Current"} data`, 
-        progress: 1, 
-        total: 1 
-      });
-      toast.success(`${activeTabDef?.label || "Dashboard"} data refreshed`);
-    } catch (error) {
-      toast.error("Failed to refresh data");
-      console.error(error);
-    } finally {
-      setRefreshDetails({ component: "", progress: 0, total: 1 });
-      setTimeout(() => {
-        setIsRefreshing(false);
-      }, 5000);
-    }
-  };
 
   return (
     <div className="p-3 sm:p-4 max-w-[1600px] mx-auto">
       <header className="border-b pb-3">
-        <div className="flex flex-col gap-3 mt-3 bg-muted/30 rounded-lg p-2.5 border">
-          <div className="flex items-center justify-between gap-3">
+        {/* Only show date range controls if tracking is set up */}
+        {isTrackingSetup && (
+          <div className="flex flex-col gap-3 mt-3 bg-muted/30 rounded-lg p-2.5 border">
+            <div className="flex items-center justify-between gap-3">
             <div className="bg-background rounded-md border overflow-hidden flex shadow-sm h-8">
               <Button
                 variant="ghost"
@@ -259,28 +250,27 @@ function WebsiteDetailsPage() {
             >
               <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">
-                {isRefreshing 
-                  ? `${refreshDetails.progress}/${refreshDetails.total}` 
-                  : 'Refresh'
-                }
+                {isRefreshing ? 'Refreshing...' : 'Refresh'}
               </span>
             </Button>
           </div>
           
           <div className="flex items-center gap-2 bg-background rounded-md p-1 border shadow-sm overflow-x-auto">
             {quickRanges.map((range) => {
+              const now = new Date();
+              const start = range.hours ? subHours(now, range.hours) : subDays(now, range.days || 7);
               const dayPickerCurrentRange = dayPickerSelectedRange;
               const isActive = dayPickerCurrentRange?.from && dayPickerCurrentRange?.to &&
-                format(dayPickerCurrentRange.from, 'yyyy-MM-dd') === format(range.fn().start, 'yyyy-MM-dd') &&
-                format(dayPickerCurrentRange.to, 'yyyy-MM-dd') === format(range.fn().end, 'yyyy-MM-dd');
+                format(dayPickerCurrentRange.from, 'yyyy-MM-dd') === format(start, 'yyyy-MM-dd') &&
+                format(dayPickerCurrentRange.to, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
               
               return (
                 <Button 
-                  key={range.value}
+                  key={range.label}
                   variant={isActive ? 'default' : 'ghost'} 
                   size="sm" 
                   className={`h-6 cursor-pointer text-xs whitespace-nowrap px-2 sm:px-2.5 touch-manipulation ${isActive ? 'shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-                  onClick={() => handleQuickRangeSelect(range.value)}
+                  onClick={() => handleQuickRangeSelect(range)}
                   title={range.fullLabel}
                 >
                   <span className="sm:hidden">{range.label}</span>
@@ -309,11 +299,11 @@ function WebsiteDetailsPage() {
                     <div className="flex gap-1 flex-wrap">
                       {quickRanges.map((range) => (
                         <Button 
-                          key={range.value}
+                          key={range.label}
                           variant="outline"
                           size="sm" 
                           className="h-7 text-xs touch-manipulation"
-                          onClick={() => handleQuickRangeSelect(range.value)}
+                          onClick={() => handleQuickRangeSelect(range)}
                         >
                           {range.label}
                         </Button>
@@ -348,6 +338,7 @@ function WebsiteDetailsPage() {
             </Popover>
           </div>
         </div>
+        )}
       </header>
 
       <Tabs 
@@ -390,16 +381,88 @@ function WebsiteDetailsPage() {
 
 function TabLoadingSkeleton() {
   return (
-    <div className="space-y-3 sm:space-y-4 pt-2">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {[1, 2, 3, 4].map((num) => (
-          <Skeleton key={`tab-loading-skeleton-${num}`} className="h-20 sm:h-24 w-full" />
+    <div className="space-y-6 py-8">
+      {/* Key metrics cards skeleton */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {[1, 2, 3, 4, 5, 6].map((num) => (
+          <div key={`metric-skeleton-${num}`} className="rounded-lg border bg-background p-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-8 w-16" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+          </div>
         ))}
       </div>
-      <Skeleton className="h-48 sm:h-64 w-full" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Skeleton className="h-32 sm:h-40 w-full" />
-        <Skeleton className="h-32 sm:h-40 w-full" />
+
+      {/* Chart skeleton */}
+      <div className="rounded-xl border shadow-sm">
+        <div className="p-4 border-b flex flex-col sm:flex-row justify-between items-start gap-3">
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-20" />
+          </div>
+        </div>
+        <div className="p-4">
+          <Skeleton className="h-80 w-full" />
+        </div>
+      </div>
+
+      {/* Data tables skeleton */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[1, 2].map((tableNum) => (
+          <div key={`table-skeleton-${tableNum}`} className="rounded-lg border bg-background">
+            <div className="p-4 border-b">
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-4 w-32 mt-1" />
+            </div>
+            <div className="p-4 space-y-3">
+              {[1, 2, 3, 4, 5].map((rowNum) => (
+                <div key={`row-skeleton-${rowNum}`} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-4 w-4" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-4 w-12" />
+                    <Skeleton className="h-5 w-10 rounded-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Technology breakdown skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {[1, 2, 3].map((techNum) => (
+          <div key={`tech-skeleton-${techNum}`} className="rounded-lg border bg-background">
+            <div className="p-4 border-b">
+              <Skeleton className="h-5 w-20" />
+              <Skeleton className="h-4 w-28 mt-1" />
+            </div>
+            <div className="p-4 space-y-3">
+              {[1, 2, 3, 4].map((rowNum) => (
+                <div key={`tech-row-skeleton-${rowNum}`} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-6 w-6" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-4 w-8" />
+                    <Skeleton className="h-5 w-12 rounded-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -407,20 +470,56 @@ function TabLoadingSkeleton() {
 
 export default function Page() {
     return (
-        <Suspense fallback={
-          <div className="p-3 sm:p-4 flex items-center justify-center h-screen">
-            <div className="space-y-3 w-full max-w-md">
-              <Skeleton className="h-6 sm:h-7 w-2/3 mx-auto" />
-              <Skeleton className="h-20 sm:h-24 w-full" />
-              <div className="grid grid-cols-2 gap-2">
-                <Skeleton className="h-12 sm:h-16 w-full" />
-                <Skeleton className="h-12 sm:h-16 w-full" />
-              </div>
-              <Skeleton className="h-32 sm:h-48 w-full" />
-            </div>
-          </div>
-        }>
+        <Suspense fallback={<PageLoadingSkeleton />}>
             <WebsiteDetailsPage />
         </Suspense>
     )
+}
+
+function PageLoadingSkeleton() {
+  return (
+    <div className="p-4 max-w-7xl mx-auto space-y-6 py-12">
+      {/* Header skeleton */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+          <Skeleton className="h-9 w-24" />
+        </div>
+        
+        {/* Date range controls skeleton */}
+        <div className="bg-muted/30 rounded-lg p-3 border space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex border rounded-md overflow-hidden">
+              <Skeleton className="h-8 w-16" />
+              <Skeleton className="h-8 w-16" />
+            </div>
+            <Skeleton className="h-8 w-20" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-6 w-16" />
+            <Skeleton className="h-6 w-20" />
+            <Skeleton className="h-6 w-16" />
+            <Skeleton className="h-6 w-32" />
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs skeleton */}
+      <div className="space-y-4">
+        <div className="border-b">
+          <div className="flex gap-4">
+            {[1, 2, 3, 4, 5].map((num) => (
+              <Skeleton key={`tab-${num}`} className="h-10 w-20" />
+            ))}
+          </div>
+        </div>
+        
+        {/* Tab content skeleton */}
+        <TabLoadingSkeleton />
+      </div>
+    </div>
+  );
 }

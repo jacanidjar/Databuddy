@@ -229,6 +229,7 @@ interface ApiResponse {
 }
 
 interface SummaryResponse extends ApiResponse {
+  tracking_setup?: boolean;
   summary: AnalyticsSummary;
   today: TodayStats;
   date_range: DateRange;
@@ -454,6 +455,7 @@ export function useWebsiteAnalytics(websiteId: string, dateRange: DateRange) {
   
   return {
     analytics: {
+      tracking_setup: summaryQuery.data?.tracking_setup,
       summary: summaryQuery.data?.summary,
       today: summaryQuery.data?.today,
       performance: summaryQuery.data?.performance,

@@ -37,12 +37,12 @@ export function WebsiteList({
   verifiedDomains
 }: WebsiteListProps) {
   return (
-    <div className="rounded-xl border border-border bg-card/80 shadow-lg overflow-x-auto">
+    <div className="rounded-lg border bg-background shadow-sm overflow-hidden">
       <Table className="min-w-full text-sm">
         <TableHeader>
-          <TableRow className="bg-muted/80 hover:bg-muted/80 border-b border-border/60">
-            <TableHead className="w-[40%] text-secondary-foreground text-xs font-bold uppercase tracking-wider py-4 px-6">Website</TableHead>
-            <TableHead className="w-[40%] text-secondary-foreground text-xs font-bold uppercase tracking-wider py-4 px-6">Traffic</TableHead>
+          <TableRow className="bg-muted/50 hover:bg-muted/50 border-b">
+            <TableHead className="w-[60%] font-medium py-3 px-4">Website</TableHead>
+            <TableHead className="w-[40%] font-medium py-3 px-4">Traffic</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -161,7 +161,7 @@ function WebsiteRow({
   return (
     <>
       <TableRow
-        className="border-b border-border/50 cursor-pointer group transition-all duration-150 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-within:ring-2 focus-within:ring-primary/60 rounded-lg"
+        className="border-b last:border-b-0 cursor-pointer group transition-all duration-150 hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary/60 focus-within:ring-2 focus-within:ring-primary/60"
         tabIndex={0}
         aria-label={`View analytics for ${website.name || 'website'}`}
         onClick={handleRowClick}
@@ -171,26 +171,26 @@ function WebsiteRow({
           }
         }}
       >
-        <TableCell className="py-4 px-6 align-middle">
+        <TableCell className="py-3 px-4 align-middle">
           <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="font-medium text-base group-hover:text-primary transition-colors truncate max-w-[180px]">
+            <div className="flex items-center gap-3">
+              <span className="font-medium group-hover:text-primary transition-colors truncate">
                 {website.name || 'Unnamed Website'}
               </span>
               <div className={cn(
-                "text-[0.7rem] py-0.5 px-2 h-5 rounded-full flex items-center gap-1 font-medium",
+                "text-xs py-1 px-2 rounded-full flex items-center gap-1.5 font-medium",
                 badgeClass[status.variant]
               )}>
                 {status.icon && <span>{status.icon}</span>}
                 <span>{status.label}</span>
               </div>
             </div>
-            <span className="text-xs text-muted-foreground mt-1 truncate max-w-[220px]">
+            <span className="text-sm text-muted-foreground mt-1 truncate">
               {domainValue}
             </span>
           </div>
         </TableCell>
-        <TableCell className="py-4 px-6 align-middle">
+        <TableCell className="py-3 px-4 align-middle">
           <MiniChart
             websiteId={website.id}
             className="h-12"

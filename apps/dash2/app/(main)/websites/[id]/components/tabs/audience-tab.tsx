@@ -387,8 +387,8 @@ export function WebsiteAudienceTab({
                 </div>
               );
             }),
-            col<CountryEntry>('visitors', 'Visitors', undefined, { className: 'text-right justify-end' } as { className: string }),
-            col<CountryEntry>('pageviews', 'Pageviews', undefined, { className: 'text-right justify-end' } as { className: string }),
+            col<CountryEntry>('visitors', 'Visitors', undefined),
+            col<CountryEntry>('pageviews', 'Pageviews', undefined),
           ], [])}
           title="Geographic Distribution"
           description="Visitors by location"

@@ -32,7 +32,6 @@ import { Card, CardHeader, CardContent, CardDescription, CardTitle } from "@/com
 import type { ColumnDef, CellContext } from "@tanstack/react-table";
 import { ReferrerSourceCell, type ReferrerSourceCellData } from "@/components/atomic/ReferrerSourceCell";
 import { PageLinkCell } from "@/components/atomic/PageLinkCell";
-import { TrackingSetupOverlay } from "../tracking-setup-overlay";
 import { 
   processDeviceData, 
   processBrowserData, 
@@ -139,42 +138,9 @@ export function WebsiteOverviewTab({
     sessions: false,
   });
   
-  const [showTrackingOverlay, setShowTrackingOverlay] = useState(false);
-  
-  const overlayDismissedKey = `tracking-overlay-dismissed-${websiteId}`;
-  const isOverlayDismissed = typeof window !== 'undefined' ? localStorage.getItem(overlayDismissedKey) === 'true' : false;
-  
   const toggleMetric = useCallback((metric: string) => {
     setVisibleMetrics(prev => ({ ...prev, [metric]: !prev[metric] }));
   }, []);
-
-  const trackingNotSetup = useMemo(() => {
-    if (error || loading.summary || !analytics || currentTab === 'settings' || isOverlayDismissed) {
-      return false;
-    }
-    
-    const isUtilIndicatingNotSetup = isTrackingNotSetup(analytics);
-    const summary = analytics.summary;
-    const hasZeroData = summary && 
-      (summary.pageviews || 0) === 0 && 
-      (summary.visitors || summary.unique_visitors || 0) === 0 && 
-      (summary.sessions || 0) === 0;
-    
-    return isUtilIndicatingNotSetup || hasZeroData;
-  }, [analytics, loading.summary, currentTab, isOverlayDismissed, error]);
-
-  useEffect(() => {
-    if (trackingNotSetup && !showTrackingOverlay && !isOverlayDismissed) {
-      setShowTrackingOverlay(true);
-    }
-  }, [trackingNotSetup, showTrackingOverlay, isOverlayDismissed]);
-
-  const handleOverlayClose = () => {
-    setShowTrackingOverlay(false);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(overlayDismissedKey, 'true');
-    }
-  };
 
   useEffect(() => {
     let isMounted = true;
@@ -651,15 +617,6 @@ export function WebsiteOverviewTab({
           showSearch={false}
         />
       </div>
-
-      {/* Tracking Setup Overlay */}
-      {showTrackingOverlay && websiteData && (
-        <TrackingSetupOverlay 
-          websiteId={websiteId}
-          websiteData={websiteData}
-          onClose={handleOverlayClose}
-        />
-      )}
     </div>
   );
 } 

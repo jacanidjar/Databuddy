@@ -372,40 +372,41 @@ export function DataTable<TData extends RowData, TValue>(
 
                       >
                         {row.getVisibleCells().map((cell, cellIndex) => (
-                                                      <TableCell 
+                          <TableCell 
                             key={cell.id}
                             className={cn(
                               "py-3 text-sm font-medium transition-colors duration-150",
                               cellIndex === 0 && percentage > 0 ? "pl-5" : "px-4",
                               (cell.column.columnDef.meta as any)?.className
                             )}
-                            style={{ width: cell.column.getSize() !== 150 ? cell.column.getSize() : undefined }}
+                            style={{ width: cell.column.getSize() !== 150 ? cell.column.getSize() : undefined, position: cellIndex === 0 && percentage > 0 ? 'relative' : undefined }}
                           >
+                            {/* If this is the first cell and percentage > 0, render accent bars absolutely inside the cell */}
+                            {cellIndex === 0 && percentage > 0 && (
+                              <>
+                                <div 
+                                  className="absolute bottom-0 left-0 h-1 transition-all duration-500 ease-out animate-in slide-in-from-left-1"
+                                  style={{
+                                    width: `${percentage}%`,
+                                    background: `linear-gradient(90deg, ${gradient.accentColor} 0%, ${gradient.borderColor.replace('0.3', '0.6')} 50%, ${gradient.accentColor} 100%)`,
+                                    animationDelay: `${rowIndex * 50 + 200}ms`,
+                                    animationFillMode: 'both',
+                                    zIndex: 1
+                                  }}
+                                />
+                                <div 
+                                  className="absolute bottom-0 left-0 h-1 opacity-40 animate-pulse"
+                                  style={{
+                                    width: `${Math.min(percentage + 8, 100)}%`,
+                                    background: `linear-gradient(90deg, transparent 0%, ${gradient.glowColor} 50%, transparent 100%)`,
+                                    zIndex: 1
+                                  }}
+                                />
+                              </>
+                            )}
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </TableCell>
                         ))}
-                        
-                        {/* Enhanced animated accent bar with shimmer effect */}
-                        {percentage > 0 && (
-                          <>
-                            <div 
-                              className="absolute bottom-0 left-0 h-1 transition-all duration-500 ease-out animate-in slide-in-from-left-1"
-                              style={{
-                                width: `${percentage}%`,
-                                background: `linear-gradient(90deg, ${gradient.accentColor} 0%, ${gradient.borderColor.replace('0.3', '0.6')} 50%, ${gradient.accentColor} 100%)`,
-                                animationDelay: `${rowIndex * 50 + 200}ms`,
-                                animationFillMode: 'both'
-                              }}
-                            />
-                            <div 
-                              className="absolute bottom-0 left-0 h-1 opacity-40 animate-pulse"
-                              style={{
-                                width: `${Math.min(percentage + 8, 100)}%`,
-                                background: `linear-gradient(90deg, transparent 0%, ${gradient.glowColor} 50%, transparent 100%)`
-                              }}
-                            />
-                          </>
-                        )}
                       </TableRow>
                     );
                   })}

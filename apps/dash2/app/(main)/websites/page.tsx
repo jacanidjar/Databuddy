@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import dynamic from "next/dynamic";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,62 +12,39 @@ import { AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { TrialStatusCard } from "@/components/trial/trial-status-card";
 
-// Dynamic imports with proper loading states
-const WebsiteDialog = dynamic(
-  () => import("@/components/website-dialog").then(mod => ({ default: mod.WebsiteDialog })),
-  {
-    loading: () => <div />, // Dialog doesn't need visible loading state
-    ssr: false
-  }
-);
+import { WebsiteDialog } from "@/components/website-dialog";
+import { EmptyState } from "@/components/websites/empty-state";
+import { ErrorState } from "@/components/websites/error-state";
+import { WebsiteList } from "@/components/websites/website-list";
 
-const LoadingState = dynamic(
-  () => import("@/components/websites/loading-state").then(mod => ({ default: mod.LoadingState })),
-  {
-    loading: () => <WebsiteLoadingSkeleton />,
-    ssr: false
-  }
-);
-
-const EmptyState = dynamic(
-  () => import("@/components/websites/empty-state").then(mod => ({ default: mod.EmptyState })),
-  {
-    loading: () => <WebsiteLoadingSkeleton />,
-    ssr: false
-  }
-);
-
-const ErrorState = dynamic(
-  () => import("@/components/websites/error-state").then(mod => ({ default: mod.ErrorState })),
-  {
-    loading: () => <WebsiteLoadingSkeleton />,
-    ssr: false
-  }
-);
-
-const WebsiteList = dynamic(
-  () => import("@/components/websites/website-list").then(mod => ({ default: mod.WebsiteList })),
-  {
-    loading: () => <WebsiteLoadingSkeleton />,
-    ssr: false
-  }
-);
-
-// Loading skeleton component for website components - mobile optimized
 function WebsiteLoadingSkeleton() {
   return (
-    <div className="space-y-3 sm:space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-        {[1, 2, 3, 4, 5, 6].map((num) => (
-          <div key={`website-skeleton-${num}`} className="rounded-lg border p-3 sm:p-4 space-y-2 sm:space-y-3">
-            <div className="flex items-center justify-between">
-              <Skeleton className="h-4 sm:h-5 w-24 sm:w-32" />
-              <Skeleton className="h-3 sm:h-4 w-3 sm:w-4 rounded-full" />
+    <div className="rounded-lg border bg-background shadow-sm overflow-hidden">
+      <div className="min-w-full text-sm">
+        {/* Table Header */}
+        <div className="bg-muted/50 border-b flex">
+          <div className="w-[60%] py-3 px-4">
+            <Skeleton className="h-4 w-16" />
+          </div>
+          <div className="w-[40%] py-3 px-4">
+            <Skeleton className="h-4 w-12" />
+          </div>
+        </div>
+        
+        {/* Table Rows */}
+        {[1, 2, 3, 4].map((num) => (
+          <div key={`website-skeleton-${num}`} className="border-b last:border-b-0 flex">
+            <div className="py-3 px-4 align-middle w-[60%]">
+              <div className="flex flex-col">
+                <div className="flex items-center gap-3 mb-1">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                </div>
+                <Skeleton className="h-4 w-48" />
+              </div>
             </div>
-            <Skeleton className="h-3 sm:h-4 w-full max-w-[200px] sm:max-w-[240px]" />
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-5 sm:h-6 w-12 sm:w-16" />
-              <Skeleton className="h-5 sm:h-6 w-16 sm:w-20" />
+            <div className="py-3 px-4 align-middle w-[40%]">
+              <Skeleton className="h-12 w-full" />
             </div>
           </div>
         ))}
@@ -151,9 +127,7 @@ function WebsitesPage() {
     return (
       <div className="h-full flex flex-col">
         <div className="p-3 sm:p-4">
-          <Suspense fallback={<WebsiteLoadingSkeleton />}>
-            <ErrorState onRetry={handleRefresh} />
-          </Suspense>
+          <ErrorState onRetry={handleRefresh} />
         </div>
       </div>
     );
@@ -207,69 +181,41 @@ function WebsitesPage() {
         )}
 
         {/* Show loading state */}
-        {isLoading && (
-          <Suspense fallback={<WebsiteLoadingSkeleton />}>
-            <LoadingState />
-          </Suspense>
-        )}
+        {isLoading && <WebsiteLoadingSkeleton />}
 
         {/* Show empty state */}
         {!isLoading && websites.length === 0 && (
-          <Suspense fallback={<WebsiteLoadingSkeleton />}>
-            <EmptyState 
-              onCreateWebsite={createWebsite} 
-              isCreating={isCreating} 
-              hasVerifiedDomains={verifiedDomains.length > 0}
-              verifiedDomains={verifiedDomains}
-            />
-          </Suspense>
+          <EmptyState 
+            onCreateWebsite={createWebsite} 
+            isCreating={isCreating} 
+            hasVerifiedDomains={verifiedDomains.length > 0}
+            verifiedDomains={verifiedDomains}
+          />
         )}
 
         {/* Show website list view */}
         {!isLoading && websites.length > 0 && (
-          <Suspense fallback={<WebsiteLoadingSkeleton />}>
-            <WebsiteList
-              websites={websites}
-              onUpdate={(id: string, name: string) => updateWebsite({ id, name })}
-              isUpdating={isUpdating}
-              verifiedDomains={verifiedDomains}
-            />
-          </Suspense>
+          <WebsiteList
+            websites={websites}
+            onUpdate={(id: string, name: string) => updateWebsite({ id, name })}
+            isUpdating={isUpdating}
+            verifiedDomains={verifiedDomains}
+          />
         )}
       </div>
 
-      {/* Separate dialog component */}
-      <Suspense fallback={<div />}>
-        <WebsiteDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          verifiedDomains={verifiedDomains}
-          initialValues={initialValues}
-          onCreationSuccess={handleWebsiteCreated}
-        />
-      </Suspense>
+      {/* Dialog component */}
+      <WebsiteDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        verifiedDomains={verifiedDomains}
+        initialValues={initialValues}
+        onCreationSuccess={handleWebsiteCreated}
+      />
     </div>
   );
 } 
 
 export default function Page() {
-  return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center h-full p-3 sm:p-4">
-        <div className="space-y-3 sm:space-y-4 w-full max-w-4xl">
-          {/* Mobile-optimized loading header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
-            <div className="space-y-2 min-w-0 flex-1">
-              <Skeleton className="h-6 sm:h-8 w-24 sm:w-32" />
-              <Skeleton className="h-3 sm:h-4 w-full max-w-[200px] sm:max-w-[300px]" />
-            </div>
-            <Skeleton className="h-9 w-full sm:w-32" />
-          </div>
-          <WebsiteLoadingSkeleton />
-        </div>
-      </div>
-    }>
-      <WebsitesPage />
-    </Suspense>
-  )
+  return <WebsitesPage />;
 }

@@ -265,16 +265,27 @@ export async function checkDomainVerification(id: string) {
     
     const dnsRecord = `_databuddy.${rootDomain}`;
     let txtRecords: string[][] | undefined;
+    
     try {
-      txtRecords = await new Promise<string[][]>((resolve, reject) => {
-        resolver.resolveTxt(dnsRecord, (err, records) => {
-          if (err) return reject(err);
-          resolve(records);
-        });
-      });
+      // Add timeout to DNS lookup to prevent hanging
+      txtRecords = await Promise.race([
+        new Promise<string[][]>((resolve, reject) => {
+          resolver.resolveTxt(dnsRecord, (err, records) => {
+            if (err) return reject(err);
+            resolve(records);
+          });
+        }),
+        new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('DNS lookup timeout')), 10000); // 10 second timeout
+        })
+      ]);
     } catch (dnsError: unknown) {
+      const errorMessage = dnsError instanceof Error && dnsError.message.includes('timeout')
+        ? "DNS lookup timed out. The DNS servers may be slow or the record doesn't exist yet."
+        : "DNS lookup failed. Please make sure the TXT record is correctly configured and try again.";
+      
       await db.update(domains).set({ verificationStatus: "FAILED" }).where(eq(domains.id, id));
-      return { data: { verified: false, message: "DNS lookup failed. Please make sure the TXT record is correctly configured and try again." } };
+      return { data: { verified: false, message: errorMessage } };
     }
     
     if (!txtRecords || txtRecords.length === 0) {
@@ -284,14 +295,21 @@ export async function checkDomainVerification(id: string) {
     
     const isVerified = txtRecords.some(record => Array.isArray(record) && record.some(txt => typeof txt === "string" && txt.includes(expectedToken)));
     
-    if (isVerified) {
-      await db.update(domains).set({
-        verifiedAt: new Date().toISOString(),
-        verificationStatus: "VERIFIED"
-      }).where(eq(domains.id, id));
+    const updateData = isVerified 
+      ? {
+          verifiedAt: new Date().toISOString(),
+          verificationStatus: "VERIFIED" as const
+        }
+      : {
+          verificationStatus: "FAILED" as const
+        };
 
-      // Log successful domain verification
-      await logger.success(
+    // Update database first (fastest operation)
+    await db.update(domains).set(updateData).where(eq(domains.id, id));
+
+    if (isVerified) {
+      // Log successful verification asynchronously (don't block response)
+      logger.success(
         'Domain Verified',
         `Domain "${domain.name}" was successfully verified via DNS`,
         {
@@ -300,17 +318,15 @@ export async function checkDomainVerification(id: string) {
           userName: user.name || user.email,
           verificationType: 'DNS'
         }
-      );
+      ).catch(console.error); // Don't fail if logging fails
 
       revalidatePath("/domains");
       revalidatePath(`/domains/${id}`);
       return { data: { verified: true, message: "Domain verified successfully. You can now use this domain for websites." } };
     }
-    
-    await db.update(domains).set({ verificationStatus: "FAILED" }).where(eq(domains.id, id));
 
-    // Log verification failure
-    await logger.warning(
+    // Log verification failure asynchronously (don't block response)
+    logger.warning(
       'Domain Verification Failed',
       `Domain "${domain.name}" verification failed - token not found in DNS`,
       {
@@ -320,7 +336,7 @@ export async function checkDomainVerification(id: string) {
         dnsRecord,
         expectedToken: `"${expectedToken.slice(0, 20)}..."`
       }
-    );
+    ).catch(console.error); // Don't fail if logging fails
 
     return { data: { verified: false, message: "Verification token not found in DNS records. Please check your DNS configuration and try again." } };
   } catch (error) {

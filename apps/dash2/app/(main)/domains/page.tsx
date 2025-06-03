@@ -10,7 +10,7 @@ import { createDomain, getUserDomains, checkDomainVerification, deleteDomain, re
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle, Clock, Copy, Filter, Globe, Plus, RefreshCw, Search, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import { AlertCircle, CheckCircle, Clock, Copy, Filter, Globe, Plus, RefreshCw, Search, Trash2, ChevronDown, ChevronRight, Circle } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,12 +37,13 @@ type VerificationStatus = "VERIFIED" | "PENDING" | "FAILED" | "RETRYING";
 // Reusable copy field for DNS info
 function CopyField({ label, value, onCopy }: { label: string; value: string; onCopy: () => void }) {
   return (
-    <div className="flex flex-col gap-1 min-w-0 flex-1">
-      <span className="text-xs text-muted-foreground mb-1">{label}</span>
-      <div className="flex items-center gap-2 min-w-0">
-        <code className="block p-2 bg-background rounded text-sm break-all min-w-0 flex-1">{value}</code>
-        <Button size="icon" variant="outline" onClick={onCopy}>
-          <Copy className="h-4 w-4" />
+    <div className="space-y-2">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <div className="flex items-center gap-2">
+        <code className="block p-2 sm:p-3 bg-muted/50 rounded text-xs sm:text-sm break-all flex-1 min-w-0">{value}</code>
+        <Button size="sm" variant="outline" onClick={onCopy} className="flex-shrink-0">
+          <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
+          <span className="sr-only">Copy</span>
         </Button>
       </div>
     </div>
@@ -691,143 +692,93 @@ export default function DomainsPage() {
     return (
       <TableRow>
         <TableCell colSpan={5} className="!p-0">
-          <div className="rounded-lg border bg-muted/60 p-6 my-2 mx-1 flex flex-col gap-6">
-            {/* Header with status indicator */}
-            <div className="flex items-center gap-3">
-              <div className={`h-3 w-3 rounded-full ${isFailed ? 'bg-red-500' : 'bg-yellow-500'}`} />
-              <h4 className="font-medium text-base">
-                {isFailed ? "Verification Failed - Action Required" : "Domain Verification Required"}
+          <div className="bg-muted/30 p-6 my-2 mx-1 space-y-4">
+            <div>
+              <h4 className="font-medium text-sm mb-3">
+                {isFailed ? "Verification Failed" : "Add DNS Record"}
               </h4>
-            </div>
-            
-            {/* Step-by-step guidance with improved visual hierarchy */}
-            <div className="space-y-6">
-              <div className="flex items-start gap-4">
-                <div className="bg-primary rounded-full h-8 w-8 flex items-center justify-center mt-0.5 flex-shrink-0">
-                  <span className="text-sm font-medium text-primary-foreground">1</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium mb-3">Add this TXT record to your DNS settings</p>
-                  <div className="flex flex-col md:flex-row gap-4 md:gap-8 w-full bg-background rounded-md p-4 border-2 border-dashed border-primary/20">
-                    <CopyField label="Name / Host" value={host} onCopy={() => copyToClipboard(host)} />
+              
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">Add this TXT record to your DNS:</p>
+                  <div className="space-y-3 bg-background rounded p-3 sm:p-4 border">
+                    <CopyField label="Name" value={host} onCopy={() => copyToClipboard(host)} />
                     <CopyField label="Value" value={verificationToken || ""} onCopy={() => copyToClipboard(verificationToken || "")} />
                   </div>
-                  <div className="mt-3 p-3 bg-blue-50 rounded-md border border-blue-200">
-                    <p className="text-xs text-blue-800 font-medium mb-1">DNS Record Example:</p>
-                    <code className="text-xs text-blue-700 break-all">{host} IN TXT "{verificationToken}"</code>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-4">
-                <div className="bg-primary rounded-full h-8 w-8 flex items-center justify-center mt-0.5 flex-shrink-0">
-                  <span className="text-sm font-medium text-primary-foreground">2</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium mb-2">Wait for DNS propagation</p>
                   <p className="text-xs text-muted-foreground">
-                    DNS changes typically take 15-30 minutes but can take up to 24-48 hours to propagate worldwide.
+                    DNS changes take 15-30 minutes to propagate.{" "}
+                    <a 
+                      href={`https://mxtoolbox.com/TXTLookup.aspx?domain=${host}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-primary hover:underline"
+                    >
+                      Check DNS record →
+                    </a>
                   </p>
-                  <div className="mt-2 p-2 bg-amber-50 rounded border border-amber-200">
-                    <p className="text-xs text-amber-800">
-                      💡 <strong>Tip:</strong> You can check if your DNS record is live using{" "}
-                      <a 
-                        href={`https://mxtoolbox.com/TXTLookup.aspx?domain=${host}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="text-primary hover:underline font-medium"
-                      >
-                        this DNS lookup tool
-                      </a>
-                    </p>
-                  </div>
                 </div>
-              </div>
-              
-              <div className="flex items-start gap-4">
-                <div className="bg-primary rounded-full h-8 w-8 flex items-center justify-center mt-0.5 flex-shrink-0">
-                  <span className="text-sm font-medium text-primary-foreground">3</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium mb-3">Verify your domain</p>
-                  <div className="flex items-center gap-3">
+                
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleVerifyDomain(domain.id)}
+                    disabled={isVerifying[domain.id]}
+                    className="w-full sm:w-auto"
+                  >
+                    {isVerifying[domain.id] ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        Verifying...
+                      </>
+                    ) : (
+                      "Verify Domain"
+                    )}
+                  </Button>
+                  {isFailed && (
                     <Button 
                       size="sm" 
-                      onClick={() => handleVerifyDomain(domain.id)}
-                      disabled={isVerifying[domain.id]}
-                      className="h-9"
+                      variant="outline"
+                      onClick={() => handleRetryFailedDomain(domain.id)}
+                      disabled={isRegenerating[domain.id]}
+                      className="w-full sm:w-auto"
                     >
-                      {isVerifying[domain.id] ? (
-                        <span className="flex items-center">
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                          Verifying... {verificationProgress[domain.id] || 0}%
-                        </span>
-                      ) : (
-                        <span className="flex items-center">
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Verify Domain
-                        </span>
-                      )}
+                      <RefreshCw className={`h-4 w-4 mr-2 ${isRegenerating[domain.id] ? "animate-spin" : ""}`} />
+                      <span className="sm:hidden">Reset & Retry</span>
+                      <span className="hidden sm:inline">Reset & Try Again</span>
                     </Button>
-                    {isFailed && (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleRetryFailedDomain(domain.id)}
-                        disabled={isRegenerating[domain.id]}
-                        className="h-9"
-                      >
-                        <RefreshCw className={`h-4 w-4 mr-2 ${isRegenerating[domain.id] ? "animate-spin" : ""}`} />
-                        Reset & Try Again
-                      </Button>
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
             
-            {/* Troubleshooting section with better organization */}
             {isFailed && (
-              <div className="mt-4 border-t pt-6 border-border">
-                <div className="flex items-center gap-2 mb-4">
-                  <AlertCircle className="h-5 w-5 text-amber-600" />
-                  <h5 className="font-medium text-sm">Troubleshooting Guide</h5>
+              <div className="pt-4 border-t space-y-4">
+                <div>
+                  <p className="text-sm font-medium mb-2">Common Issues:</p>
+                  <ul className="text-xs sm:text-sm text-muted-foreground space-y-1">
+                    <li>• Record not added to correct domain zone</li>
+                    <li>• Missing underscore: use <code className="bg-muted px-1 rounded text-xs break-all">_databuddy</code> exactly</li>
+                    <li>• Token value copied incorrectly</li>
+                    <li>• DNS not propagated yet (can take 24 hours)</li>
+                  </ul>
                 </div>
-                <div className="grid gap-3">
-                  <div className="p-3 bg-red-50 rounded border border-red-200">
-                    <p className="text-xs font-medium text-red-800 mb-1">Common Issues:</p>
-                    <ul className="text-xs text-red-700 space-y-1 list-disc pl-4">
-                      <li>TXT record not added to the correct domain zone</li>
-                      <li>Missing underscore in host field: should be <code className="bg-red-100 rounded px-1">_databuddy</code></li>
-                      <li>Token value doesn't match exactly (copy/paste recommended)</li>
-                    </ul>
-                  </div>
-                  <div className="p-3 bg-blue-50 rounded border border-blue-200">
-                    <p className="text-xs font-medium text-blue-800 mb-1">DNS Provider Notes:</p>
-                    <ul className="text-xs text-blue-700 space-y-1 list-disc pl-4">
-                      <li>Some providers require only <code className="bg-blue-100 rounded px-1">_databuddy</code> as the host (without domain)</li>
-                      <li>Others need the full host: <code className="bg-blue-100 rounded px-1">{host}</code></li>
-                      <li>Cloudflare users: Make sure the record is not proxied (gray cloud)</li>
-                    </ul>
-                  </div>
+                <div>
+                  <p className="text-sm font-medium mb-2">Provider-Specific Notes:</p>
+                  <ul className="text-xs sm:text-sm text-muted-foreground space-y-1.5">
+                    <li>• <strong>Cloudflare:</strong> Turn off proxy (gray cloud)</li>
+                    <li>• <strong>Some providers:</strong> Use <code className="bg-muted px-1 rounded text-xs break-all">_databuddy</code> only</li>
+                    <li className="break-words">• <strong>GoDaddy/Namecheap:</strong> Use full host <code className="bg-muted px-1 rounded text-xs break-all">{host}</code></li>
+                  </ul>
                 </div>
               </div>
             )}
             
-            {/* Error message with better styling */}
             {domainVerificationResult && !domainVerificationResult.verified && (
-              <Alert variant="destructive" className="mt-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Verification Failed</AlertTitle>
-                <AlertDescription className="mt-2">
+              <div className="pt-4 border-t">
+                <p className="text-sm text-muted-foreground">
                   {domainVerificationResult.message}
-                  {domainVerificationResult.lastChecked && (
-                    <div className="text-xs mt-2 opacity-75">
-                      Last checked: {formatDistanceToNow(domainVerificationResult.lastChecked, { addSuffix: true })}
-                    </div>
-                  )}
-                </AlertDescription>
-              </Alert>
+                </p>
+              </div>
             )}
           </div>
         </TableCell>
@@ -900,22 +851,22 @@ export default function DomainsPage() {
     );
   };
 
-  // Render empty state with better UX
+  // Render compact empty state
   const renderEmptyState = () => {
     const isFiltering = searchQuery || filterStatus !== "all";
     
     return (
-      <div className="py-12 text-center">
+      <div className="py-8 text-center">
         {isFiltering ? (
           <>
-            <div className="bg-muted/30 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
-              <Filter className="h-8 w-8 text-muted-foreground" />
+            <div className="bg-muted/30 rounded-full h-12 w-12 flex items-center justify-center mx-auto mb-3">
+              <Filter className="h-6 w-6 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium mb-2">No matching domains</h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            <h3 className="text-base font-medium mb-2">No matching domains</h3>
+            <p className="text-muted-foreground mb-4 max-w-md mx-auto text-sm">
               No domains match your current filters. Try adjusting your search or filter criteria.
             </p>
-            <Button variant="outline" onClick={() => {
+            <Button variant="outline" size="sm" onClick={() => {
               setSearchQuery("");
               setFilterStatus("all");
             }}>
@@ -924,28 +875,28 @@ export default function DomainsPage() {
           </>
         ) : hasError ? (
           <>
-            <div className="bg-red-100 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
-              <AlertCircle className="h-8 w-8 text-red-500" />
+            <div className="bg-red-100 dark:bg-red-950/20 rounded-full h-12 w-12 flex items-center justify-center mx-auto mb-3">
+              <AlertCircle className="h-6 w-6 text-red-500 dark:text-red-400" />
             </div>
-            <h3 className="text-lg font-medium mb-2">Failed to load domains</h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            <h3 className="text-base font-medium mb-2">Failed to load domains</h3>
+            <p className="text-muted-foreground mb-4 max-w-md mx-auto text-sm">
               There was a problem loading your domains. Please try again.
             </p>
-            <Button onClick={fetchDomains}>
+            <Button size="sm" onClick={fetchDomains}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Retry
             </Button>
           </>
         ) : (
           <>
-            <div className="bg-muted/30 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
-              <Globe className="h-8 w-8 text-muted-foreground" />
+            <div className="bg-muted/30 rounded-full h-12 w-12 flex items-center justify-center mx-auto mb-3">
+              <Globe className="h-6 w-6 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium mb-2">No domains yet</h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Add your first domain to get started with DataBuddy. Once verified, you can create websites and track analytics.
+            <h3 className="text-base font-medium mb-2">No domains yet</h3>
+            <p className="text-muted-foreground mb-4 max-w-md mx-auto text-sm">
+              Add your first domain to get started. Once verified, you can create websites and track analytics.
             </p>
-            <Button onClick={() => setAddDialogOpen(true)}>
+            <Button size="sm" onClick={() => setAddDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Add Your First Domain
             </Button>
@@ -956,19 +907,25 @@ export default function DomainsPage() {
   };
 
   return (
-    <div className="container py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Domains</h1>
-          <p className="text-muted-foreground">
+    <div className="h-full flex flex-col animate-fadeIn">
+      {/* Compact header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:px-4 sm:py-4 border-b gap-3 sm:gap-0">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate">
+            Domains
+          </h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-0.5 line-clamp-2 sm:line-clamp-1">
             Manage your domains and DNS settings
           </p>
         </div>
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Domain
+            <Button 
+              size="default" 
+              className="h-9 sm:h-9 text-sm sm:text-base text-primary-foreground btn-hover-effect w-full sm:w-auto touch-manipulation"
+            >
+              <Plus className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span className="truncate">Add Domain</span>
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -1004,9 +961,11 @@ export default function DomainsPage() {
         </Dialog>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Compact content area */}
+      <div className="flex-1 overflow-y-auto p-3 sm:px-4 sm:pt-4 sm:pb-6">
+        <Card className="rounded-lg border bg-background shadow-sm h-full flex flex-col">
+        <CardHeader className="pb-2 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center space-x-2">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input
@@ -1023,10 +982,10 @@ export default function DomainsPage() {
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Domains</SelectItem>
-                  <SelectItem value="VERIFIED">Verified</SelectItem>
-                  <SelectItem value="PENDING">Pending</SelectItem>
-                  <SelectItem value="FAILED">Failed</SelectItem>
+                  <SelectItem value="all"><Circle className="h-4 w-4 text-muted-foreground" fill="currentColor" /> All Domains</SelectItem>
+                  <SelectItem value="VERIFIED"><Circle className="h-4 w-4 text-green-500" fill="currentColor" /> Verified</SelectItem>
+                  <SelectItem value="PENDING"><Circle className="h-4 w-4 text-yellow-500" fill="currentColor" /> Pending</SelectItem>
+                  <SelectItem value="FAILED"><Circle className="h-4 w-4 text-red-500" fill="currentColor" /> Failed</SelectItem>
                 </SelectContent>
               </Select>
               {(searchQuery || filterStatus !== "all") && (
@@ -1045,26 +1004,46 @@ export default function DomainsPage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 flex flex-col overflow-hidden">
           {isLoading ? (
-            <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[100px]" />
-                <Skeleton className="h-4 w-[100px]" />
-                <Skeleton className="h-4 w-[100px]" />
-                <Skeleton className="h-4 w-[100px]" />
-              </div>
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center space-x-4">
-                  <Skeleton className="h-4 w-[250px]" />
-                  <Skeleton className="h-4 w-[100px]" />
-                  <Skeleton className="h-4 w-[100px]" />
-                  <Skeleton className="h-4 w-[100px]" />
-                  <Skeleton className="h-4 w-[100px]" />
-                </div>
-              ))}
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Domain</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Verified</TableHead>
+                  <TableHead>Added</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <TableRow key={i}>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <Skeleton className="h-4 w-4 mr-2" />
+                        <Skeleton className="h-4 w-[180px]" />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-5 w-16 rounded-full" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-20" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-16" />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end space-x-2">
+                        <Skeleton className="h-8 w-16" />
+                        <Skeleton className="h-8 w-8" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           ) : filteredDomains().length === 0 ? (
             renderEmptyState()
           ) : (
@@ -1094,7 +1073,8 @@ export default function DomainsPage() {
             </>
           )}
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 } 
