@@ -1,0 +1,135 @@
+---
+- hosts: "{{ hosts_group }}"
+  name: Setup Docker Swarm on Application Nodes
+  remote_user: ubuntu
+  gather_facts: true
+
+  tasks:
+
+
+    - name: Ensure Iptables Persistent is installed
+      become: true
+      ansible.builtin.apt:
+        name: iptables-persistent
+        state: present
+
+    - name: Preparing Swarm Workers Required Ports
+      become: true
+      ansible.builtin.shell: |
+        iptables -I INPUT 1 -p tcp --dport 2376 -j ACCEPT
+        iptables -I INPUT 2 -p tcp --dport 7946 -j ACCEPT
+        iptables -I INPUT 3 -p udp --dport 7946 -j ACCEPT
+        iptables -I INPUT 4 -p udp --dport 4789 -j ACCEPT
+        iptables-save | sudo tee /etc/iptables/rules.v4
+        ip6tables-save | sudo tee /etc/iptables/rules.v6
+      when: inventory_hostname in groups['swarm-workers']
+
+    
+    - name: Preparing Swarm Manager Required Ports
+      become: true
+      ansible.builtin.shell: |
+        iptables -I INPUT 1 -p tcp --dport 2376 -j ACCEPT
+        iptables -I INPUT 2 -p tcp --dport 2377 -j ACCEPT
+        iptables -I INPUT 3 -p tcp --dport 7946 -j ACCEPT
+        iptables -I INPUT 4 -p udp --dport 7946 -j ACCEPT
+        iptables -I INPUT 5 -p udp --dport 4789 -j ACCEPT
+        iptables-save | sudo tee /etc/iptables/rules.v4
+        ip6tables-save | sudo tee /etc/iptables/rules.v6
+      when: inventory_hostname in groups['swarm-managers']
+
+    - name: Save Join Token
+      ansible.builtin.shell: docker swarm join-token worker | tail -2
+      register: join_command
+      when: inventory_hostname in groups['swarm-masters']
+
+    - name: Set Join Token Fact
+      ansible.builtin.set_fact:
+        join_command: "{{ join_command }}"
+      when: inventory_hostname in groups['swarm-masters']
+
+    - name: Save Swarm Active Token
+      ansible.builtin.shell: "docker info | grep 'Swarm: inactive'"
+      register: swarm_inactive
+      failed_when: swarm_inactive.rc == 2
+      when: inventory_hostname in groups['swarm-workers']
+
+    - name: Set Swarm Active Fact
+      ansible.builtin.set_fact:
+        swarm_inactive: "{{ swarm_inactive }}"
+      when: inventory_hostname in groups['swarm-workers']
+
+    - name: Join Docker Swarm 
+      ansible.builtin.shell: "{{ hostvars[(groups['swarm-masters'] | intersect(groups[hosts_group]) )[0]].join_command.stdout }}"
+      when: inventory_hostname in groups['swarm-workers'] and swarm_inactive is defined and swarm_inactive.rc == 0
+      
+    - name: Promote To Swarm Manager
+      ansible.builtin.shell: "docker node promote {{ hostvars[item]['ansible_facts']['nodename'] }}"
+      loop: "{{ groups['swarm-managers'] | intersect(groups[hosts_group]) }}"
+      delegate_to: "{{ (groups['swarm-masters'] | intersect(groups[hosts_group]))[0] }}"
+
+    - name: Remove App Label From Nodes                             
+      ansible.builtin.shell: "docker node update --label-rm app {{ hostvars[item]['ansible_facts']['nodename'] }} || true "
+      loop: "{{   (groups[hosts_group]) |  difference(groups['app']) }}"
+      delegate_to: "{{ (groups['swarm-managers'] | intersect(groups[hosts_group]))[0] }}"
+      run_once: true
+
+    - name: Add App Label to Nodes                             
+      ansible.builtin.shell: "docker node update --label-add app=true {{ hostvars[item]['ansible_facts']['nodename'] }}"
+      loop: "{{ groups['app'] | intersect(groups[hosts_group]) }}"
+      delegate_to: "{{ (groups['swarm-managers'] | intersect(groups[hosts_group]))[0] }}"
+      run_once: true
+    
+
+    - name: Remove Pgsql Label From Nodes                             
+      ansible.builtin.shell: "docker node update --label-rm pgsql {{ hostvars[item]['ansible_facts']['nodename'] }} || true "
+      loop: "{{   (groups[hosts_group]) |  difference(groups['pgsql']) }}"
+      delegate_to: "{{ (groups['swarm-managers'] | intersect(groups[hosts_group]))[0] }}"
+      run_once: true
+
+    - name: Add Pgsql Label to Nodes                             
+      ansible.builtin.shell: "docker node update --label-add pgsql=true {{ hostvars[item]['ansible_facts']['nodename'] }}"
+      loop: "{{ groups['pgsql'] | intersect(groups[hosts_group]) }}"
+      delegate_to: "{{ (groups['swarm-managers'] | intersect(groups[hosts_group]))[0] }}"
+      run_once: true
+
+    - name: Remove Redis Label From Nodes                             
+      ansible.builtin.shell: "docker node update --label-rm redis {{ hostvars[item]['ansible_facts']['nodename'] }} || true "
+      loop: "{{   (groups[hosts_group]) |  difference(groups['redis']) }}"
+      delegate_to: "{{ (groups['swarm-managers'] | intersect(groups[hosts_group]))[0] }}"
+      run_once: true
+
+    - name: Add Redis Label to Nodes                             
+      ansible.builtin.shell: "docker node update --label-add redis=true {{ hostvars[item]['ansible_facts']['nodename'] }}"
+      loop: "{{ groups['redis'] | intersect(groups[hosts_group]) }}"
+      delegate_to: "{{ (groups['swarm-managers'] | intersect(groups[hosts_group]))[0] }}"
+      run_once: true
+    
+    - name: Remove Tool Label From Nodes                             
+      ansible.builtin.shell: "docker node update --label-rm tool {{ hostvars[item]['ansible_facts']['nodename'] }} || true "
+      loop: "{{   (groups[hosts_group]) |  difference(groups['tool']) }}"
+      delegate_to: "{{ (groups['swarm-managers'] | intersect(groups[hosts_group]))[0] }}"
+      run_once: true
+
+    - name: Add Tool Label to Nodes                             
+      ansible.builtin.shell: "docker node update --label-add tool=true {{ hostvars[item]['ansible_facts']['nodename'] }}"
+      loop: "{{ groups['tool'] | intersect(groups[hosts_group]) }}"
+      delegate_to: "{{ (groups['swarm-managers'] | intersect(groups[hosts_group]))[0] }}"
+      run_once: true
+    
+    - name: Remove Clickhouse Label From Nodes                             
+      ansible.builtin.shell: "docker node update --label-rm clickhouse {{ hostvars[item]['ansible_facts']['nodename'] }} || true "
+      loop: "{{   (groups[hosts_group]) |  difference(groups['clickhouse']) }}"
+      delegate_to: "{{ (groups['swarm-managers'] | intersect(groups[hosts_group]))[0] }}"
+      run_once: true
+
+    - name: Add Clickhouse Label to Nodes                             
+      ansible.builtin.shell: "docker node update --label-add clickhouse=true {{ hostvars[item]['ansible_facts']['nodename'] }}"
+      loop: "{{ groups['clickhouse'] | intersect(groups[hosts_group]) }}"
+      delegate_to: "{{ (groups['swarm-managers'] | intersect(groups[hosts_group]))[0] }}"
+      run_once: true
+    
+    
+
+
+
+    
