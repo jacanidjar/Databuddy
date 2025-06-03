@@ -1,0 +1,15 @@
+---
+- hosts: "{{ hosts_group }}"
+  name: Setup Docker Swarm on Application Nodes
+  remote_user: ubuntu
+  gather_facts: true
+  become: true
+
+  tasks:
+    - name: Force Leave Docker Swarm
+      ansible.builtin.shell: docker swarm leave --force || exit 0
+
+    - name: Docker Swarm Init
+      ansible.builtin.shell: docker swarm init
+      delegate_to: "{{ (groups['swarm-masters'] | intersect(groups[hosts_group]))[0] }}"
+      run_once: true
