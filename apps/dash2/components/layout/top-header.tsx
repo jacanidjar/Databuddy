@@ -15,7 +15,7 @@ const HelpDialog = dynamic(() => import("./help-dialog").then(mod => mod.HelpDia
 });
 
 interface TopHeaderProps {
-  setMobileOpen: (open: boolean) => void;
+  setMobileOpen: () => void;
 }
 
 export function TopHeader({ setMobileOpen }: TopHeaderProps) {
@@ -30,7 +30,7 @@ export function TopHeader({ setMobileOpen }: TopHeaderProps) {
             variant="ghost"
             size="icon"
             className="md:hidden"
-            onClick={() => setMobileOpen(true)}
+            onClick={setMobileOpen}
           >
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle menu</span>

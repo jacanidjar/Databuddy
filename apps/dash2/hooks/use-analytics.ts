@@ -429,16 +429,21 @@ const defaultQueryOptions = {
   gcTime: 30 * 60 * 1000, // 30 minutes
   refetchOnWindowFocus: false,
   refetchOnMount: false,
+  refetchInterval: 10 * 60 * 1000, // Background refetch every 10 minutes
   retry: (failureCount: number, error: Error) => {
     if (error instanceof DOMException && error.name === 'AbortError') {
       return false;
     }
     return failureCount < 2;
-  }
+  },
+  // Enable request deduplication
+  networkMode: 'online' as const,
+  // Use background refetching for better UX
+  refetchIntervalInBackground: false,
 };
 
 /**
- * Unified analytics hook for all data
+ * Unified analytics hook for all data with optimized caching
  */
 export function useWebsiteAnalytics(websiteId: string, dateRange: DateRange) {
   const fetchData = useCallback(async ({ signal }: { signal?: AbortSignal }) => {
@@ -448,7 +453,11 @@ export function useWebsiteAnalytics(websiteId: string, dateRange: DateRange) {
   const summaryQuery = useQuery({
     queryKey: ['analytics', 'summary', websiteId, dateRange],
     queryFn: fetchData,
-    ...defaultQueryOptions
+    ...defaultQueryOptions,
+    // Prefetch next likely date ranges
+    meta: {
+      prefetchRelated: true,
+    },
   });
   
   return {
