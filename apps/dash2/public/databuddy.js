@@ -99,8 +99,8 @@
                 trackHashChanges: false,
                 trackAttributes: false,
                 trackOutgoingLinks: false,
-                trackSessions: false,
-                trackPerformance: false,
+                trackSessions: true,
+                trackPerformance: true,
                 trackWebVitals: false,
                 trackEngagement: false,
                 trackScrollDepth: false,
@@ -1247,10 +1247,13 @@
                 clientId
             });
             
-            window.db = (method, ...args) => {
-                if (window.databuddy && typeof window.databuddy[method] === 'function') {
-                    return window.databuddy[method](...args);
-                }
+            window.db = {
+                track: (...args) => window.databuddy?.track(...args),
+                screenView: (...args) => window.databuddy?.screenView(...args),
+                clear: () => window.databuddy?.clear(),
+                flush: () => window.databuddy?.flush(),
+                setGlobalProperties: (...args) => window.databuddy?.setGlobalProperties(...args),
+                trackCustomEvent: (...args) => window.databuddy?.trackCustomEvent(...args)
             };
         }
         

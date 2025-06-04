@@ -70,7 +70,7 @@ All options are type-safe and documented in `DatabuddyConfig`:
 | `trackHashChanges`    | boolean   | `false`      | Track hash changes in URL. |
 | `trackAttributes`     | boolean   | `false`      | Track data-* attributes. |
 | `trackOutgoingLinks`  | boolean   | `false`      | Track outgoing link clicks. |
-| `trackSessions`       | boolean   | `false`      | Track user sessions. |
+| `trackSessions`       | boolean   | `true`       | Track user sessions. |
 | `trackPerformance`    | boolean   | `true`       | Track page performance. |
 | `trackWebVitals`      | boolean   | `true`       | Track Web Vitals. |
 | `trackEngagement`     | boolean   | `false`      | Track engagement metrics. |

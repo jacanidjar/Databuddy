@@ -1,0 +1,787 @@
+---
+title: Advanced Tracking
+description: Complete guide to implementing advanced analytics tracking with Databuddy
+---
+
+# Advanced Tracking
+
+This guide covers advanced tracking patterns, custom events, performance monitoring, and best practices for implementing comprehensive analytics with Databuddy.
+
+## 📊 Automatic Tracking Features
+
+### Page View Tracking
+
+Automatically tracks navigation and page changes:
+
+```javascript
+// Automatically tracked:
+- Initial page loads
+- SPA route changes (pushState/replaceState)
+- Hash changes (optional)
+- Back/forward navigation
+
+// Event data includes:
+{
+  event: 'screen_view',
+  __path: '/dashboard/analytics',
+  __title: 'Analytics Dashboard - MyApp',
+  __referrer: '/dashboard',
+  __timestamp_ms: 1703123456789,
+  page_count: 3,
+  timezone: 'America/New_York',
+  language: 'en-US',
+  screen_resolution: '1920x1080',
+  viewport_size: '1440x900'
+}
+```
+
+**Configuration:**
+```tsx
+<Databuddy
+  trackScreenViews={true}       // Enable page tracking
+  trackHashChanges={true}       // Include hash changes
+/>
+```
+
+### Performance Tracking
+
+Collects detailed performance metrics automatically:
+
+```javascript
+// Navigation Timing metrics:
+{
+  event: 'screen_view',
+  load_time: 1250,           // Total page load time (ms)
+  dom_ready_time: 800,       // DOMContentLoaded (ms)
+  ttfb: 120,                 // Time to First Byte (ms)
+  request_time: 200,         // Network request time (ms)
+  render_time: 450,          // DOM processing time (ms)
+  __path: '/dashboard'
+}
+```
+
+**Configuration:**
+```tsx
+<Databuddy
+  trackPerformance={true}       // Enable performance tracking
+  trackWebVitals={true}        // Include Core Web Vitals
+/>
+```
+
+### Web Vitals Tracking
+
+Automatically measures Core Web Vitals:
+
+```javascript
+// Separate web_vitals event:
+{
+  event: 'web_vitals',
+  fcp: 1200,    // First Contentful Paint (ms)
+  lcp: 2100,    // Largest Contentful Paint (ms)
+  cls: 0.12,    // Cumulative Layout Shift
+  fid: 45,      // First Input Delay (ms)
+  ttfb: 180,    // Time to First Byte (ms)
+  __path: '/dashboard',
+  __timestamp_ms: 1703123456789
+}
+```
+
+**What's Measured:**
+- **FCP** - First Contentful Paint (speed)
+- **LCP** - Largest Contentful Paint (loading performance)  
+- **CLS** - Cumulative Layout Shift (visual stability)
+- **FID** - First Input Delay (interactivity)
+- **TTFB** - Time to First Byte (server responsiveness)
+
+### Error Tracking
+
+Automatically captures JavaScript errors:
+
+```javascript
+// Global error handling:
+{
+  event: 'error',
+  message: 'Cannot read property of undefined',
+  filename: 'https://myapp.com/js/app.js',
+  lineno: 42,
+  colno: 15,
+  stack: 'Error: Cannot read property...\n  at Component...',
+  __path: '/dashboard',
+  __title: 'Dashboard',
+  __referrer: '/login'
+}
+```
+
+**Configuration:**
+```tsx
+<Databuddy
+  trackErrors={true}           // Enable error tracking
+/>
+```
+
+### Session Tracking
+
+Tracks user sessions with automatic timeout:
+
+```javascript
+// Session data added to all events:
+{
+  sessionId: 'sess_abc123...',
+  sessionStartTime: 1703120000000,
+  // ... other event data
+}
+
+// Sessions timeout after 30 minutes of inactivity
+// New session created on return
+```
+
+**Configuration:**
+```tsx
+<Databuddy
+  trackSessions={true}         // Enable session tracking (default: true)
+/>
+```
+
+### Engagement Tracking
+
+Measures user engagement metrics:
+
+```javascript
+// Page exit event with engagement data:
+{
+  event: 'page_exit',
+  time_on_page: 45,           // Seconds spent on page
+  scroll_depth: 75,           // Maximum scroll percentage
+  interaction_count: 12,      // Number of interactions
+  has_exit_intent: false,     // Mouse left viewport
+  page_count: 3,              // Pages in session
+  is_bounce: 0,               // Single page visit (0/1)
+  __path: '/blog/article'
+}
+```
+
+**Configuration:**
+```tsx
+<Databuddy
+  trackEngagement={true}       // Enable engagement tracking
+  trackScrollDepth={true}      // Include scroll tracking
+  trackExitIntent={true}       // Track exit intent
+  trackInteractions={true}     // Count interactions
+  trackBounceRate={true}       // Calculate bounce rate
+/>
+```
+
+### Link Tracking
+
+Automatically tracks outgoing link clicks:
+
+```javascript
+// Outgoing link clicks:
+{
+  event: 'link_out',
+  href: 'https://external-site.com/page',
+  text: 'Learn More',          // Link text or title
+  __path: '/blog/article'
+}
+```
+
+**Configuration:**
+```tsx
+<Databuddy
+  trackOutgoingLinks={true}    // Enable link tracking
+/>
+```
+
+## 🎯 Custom Event Tracking
+
+### Basic Custom Events
+
+Track specific user actions and conversions:
+
+```javascript
+// Button clicks
+db('track', 'button_click', {
+  button_text: 'Sign Up',
+  button_type: 'cta',
+  page: '/pricing',
+  plan: 'pro'
+});
+
+// Form submissions
+db('track', 'form_submit', {
+  form_type: 'contact',
+  form_id: 'contact-form',
+  fields_count: 5,
+  validation_errors: 0
+});
+
+// Purchase events
+db('track', 'purchase', {
+  product_id: 'plan_pro_monthly',
+  product_name: 'Pro Plan',
+  price: 29.99,
+  currency: 'USD',
+  payment_method: 'stripe'
+});
+```
+
+### E-commerce Tracking
+
+Comprehensive e-commerce event tracking:
+
+```javascript
+// Product views
+db('track', 'product_view', {
+  product_id: 'shirt_001',
+  product_name: 'Blue Cotton Shirt',
+  category: 'Clothing',
+  price: 39.99,
+  currency: 'USD',
+  brand: 'MyBrand'
+});
+
+// Add to cart
+db('track', 'add_to_cart', {
+  product_id: 'shirt_001',
+  quantity: 2,
+  value: 79.98,
+  currency: 'USD'
+});
+
+// Purchase complete
+db('track', 'purchase', {
+  transaction_id: 'order_123456',
+  value: 79.98,
+  currency: 'USD',
+  items: [
+    {
+      product_id: 'shirt_001',
+      product_name: 'Blue Cotton Shirt',
+      category: 'Clothing',
+      quantity: 2,
+      price: 39.99
+    }
+  ],
+  shipping: 9.99,
+  tax: 6.40
+});
+```
+
+### User Identification
+
+Track user properties and identification:
+
+```javascript
+// User signup
+db('track', 'user_signup', {
+  signup_method: 'email',
+  plan: 'free',
+  source: 'landing_page',
+  referrer: 'google'
+});
+
+// User identification (optional)
+db('identify', {
+  user_id: 'user_12345',
+  plan: 'pro',
+  signup_date: '2024-01-15',
+  total_orders: 3
+});
+
+// Plan upgrade
+db('track', 'plan_upgrade', {
+  from_plan: 'free',
+  to_plan: 'pro',
+  upgrade_reason: 'feature_limit',
+  annual_discount: true
+});
+```
+
+### Content Interaction
+
+Track how users interact with content:
+
+```javascript
+// Video tracking
+db('track', 'video_play', {
+  video_id: 'intro_tutorial',
+  video_title: 'Getting Started Tutorial',
+  duration: 300, // seconds
+  position: 0
+});
+
+db('track', 'video_progress', {
+  video_id: 'intro_tutorial',
+  progress: 0.25, // 25% watched
+  duration: 300
+});
+
+// File downloads
+db('track', 'file_download', {
+  file_name: 'user_guide.pdf',
+  file_type: 'pdf',
+  file_size: 2048000, // bytes
+  download_source: 'help_center'
+});
+
+// Search queries
+db('track', 'search', {
+  query: 'how to export data',
+  results_count: 15,
+  search_type: 'help_docs'
+});
+```
+
+### Feature Usage
+
+Track specific feature adoption and usage:
+
+```javascript
+// Feature usage
+db('track', 'feature_used', {
+  feature: 'data_export',
+  feature_category: 'analytics',
+  first_time_use: true,
+  user_plan: 'pro'
+});
+
+// Dashboard interactions
+db('track', 'dashboard_filter', {
+  filter_type: 'date_range',
+  date_from: '2024-01-01',
+  date_to: '2024-01-31',
+  dashboard_view: 'overview'
+});
+
+// Report generation
+db('track', 'report_generated', {
+  report_type: 'monthly_summary',
+  data_range: '30_days',
+  export_format: 'csv',
+  filters_applied: 3
+});
+```
+
+## 🏷️ Attribute-Based Tracking
+
+Track events automatically using HTML data attributes:
+
+### HTML Setup
+
+```html
+<!-- Button tracking -->
+<button 
+  data-track="button_click"
+  data-button-type="cta"
+  data-button-text="Get Started"
+  data-page="landing"
+>
+  Get Started
+</button>
+
+<!-- Link tracking -->
+<a 
+  href="/pricing" 
+  data-track="nav_click"
+  data-nav-section="header"
+  data-link-type="internal"
+>
+  Pricing
+</a>
+
+<!-- Form tracking -->
+<form 
+  data-track="form_submit"
+  data-form-type="newsletter"
+  data-form-location="footer"
+>
+  <!-- form fields -->
+</form>
+```
+
+### Automatic Event Generation
+
+```javascript
+// Automatically tracked when clicked:
+{
+  event: 'button_click',
+  buttonType: 'cta',        // data-button-type (camelCase)
+  buttonText: 'Get Started', // data-button-text
+  page: 'landing'           // data-page
+}
+```
+
+### Configuration
+
+```tsx
+<Databuddy
+  trackAttributes={true}      // Enable data-* tracking
+/>
+```
+
+## 📱 SPA & React Tracking
+
+### React Component Tracking
+
+Track component interactions and lifecycle:
+
+```tsx
+import { useEffect } from 'react';
+
+function PricingTable() {
+  useEffect(() => {
+    // Track component view
+    window.databuddy?.track('component_view', {
+      component: 'pricing_table',
+      variant: 'three_column',
+      page: '/pricing'
+    });
+  }, []);
+
+  const handlePlanSelect = (plan: string) => {
+    window.databuddy?.track('plan_selected', {
+      plan,
+      component: 'pricing_table',
+      action: 'click'
+    });
+  };
+
+  return (
+    <div>
+      {plans.map(plan => (
+        <button 
+          key={plan.id}
+          onClick={() => handlePlanSelect(plan.id)}
+        >
+          {plan.name}
+        </button>
+      ))}
+    </div>
+  );
+}
+```
+
+## 🔄 Event Batching & Performance
+
+### Batching Configuration
+
+Optimize performance with event batching:
+
+```tsx
+<Databuddy
+  enableBatching={true}
+  batchSize={20}              // Send after 20 events
+  batchTimeout={5000}         // Or after 5 seconds
+/>
+```
+
+### Manual Batching Control
+
+```javascript
+// Force send batched events
+window.databuddy?.flush();
+
+// Disable batching for critical events
+window.databuddy?.track('purchase', {
+  // ... purchase data
+}, { 
+  immediate: true  // Send immediately
+});
+```
+
+### High-Volume Tracking
+
+For high-traffic applications:
+
+```tsx
+<Databuddy
+  // Reduced sampling for high traffic
+  samplingRate={0.1}          // Track 10% of users
+  
+  // Aggressive batching
+  enableBatching={true}
+  batchSize={50}              // Larger batches
+  batchTimeout={10000}        // Longer timeout
+  
+  // Selective tracking - Choose what matters for you
+  trackScreenViews={true}
+  trackPerformance={false}
+  trackWebVitals={false}
+  trackSessions={false}
+/>
+```
+
+## 🎯 Advanced Patterns
+
+### Conditional Tracking
+
+Track events based on conditions:
+
+```javascript
+// Track only for specific user segments
+const trackForPremiumUsers = (event, properties) => {
+  if (user.plan === 'premium') {
+    db('track', event, {
+      ...properties,
+      user_segment: 'premium'
+    });
+  }
+};
+
+// Track with user context
+const trackWithContext = (event, properties) => {
+  db('track', event, {
+    ...properties,
+    user_plan: user.plan,
+    feature_flags: getActiveFeatureFlags(),
+    ab_tests: getActiveTests()
+  });
+};
+```
+
+### Error Boundary Tracking
+
+Track React errors with error boundaries:
+
+```tsx
+class ErrorBoundary extends React.Component {
+  componentDidCatch(error, errorInfo) {
+    window.databuddy?.track('react_error', {
+      error_message: error.message,
+      error_stack: error.stack,
+      component_stack: errorInfo.componentStack,
+      error_boundary: 'main_app'
+    });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <ErrorFallback />;
+    }
+    return this.props.children;
+  }
+}
+```
+
+## 🔍 Debugging & Testing
+
+### Debug Mode
+
+Enable debugging for development:
+
+```javascript
+// Enable debug logging
+localStorage.setItem('databuddy_debug', 'true');
+
+// Or programmatically
+window.databuddy?.setDebug(true);
+
+// Check what events are being sent
+window.databuddy?.onTrack((event, properties) => {
+  console.log('Tracked:', event, properties);
+});
+```
+
+### Testing Events
+
+Test tracking in development:
+
+```javascript
+// Test custom events
+window.databuddy?.track('test_event', {
+  test: true,
+  timestamp: Date.now()
+});
+
+// Verify events are queued
+console.log(window.databuddy?.getQueue());
+
+// Force send for testing
+window.databuddy?.flush();
+```
+
+### Event Simulation
+
+Simulate events for testing:
+
+```javascript
+// Simulate user journey
+const simulateUserJourney = () => {
+  // Landing
+  db('track', 'page_view', { page: 'landing' });
+  
+  // Sign up
+  setTimeout(() => {
+    db('track', 'signup_start', { method: 'email' });
+  }, 2000);
+  
+  // Complete signup
+  setTimeout(() => {
+    db('track', 'signup_complete', { method: 'email' });
+  }, 5000);
+};
+```
+
+## 📈 Best Practices
+
+### Event Naming
+
+Use consistent event naming conventions:
+
+```javascript
+// Good - verb_noun pattern
+'button_click'
+'form_submit'
+'video_play'
+'purchase_complete'
+
+// Good - specific and descriptive
+'newsletter_signup'
+'plan_upgrade'
+'feature_activated'
+
+// Avoid - too generic
+'click'
+'event'
+'action'
+```
+
+### Property Structure
+
+Structure properties consistently:
+
+```javascript
+// Good - consistent property names
+{
+  event: 'product_view',
+  product_id: 'abc123',
+  product_name: 'Blue Shirt',
+  product_category: 'Clothing',
+  product_price: 29.99,
+  user_plan: 'premium'
+}
+
+// Good - use snake_case for consistency
+// Good - include context (product_, user_, etc.)
+```
+
+### Performance Optimization
+
+1. **Use batching** for high-frequency events
+2. **Sample high-traffic** events when appropriate
+3. **Avoid tracking** in tight loops
+4. **Debounce** rapid events like scroll/resize
+5. **Lazy load** tracking for non-critical events
+
+```javascript
+// Debounced scroll tracking
+const debouncedScrollTrack = debounce(() => {
+  db('track', 'scroll_milestone', {
+    scroll_percentage: Math.round(getScrollPercentage())
+  });
+}, 1000);
+
+window.addEventListener('scroll', debouncedScrollTrack);
+```
+
+### Privacy Considerations
+
+1. **Avoid PII** in event properties
+2. **Hash sensitive** identifiers when needed
+3. **Respect user preferences** for tracking
+4. **Implement opt-out** mechanisms
+
+```javascript
+// Safe user identification
+const trackUserAction = (action) => {
+  db('track', action, {
+    user_hash: hashUserId(user.id), // Hash instead of raw ID
+    user_plan: user.plan,
+    // Don't include: email, name, address, etc.
+  });
+};
+```
+
+## 🔗 Integration Examples
+
+### React Query Integration
+
+Track API calls and data fetching:
+
+```tsx
+import { useQuery } from '@tanstack/react-query';
+
+function useTrackedQuery(key, fn, options = {}) {
+  return useQuery({
+    queryKey: key,
+    queryFn: async (...args) => {
+      const startTime = Date.now();
+      
+      try {
+        const result = await fn(...args);
+        
+        // Track successful API call
+        window.databuddy?.track('api_call_success', {
+          endpoint: key[0],
+          duration: Date.now() - startTime,
+          cache_hit: false
+        });
+        
+        return result;
+      } catch (error) {
+        // Track API errors
+        window.databuddy?.track('api_call_error', {
+          endpoint: key[0],
+          error_message: error.message,
+          duration: Date.now() - startTime
+        });
+        
+        throw error;
+      }
+    },
+    ...options
+  });
+}
+```
+
+### Form Tracking with React Hook Form
+
+```tsx
+import { useForm } from 'react-hook-form';
+
+function ContactForm() {
+  const { register, handleSubmit, formState } = useForm();
+
+  useEffect(() => {
+    // Track form view
+    window.databuddy?.track('form_view', {
+      form_type: 'contact',
+      form_id: 'contact-form'
+    });
+  }, []);
+
+  const onSubmit = (data) => {
+    // Track form submission
+    window.databuddy?.track('form_submit', {
+      form_type: 'contact',
+      fields_count: Object.keys(data).length,
+      has_errors: Object.keys(formState.errors).length > 0
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      {/* form fields */}
+    </form>
+  );
+}
+```
+
+---
+
+## What's Next?
+
+- **[Dashboard Overview](/dashboard)** - Explore your analytics dashboard
+- **[API Documentation](/api)** - Server-side tracking and data access  
+- **[Security Guide](/security)** - Privacy and security best practices
+- **[Troubleshooting](/troubleshooting)** - Common issues and solutions 

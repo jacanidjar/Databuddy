@@ -8,10 +8,10 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
 import { chQuery } from '@databuddy/db';
-import type { AppVariables } from '../types';
-import { authMiddleware } from '../middleware/auth';
-import { websiteAuthHook } from '../middleware/website';
-import { logger } from '../lib/logger';
+import type { AppVariables } from '../../types';
+import { authMiddleware } from '../../middleware/auth';
+import { websiteAuthHook } from '../../middleware/website';
+import { logger } from '../../lib/logger';
 import { getRedisCache } from '@databuddy/redis';
 import OpenAI from 'openai';
 

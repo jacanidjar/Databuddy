@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { auth, type User, type Session } from '@databuddy/auth';
-import analyticsRouter from './routes/analytics';
-import assistantRouter from './routes/assistant';
+import analyticsRouter from './routes/v1/analytics';
+import assistantRouter from './routes/v1/assistant';
 import { logger } from './lib/logger';
 import { logger as HonoLogger } from "hono/logger"
 import { sentry } from '@hono/sentry'
@@ -65,16 +65,12 @@ app.on(['POST', 'GET', 'OPTIONS'], '/api/auth/*', async (c) => {
   }
 });
 
-// Health check route
-app.get('/', (c) => c.json({ status: 'ok', version: '1.0.0' }));
 
-// Mount analytics routes with auth middleware
-app.route('/analytics', analyticsRouter);
-
-// Mount assistant routes with auth middleware
-app.route('/assistant', assistantRouter);
+app.route('/v1/analytics', analyticsRouter);
+app.route('/v1/assistant', assistantRouter);
 
 app.get('/health', (c) => c.json({ status: 'ok', version: '1.0.0' }));
+app.get('/', (c) => c.json({ status: 'ok', version: '1.0.0' }));
 
 // Error handling
 app.onError((err) => {

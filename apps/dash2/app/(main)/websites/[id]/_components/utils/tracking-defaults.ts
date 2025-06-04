@@ -3,11 +3,11 @@ import type { TrackingOptions } from "./types";
 // Library defaults - what the actual tracking library uses when no options are provided
 export const ACTUAL_LIBRARY_DEFAULTS: TrackingOptions = {
   trackErrors: false,
-  trackPerformance: false,
+  trackPerformance: true,
   trackWebVitals: false,
   trackOutgoingLinks: false,
   trackScreenViews: true,
-  trackSessions: false,
+  trackSessions: true,
   trackInteractions: false,
   samplingRate: 1.0,
   enableRetries: true,

@@ -1,0 +1,20 @@
+{
+  "title": "Databuddy Documentation",
+  "description": "Privacy-first analytics for modern websites",
+  "icon": "BarChart3",
+  "root": true,
+  "pages": [
+    "---Getting Started---",
+    "index",
+    "domain-verification",
+    "getting-started",
+    "---Implementation---", 
+    "sdk",
+    "Setup",
+    "---Analytics---",
+    "dashboard",
+    "api",
+    "---Security---",
+    "security"
+  ]
+} 

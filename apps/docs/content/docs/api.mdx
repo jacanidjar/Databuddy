@@ -1,0 +1,327 @@
+---
+title: API Reference
+description: Complete API reference for Databuddy analytics endpoints
+---
+
+# API Reference
+
+Access your analytics data programmatically with Databuddy's REST API. All endpoints require authentication and are rate-limited for security.
+
+## 🔐 Authentication
+
+All API requests require authentication using your API key:
+
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+  https://api.databuddy.cc/v1/analytics
+```
+
+Get your API key from your [dashboard settings](https://app.databuddy.cc/settings/api).
+
+## 📊 Analytics Endpoints
+
+### Get Website Analytics
+
+Retrieve analytics data for a specific website and date range.
+
+```http
+GET /v1/websites/{website_id}/analytics
+```
+
+**Parameters:**
+- `website_id` (required) - Your website ID
+- `start_date` (optional) - Start date (ISO 8601)
+- `end_date` (optional) - End date (ISO 8601)
+- `granularity` (optional) - Data granularity: `hour`, `day`, `week`, `month`
+- `metrics` (optional) - Comma-separated metrics to include
+
+**Example:**
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+  "https://api.databuddy.cc/v1/websites/web_123/analytics?start_date=2024-01-01&end_date=2024-01-31&granularity=day"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "pageviews": 15420,
+      "visitors": 8921,
+      "sessions": 12340,
+      "bounce_rate": 0.32,
+      "avg_session_duration": 285.5
+    },
+    "events_by_date": [
+      {
+        "date": "2024-01-01",
+        "pageviews": 512,
+        "visitors": 324,
+        "sessions": 456
+      }
+    ],
+    "top_pages": [
+      {
+        "path": "/",
+        "pageviews": 3420,
+        "visitors": 2100
+      }
+    ],
+    "top_referrers": [
+      {
+        "referrer": "google.com",
+        "visitors": 1250,
+        "percentage": 15.2
+      }
+    ],
+    "countries": [
+      {
+        "country": "United States",
+        "visitors": 4200,
+        "percentage": 28.5
+      }
+    ],
+    "devices": [
+      {
+        "device_type": "desktop",
+        "visitors": 5200,
+        "percentage": 35.3
+      }
+    ],
+    "browsers": [
+      {
+        "browser_name": "Chrome",
+        "visitors": 6800,
+        "percentage": 46.2
+      }
+    ]
+  }
+}
+```
+
+### Get Real-time Analytics
+
+<div className="flex items-center gap-2 mb-4">
+  <span className="bg-amber-600/20 text-amber-400 py-1 px-2 rounded text-sm font-medium">Coming Soon</span>
+</div>
+
+Get current active visitors and real-time metrics.
+
+```http
+GET /v1/websites/{website_id}/realtime
+```
+
+Real-time analytics with WebSocket streaming will be available soon.
+
+### Get Custom Events
+
+Retrieve custom event data and conversions.
+
+```http
+GET /v1/websites/{website_id}/events
+```
+
+**Parameters:**
+- `event_name` (optional) - Filter by specific event name
+- `start_date` (optional) - Start date (ISO 8601)
+- `end_date` (optional) - End date (ISO 8601)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "events": [
+      {
+        "event_name": "signup",
+        "count": 156,
+        "unique_users": 142
+      },
+      {
+        "event_name": "purchase",
+        "count": 89,
+        "unique_users": 85
+      }
+    ],
+    "events_over_time": [
+      {
+        "date": "2024-01-01",
+        "signup": 12,
+        "purchase": 8
+      }
+    ]
+  }
+}
+```
+
+## 🌐 Websites Management
+
+### List Websites
+
+Get all websites in your account.
+
+```http
+GET /v1/websites
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "web_123",
+      "name": "My Website",
+      "domain": "example.com",
+      "created_at": "2024-01-01T00:00:00Z",
+      "verified": true
+    }
+  ]
+}
+```
+
+### Get Website Details
+
+Get details for a specific website.
+
+```http
+GET /v1/websites/{website_id}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "web_123",
+    "name": "My Website",
+    "domain": "example.com",
+    "created_at": "2024-01-01T00:00:00Z",
+    "verified": true,
+    "tracking_code": "db_abc123...",
+    "monthly_pageviews": 45678
+  }
+}
+```
+
+## 🤖 AI Assistant
+
+### Query Analytics with AI
+
+Use natural language to query your analytics data.
+
+```http
+POST /v1/websites/{website_id}/assistant/chat
+```
+
+**Request:**
+```json
+{
+  "message": "Show me the top pages by pageviews last week",
+  "context": {
+    "dateRange": {
+      "start": "2024-01-01",
+      "end": "2024-01-07"
+    }
+  }
+}
+```
+
+**Response (Streaming):**
+```json
+{
+  "type": "complete",
+  "content": "Here are your top pages by pageviews last week:",
+  "data": {
+    "chart_type": "bar",
+    "results": [
+      {
+        "path": "/",
+        "pageviews": 1250
+      },
+      {
+        "path": "/pricing",
+        "pageviews": 890
+      }
+    ]
+  }
+}
+```
+
+## 📝 Event Tracking
+
+### Send Custom Events
+
+Track custom events programmatically.
+
+```http
+POST /v1/track
+```
+
+**Request:**
+```json
+{
+  "client_id": "your_tracking_id",
+  "events": [
+    {
+      "event": "purchase",
+      "properties": {
+        "value": 99.99,
+        "currency": "USD",
+        "product_id": "prod_123"
+      },
+      "timestamp": "2024-01-01T12:00:00Z"
+    }
+  ]
+}
+```
+
+## ⚠️ Rate Limits
+
+All API endpoints are rate-limited:
+
+- **Analytics endpoints**: 100 requests per minute
+- **Real-time endpoints**: 60 requests per minute  
+- **Event tracking**: 1000 requests per minute
+
+Rate limit headers are included in responses:
+```http
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1640995200
+```
+
+## 🚨 Error Handling
+
+All errors follow a consistent format:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_WEBSITE_ID",
+    "message": "Website not found or access denied",
+    "details": {}
+  }
+}
+```
+
+**Common Error Codes:**
+- `AUTHENTICATION_FAILED` - Invalid or missing API key
+- `RATE_LIMIT_EXCEEDED` - Too many requests
+- `INVALID_WEBSITE_ID` - Website not found or no access
+- `INVALID_DATE_RANGE` - Invalid start/end dates
+- `VALIDATION_ERROR` - Request validation failed
+
+## 📚 SDKs and Libraries
+
+- **JavaScript/TypeScript**: `@databuddy/sdk`
+- **Python**: Coming soon
+- **Go**: Coming soon
+- **PHP**: Coming soon
+
+## 🔗 Base URLs
+
+- **Production**: `https://api.databuddy.cc/v1`
+- **Sandbox**: `https://api-sandbox.databuddy.cc/v1` 

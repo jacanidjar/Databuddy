@@ -74,7 +74,7 @@ export interface DatabuddyConfig {
   trackOutgoingLinks?: boolean;
 
   /**
-   * Track user sessions (default: false).
+   * Track user sessions (default: true).
    */
   trackSessions?: boolean;
 

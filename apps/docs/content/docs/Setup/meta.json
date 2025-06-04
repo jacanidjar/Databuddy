@@ -1,0 +1,8 @@
+{
+  "title": "Setup Guide", 
+  "description": "Advanced implementation guides",
+  "icon": "Settings",
+  "pages": [
+    "tracking"
+  ]
+} 

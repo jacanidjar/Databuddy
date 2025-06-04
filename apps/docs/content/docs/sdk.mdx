@@ -1,0 +1,719 @@
+---
+title: SDK Reference
+description: Complete reference for the Databuddy SDK and JavaScript library
+---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+# 📦 SDK Reference
+
+The Databuddy SDK provides both a React component and a standalone JavaScript library for tracking analytics events. This guide covers all configuration options, types, and usage patterns based on the actual implementation.
+
+<Callout type="info">
+**Version**: 1.0.2 | **API**: basket.databuddy.cc | **CDN**: app.databuddy.cc
+</Callout>
+
+## 🚀 Installation
+
+<Tabs items={['React/Next.js', 'Script Tag']}>
+<Tab value="React/Next.js">
+
+```bash
+# Using bun (recommended)
+bun add @databuddy/sdk
+
+# Using npm
+npm install @databuddy/sdk
+
+# Using yarn
+yarn add @databuddy/sdk
+```
+
+</Tab>
+<Tab value="Script Tag">
+
+No installation needed - load directly from CDN:
+
+```html
+<script 
+  src="https://app.databuddy.cc/databuddy.js"
+  data-client-id="your-client-id"
+  defer
+></script>
+```
+
+</Tab>
+</Tabs>
+
+## ⚡ Quick Start
+
+<Tabs items={['React Component', 'Script Tag']}>
+<Tab value="React Component">
+
+```tsx title="app/layout.tsx"
+import { Databuddy } from '@databuddy/sdk';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <Databuddy
+          clientId={process.env.NEXT_PUBLIC_DATABUDDY_CLIENT_ID!}
+          trackScreenViews
+          trackPerformance
+          trackWebVitals
+        />
+        {children}
+      </body>
+    </html>
+  );
+}
+```
+
+</Tab>
+<Tab value="Script Tag">
+
+```html title="index.html"
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Website</title>
+</head>
+<body>
+  <!-- Your content -->
+  
+  <script 
+    src="https://app.databuddy.cc/databuddy.js"
+    data-client-id="your-client-id"
+    data-track-screen-views="true"
+    data-track-performance="true"
+    data-track-web-vitals="true"
+    defer
+  ></script>
+</body>
+</html>
+```
+
+</Tab>
+</Tabs>
+
+## 🔧 Configuration Options
+
+### Required Settings
+
+<Tabs items={['React Props', 'Script Attributes']}>
+<Tab value="React Props">
+
+```tsx
+<Databuddy
+  clientId="your-client-id"  // ✅ Required - Get from dashboard
+/>
+```
+
+</Tab>
+<Tab value="Script Attributes">
+
+```html
+<script 
+  src="https://app.databuddy.cc/databuddy.js"
+  data-client-id="your-client-id"  <!-- ✅ Required -->
+></script>
+```
+
+</Tab>
+</Tabs>
+
+### Core Tracking Features
+
+These features are **enabled by default** and recommended for most websites:
+
+<Accordions>
+<Accordion title="trackScreenViews (default: true)">
+
+Tracks page views and route changes in SPAs.
+
+<Tabs items={['React', 'Script Tag']}>
+<Tab value="React">
+
+```tsx
+<Databuddy
+  clientId="your-client-id"
+  trackScreenViews={true}  // Default: true
+/>
+```
+
+</Tab>
+<Tab value="Script Tag">
+
+```html
+<script 
+  data-track-screen-views="true"  <!-- Default: true -->
+></script>
+```
+
+</Tab>
+</Tabs>
+
+**Events tracked**: `screen_view`, `page_view`
+
+</Accordion>
+
+<Accordion title="trackPerformance (default: true)">
+
+Monitors page load times, navigation timing, and resource performance.
+
+<Tabs items={['React', 'Script Tag']}>
+<Tab value="React">
+
+```tsx
+<Databuddy
+  clientId="your-client-id"
+  trackPerformance={true}  // Default: true
+/>
+```
+
+</Tab>
+<Tab value="Script Tag">
+
+```html
+<script 
+  data-track-performance="true"  <!-- Default: true -->
+></script>
+```
+
+</Tab>
+</Tabs>
+
+**Events tracked**: `performance_navigation`, `performance_resource`
+
+</Accordion>
+
+<Accordion title="trackSessions (default: true)">
+
+Tracks user sessions with a 30-minute timeout using sessionStorage.
+
+<Tabs items={['React', 'Script Tag']}>
+<Tab value="React">
+
+```tsx
+<Databuddy
+  clientId="your-client-id"
+  trackSessions={true}  // Default: true
+/>
+```
+
+</Tab>
+<Tab value="Script Tag">
+
+```html
+<script 
+  data-track-sessions="true"  <!-- Default: true -->
+></script>
+```
+
+</Tab>
+</Tabs>
+
+**Events tracked**: `session_start`, session duration metrics
+
+</Accordion>
+</Accordions>
+
+### Optional Tracking Features
+
+These features are **disabled by default** - enable as needed:
+
+<Callout type="warn">
+**Performance Impact**: Enabling many optional features can increase data volume and impact performance. Choose only what you need.
+</Callout>
+
+<Accordions>
+<Accordion title="trackWebVitals (default: false)">
+
+Tracks Core Web Vitals: LCP, FID, CLS, TTFB, INP.
+
+```tsx
+// ⚠️ Can generate significant data volume
+trackWebVitals={true}
+```
+
+**Events tracked**: `web_vitals` with metrics data
+
+</Accordion>
+
+<Accordion title="trackErrors (default: false)">
+
+Captures JavaScript errors and unhandled promise rejections.
+
+```tsx
+trackErrors={true}
+```
+
+**Events tracked**: `javascript_error`, `unhandled_rejection`
+
+</Accordion>
+
+<Accordion title="trackOutgoingLinks (default: false)">
+
+Tracks clicks on external links.
+
+```tsx
+trackOutgoingLinks={true}
+```
+
+**Events tracked**: `outgoing_link_click`
+
+</Accordion>
+
+<Accordion title="trackScrollDepth (default: false)">
+
+Measures how far users scroll (25%, 50%, 75%, 100% milestones).
+
+```tsx
+trackScrollDepth={true}
+```
+
+**Events tracked**: `scroll_depth`
+
+</Accordion>
+
+<Accordion title="trackEngagement (default: false)">
+
+Tracks time on page and user interactions.
+
+```tsx
+trackEngagement={true}
+```
+
+**Events tracked**: `engagement_time`, `page_engagement`
+
+</Accordion>
+
+<Accordion title="More Optional Features">
+
+```tsx
+// Advanced tracking options
+trackExitIntent={false}      // Mouse leave detection
+trackInteractions={false}    // Clicks, keypresses
+trackBounceRate={false}      // Single-page visits
+trackHashChanges={false}     // URL hash changes
+trackAttributes={false}      // data-* attributes on clicks
+```
+
+</Accordion>
+</Accordions>
+
+### Performance & Reliability
+
+<Tabs items={['React Props', 'Script Attributes']}>
+<Tab value="React Props">
+
+```tsx title="Performance Configuration"
+<Databuddy
+  clientId="your-client-id"
+  
+  // Batching (reduces requests)
+  enableBatching={false}     // Default: false
+  batchSize={10}             // Default: 10 (range: 1-50)
+  batchTimeout={2000}        // Default: 2000ms (range: 100-30000)
+  
+  // Reliability
+  enableRetries={true}       // Default: true
+  maxRetries={3}             // Default: 3
+  initialRetryDelay={500}    // Default: 500ms (range: 50-10000)
+  
+  // Sampling (for high-traffic sites)
+  samplingRate={1.0}         // Default: 1.0 (range: 0.0-1.0)
+  
+  // Environment control
+  disabled={process.env.NODE_ENV === 'development'}
+/>
+```
+
+</Tab>
+<Tab value="Script Attributes">
+
+```html title="Performance Configuration"
+<script 
+  src="https://app.databuddy.cc/databuddy.js"
+  data-client-id="your-client-id"
+  
+  <!-- Batching -->
+  data-enable-batching="false"
+  data-batch-size="10"
+  data-batch-timeout="2000"
+  
+  <!-- Reliability -->
+  data-enable-retries="true"
+  data-max-retries="3"
+  data-initial-retry-delay="500"
+  
+  <!-- Sampling -->
+  data-sampling-rate="1.0"
+  
+  <!-- Environment -->
+  data-disabled="false"
+></script>
+```
+
+</Tab>
+</Tabs>
+
+<Callout type="info">
+**Batching**: Groups multiple events into single requests. Enable for high-traffic sites to reduce server load.
+</Callout>
+
+### Advanced Configuration
+
+<Accordions>
+<Accordion title="Custom API Endpoints">
+
+Only change these if you're self-hosting Databuddy:
+
+```tsx
+<Databuddy
+  clientId="your-client-id"
+  apiUrl="https://your-api.example.com"      // Default: basket.databuddy.cc
+  scriptUrl="https://your-cdn.example.com"   // Default: app.databuddy.cc
+/>
+```
+
+</Accordion>
+
+<Accordion title="Event Filtering">
+
+Filter events before they're sent:
+
+```tsx
+<Databuddy
+  clientId="your-client-id"
+  filter={(event) => {
+    // Don't track admin pages
+    if (event.properties?.page?.includes('/admin')) {
+      return false;
+    }
+    
+    // Don't track bot traffic
+    if (navigator.userAgent.includes('bot')) {
+      return false;
+    }
+    
+    return true;
+  }}
+/>
+```
+
+</Accordion>
+
+<Accordion title="TypeScript Interface">
+
+Complete TypeScript definition:
+
+```tsx
+interface DatabuddyConfig {
+  // Required
+  clientId: string;
+
+  // Optional authentication (server-side only)
+  clientSecret?: string;
+
+  // Endpoints
+  apiUrl?: string;        // Default: 'https://basket.databuddy.cc'
+  scriptUrl?: string;     // Default: 'https://app.databuddy.cc/databuddy.js'
+
+  // SDK metadata
+  sdk?: string;           // Default: 'web'
+  sdkVersion?: string;    // Default: '1.0.2'
+
+  // Control
+  disabled?: boolean;     // Default: false
+
+  // Core tracking (enabled by default)
+  trackScreenViews?: boolean;    // Default: true
+  trackPerformance?: boolean;    // Default: true  
+  trackSessions?: boolean;       // Default: true
+
+  // Optional tracking (disabled by default)
+  trackWebVitals?: boolean;     // Default: false
+  trackErrors?: boolean;        // Default: false
+  trackOutgoingLinks?: boolean; // Default: false
+  trackScrollDepth?: boolean;   // Default: false
+  trackEngagement?: boolean;    // Default: false
+  trackExitIntent?: boolean;    // Default: false
+  trackInteractions?: boolean;  // Default: false
+  trackBounceRate?: boolean;    // Default: false
+  trackHashChanges?: boolean;   // Default: false
+  trackAttributes?: boolean;    // Default: false
+
+  // Performance & reliability
+  samplingRate?: number;         // Default: 1.0 (0.0-1.0)
+  enableRetries?: boolean;       // Default: true
+  maxRetries?: number;          // Default: 3
+  initialRetryDelay?: number;   // Default: 500ms (50-10000)
+  enableBatching?: boolean;     // Default: false
+  batchSize?: number;           // Default: 10 (1-50)
+  batchTimeout?: number;        // Default: 2000ms (100-30000)
+
+  // Custom filter function
+  filter?: (event: any) => boolean;
+}
+```
+
+</Accordion>
+</Accordions>
+
+## 🎯 Custom Event Tracking
+
+Track custom business events using the global API:
+
+<Tabs items={['React/Next.js', 'Script Tag']}>
+<Tab value="React/Next.js">
+
+```tsx title="Custom Events in React"
+import { useEffect } from 'react';
+
+function ProductPage({ product }: { product: Product }) {
+  useEffect(() => {
+    // Track product view
+    window.databuddy?.track('product_viewed', {
+      product_id: product.id,
+      product_name: product.name,
+      category: product.category,
+      price: product.price
+    });
+  }, [product]);
+
+  const handlePurchase = () => {
+    // Track conversion
+    window.databuddy?.track('purchase_completed', {
+      product_id: product.id,
+      revenue: product.price,
+      currency: 'USD'
+    });
+  };
+
+  return (
+    <div>
+      <h1>{product.name}</h1>
+      <button onClick={handlePurchase}>
+        Buy Now - ${product.price}
+      </button>
+    </div>
+  );
+}
+```
+
+**Alternative Object Syntax:**
+
+```tsx
+// Both syntaxes work
+db.track('event_name', { key: 'value' });
+window.databuddy?.track('event_name', { key: 'value' });
+```
+
+</Tab>
+<Tab value="Script Tag">
+
+```html title="Custom Events with Script Tag"
+<script>
+// Track user actions
+function trackSignup(plan) {
+  db.track('signup_completed', {
+    plan: plan,
+    source: 'pricing_page',
+    timestamp: Date.now()
+  });
+}
+
+function trackFeatureUsage(feature) {
+  db.track('feature_used', {
+    feature: feature,
+    page: window.location.pathname,
+    user_agent: navigator.userAgent
+  });
+}
+
+// Track form interactions
+document.getElementById('contact-form').addEventListener('submit', () => {
+  db.track('contact_form_submitted', {
+    form_id: 'contact-form',
+    page: window.location.pathname
+  });
+});
+</script>
+
+<button onclick="trackSignup('pro')">Upgrade to Pro</button>
+<button onclick="trackFeatureUsage('export')">Export Data</button>
+```
+
+</Tab>
+</Tabs>
+
+### Custom Event Best Practices
+
+<Callout type="info">
+**Event Naming**: Use snake_case for event names (e.g., `signup_completed`, `product_viewed`)
+**Properties**: Include relevant context but avoid PII (personally identifiable information)
+</Callout>
+
+<Cards>
+  <Card title="Good Events" icon="✅">
+    ```tsx
+    db.track('signup_completed', {
+      plan: 'pro',
+      source: 'landing_page'
+    });
+    
+    db.track('video_played', {
+      video_id: 'intro_2024',
+      duration: 120,
+      position: 'hero'
+    });
+    ```
+  </Card>
+  <Card title="Avoid These" icon="❌">
+    ```tsx
+    // Don't include PII
+    db.track('signup', {
+      email: 'user@example.com',  // ❌ PII
+      ip_address: '192.168.1.1'  // ❌ PII
+    });
+    
+    // Don't use spaces in event names
+    db.track('Sign Up Completed'); // ❌ Use snake_case
+    ```
+  </Card>
+</Cards>
+
+## 📋 Configuration Reference
+
+### Default Values Table
+
+| Option | Default | Type | Range |
+|--------|---------|------|-------|
+| `clientId` | - | `string` | **Required** |
+| `disabled` | `false` | `boolean` | - |
+| `trackScreenViews` | `true` | `boolean` | - |
+| `trackPerformance` | `true` | `boolean` | - |
+| `trackSessions` | `true` | `boolean` | - |
+| `trackWebVitals` | `false` | `boolean` | - |
+| `trackErrors` | `false` | `boolean` | - |
+| `trackOutgoingLinks` | `false` | `boolean` | - |
+| `trackScrollDepth` | `false` | `boolean` | - |
+| `trackEngagement` | `false` | `boolean` | - |
+| `enableBatching` | `false` | `boolean` | - |
+| `batchSize` | `10` | `number` | 1-50 |
+| `batchTimeout` | `2000` | `number` | 100-30000ms |
+| `samplingRate` | `1.0` | `number` | 0.0-1.0 |
+| `enableRetries` | `true` | `boolean` | - |
+| `maxRetries` | `3` | `number` | 0-10 |
+| `initialRetryDelay` | `500` | `number` | 50-10000ms |
+| `apiUrl` | `https://basket.databuddy.cc` | `string` | Valid URL |
+| `scriptUrl` | `https://app.databuddy.cc/databuddy.js` | `string` | Valid URL |
+
+### Environment Variables
+
+For React/Next.js projects, set up environment variables:
+
+```bash title=".env.local"
+# Required
+NEXT_PUBLIC_DATABUDDY_CLIENT_ID=your-client-id-here
+
+# Optional - only for self-hosted instances
+NEXT_PUBLIC_DATABUDDY_API_URL=https://your-api.example.com
+```
+
+<Callout type="warn">
+**Security**: Never include `clientSecret` in client-side code. It's only for server-side usage.
+</Callout>
+
+## 🔍 Debugging & Testing
+
+### Development Mode
+
+```tsx title="Disable tracking in development"
+<Databuddy
+  clientId={process.env.NEXT_PUBLIC_DATABUDDY_CLIENT_ID!}
+  disabled={process.env.NODE_ENV === 'development'}
+  // ... other props
+/>
+```
+
+### Browser Console Testing
+
+Test custom events in your browser console:
+
+```javascript
+// Test if SDK is loaded
+console.log(window.databuddy ? 'SDK loaded ✅' : 'SDK not loaded ❌');
+
+// Send test event
+db.track('test_event', { source: 'console', timestamp: Date.now() });
+
+// Check network requests
+// Look for requests to basket.databuddy.cc in Network tab
+```
+
+### Common Issues
+
+<Accordions>
+<Accordion title="Events Not Appearing">
+
+1. **Check Client ID**: Verify it matches your dashboard
+2. **Check Network Tab**: Look for requests to `basket.databuddy.cc`
+3. **Verify Domain**: Ensure your domain is verified in the dashboard
+4. **Check Disabled State**: Make sure `disabled` is not `true`
+5. **Test Manually**: Try `db.track('test', {})` in console
+
+</Accordion>
+
+<Accordion title="TypeScript Errors">
+
+1. **Install SDK**: Make sure `@databuddy/sdk` is installed
+2. **TypeScript Version**: Requires TypeScript 4.5+
+3. **Global Types**: Add global declarations if needed:
+
+```tsx
+declare global {
+  interface Window {
+    databuddy?: {
+      track: (event: string, properties?: Record<string, any>) => void;
+    };
+  }
+}
+```
+
+</Accordion>
+
+<Accordion title="Script Loading Issues">
+
+1. **Check URL**: Verify `https://app.databuddy.cc/databuddy.js`
+2. **Content Security Policy**: Add CSP rules if needed:
+   ```
+   script-src 'self' https://app.databuddy.cc;
+   connect-src 'self' https://basket.databuddy.cc;
+   ```
+3. **Ad Blockers**: Some ad blockers may block analytics scripts
+
+</Accordion>
+</Accordions>
+
+## 🔗 Related Documentation
+
+<Cards>
+  <Card title="Getting Started" href="/getting-started" icon="🚀">
+    Quick setup guide and basic configuration
+  </Card>
+  <Card title="Advanced Tracking" href="/Setup/tracking" icon="⚙️">
+    Custom events, performance monitoring, and advanced features
+  </Card>
+  <Card title="Dashboard Guide" href="/dashboard" icon="📊">
+    Navigate your analytics dashboard and understand metrics
+  </Card>
+  <Card title="Security & Privacy" href="/security" icon="🔒">
+    Privacy settings, GDPR compliance, and data handling
+  </Card>
+</Cards>

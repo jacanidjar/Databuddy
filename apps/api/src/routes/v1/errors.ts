@@ -1,13 +1,13 @@
-import { createSqlBuilder } from "../builders/analytics";
+import { createSqlBuilder } from "../../builders/analytics";
 
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import type { AppVariables } from "../types";
-import { timezoneQuerySchema } from "../middleware/timezone";
+import type { AppVariables } from "../../types";
+import { timezoneQuerySchema } from "../../middleware/timezone";
 import { z } from "zod";
-import { logger } from "../lib/logger";
+import { logger } from "../../lib/logger";
 import { chQuery } from "@databuddy/db";
-import { parseUserAgentDetails } from "../utils/ua";
+import { parseUserAgentDetails } from "../../utils/ua";
 
 export const errorsRouter = new Hono<{ Variables: AppVariables }>();
 

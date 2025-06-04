@@ -8,9 +8,9 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
 import { chQuery } from '@databuddy/db';
-import type { AppVariables } from '../types';
-import { authMiddleware } from '../middleware/auth';
-import { timezoneMiddleware, useTimezone, timezoneQuerySchema } from '../middleware/timezone';
+import type { AppVariables } from '../../types';
+import { authMiddleware } from '../../middleware/auth';
+import { timezoneMiddleware, useTimezone, timezoneQuerySchema } from '../../middleware/timezone';
 import { 
   formatTime, 
   formatPerformanceMetric, 
@@ -18,15 +18,15 @@ import {
   formatCleanPath,
   formatBrowserData,
   formatDeviceData
-} from '../utils/analytics-helpers';
-import { adjustDateRangeForTimezone } from '../utils/timezone';
+} from '../../utils/analytics-helpers';
+import { adjustDateRangeForTimezone } from '../../utils/timezone';
 import { 
   processEventsForTimezone, 
   filterEventsForTimezone,
   processSummaryForTimezone,
   adjustTodayDataForTimezone,
   type AnalyticsEntry
-} from '../utils/analytics-timezone';
+} from '../../utils/analytics-timezone';
 import {
   createSummaryBuilder, 
   createTodayBuilder, 
@@ -43,15 +43,15 @@ import {
   createTimezonesBuilder,
   createPerformanceBuilder,
   parseReferrers
-} from '../builders/analytics';
+} from '../../builders/analytics';
 import {
   mergeTodayDataIntoSummary,
   updateEventsWithTodayData,
   mergeTodayIntoTrends
-} from '../utils/today-data-processor';
-import { logger } from '../lib/logger';
-import { websiteAuthHook } from '../middleware/website';
-import { isInternalReferrer } from '../utils/referrer';
+} from '../../utils/today-data-processor';
+import { logger } from '../../lib/logger';
+import { websiteAuthHook } from '../../middleware/website';
+import { isInternalReferrer } from '../../utils/referrer';
 
 // Define types for data processing
 interface ReferrerData {

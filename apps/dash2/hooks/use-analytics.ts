@@ -403,7 +403,7 @@ async function fetchAnalyticsData<T extends ApiResponse>(
   signal?: AbortSignal
 ): Promise<T> {
   const params = buildParams(websiteId, dateRange, additionalParams);
-  const url = `${API_BASE_URL}${endpoint}?${params}`;
+  const url = `${API_BASE_URL}/v1${endpoint}?${params}`;
   
   const response = await fetch(url, {
     credentials: 'include',
