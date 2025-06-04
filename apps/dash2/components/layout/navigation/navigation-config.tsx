@@ -8,7 +8,8 @@ import {
   Link as LinkIcon,
   Map as MapIcon,
   MessageCircle,
-  Home
+  Home,
+  Bot
 } from "lucide-react";
 import type { NavigationSection } from "./types";
 
@@ -41,4 +42,10 @@ export const websiteNavigation: NavigationSection[] = [
       { name: "Map", icon: MapIcon, href: "/map", highlight: true },
     ],
   },
+  {
+    title: "Early Access",
+    items: [
+      { name: "Assistant", icon: Bot, href: "/assistant", highlight: true, alpha: true },
+    ],
+  }
 ]; 

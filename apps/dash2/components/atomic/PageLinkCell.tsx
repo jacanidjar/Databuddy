@@ -3,7 +3,7 @@
 import type React from "react";
 import { ExternalLinkIcon, FileTextIcon } from "lucide-react"; // Using FileTextIcon as a generic page icon
 import { cn } from "@/lib/utils";
-import { formatDomainLink } from "@/app/(main)/websites/[id]/components/utils/analytics-helpers"; // Adjusted path
+import { formatDomainLink } from "@/app/(main)/websites/[id]/_components/utils/analytics-helpers"; // Adjusted path
 
 export interface PageLinkCellData {
   path: string;

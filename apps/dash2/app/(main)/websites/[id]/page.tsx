@@ -25,38 +25,38 @@ import {
   setDateRangeAndAdjustGranularityAtom,
   formattedDateRangeAtom,
 } from "@/stores/jotai/filterAtoms";
-import { EmptyState } from "./components/utils/ui-components";
+import { EmptyState } from "./_components/utils/ui-components";
 
-import type { FullTabProps, WebsiteDataTabProps } from "./components/utils/types";
+import type { FullTabProps, WebsiteDataTabProps } from "./_components/utils/types";
 
 type TabId = 'overview' | 'audience' | 'content' | 'performance' | 'settings' | 'errors' | 'tracking-setup';
 
 const WebsiteOverviewTab = dynamic(
-  () => import("./components/tabs/overview-tab").then(mod => ({ default: mod.WebsiteOverviewTab })),
+  () => import("./_components/tabs/overview-tab").then(mod => ({ default: mod.WebsiteOverviewTab })),
   { loading: () => <TabLoadingSkeleton />, ssr: false }
 );
 const WebsiteAudienceTab = dynamic(
-  () => import("./components/tabs/audience-tab").then(mod => ({ default: mod.WebsiteAudienceTab })),
+  () => import("./_components/tabs/audience-tab").then(mod => ({ default: mod.WebsiteAudienceTab })),
   { loading: () => <TabLoadingSkeleton />, ssr: false }
 );
 const WebsiteContentTab = dynamic(
-  () => import("./components/tabs/content-tab").then(mod => ({ default: mod.WebsiteContentTab })),
+  () => import("./_components/tabs/content-tab").then(mod => ({ default: mod.WebsiteContentTab })),
   { loading: () => <TabLoadingSkeleton />, ssr: false }
 );
 const WebsitePerformanceTab = dynamic(
-  () => import("./components/tabs/performance-tab").then(mod => ({ default: mod.WebsitePerformanceTab })),
+  () => import("./_components/tabs/performance-tab").then(mod => ({ default: mod.WebsitePerformanceTab })),
   { loading: () => <TabLoadingSkeleton />, ssr: false }
 );
 const WebsiteSettingsTab = dynamic(
-  () => import("./components/tabs/settings-tab").then(mod => ({ default: mod.WebsiteSettingsTab })),
+  () => import("./_components/tabs/settings-tab").then(mod => ({ default: mod.WebsiteSettingsTab })),
   { loading: () => <TabLoadingSkeleton />, ssr: false }
 );
 const WebsiteErrorsTab = dynamic(
-  () => import("./components/tabs/errors-tab").then(mod => ({ default: mod.WebsiteErrorsTab })),
+  () => import("./_components/tabs/errors-tab").then(mod => ({ default: mod.WebsiteErrorsTab })),
   { loading: () => <TabLoadingSkeleton />, ssr: false }
 );
 const WebsiteTrackingSetupTab = dynamic(
-  () => import("./components/tabs/tracking-setup-tab").then(mod => ({ default: mod.WebsiteTrackingSetupTab })),
+  () => import("./_components/tabs/tracking-setup-tab").then(mod => ({ default: mod.WebsiteTrackingSetupTab })),
   { loading: () => <TabLoadingSkeleton />, ssr: false }
 );
 
@@ -104,7 +104,7 @@ function WebsiteDetailsPage() {
     }
   }, [setDateRangeAction]);
 
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading, isError, error, refetch: refetchWebsiteData } = useQuery({
     queryKey: ["website", id],
     queryFn: async () => {
       const result = await getWebsiteById(id as string);
@@ -155,7 +155,8 @@ function WebsiteDetailsPage() {
     const settingsProps: WebsiteDataTabProps = {
       websiteId: id as string,
       dateRange: memoizedDateRangeForTabs,
-      websiteData: data
+      websiteData: data,
+      onWebsiteUpdated: refetchWebsiteData
     };
 
     const tabProps: FullTabProps = {
@@ -182,7 +183,7 @@ function WebsiteDetailsPage() {
         {getTabComponent()}
       </Suspense>
     );
-  }, [activeTab, id, memoizedDateRangeForTabs, data, isRefreshing]);
+  }, [activeTab, id, memoizedDateRangeForTabs, data, isRefreshing, refetchWebsiteData]);
 
   if (isLoading || isTrackingSetup === null) {
     return <TabLoadingSkeleton />;

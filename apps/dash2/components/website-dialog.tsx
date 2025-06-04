@@ -69,6 +69,7 @@ interface WebsiteDialogProps {
     domainId?: string;
   } | null;
   onCreationSuccess?: () => void;
+  onUpdateSuccess?: () => void;
 }
 
 export function WebsiteDialog({
@@ -79,6 +80,7 @@ export function WebsiteDialog({
   trigger,
   initialValues = null,
   onCreationSuccess,
+  onUpdateSuccess,
 }: WebsiteDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditing = !!website;
@@ -146,6 +148,9 @@ export function WebsiteDialog({
           toast.error(result.error);
         } else {
           toast.success("Website updated successfully");
+          if (onUpdateSuccess) {
+            onUpdateSuccess();
+          }
           handleClose();
         }
       }

@@ -270,21 +270,20 @@ analyticsRouter.get('/summary', zValidator('query', analyticsQuerySchema), async
       website.domain
     );
 
-    // Group referrers by domain and aggregate metrics
     const groupedReferrers = new Map();
     
     for (const ref of allProcessedReferrers) {
-      if (ref.referrer === 'direct') continue; // Skip direct traffic
+      if (ref.referrer === 'direct') continue;
       
-      const domain = ref.domain || '';
-      if (!domain) continue;
+      const name = ref.name || ref.domain || '';
+      if (!name) continue;
       
-      if (groupedReferrers.has(domain)) {
-        const existing = groupedReferrers.get(domain);
+      if (groupedReferrers.has(name)) {
+        const existing = groupedReferrers.get(name);
         existing.visitors += ref.visitors;
         existing.pageviews += ref.pageviews;
       } else {
-        groupedReferrers.set(domain, {
+        groupedReferrers.set(name, {
           referrer: ref.referrer,
           visitors: ref.visitors,
           pageviews: ref.pageviews,

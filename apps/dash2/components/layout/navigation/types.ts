@@ -7,6 +7,7 @@ export interface NavigationItem {
   rootLevel?: boolean;
   external?: boolean;
   highlight?: boolean;
+  alpha?: boolean;
 }
 
 export interface NavigationSection {

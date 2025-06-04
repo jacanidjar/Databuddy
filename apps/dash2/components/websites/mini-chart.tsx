@@ -32,7 +32,7 @@ export function MiniChart({
   } = useMiniChartData(websiteId, { 
     enabled: !data && !externalLoading && !externalError
   });
-  
+
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   

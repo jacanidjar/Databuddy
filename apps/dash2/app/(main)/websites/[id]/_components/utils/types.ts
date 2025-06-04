@@ -20,6 +20,7 @@ export interface RefreshableTabProps extends BaseTabProps {
 // Tab props with website data
 export interface WebsiteDataTabProps extends BaseTabProps {
   websiteData: any;
+  onWebsiteUpdated?: () => void;
 }
 
 // Combined tab props that include all features
@@ -49,4 +50,24 @@ export interface TableColumn {
   header: string;
   cell?: (value: any, row?: any) => React.ReactNode;
   className?: string;
+}
+
+// Settings-related types
+export interface WebsiteFormData {
+  name?: string;
+  domain?: string;
+}
+
+export interface TrackingOptions {
+  trackErrors: boolean;
+  trackPerformance: boolean;
+  trackWebVitals: boolean;
+  trackOutgoingLinks: boolean;
+  trackScreenViews: boolean;
+  trackSessions: boolean;
+  trackInteractions: boolean;
+  samplingRate: number;
+  enableRetries: boolean;
+  maxRetries: number;
+  initialRetryDelay: number;
 } 

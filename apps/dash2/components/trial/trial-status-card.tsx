@@ -6,7 +6,7 @@ import Link from "next/link";
 export function TrialStatusCard() {
 
   return (
-    <Card className="mb-3 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 dark:border-amber-800/30 relative overflow-hidden">
+    <Card className="mb-3 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 dark:border-amber-800/30 relative overflow-hidden rounded">
       {/* Background decoration */}
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-100/30 to-transparent dark:from-transparent dark:via-amber-400/5 dark:to-transparent" />
       

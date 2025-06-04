@@ -29,6 +29,7 @@ export function NavigationSection({ title, items, pathname, currentWebsiteId }: 
               name={item.name}
               icon={item.icon}
               href={item.href}
+              alpha={item.alpha}
               isActive={isActive}
               isRootLevel={!!item.rootLevel}
               isExternal={item.external}

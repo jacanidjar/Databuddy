@@ -10,7 +10,7 @@ import {
   TechnologyIcon,
   PercentageBadge,
   type TechnologyTableEntry,
-} from "../components/utils/technology-helpers";
+} from "../_components/utils/technology-helpers";
 import type { ColumnDef, CellContext } from "@tanstack/react-table";
 
 // Mock Website type. Replace with your actual Website type import.

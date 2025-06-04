@@ -1242,7 +1242,6 @@
             const clientId = getClientId(config);
             
             if (!clientId) return;
-            
             window.databuddy = new d({
                 ...config,
                 clientId

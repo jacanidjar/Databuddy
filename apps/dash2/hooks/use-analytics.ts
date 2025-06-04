@@ -429,17 +429,17 @@ const defaultQueryOptions = {
   gcTime: 30 * 60 * 1000, // 30 minutes
   refetchOnWindowFocus: false,
   refetchOnMount: false,
+  refetchInterval: 10 * 60 * 1000, // Background refetch every 10 minutes
   retry: (failureCount: number, error: Error) => {
     if (error instanceof DOMException && error.name === 'AbortError') {
       return false;
     }
     return failureCount < 2;
-  }
+  },
+  networkMode: 'online' as const,
+  refetchIntervalInBackground: false,
 };
 
-/**
- * Unified analytics hook for all data
- */
 export function useWebsiteAnalytics(websiteId: string, dateRange: DateRange) {
   const fetchData = useCallback(async ({ signal }: { signal?: AbortSignal }) => {
     return fetchAnalyticsData<SummaryResponse>('/analytics/summary', websiteId, dateRange, undefined, signal);
@@ -448,7 +448,11 @@ export function useWebsiteAnalytics(websiteId: string, dateRange: DateRange) {
   const summaryQuery = useQuery({
     queryKey: ['analytics', 'summary', websiteId, dateRange],
     queryFn: fetchData,
-    ...defaultQueryOptions
+    ...defaultQueryOptions,
+    // Prefetch next likely date ranges
+    meta: {
+      prefetchRelated: true,
+    },
   });
   
   return {

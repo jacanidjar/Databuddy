@@ -18,6 +18,7 @@ export function NavigationItem({
   name,
   icon: Icon,
   href,
+  alpha,
   isActive,
   isRootLevel,
   isExternal,
@@ -58,7 +59,14 @@ export function NavigationItem({
         <Icon className="h-4 w-4" />
       </span>
       <span className="flex-grow truncate">{name}</span>
-      {isExternal && <ExternalLink className="h-3 w-3 ml-1 text-muted-foreground" />}
+      <div className="flex items-center gap-1">
+        {alpha && (
+          <span className="inline-flex items-center rounded-full bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 text-xs font-medium text-orange-800 dark:text-orange-300 border border-orange-200 dark:border-orange-800/50">
+            Alpha
+          </span>
+        )}
+        {isExternal && <ExternalLink className="h-3 w-3 text-muted-foreground" />}
+      </div>
     </LinkComponent>
   );
 } 

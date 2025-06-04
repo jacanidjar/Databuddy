@@ -1,67 +1,39 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import type { WebsiteDataTabProps } from "../utils/types";
+import type { WebsiteDataTabProps, TrackingOptions } from "../utils/types";
 import { 
   Check, 
   Clipboard, 
   Code, 
   ExternalLink, 
-  Globe, 
   Info, 
-  Laptop, 
-  Zap, 
-  ChevronRight, 
   AlertCircle, 
   FileCode, 
   BookOpen, 
   Activity,
-  Rocket,
-  Target,
-  BarChart,
-  Users,
-  MousePointer
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-interface TrackingOptions {
-  trackErrors: boolean;
-  trackPerformance: boolean;
-  trackWebVitals: boolean;
-  trackOutgoingLinks: boolean;
-  trackScreenViews: boolean;
-  trackSessions: boolean;
-  trackInteractions: boolean;
-  samplingRate: number;
-  enableRetries: boolean;
-  maxRetries: number;
-  initialRetryDelay: number;
-}
 
-// Define the library defaults
-const LIBRARY_DEFAULTS: TrackingOptions = {
-  trackErrors: false,
-  trackPerformance: true,
-  trackWebVitals: false,
-  trackOutgoingLinks: false,
-  trackScreenViews: true,
-  trackSessions: true,
-  trackInteractions: false,
-  samplingRate: 1.0,
-  enableRetries: true,
-  maxRetries: 3,
-  initialRetryDelay: 500
-};
+
+// Import utilities and types
+import { RECOMMENDED_DEFAULTS } from "../utils/tracking-defaults";
+import { 
+  generateScriptTag, 
+  generateNpmCode, 
+  generateNpmComponentCode 
+} from "../utils/code-generators";
+import { 
+  toggleTrackingOption
+} from "../utils/tracking-helpers";
 
 export function WebsiteTrackingSetupTab({
   websiteId,
@@ -69,66 +41,10 @@ export function WebsiteTrackingSetupTab({
 }: WebsiteDataTabProps) {
   const [copied, setCopied] = useState(false);
   const [installMethod, setInstallMethod] = useState<"script" | "npm">("script");
-  const [trackingOptions, setTrackingOptions] = useState<TrackingOptions>({...LIBRARY_DEFAULTS});
+  const [trackingOptions, setTrackingOptions] = useState<TrackingOptions>(RECOMMENDED_DEFAULTS);
   
-  // Generate tracking code based on selected options
-  const generateScriptTag = useCallback(() => {
-    const isLocalhost = process.env.NODE_ENV === 'development';
-    const scriptUrl = isLocalhost ? "http://localhost:3000/databuddy.js" : "https://app.databuddy.cc/databuddy.js";
-    const apiUrl = isLocalhost ? "http://localhost:4000" : "https://basket.databuddy.cc";
-    
-    // Only include options that differ from defaults
-    const options = Object.entries(trackingOptions)
-      .filter(([key, value]) => value !== LIBRARY_DEFAULTS[key as keyof TrackingOptions])
-      .map(([key, value]) => `data-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}="${value}"`)
-      .join(" ");
-    
-    return `<script
-  src="${scriptUrl}"
-  data-client-id="${websiteId}"
-  data-api-url="${apiUrl}"
-  ${options}
-  defer
-></script>`;
-  }, [trackingOptions, websiteId]);
-  
-  // Generate NPM init code
-  const generateNpmCode = useCallback(() => {
-    const propsString = Object.entries(trackingOptions)
-      .map(([key, value]) => {
-        if (typeof value === 'boolean') {
-          return value ? `  ${key}` : `  ${key}={false}`;
-        }
-        if (typeof value === 'string') {
-          return `  ${key}="${value}"`;
-        }
-        return `  ${key}={${value}}`;
-      })
-      .join("\n");
-
-    return `import { Databuddy } from '@databuddy/sdk';
-
-function AppLayout({ children }) {
-  return (
-    <>
-      {children}
-      <Databuddy
-        clientId="${websiteId}"
-${propsString}
-      />
-    </>
-  );
-}`;
-  }, [trackingOptions, websiteId]);
-  
-  const [trackingCode, setTrackingCode] = useState(generateScriptTag());
-  const [npmCode, setNpmCode] = useState(generateNpmCode());
-  
-  // Update code when options change
-  useEffect(() => {
-    setTrackingCode(generateScriptTag());
-    setNpmCode(generateNpmCode());
-  }, [generateScriptTag, generateNpmCode]);
+  const trackingCode = generateScriptTag(websiteId, trackingOptions);
+  const npmCode = generateNpmCode(websiteId, trackingOptions);
   
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -137,12 +53,50 @@ ${propsString}
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const toggleOption = (option: keyof TrackingOptions) => {
-    setTrackingOptions(prev => ({
-      ...prev,
-      [option]: !prev[option]
-    }));
+  const handleToggleOption = (option: keyof TrackingOptions) => {
+    setTrackingOptions(prev => toggleTrackingOption(prev, option));
   };
+
+  // Determine language based on code content
+  const getLanguage = (code: string) => {
+    if (code.includes('npm install') || code.includes('yarn add') || code.includes('pnpm add') || code.includes('bun add')) return 'bash';
+    if (code.includes('<script')) return 'html';
+    if (code.includes('import') && code.includes('from')) return 'jsx';
+    return 'javascript';
+  };
+
+  const CodeBlock = ({ code, description, onCopy }: { code: string; description?: string; onCopy: () => void }) => (
+    <div className="space-y-2">
+      {description && (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      )}
+      <div className="relative">
+        <div className="rounded-md overflow-hidden border">
+          <SyntaxHighlighter
+            language={getLanguage(code)}
+            style={oneDark}
+            customStyle={{
+              margin: 0,
+              fontSize: '12px',
+              lineHeight: '1.5',
+              padding: '12px',
+            }}
+            showLineNumbers={false}
+          >
+            {code}
+          </SyntaxHighlighter>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-2 right-2 h-7 w-7 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
+          onClick={onCopy}
+        >
+          {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Clipboard className="h-3.5 w-3.5" />}
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -184,65 +138,68 @@ ${propsString}
             </TabsList>
             
             <TabsContent value="script" className="space-y-4">
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Add this script to the <code>&lt;head&gt;</code> section of your HTML:
-                </p>
-                <div className="relative">
-                  <pre className="bg-muted p-3 rounded text-sm overflow-x-auto">
-                    <code>{trackingCode}</code>
-                  </pre>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={() => handleCopyCode(trackingCode)}
-                  >
-                    {copied ? <Check className="w-4 h-4" /> : <Clipboard className="w-4 h-4" />}
-                    {copied ? "Copied!" : "Copy"}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Data will appear within a few minutes after installation.
-                </p>
-              </div>
+              <CodeBlock 
+                code={trackingCode}
+                description="Add this script to the <head> section of your HTML:"
+                onCopy={() => handleCopyCode(trackingCode)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Data will appear within a few minutes after installation.
+              </p>
             </TabsContent>
             
             <TabsContent value="npm" className="space-y-4">
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">Install the package:</p>
-                <div className="relative">
-                  <pre className="bg-muted p-3 rounded text-sm overflow-x-auto">
-                    <code>npm install @databuddy/sdk</code>
-                  </pre>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={() => handleCopyCode("npm install @databuddy/sdk")}
-                  >
-                    {copied ? <Check className="w-4 h-4" /> : <Clipboard className="w-4 h-4" />}
-                    {copied ? "Copied!" : "Copy"}
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">Add to your app:</p>
-                <div className="relative">
-                  <pre className="bg-muted p-3 rounded text-sm overflow-x-auto">
-                    <code>{npmCode}</code>
-                  </pre>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={() => handleCopyCode(npmCode)}
-                  >
-                    {copied ? <Check className="w-4 h-4" /> : <Clipboard className="w-4 h-4" />}
-                    {copied ? "Copied!" : "Copy"}
-                  </Button>
-                </div>
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground mb-3">
+                  Install the DataBuddy package using your preferred package manager:
+                </p>
+                
+                <Tabs defaultValue="npm" className="w-full">
+                  <TabsList className="mb-2 grid grid-cols-4 h-8">
+                    <TabsTrigger value="npm" className="text-xs">npm</TabsTrigger>
+                    <TabsTrigger value="yarn" className="text-xs">yarn</TabsTrigger>
+                    <TabsTrigger value="pnpm" className="text-xs">pnpm</TabsTrigger>
+                    <TabsTrigger value="bun" className="text-xs">bun</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="npm" className="mt-0">
+                    <CodeBlock 
+                      code="npm install @databuddy/sdk"
+                      description=""
+                      onCopy={() => handleCopyCode("npm install @databuddy/sdk")}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="yarn" className="mt-0">
+                    <CodeBlock 
+                      code="yarn add @databuddy/sdk"
+                      description=""
+                      onCopy={() => handleCopyCode("yarn add @databuddy/sdk")}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="pnpm" className="mt-0">
+                    <CodeBlock 
+                      code="pnpm add @databuddy/sdk"
+                      description=""
+                      onCopy={() => handleCopyCode("pnpm add @databuddy/sdk")}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="bun" className="mt-0">
+                    <CodeBlock 
+                      code="bun add @databuddy/sdk"
+                      description=""
+                      onCopy={() => handleCopyCode("bun add @databuddy/sdk")}
+                    />
+                  </TabsContent>
+                </Tabs>
+                
+                <CodeBlock 
+                  code={npmCode}
+                  description="Then initialize the tracker in your code:"
+                  onCopy={() => handleCopyCode(generateNpmComponentCode(websiteId, trackingOptions))}
+                />
               </div>
             </TabsContent>
           </Tabs>
@@ -273,7 +230,7 @@ ${propsString}
                   <Switch
                     id="trackScreenViews"
                     checked={trackingOptions.trackScreenViews}
-                    onCheckedChange={() => toggleOption('trackScreenViews')}
+                    onCheckedChange={() => handleToggleOption('trackScreenViews')}
                   />
                 </div>
                 <div className="flex items-center justify-between py-2">
@@ -284,7 +241,7 @@ ${propsString}
                   <Switch
                     id="trackSessions"
                     checked={trackingOptions.trackSessions}
-                    onCheckedChange={() => toggleOption('trackSessions')}
+                    onCheckedChange={() => handleToggleOption('trackSessions')}
                   />
                 </div>
                 <div className="flex items-center justify-between py-2">
@@ -295,7 +252,7 @@ ${propsString}
                   <Switch
                     id="trackInteractions"
                     checked={trackingOptions.trackInteractions}
-                    onCheckedChange={() => toggleOption('trackInteractions')}
+                    onCheckedChange={() => handleToggleOption('trackInteractions')}
                   />
                 </div>
               </div>
@@ -312,7 +269,7 @@ ${propsString}
                   <Switch
                     id="trackPerformance"
                     checked={trackingOptions.trackPerformance}
-                    onCheckedChange={() => toggleOption('trackPerformance')}
+                    onCheckedChange={() => handleToggleOption('trackPerformance')}
                   />
                 </div>
                 <div className="flex items-center justify-between py-2">
@@ -323,7 +280,7 @@ ${propsString}
                   <Switch
                     id="trackWebVitals"
                     checked={trackingOptions.trackWebVitals}
-                    onCheckedChange={() => toggleOption('trackWebVitals')}
+                    onCheckedChange={() => handleToggleOption('trackWebVitals')}
                   />
                 </div>
                 <div className="flex items-center justify-between py-2">
@@ -334,7 +291,7 @@ ${propsString}
                   <Switch
                     id="trackErrors"
                     checked={trackingOptions.trackErrors}
-                    onCheckedChange={() => toggleOption('trackErrors')}
+                    onCheckedChange={() => handleToggleOption('trackErrors')}
                   />
                 </div>
               </div>
