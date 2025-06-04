@@ -7,7 +7,6 @@ import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getWebsiteById } from "@/app/actions/websites";
 
-// Lazy load the main AI assistant component
 const AIAssistantMain = dynamic(
   () => import("./components/ai-assistant-main"),
   { 
@@ -18,41 +17,35 @@ const AIAssistantMain = dynamic(
 
 function AIAssistantLoadingSkeleton() {
   return (
-    <div className="h-[calc(100vh-200px)] grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="flex flex-1 p-3 gap-3 overflow-hidden">
       {/* Chat Section Skeleton */}
-      <div className="rounded-lg border bg-background shadow-sm flex flex-col h-full">
-        <div className="p-6 border-b">
-          <Skeleton className="h-6 w-48 mb-2" />
-          <Skeleton className="h-4 w-64" />
+      <div className="flex-[2_2_0%] rounded-lg border bg-background shadow-sm flex flex-col overflow-hidden">
+        <div className="p-3 border-b flex-shrink-0">
+          <Skeleton className="h-5 w-32 mb-1" />
+          <Skeleton className="h-3 w-48" />
         </div>
-        <div className="flex-1 p-6 space-y-4">
-          <div className="flex gap-3">
-            <Skeleton className="w-8 h-8 rounded-full" />
-            <Skeleton className="h-20 w-3/4 rounded-lg" />
+        <div className="flex-1 p-3 space-y-3 overflow-y-auto">
+          <div className="flex gap-2">
+            <Skeleton className="w-8 h-8 rounded-full flex-shrink-0" />
+            <Skeleton className="h-16 w-3/4 rounded-lg" />
           </div>
-          <div className="flex gap-3 ml-auto flex-row-reverse">
-            <Skeleton className="w-8 h-8 rounded-full" />
-            <Skeleton className="h-12 w-1/2 rounded-lg" />
+          <div className="flex gap-2 ml-auto flex-row-reverse">
+            <Skeleton className="w-8 h-8 rounded-full flex-shrink-0" />
+            <Skeleton className="h-10 w-1/2 rounded-lg" />
           </div>
         </div>
-        <div className="p-6 border-t">
-          <Skeleton className="h-10 w-full rounded-md" />
+        <div className="p-3 border-t flex-shrink-0">
+          <Skeleton className="h-9 w-full rounded-md" />
         </div>
       </div>
 
       {/* Visualization Section Skeleton */}
-      <div className="rounded-lg border bg-background shadow-sm flex flex-col h-full">
-        <div className="p-6 border-b">
-          <Skeleton className="h-6 w-40 mb-2" />
-          <Skeleton className="h-4 w-56" />
+      <div className="flex-[3_3_0%] rounded-lg border bg-background shadow-sm flex flex-col overflow-hidden">
+        <div className="p-3 border-b flex-shrink-0">
+          <Skeleton className="h-5 w-32 mb-1" />
         </div>
-        <div className="flex-1 p-6">
-          <div className="flex gap-2 mb-6">
-            <Skeleton className="h-8 w-16" />
-            <Skeleton className="h-8 w-16" />
-            <Skeleton className="h-8 w-16" />
-          </div>
-          <Skeleton className="h-64 w-full rounded-lg" />
+        <div className="flex-1 p-3">
+          <Skeleton className="h-full w-full rounded-lg" />
         </div>
       </div>
     </div>
@@ -62,7 +55,6 @@ function AIAssistantLoadingSkeleton() {
 export default function AssistantPage() {
   const { id } = useParams();
   
-  // Fetch website data
   const { data: websiteData, isLoading } = useQuery({
     queryKey: ["website", id],
     queryFn: async () => {
@@ -76,23 +68,27 @@ export default function AssistantPage() {
     gcTime: 10 * 60 * 1000,
   });
 
-  if (isLoading || !websiteData) {
-    return <AIAssistantLoadingSkeleton />;
-  }
-
+  // This div structure is crucial for correct layout and scrolling
   return (
-    <div className="p-3 sm:p-4 max-w-[1600px] mx-auto">
-      <Suspense fallback={<AIAssistantLoadingSkeleton />}>
-        <AIAssistantMain 
-          websiteId={id as string}
-          websiteData={websiteData}
-          dateRange={{
-            start_date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-            end_date: new Date().toISOString(),
-            granularity: 'daily'
-          }}
-        />
-      </Suspense>
+    <div className="fixed inset-0 pt-16 md:pl-72 flex flex-col bg-gradient-to-br from-background to-muted/20">
+      {/* This inner div will handle the actual content area and padding */}
+      <div className="flex flex-1 p-3 overflow-hidden">
+        {isLoading || !websiteData ? (
+          <AIAssistantLoadingSkeleton />
+        ) : (
+          <Suspense fallback={<AIAssistantLoadingSkeleton />}>
+            <AIAssistantMain 
+              websiteId={id as string}
+              websiteData={websiteData}
+              dateRange={{
+                start_date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+                end_date: new Date().toISOString(),
+                granularity: 'daily'
+              }}
+            />
+          </Suspense>
+        )}
+      </div>
     </div>
   );
 } 

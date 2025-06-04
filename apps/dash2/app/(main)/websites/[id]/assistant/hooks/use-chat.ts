@@ -1,15 +1,26 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { Message } from "../types/message";
-import { AIService } from "../utils/ai-service";
+import { processAIRequestStreaming, type StreamingUpdate } from '../actions'; 
+
+function generateWelcomeMessage(websiteName?: string): string {
+  const examples = [
+    "Show me page views over the last 7 days",
+    "What are my top traffic sources?", 
+    "Which pages have the highest bounce rate?",
+    "How is my mobile vs desktop traffic?",
+    "Show me traffic by country",
+    "What's my average page load time?"
+  ];
+
+  return `Hello! I'm your analytics AI assistant for ${websiteName || 'your website'}. I can help you understand your data and create visualizations. Try asking me questions like:\n\n${examples.map((prompt: string) => `• "${prompt}"`).join('\n')}`;
+}
 
 export function useChat(websiteId: string, websiteName?: string) {
-  const aiService = AIService.getInstance();
-  
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       type: 'assistant',
-      content: aiService.generateWelcomeMessage(websiteName),
+      content: generateWelcomeMessage(websiteName), 
       timestamp: new Date(),
     }
   ]);
@@ -17,14 +28,20 @@ export function useChat(websiteId: string, websiteName?: string) {
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new messages are added
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      if (scrollAreaRef.current) {
+        const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+        if (scrollContainer) {
+          scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        }
       }
-    }
+    }, 50);
+  }, []);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Need to scroll on message content changes
+  useEffect(() => {
+    scrollToBottom();
   }, [messages.length]);
 
   const sendMessage = useCallback(async (content?: string) => {
@@ -42,36 +59,90 @@ export function useChat(websiteId: string, websiteName?: string) {
     setInputValue("");
     setIsLoading(true);
 
-    try {
-      const aiResponse = await aiService.sendMessage(
-        userMessage.content,
-        websiteId,
-        { previousMessages: messages }
-      );
-      
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: aiResponse.content,
-        timestamp: new Date(),
-        hasVisualization: aiResponse.hasVisualization,
-        chartType: aiResponse.chartType,
-      };
+    const assistantId = (Date.now() + 1).toString();
+    const assistantMessage: Message = {
+      id: assistantId,
+      type: 'assistant',
+      content: "",
+      timestamp: new Date(),
+      hasVisualization: false,
+      thinkingSteps: [],
+    };
 
-      setMessages(prev => [...prev, assistantMessage]);
+    setMessages(prev => [...prev, assistantMessage]);
+
+    try {
+      const updatesAsyncIterable = processAIRequestStreaming({
+        message: userMessage.content,
+        websiteId,
+        context: { previousMessages: messages }
+      });
+      
+      for await (const update of updatesAsyncIterable) {
+        if (update.type === 'thinking') {
+          setMessages(prev => prev.map(msg => 
+            msg.id === assistantId 
+              ? { 
+                  ...msg, 
+                  thinkingSteps: [...(msg.thinkingSteps || []), update.content]
+                }
+              : msg
+          ));
+        } else if (update.type === 'progress') {
+          setMessages(prev => prev.map(msg => 
+            msg.id === assistantId 
+              ? { 
+                  ...msg, 
+                  content: update.content,
+                  hasVisualization: update.data?.hasVisualization || false,
+                  chartType: update.data?.chartType,
+                  data: update.data?.queryData || update.data?.data,
+                }
+              : msg
+          ));
+          scrollToBottom();
+        } else if (update.type === 'complete') {
+          setMessages(prev => prev.map(msg => 
+            msg.id === assistantId 
+              ? { 
+                  ...msg, 
+                  content: update.content,
+                  hasVisualization: update.data?.hasVisualization || false,
+                  chartType: update.data?.chartType,
+                  data: update.data?.data,
+                  debugInfo: update.debugInfo,
+                }
+              : msg
+          ));
+          scrollToBottom();
+          break;
+        } else if (update.type === 'error') {
+          setMessages(prev => prev.map(msg => 
+            msg.id === assistantId 
+              ? { 
+                  ...msg, 
+                  content: update.content,
+                  debugInfo: update.debugInfo,
+                }
+              : msg
+          ));
+          break;
+        }
+      }
     } catch (error) {
       console.error('Failed to get AI response:', error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: "I apologize, but I'm having trouble processing your request right now. Please try again in a moment.",
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => prev.map(msg => 
+        msg.id === assistantId 
+          ? { 
+              ...msg, 
+              content: "I apologize, but I'm having trouble processing your request right now. Please try again in a moment."
+            }
+          : msg
+      ));
     } finally {
       setIsLoading(false);
     }
-  }, [inputValue, isLoading, websiteId, messages, aiService]);
+  }, [inputValue, isLoading, websiteId, messages, scrollToBottom]);
 
   const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -79,6 +150,18 @@ export function useChat(websiteId: string, websiteName?: string) {
       sendMessage();
     }
   }, [sendMessage]);
+
+  const resetChat = useCallback(() => {
+    setMessages([
+      {
+        id: '1',
+        type: 'assistant',
+        content: generateWelcomeMessage(websiteName),
+        timestamp: new Date(),
+      }
+    ]);
+    setInputValue("");
+  }, [websiteName]);
 
   return {
     messages,
@@ -88,5 +171,6 @@ export function useChat(websiteId: string, websiteName?: string) {
     scrollAreaRef,
     sendMessage,
     handleKeyPress,
+    resetChat,
   };
 } 
