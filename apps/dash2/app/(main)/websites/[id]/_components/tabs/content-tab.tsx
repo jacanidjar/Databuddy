@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useCallback } from "react";
 import { FileText, Globe, BarChart, Link2, Users, Clock } from "lucide-react";
-import type { ColumnDef, CellContext } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/analytics/data-table";
 import { useWebsiteAnalytics } from "@/hooks/use-analytics";
 import type { FullTabProps } from "../utils/types";
@@ -11,6 +11,8 @@ import { formatDomainLink } from "../utils/analytics-helpers";
 import { PageLinkCell, type PageLinkCellData } from "@/components/atomic/PageLinkCell";
 import { ReferrerSourceCell, type ReferrerSourceCellData } from "@/components/atomic/ReferrerSourceCell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useTableTabs, type BaseTabItem } from "@/lib/table-tabs";
+import { PercentageBadge } from "../utils/technology-helpers";
 
 interface TopPageEntry {
   path: string;
@@ -37,15 +39,7 @@ interface TopReferrerEntryWithPercent extends TopReferrerEntry {
   percentage: number;
 }
 
-// Helper to create a column with optional cell and meta
-function col<T>(accessorKey: keyof T, header: string, cell?: (info: CellContext<T, unknown>) => React.ReactNode, meta?: object): ColumnDef<T, unknown> {
-  return {
-    accessorKey: accessorKey as string,
-    header,
-    ...(cell && { cell }),
-    ...(meta && { meta }),
-  };
-}
+
 
 export function WebsiteContentTab({
   websiteId,
@@ -88,49 +82,194 @@ export function WebsiteContentTab({
   const isLoading = loading.summary || isRefreshing;
 
   const topPagesColumns = useMemo(() => [
-    col<TopPageEntryWithPercent>('path', 'Page Path', (info) => (
-      <PageLinkCell path={info.getValue() as string} websiteDomain={websiteData?.domain} />
-    )),
-    col<TopPageEntryWithPercent>('pageviews', 'Views'),
-    col<TopPageEntryWithPercent>('visitors', 'Visitors', (info) => (info.getValue() as number | undefined) ?? 'N/A'),
-    col<TopPageEntryWithPercent>('avg_time_on_page_formatted', 'Avg. Time', (info) => (info.getValue() as string | null | undefined) || 'N/A'),
-    col<TopPageEntryWithPercent>('percentage', '% Total Views', (info) => {
-      const value = info.getValue() as number | undefined;
-      return value ? `${value.toFixed(1)}%` : 'N/A';
-    }),
+    {
+      id: 'path',
+      accessorKey: 'path',
+      header: 'Page',
+      cell: (info: any) => (
+        <PageLinkCell 
+          path={info.getValue() as string} 
+          websiteDomain={websiteData?.domain} 
+        />
+      )
+    },
+    {
+      id: 'pageviews',
+      accessorKey: 'pageviews',
+      header: 'Views',
+    },
+    {
+      id: 'visitors',
+      accessorKey: 'visitors',
+      header: 'Visitors',
+    },
+    {
+      id: 'percentage',
+      accessorKey: 'percentage',
+      header: 'Share',
+      cell: (info: any) => {
+        const percentage = info.getValue() as number;
+        return <PercentageBadge percentage={percentage} />;
+      },
+    },
   ], [websiteData?.domain]);
 
-  const topPagesData = useMemo<TopPageEntryWithPercent[]>(() => {
+  const entryPagesColumns = useMemo(() => [
+    {
+      id: 'path',
+      accessorKey: 'path',
+      header: 'Page',
+      cell: (info: any) => (
+        <PageLinkCell 
+          path={info.getValue() as string} 
+          websiteDomain={websiteData?.domain} 
+        />
+      )
+    },
+    {
+      id: 'entries',
+      accessorKey: 'entries',
+      header: 'Entries',
+    },
+    {
+      id: 'visitors',
+      accessorKey: 'visitors',
+      header: 'Visitors',
+    },
+    {
+      id: 'percentage',
+      accessorKey: 'percentage',
+      header: 'Share',
+      cell: (info: any) => {
+        const percentage = info.getValue() as number;
+        return <PercentageBadge percentage={percentage} />;
+      },
+    },
+  ], [websiteData?.domain]);
+
+  const exitPagesColumns = useMemo(() => [
+    {
+      id: 'path',
+      accessorKey: 'path',
+      header: 'Page',
+      cell: (info: any) => (
+        <PageLinkCell 
+          path={info.getValue() as string} 
+          websiteDomain={websiteData?.domain} 
+        />
+      )
+    },
+    {
+      id: 'exits',
+      accessorKey: 'exits',
+      header: 'Exits',
+    },
+    {
+      id: 'visitors',
+      accessorKey: 'visitors',
+      header: 'Visitors',
+    },
+    {
+      id: 'percentage',
+      accessorKey: 'percentage',
+      header: 'Share',
+      cell: (info: any) => {
+        const percentage = info.getValue() as number;
+        return <PercentageBadge percentage={percentage} />;
+      },
+    },
+  ], [websiteData?.domain]);
+
+  // Process top pages with percentage calculations
+  const processedTopPages = useMemo(() => {
     if (!analytics.top_pages?.length) return [];
-    const totalSiteViews = analytics.summary?.pageviews || 1;
-    return analytics.top_pages.map((page: TopPageEntry) => ({
+    
+    const totalPageviews = analytics.top_pages.reduce((sum, page) => sum + (page.pageviews || 0), 0);
+    
+    return analytics.top_pages.map(page => ({
       ...page,
-      percentage: (page.pageviews / totalSiteViews) * 100,
+      percentage: totalPageviews > 0 ? Math.round((page.pageviews / totalPageviews) * 100) : 0
     }));
-  }, [analytics.top_pages, analytics.summary?.pageviews]);
+  }, [analytics.top_pages]);
 
-  const topReferrersColumns = useMemo(() => [
-    col<TopReferrerEntryWithPercent>('name', 'Source', (info) => {
-      const cellData: ReferrerSourceCellData = info.row.original;
-      return <ReferrerSourceCell {...cellData} />;
-    }),
-    col<TopReferrerEntryWithPercent>('type', 'Type', (info) => (info.getValue() as string | undefined) || 'Unknown', { className: 'text-left capitalize' }),
-    col<TopReferrerEntryWithPercent>('visitors', 'Visitors', undefined),
-    col<TopReferrerEntryWithPercent>('pageviews', 'Pageviews', undefined),
-    col<TopReferrerEntryWithPercent>('percentage', '% of Visitors', (info) => {
-      const value = info.getValue() as number | undefined;
-      return value ? `${value.toFixed(1)}%` : 'N/A';
-    }),
-  ], []);
-
-  const topReferrersData = useMemo<TopReferrerEntryWithPercent[]>(() => {
-    if (!analytics.top_referrers?.length) return [];
-    const totalVisitors = analytics.summary?.visitors || analytics.summary?.unique_visitors || 1;
-    return analytics.top_referrers.map((referrer: TopReferrerEntry) => ({
-      ...referrer,
-      percentage: (referrer.visitors / totalVisitors) * 100,
+  // Process entry pages with percentages
+  const processedEntryPages = useMemo(() => {
+    if (!analytics.entry_pages?.length) return [];
+    
+    return analytics.entry_pages.map(page => ({
+      ...page,
+      pageviews: page.entries, // Use entries as pageviews for consistency
+      visitors: page.visitors
     }));
-  }, [analytics.top_referrers, analytics.summary?.visitors, analytics.summary?.unique_visitors]);
+  }, [analytics.entry_pages]);
+
+  // Process exit pages with percentages  
+  const processedExitPages = useMemo(() => {
+    if (!analytics.exit_pages?.length) return [];
+    
+    return analytics.exit_pages.map(page => ({
+      ...page,
+      pageviews: page.exits, // Use exits as pageviews for consistency
+      visitors: page.visitors
+    }));
+  }, [analytics.exit_pages]);
+
+  // Combined pages tabs (top pages, entry pages, exit pages)
+  const pagesTabs = useTableTabs({
+    top_pages: {
+      data: processedTopPages,
+      label: 'Top Pages',
+      primaryField: 'path',
+      primaryHeader: 'Page'
+    },
+    entry_pages: {
+      data: processedEntryPages,
+      label: 'Entry Pages',
+      primaryField: 'path',
+      primaryHeader: 'Page'
+    },
+    exit_pages: {
+      data: processedExitPages,
+      label: 'Exit Pages', 
+      primaryField: 'path',
+      primaryHeader: 'Page'
+    }
+  });
+
+  // Custom cell for referrers (special case)
+  const referrerCustomCell = useCallback((info: any) => {
+    const cellData: ReferrerSourceCellData = info.row.original;
+    return <ReferrerSourceCell {...cellData} />;
+  }, []);
+
+  // Simple tab configuration using utility
+  const referrerTabs = useTableTabs({
+    referrers: {
+      data: analytics.top_referrers || [],
+      label: 'Referrers',
+      primaryField: 'name',
+      primaryHeader: 'Source',
+      customCell: referrerCustomCell
+    },
+    utm_sources: {
+      data: analytics.utm_sources || [],
+      label: 'UTM Sources',
+      primaryField: 'utm_source',
+      primaryHeader: 'Source'
+    },
+    utm_mediums: {
+      data: analytics.utm_mediums || [],
+      label: 'UTM Mediums',
+      primaryField: 'utm_medium',
+      primaryHeader: 'Medium'
+    },
+    utm_campaigns: {
+      data: analytics.utm_campaigns || [],
+      label: 'UTM Campaigns',
+      primaryField: 'utm_campaign',
+      primaryHeader: 'Campaign'
+    }
+  });
 
   if (!isLoading && error?.summary) {
     return (
@@ -145,7 +284,7 @@ export function WebsiteContentTab({
     );
   }
 
-  if (!isLoading && !topPagesData.length && !topReferrersData.length) {
+  if (!isLoading && !processedTopPages.length && !analytics.top_referrers?.length) {
     return (
       <div className="pt-6">
         <EmptyState
@@ -206,25 +345,27 @@ export function WebsiteContentTab({
         </CardContent>
       </Card>
 
-      {topPagesData.length > 0 && (
-        <DataTable
-            data={topPagesData}
-            columns={topPagesColumns}
-            title="Top Pages"
-            description="Most viewed pages on your website."
-            isLoading={isLoading}
-          />
-      )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Pages (Top, Entry, Exit) */}
+        <DataTable 
+          tabs={pagesTabs}
+          title="Pages"
+          description="Page views, entry points, and exit points"
+          isLoading={isLoading}
+          initialPageSize={7}
+          minHeight={280}
+        />
 
-      {topReferrersData.length > 0 && (
-        <DataTable
-            data={topReferrersData}
-            columns={topReferrersColumns}
-            title="Top Referrers"
-            description="Where your website traffic is coming from."
-            isLoading={isLoading}
-          />
-      )}
+        {/* Top Referrers */}
+        <DataTable 
+          tabs={referrerTabs}
+          title="Traffic Sources"
+          description="Sources of your traffic and UTM data"
+          isLoading={isLoading}
+          initialPageSize={7}
+          minHeight={280}
+        />
+      </div>
     </div>
   );
 } 

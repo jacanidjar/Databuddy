@@ -265,7 +265,7 @@ export function DataTable<TData extends RowData, TValue>(
                     className={cn(
                       "flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md transition-all duration-200",
                       "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-1",
-                      "disabled:opacity-60 disabled:cursor-not-allowed",
+                      "disabled:opacity-60",
                       isActive 
                         ? "bg-background text-foreground shadow-sm" 
                         : "text-muted-foreground hover:text-foreground hover:bg-background/60"
