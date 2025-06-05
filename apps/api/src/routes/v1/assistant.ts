@@ -103,35 +103,18 @@ function createThinkingStep(step: string): string {
   return `🧠 ${step}`;
 }
 
-async function checkRateLimit(userId: string): Promise<boolean> {
-  const redis = getRedisCache();
-  const key = `rate_limit:assistant:${userId}`;
-  const limit = 5; // 5 requests per minute
-  const window = 60; // 60 seconds
-
-  try {
-    const current = await redis.get(key);
-    
-    if (!current) {
-      await redis.setex(key, window, '1');
-      return true;
-    }
-    
-    const count = Number.parseInt(current, 10);
-    if (count >= limit) {
-      return false;
-    }
-    
-    await redis.incr(key);
-    return true;
-  } catch (error: any) {
-    logger.error('Rate limit check failed:', error);
-    return false;
-  }
-}
-
 const enhancedAnalysisPrompt = (userQuery: string, websiteId: string, websiteHostname: string, previousMessages?: any[]) => `
 You are DataBuddy AI - an advanced analytics assistant that provides intelligent responses based on user queries.
+
+CURRENT DATE & TIME CONTEXT:
+- Today's date: ${new Date().toISOString().split('T')[0]} (YYYY-MM-DD format)
+- Current year: ${new Date().getFullYear()}
+- Current month: ${new Date().getMonth() + 1}
+- Current UTC timestamp: ${new Date().toISOString()}
+- For "today", "yesterday", "this week", "this month" queries, use these reference points
+- When users ask about "yesterday", subtract 1 day from today's date
+- When users ask about "this week", use the past 7 days from today
+- When users ask about "this month", use the current calendar month
 
 USER QUERY: "${userQuery}";
 WEBSITE ID: ${websiteId};
@@ -266,7 +249,7 @@ SQL OPTIMIZATION RULES:
    Example for Top Referrers (excluding internal, direct, and empty/null):
      SQL: SELECT referrer, COUNT(*) AS pageviews FROM analytics.events WHERE client_id = '${websiteId}' AND event_name='screen_view' AND referrer IS NOT NULL AND referrer != '' AND (domain(referrer) != '${websiteHostname}' AND NOT domain(referrer) ILIKE '%.${websiteHostname}') AND domain(referrer) NOT IN ('localhost', '127.0.0.1') GROUP BY referrer ORDER BY pageviews DESC LIMIT 10;
    (Client-side Note: The application will handle normalization of displayed referrer names, e.g., mapping various domains like 't.co', 'twitter.com' to a single 'Twitter / X' and applying icons. Your SQL should provide raw referrer data.)
-4. When a date range (e.g., "last 7 days", "this month") is implied or stated, apply it to the 'time' column. Default to 'last 7 days' if unspecified. Query examples: \`time >= today() - INTERVAL '7' DAY\`, \`time >= date_trunc('month', today()) AND time < date_trunc('month', today()) + INTERVAL '1' MONTH\`;
+4. When a date range (e.g., "last 7 days", "this month") is implied or stated, apply it to the 'time' column. Default to 'last 7 days' if unspecified. Query examples: \`time >= today() - INTERVAL '7' DAY\`, \`time >= date_trunc('month', today()) AND time < date_trunc('month', today()) + INTERVAL '1' MONTH\`. IMPORTANT: Use today() for current date, yesterday() for yesterday, and proper interval arithmetic. For "this week" use \`time >= today() - INTERVAL '7' DAY\`, for "yesterday" use \`toDate(time) = yesterday()\`, for "today" use \`toDate(time) = today()\`;
 5. Use toDate(time) AS date for daily grouping, toHour(time) AS hour for hourly grouping. Always alias the time grouping (e.g., AS date, AS hour).;
 6. LIMIT results (e.g., LIMIT 100 for raw data, LIMIT 20-30 for aggregated time series unless many categories for multi-line) to keep visualizations readable and queries performant. For multi-line or stacked_bar charts with categories over time, a typical limit might be 7-14 distinct time points (e.g., days) if there are 2-3 categories, or up to 30 time points if only 1-2 categories. If categories are many (e.g. >5 browsers), limit time points further.;
 7. Use meaningful column aliases for ALL aggregated fields and dimensions (e.g., AVG(load_time) AS avg_load_time, browser_name AS browser, device_type AS device).;
@@ -292,8 +275,8 @@ assistantRouter.use('*', websiteAuthHook);
  * Process AI request with streaming updates
  * POST /assistant/stream
  */
-assistantRouter.post('/stream', zValidator('json', chatRequestSchema), async (c) => {
-  const { message, website_id } = c.req.valid('json');
+assistantRouter.post('/stream', zValidator('json', chatRequestSchema), async (c: any) => {
+  const { message, website_id } = c.req.valid('json') as z.infer<typeof chatRequestSchema>;
   const website = c.get('website');
   const user = c.get('user');
 
@@ -306,13 +289,13 @@ assistantRouter.post('/stream', zValidator('json', chatRequestSchema), async (c)
     return c.json({ error: 'User not found' }, 401);
   }
   
-  const rateLimitPassed = await checkRateLimit(user.id);
-  if (!rateLimitPassed) {
-    return c.json({ 
-      error: 'Rate limit exceeded. Please wait before making another request.',
-      code: 'RATE_LIMIT_EXCEEDED' 
-    }, 429);
-  }
+  // const rateLimitPassed = await checkRateLimit(user.id);
+  // if (!rateLimitPassed) {
+  //   return c.json({ 
+  //     error: 'Rate limit exceeded. Please wait before making another request.',
+  //     code: 'RATE_LIMIT_EXCEEDED' 
+  //   }, 429);
+  // }
 
   const websiteHostname = website.domain;
   const startTime = Date.now();

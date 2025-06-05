@@ -42,7 +42,7 @@ export function useChat(websiteId: string, websiteName?: string) {
   const [isLoading, setIsLoading] = useState(false);
   const [isRateLimited, setIsRateLimited] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const rateLimitTimeoutRef = useRef<number>();
+  const rateLimitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
