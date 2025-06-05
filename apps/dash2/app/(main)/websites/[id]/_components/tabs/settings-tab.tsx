@@ -47,6 +47,7 @@ import {
   enableAllOptimization,
   resetToDefaults
 } from "../utils/tracking-helpers";
+import Link from "next/link";
 
 
 export function WebsiteSettingsTab({
@@ -395,6 +396,7 @@ function SettingsNavigation({
                 </h3>
               </div>
               
+              <Link href="https://docs.databuddy.cc/docs" target="_blank">
               <Button 
                 variant="ghost" 
                 className="w-full justify-start gap-2 h-9 transition-all duration-200 hover:bg-muted/50"
@@ -403,7 +405,9 @@ function SettingsNavigation({
                 <span>Documentation</span>
                 <ChevronRight className="h-3 w-3 ml-auto" />
               </Button>
+              </Link>
               
+              <Link href="https://docs.databuddy.cc/docs/api" target="_blank">
               <Button 
                 variant="ghost" 
                 className="w-full justify-start gap-2 h-9 transition-all duration-200 hover:bg-muted/50"
@@ -412,6 +416,7 @@ function SettingsNavigation({
                 <span>API Reference</span>
                 <ChevronRight className="h-3 w-3 ml-auto" />
               </Button>
+              </Link>
             </div>
             
             <div className="pt-4 border-t">
