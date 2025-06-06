@@ -3,7 +3,7 @@
 // Assuming your @databuddy/db package exports the Drizzle instance as `db` 
 // and your users schema as `user` (singular, based on previous linter hint).
 import { db } from "@databuddy/db";
-import { eq } from "drizzle-orm";
+import { eq, or, like } from "drizzle-orm";
 import { user, domains, websites, projects, projectAccess, clickHouse, chQuery } from "@databuddy/db";
 import { revalidatePath } from "next/cache";
 import { nanoid } from 'nanoid';
@@ -134,18 +134,20 @@ export async function forceVerifyUser(userId: string) {
 }
 
 // Domain Management Actions
-export async function addDomain(userId: string, domainName: string) {
+export async function addDomain(userId: string, domainName: string, verificationStatus: 'PENDING' | 'VERIFIED' | 'FAILED' = 'PENDING') {
   try {
+    const domainId = nanoid();
     await db.insert(domains).values({
-      id: nanoid(),
+      id: domainId,
       name: domainName,
       userId,
-      verificationStatus: 'PENDING',
+      verificationStatus,
+      verifiedAt: verificationStatus === 'VERIFIED' ? new Date().toISOString() : null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
     revalidatePath('/users/[slug]', 'page');
-    return { success: true };
+    return { success: true, domainId };
   } catch (error) {
     console.error("Error adding domain:", error);
     return { error: "Failed to add domain" };
@@ -191,19 +193,184 @@ export async function deleteDomain(domainId: string) {
   }
 }
 
-// Website Management Actions
-export async function addWebsite(userId: string, websiteData: { name: string | null; domain: string }) {
+export async function getUserDomains(userId: string) {
   try {
+    const userDomains = await db.select({
+      id: domains.id,
+      name: domains.name,
+      verificationStatus: domains.verificationStatus,
+    }).from(domains).where(eq(domains.userId, userId));
+    return { success: true, domains: userDomains };
+  } catch (error) {
+    console.error('Error fetching user domains:', error);
+    return { error: 'Failed to fetch domains' };
+  }
+}
+
+// Transfer Actions
+export async function transferDomain(domainId: string, newUserId: string) {
+  try {
+    // Verify domain exists
+    const domain = await db.select().from(domains).where(eq(domains.id, domainId)).limit(1);
+    if (!domain.length) {
+      return { error: "Domain not found" };
+    }
+
+    // Verify new user exists
+    const newUser = await db.select().from(user).where(eq(user.id, newUserId)).limit(1);
+    if (!newUser.length) {
+      return { error: "Target user not found" };
+    }
+
+    // Transfer the domain
+    await db.update(domains)
+      .set({ 
+        userId: newUserId,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(domains.id, domainId));
+
+    revalidatePath('/users/[slug]', 'page');
+    return { 
+      success: true, 
+      message: `Domain "${domain[0].name}" transferred to ${newUser[0].name || newUser[0].email}` 
+    };
+  } catch (error) {
+    console.error("Error transferring domain:", error);
+    return { error: "Failed to transfer domain" };
+  }
+}
+
+export async function transferWebsite(websiteId: string, newUserId: string) {
+  try {
+    // Verify website exists
+    const website = await db.select().from(websites).where(eq(websites.id, websiteId)).limit(1);
+    if (!website.length) {
+      return { error: "Website not found" };
+    }
+
+    // Verify new user exists
+    const newUser = await db.select().from(user).where(eq(user.id, newUserId)).limit(1);
+    if (!newUser.length) {
+      return { error: "Target user not found" };
+    }
+
+    // If website is linked to a domain, check if the domain also belongs to the target user
+    if (website[0].domainId) {
+      const domain = await db.select().from(domains).where(eq(domains.id, website[0].domainId)).limit(1);
+      if (domain.length && domain[0].userId !== newUserId) {
+        return { 
+          error: "Cannot transfer website: the linked domain belongs to a different user. Transfer the domain first or unlink the website." 
+        };
+      }
+    }
+
+    // Transfer the website
+    await db.update(websites)
+      .set({ 
+        userId: newUserId,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(websites.id, websiteId));
+
+    revalidatePath('/users/[slug]', 'page');
+    return { 
+      success: true, 
+      message: `Website "${website[0].name || website[0].domain}" transferred to ${newUser[0].name || newUser[0].email}` 
+    };
+  } catch (error) {
+    console.error("Error transferring website:", error);
+    return { error: "Failed to transfer website" };
+  }
+}
+
+export async function searchUsers(query: string) {
+  try {
+    let users: {
+      id: string;
+      name: string | null;
+      email: string;
+      role: string;
+    }[];
+
+    if (!query || query.length < 2) {
+      // Return all users when no query or query too short
+      users = await db.select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      }).from(user)
+        .limit(20); // Show more users when displaying all
+    } else {
+      // Search specific users
+      const searchQuery = `%${query.toLowerCase()}%`;
+      
+      users = await db.select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      }).from(user)
+        .where(
+          or(
+            like(user.email, searchQuery),
+            like(user.name, searchQuery),
+          )
+        )
+        .limit(10);
+    }
+
+    return { users };
+  } catch (error) {
+    console.error("Error searching users:", error);
+    return { error: "Failed to search users" };
+  }
+}
+
+// Website Management Actions
+export async function addWebsite(userId: string, websiteData: { 
+  name: string | null; 
+  domainId: string;
+  subdomain?: string;
+  status?: 'ACTIVE' | 'HEALTHY' | 'UNHEALTHY' | 'INACTIVE' | 'PENDING' 
+}) {
+  try {
+    // Verify the domain exists and belongs to the user
+    const domain = await db.select().from(domains).where(eq(domains.id, websiteData.domainId)).limit(1);
+    if (!domain.length) {
+      return { error: "Domain not found" };
+    }
+    
+    const domainRecord = domain[0];
+    if (domainRecord.userId !== userId) {
+      return { error: "Domain does not belong to this user" };
+    }
+
+    // Construct the full domain
+    const fullDomain = websiteData.subdomain 
+      ? `${websiteData.subdomain}.${domainRecord.name}`
+      : domainRecord.name;
+
+    // Check if website with this domain already exists
+    const existingWebsite = await db.select().from(websites).where(eq(websites.domain, fullDomain)).limit(1);
+    if (existingWebsite.length) {
+      return { error: `A website with domain "${fullDomain}" already exists` };
+    }
+
+    const websiteId = nanoid();
     await db.insert(websites).values({
-      id: nanoid(),
-      ...websiteData,
+      id: websiteId,
+      name: websiteData.name,
+      domain: fullDomain,
+      domainId: websiteData.domainId,
       userId,
-      status: 'PENDING',
+      status: websiteData.status || 'PENDING',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
     revalidatePath('/users/[slug]', 'page');
-    return { success: true };
+    return { success: true, websiteId };
   } catch (error) {
     console.error("Error adding website:", error);
     return { error: "Failed to add website" };

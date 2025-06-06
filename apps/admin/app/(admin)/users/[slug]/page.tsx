@@ -28,6 +28,8 @@ import { format } from "date-fns";
 import { UserActions, RoleActions } from "./user-actions";
 import { DomainActions } from "./domain-actions";
 import { WebsiteActions } from "./website-actions";
+import { AddDomainForm } from "./add-domain-form";
+import { AddWebsiteForm } from "./add-website-form";
 import { Analytics } from "./analytics";
 
 interface UserWithRelations {
@@ -198,6 +200,7 @@ export default async function UserProfilePage({
                     <CardTitle>Domains</CardTitle>
                     <CardDescription>Manage user's domains and DNS settings</CardDescription>
                   </div>
+                  <AddDomainForm userId={userData.id} />
                 </div>
               </CardHeader>
               <CardContent>
@@ -262,6 +265,7 @@ export default async function UserProfilePage({
                     <CardTitle>Websites</CardTitle>
                     <CardDescription>Manage user's websites and deployments</CardDescription>
                   </div>
+                  <AddWebsiteForm userId={userData.id} />
                 </div>
               </CardHeader>
               <CardContent>
@@ -275,6 +279,9 @@ export default async function UserProfilePage({
                             <div className="font-medium">{website.name || website.domain}</div>
                             <div className="text-sm text-muted-foreground">
                               {website.domain} • Added {format(new Date(website.createdAt), "MMM d, yyyy")}
+                              {website.domainId && (
+                                <span className="text-xs text-blue-600 ml-2">↗ Linked to domain</span>
+                              )}
                             </div>
                           </div>
                         </div>

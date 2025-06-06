@@ -9,11 +9,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, CheckCircle, AlertCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { deleteDomain } from "../actions";
+import { deleteDomain, updateDomainVerification } from "../actions";
 import { useState } from "react";
 import { DeleteDialog } from "./delete-dialog";
+import { TransferDomainForm } from "./transfer-domain-form";
 
 interface Domain {
   id: string;
@@ -35,6 +36,15 @@ export function DomainActions({ domain }: { domain: Domain }) {
     }
   };
 
+  const handleVerificationUpdate = async (status: 'PENDING' | 'VERIFIED' | 'FAILED') => {
+    const result = await updateDomainVerification(domain.id, status);
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      toast.success(`Domain verification status updated to ${status.toLowerCase()}`);
+    }
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -51,9 +61,37 @@ export function DomainActions({ domain }: { domain: Domain }) {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuLabel>Verification Status</DropdownMenuLabel>
+          <DropdownMenuItem 
+            onClick={() => handleVerificationUpdate('VERIFIED')}
+            disabled={domain.verificationStatus === 'VERIFIED'}
+            className="text-green-600 focus:bg-green-500/10 focus:text-green-600 dark:focus:bg-green-500/20 dark:focus:text-green-500"
+          >
+            <CheckCircle className="mr-2 h-4 w-4" />
+            Mark as Verified
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            onClick={() => handleVerificationUpdate('PENDING')}
+            disabled={domain.verificationStatus === 'PENDING'}
+          >
+            <AlertCircle className="mr-2 h-4 w-4" />
+            Mark as Pending
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            onClick={() => handleVerificationUpdate('FAILED')}
+            disabled={domain.verificationStatus === 'FAILED'}
+            className="text-yellow-600 focus:bg-yellow-500/10 focus:text-yellow-600 dark:focus:bg-yellow-500/20 dark:focus:text-yellow-500"
+          >
+            <XCircle className="mr-2 h-4 w-4" />
+            Mark as Failed
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem disabled className="cursor-not-allowed">
             <Pencil className="mr-2 h-4 w-4" />
             Edit Domain (Soon)
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <TransferDomainForm domain={domain} />
           </DropdownMenuItem>
           <DropdownMenuItem 
             className="text-red-600 focus:bg-red-500/10 focus:text-red-600 dark:focus:bg-red-500/20 dark:focus:text-red-500"
