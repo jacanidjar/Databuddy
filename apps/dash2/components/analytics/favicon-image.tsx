@@ -19,10 +19,12 @@ export function FaviconImage({
   const [faviconUrl, setFaviconUrl] = useState<string>('');
   const [hasError, setHasError] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [currentSourceIndex, setCurrentSourceIndex] = useState<number>(0);
 
   useEffect(() => {
     setHasError(false);
     setIsLoading(true);
+    setCurrentSourceIndex(0);
     const effectiveDomain = domain;
 
     if (!effectiveDomain || 
@@ -51,12 +53,14 @@ export function FaviconImage({
         return;
       }
 
-      // Use a higher resolution favicon service for better quality
-      // We'll use 32px and scale down with CSS for crisp rendering
+      // Use better favicon services that don't default to HTTP
       const faviconSources = [
-        `https://www.google.com/s2/favicons?sz=32&domain=${hostname}`,
+        // DuckDuckGo's service is more reliable and doesn't assume HTTP
         `https://icons.duckduckgo.com/ip3/${hostname}.ico`,
-        `https://${hostname}/favicon.ico`
+        // Fallback to direct favicon
+        `https://${hostname}/favicon.ico`,
+        // Last resort: try with www prefix
+        `https://www.${hostname}/favicon.ico`
       ];
 
       // Try the first source
@@ -72,12 +76,43 @@ export function FaviconImage({
   }, [domain]);
 
   const handleImageError = () => {
-    setHasError(true);
-    setIsLoading(false);
+    const effectiveDomain = domain;
+    
+    if (!effectiveDomain) {
+      setHasError(true);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      let hostname = effectiveDomain.replace(/^https?:\/\//, '').replace(/^www\./, '');
+      hostname = hostname.split('/')[0].split('?')[0].split('#')[0];
+      
+      const faviconSources = [
+        `https://icons.duckduckgo.com/ip3/${hostname}.ico`,
+        `https://${hostname}/favicon.ico`,
+        `https://www.${hostname}/favicon.ico`
+      ];
+
+      const nextIndex = currentSourceIndex + 1;
+      
+      if (nextIndex < faviconSources.length) {
+        setCurrentSourceIndex(nextIndex);
+        setFaviconUrl(faviconSources[nextIndex]);
+        setIsLoading(true);
+      } else {
+        setHasError(true);
+        setIsLoading(false);
+      }
+    } catch (e) {
+      setHasError(true);
+      setIsLoading(false);
+    }
   };
 
   const handleImageLoad = () => {
     setIsLoading(false);
+    setHasError(false);
   };
 
   if (hasError || !faviconUrl) {
@@ -111,8 +146,8 @@ export function FaviconImage({
       <img
         src={faviconUrl}
         alt={altText || `${domain} favicon`}
-        width={32}
-        height={32}
+        width={size}
+        height={size}
         className={`transition-opacity duration-200 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
         onError={handleImageError}
         onLoad={handleImageLoad}

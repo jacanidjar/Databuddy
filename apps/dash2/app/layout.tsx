@@ -118,7 +118,7 @@ export default function RootLayout({
         // data-batch-size="20"
         // data-batch-timeout="5000"
         strategy="afterInteractive"
-        async
+        defer
       />
       <body className="antialiased h-full min-h-screen bg-background text-foreground flex flex-col">
         <Providers>
