@@ -43,7 +43,6 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.woodpecker-server.rule=Host(`{{woodpecker_host}}`)"
       - "traefik.http.routers.woodpecker-server.entrypoints=websecure"
-      - "traefik.http.routers.woodpecker-server.tls.certresolver=defaultResolver"
       - "traefik.http.services.woodpecker-server.loadbalancer.server.port=8000"
       - "traefik.docker.network=databuddy_ingress"
 

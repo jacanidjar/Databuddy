@@ -154,4 +154,11 @@
         executable: pip3
         name: pyyaml
       when: inventory_hostname in groups['swarm-masters'] or inventory_hostname in groups['swarm-managers']
+    
+    - name: Install docker python package if missing
+      become: yes
+      ansible.builtin.pip:
+        executable: pip3
+        name: docker
+      when: inventory_hostname in groups['swarm-masters'] or inventory_hostname in groups['swarm-managers']
    

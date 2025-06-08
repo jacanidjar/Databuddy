@@ -36,6 +36,21 @@
       run_once: true
       delegate_to: "{{ (groups['swarm-managers'][0]) }}"
     
+    - name: "Copy Traefik Config to Server"
+      ansible.builtin.template:
+        src: ./traefik-config.yaml
+        dest: "{{working_dir_name}}/traefik-config.yaml" 
+      run_once: true
+      delegate_to: "{{ (groups['swarm-managers'][0]) }}"
+    
+    - name: Create or Update Traefik Config
+      community.docker.docker_config:
+        name: traefik_config
+        data_src: "{{working_dir_name}}/traefik-config.yaml"
+        state: present
+      run_once: true
+      delegate_to: "{{ (groups['swarm-managers'][0]) }}"
+
     - name: "Start Stack"
       docker_stack:
         state: present

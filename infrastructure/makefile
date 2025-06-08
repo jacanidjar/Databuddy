@@ -23,5 +23,7 @@ deploy-ingress: install-dependencies
 deploy-ci: install-dependencies
 	cd ci && ansible-playbook --timeout 60 --ssh-common-args="-i $(SSH_PRIVATE_KEY) -o ServerAliveInterval=15" -i ../inventory.ini deploy-ci.yaml
 
+deploy-ssl-cert: install-dependencies
+	cd ingress && ansible-playbook --timeout 60 --ssh-common-args="-i $(SSH_PRIVATE_KEY) -o ServerAliveInterval=15" -i ../inventory.ini  --vault-id "databuddy_cc_star_key@prompt" deploy-certificate.yaml 
 
-.PHONY: setup-nodes init-swarm update-swarm install-dependencies deploy-ingress
+.PHONY: setup-nodes init-swarm update-swarm install-dependencies deploy-ingress deploy-ssl-cert

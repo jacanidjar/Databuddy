@@ -16,9 +16,7 @@ services:
       - "--providers.swarm=true"
       - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
       - "--providers.swarm.exposedbydefault=false"
-      - "--certificatesresolvers.defaultResolver.acme.tlschallenge=true"
-      - "--certificatesresolvers.defaultResolver.acme.email=contact@databuddy.cc"
-      - "--certificatesresolvers.defaultResolver.acme.storage=/letsencrypt/acme.json"
+      - "--providers.file.filename=/config/traefik.yaml"
       - --entrypoints.websecure.address=:443
       - --entrypoints.websecure.http.tls=true
       - --entrypoints.web.address=:80
@@ -44,6 +42,12 @@ services:
     volumes:
       - "{{reverse_proxy_data_dir}}:/letsencrypt"
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    secrets:
+      - databuddy_cc_star_key
+      - databuddy_cc_star_cert
+    configs:
+      - source: traefik_config
+        target: /config/traefik.yaml
     deploy:
       mode: global
       update_config:
@@ -63,4 +67,14 @@ services:
         constraints:
           - node.labels.ingress==true
           - node.role == manager
-          
+
+secrets:
+  databuddy_cc_star_key:
+    external: true
+  databuddy_cc_star_cert:
+    external: true
+
+configs:
+  traefik_config:
+    external: true
+     
