@@ -22,7 +22,7 @@ interface TabConfig<TData> {
   columns: ColumnDef<TData, unknown>[];
 }
 
-interface DataTableProps<TData extends RowData, TValue> {
+interface DataTableProps<TData extends { name: string | number }, TValue> {
   data?: TData[] | undefined;
   columns?: ColumnDef<TData, TValue>[];
   tabs?: TabConfig<TData>[];
@@ -119,7 +119,7 @@ const EnhancedSkeleton = ({ minHeight }: { minHeight: string | number }) => (
   </div>
 );
 
-export function DataTable<TData extends RowData, TValue>(
+export function DataTable<TData extends { name: string | number }, TValue>(
   {
     data,
     columns,
