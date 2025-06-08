@@ -361,7 +361,7 @@ function WebsiteDetailsPage() {
 
 function TabLoadingSkeleton() {
   return (
-    <div className="space-y-6 py-8">
+    <div className="space-y-6 py-8 p-4">
       {/* Key metrics cards skeleton */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {[1, 2, 3, 4, 5, 6].map((num) => (
