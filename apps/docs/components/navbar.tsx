@@ -57,6 +57,10 @@ export const navMenu = [
 		name: "Docs",
 		path: "/docs",
 	},
+	{
+		name: "Blog",
+		path: "/blog",
+	},
     {
         name: "Privacy",
         path: "/privacy",
@@ -69,8 +73,5 @@ export const navMenu = [
 	// 	name: "Pricing",
 	// 	path: "/pricing",
 	// },
-	// {
-	// 	name: "Blog",
-	// 	path: "/blog",
-	// },
+
 ]; 

@@ -49,13 +49,18 @@ queryRouter.use('*', authMiddleware)
 queryRouter.use('*', websiteAuthHook)
 queryRouter.use('*', timezoneMiddleware)
 
+interface QueryAndParams {
+  sql: string;
+  params: Record<string, string | number>;
+}
+
 type ParameterBuilder = (
   websiteId: string,
   startDate: string,
   endDate: string,
   limit: number,
   offset: number
-) => string;
+) => QueryAndParams;
 
 const processLanguageData = (data: any[]) => 
   data.map(item => ({
@@ -64,7 +69,87 @@ const processLanguageData = (data: any[]) =>
     code: item.name
   }))
 
-// Dynamic parameter registry - easily extensible
+// Define reusable metric sets
+const METRICS = {
+  standard: `
+    uniq(anonymous_id) as visitors,
+    COUNT(*) as pageviews,
+    uniq(session_id) as sessions
+  `,
+  performance: `
+    uniq(anonymous_id) as visitors,
+    avgIf(load_time, load_time > 0) as avg_load_time,
+    avgIf(ttfb, ttfb > 0) as avg_ttfb,
+    avgIf(dom_ready_time, dom_ready_time > 0) as avg_dom_ready_time,
+    avgIf(render_time, render_time > 0) as avg_render_time,
+    avgIf(fcp, fcp > 0) as avg_fcp,
+    avgIf(lcp, lcp > 0) as avg_lcp,
+    avgIf(cls, cls >= 0) as avg_cls
+  `,
+  errors: `
+    COUNT(*) as total_errors,
+    COUNT(DISTINCT error_message) as unique_error_types,
+    uniq(anonymous_id) as affected_users,
+    uniq(session_id) as affected_sessions
+  `,
+  exits: `
+    uniq(anonymous_id) as visitors,
+    COUNT(*) as exits,
+    uniq(session_id) as sessions
+  `
+};
+
+// Query builder factory
+interface BuilderConfig {
+  metricSet: string;
+  nameColumn: string;
+  groupByColumns: string[];
+  eventName?: string;
+  extraWhere?: string;
+  orderBy: string;
+}
+
+function createQueryBuilder(config: BuilderConfig): ParameterBuilder {
+  return (websiteId, startDate, endDate, limit, offset) => {
+    const whereClauses = [
+      'client_id = {websiteId:String}',
+      'time >= {startDate:String}',
+      'time <= {endDate:String}'
+    ];
+    
+    if (config.eventName) {
+      whereClauses.push(`event_name = '${config.eventName}'`);
+    }
+
+    if (config.extraWhere) {
+      whereClauses.push(config.extraWhere);
+    }
+    
+    const sql = `
+      SELECT 
+        ${config.nameColumn} as name,
+        ${config.metricSet}
+      FROM analytics.events
+      WHERE ${whereClauses.join(' AND ')}
+      GROUP BY ${config.groupByColumns.join(', ')}
+      ORDER BY ${config.orderBy}
+      LIMIT {limit:UInt64} OFFSET {offset:UInt64}
+    `;
+
+    return {
+      sql,
+      params: {
+        websiteId,
+        startDate,
+        endDate,
+        limit,
+        offset
+      }
+    };
+  };
+}
+
+// Dynamic parameter registry - now with parameterized queries and reduced duplication
 const PARAMETER_BUILDERS: Record<string, ParameterBuilder> = {
   // Device & Browser
   device_type: (websiteId: string, startDate: string, endDate: string, limit: number, offset: number) => `
