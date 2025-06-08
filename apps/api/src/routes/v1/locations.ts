@@ -108,3 +108,5 @@ locationsRouter.get('/', zValidator('query', analyticsQuerySchema), async (c) =>
     }
   });
   
+
+export default locationsRouter;

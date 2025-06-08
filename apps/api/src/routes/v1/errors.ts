@@ -175,3 +175,5 @@ errorsRouter.get('/', zValidator('query', analyticsQuerySchema), async (c) => {
     }, 500);
   }
 }); 
+
+export default errorsRouter;

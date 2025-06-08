@@ -95,8 +95,8 @@ analyticsRouter.get('/summary', zValidator('query', analyticsQuerySchema), async
 import miniChartRouter from './mini-chart';
 import sessionsRouter from './sessions';
 import profilesRouter from './profiles';
-import { locationsRouter } from './locations';
-import { errorsRouter } from './errors';
+import locationsRouter from './locations';
+import errorsRouter from './errors';
 import queryRouter from './query';
 
 analyticsRouter.route('/mini-chart', miniChartRouter);
