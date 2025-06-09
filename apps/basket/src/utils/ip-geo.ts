@@ -25,6 +25,7 @@ const ignore = ['127.0.0.1', '::1'];
 const IPINFO_TOKEN = process.env.IPINFO_TOKEN;
 
 function urlConstructor(ip: string) {
+  logger.info(`IP: ${ip}`);
   return `https://ipinfo.io/${ip}?token=${IPINFO_TOKEN}`;
 }
 
@@ -40,7 +41,12 @@ async function fetchIpGeo(ip: string): Promise<GeoLocation> {
     });
 
     if (!response.ok) {
-      logger.warn(new Error(`Failed to fetch geo location: ${response.status}`));
+      // 404 is expected for unknown IPs, don't warn
+      if (response.status === 404) {
+        logger.debug(`IP not found in geo database: ${ip}`);
+      } else {
+        logger.warn(new Error(`Failed to fetch geo location: ${response.status}`));
+      }
       return DEFAULT_GEO;
     }
 
