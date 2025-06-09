@@ -65,6 +65,14 @@ const processLanguageData = (data: any[]) =>
     code: item.name
   }))
 
+// Helper function to transform country codes
+const processCountryData = (data: any[]) => 
+  data.map(item => ({
+    ...item,
+    name: item.name === 'IL' ? 'PS' : item.name,
+    country: item.country === 'IL' ? 'PS' : item.country
+  }))
+
 // Helper function to group browser version data
 function processBrowserGroupedData(rawData: any[]): any[] {
   const browserGroups: Record<string, any> = {}
@@ -794,6 +802,15 @@ function processUnifiedResults(
           processedData = processTimezoneData(rawData)
           break
           
+        case 'country':
+        case 'countries':
+        case 'region':
+        case 'regions':
+        case 'performance_by_country':
+        case 'errors_by_country':
+          processedData = processCountryData(rawData)
+          break
+          
         default:
           processedData = rawData
           break
@@ -921,6 +938,15 @@ async function processBatchQueries(
                   
                 case 'timezone':
                   processedData = processTimezoneData(result)
+                  break
+                  
+                case 'country':
+                case 'countries':
+                case 'region':
+                case 'regions':
+                case 'performance_by_country':
+                case 'errors_by_country':
+                  processedData = processCountryData(result)
                   break
                   
                 default:

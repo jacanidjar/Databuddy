@@ -125,6 +125,13 @@
                 "databuddy-sdk-name": this.options.sdk || "web",
                 "databuddy-sdk-version": this.options.sdkVersion || "1.0.0"
             };
+
+            this.api = new c({
+                baseUrl: this.options.apiUrl || "https://basket.databuddy.cc",
+                defaultHeaders: headers,
+                maxRetries: this.options.maxRetries,
+                initialRetryDelay: this.options.initialRetryDelay
+            });
             
             this.lastPath = "";
             this.pageCount = 0;

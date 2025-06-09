@@ -13,6 +13,7 @@ export interface SummaryData {
   sessions: number;
   bounce_rate: number;
   avg_session_duration: number;
+  total_events: number;
 }
 
 export interface TodayData {
@@ -66,13 +67,23 @@ export function createSummaryBuilder(
         AND toDate(time) >= '${startDate}'
         AND toDate(time) <= '${endDate}'
         AND event_name = 'screen_view'
+    ),
+    all_events AS (
+      SELECT
+        count() as total_events
+      FROM analytics.events
+      WHERE 
+        client_id = '${websiteId}'
+        AND toDate(time) >= '${startDate}'
+        AND toDate(time) <= '${endDate}'
     )
     SELECT
       sum(page_count) as pageviews,
       (SELECT unique_visitors FROM unique_visitors) as unique_visitors,
       count(session_metrics.session_id) as sessions,
       (COALESCE(countIf(page_count = 1), 0) / COALESCE(COUNT(*), 0)) * 100 as bounce_rate,
-      AVG(sd.duration) as avg_session_duration
+      AVG(sd.duration) as avg_session_duration,
+      (SELECT total_events FROM all_events) as total_events
     FROM session_metrics
     LEFT JOIN session_durations as sd ON session_metrics.session_id = sd.session_id
   `;
@@ -120,13 +131,22 @@ export function createTodayBuilder(websiteId: string) {
         client_id = '${websiteId}'
         AND formatDateTime(time, '%Y-%m-%d', 'UTC') = formatDateTime(now(), '%Y-%m-%d', 'UTC')
         AND event_name = 'screen_view'
+    ),
+    all_events AS (
+      SELECT
+        count() as total_events
+      FROM analytics.events
+      WHERE 
+        client_id = '${websiteId}'
+        AND formatDateTime(time, '%Y-%m-%d', 'UTC') = formatDateTime(now(), '%Y-%m-%d', 'UTC')
     )
     SELECT
       sum(page_count) as pageviews,
       (SELECT unique_visitors FROM unique_visitors) as unique_visitors,
       count(session_metrics.session_id) as sessions,
       (COALESCE(countIf(page_count = 1), 0) / COALESCE(COUNT(*), 0)) * 100 as bounce_rate,
-      AVG(sd.duration) as avg_session_duration
+      AVG(sd.duration) as avg_session_duration,
+      (SELECT total_events FROM all_events) as total_events
     FROM session_metrics
     LEFT JOIN session_durations as sd ON session_metrics.session_id = sd.session_id
   `;
