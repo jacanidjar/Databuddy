@@ -34,6 +34,8 @@ import {
   TechnologyIcon,
   PercentageBadge,
 } from "../utils/technology-helpers";
+import type { Referrer, UTM, Pages, Location, Browser, OS, Device } from '@/shared/src/types';
+import Image from 'next/image';
 
 // Types
 interface TrendCalculation {

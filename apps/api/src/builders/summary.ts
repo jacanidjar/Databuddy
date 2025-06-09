@@ -98,7 +98,7 @@ export function createTodayBuilder(websiteId: string) {
       FROM analytics.events
       WHERE 
         client_id = '${websiteId}'
-        AND toDate(time) = today()
+        AND formatDateTime(time, '%Y-%m-%d', 'UTC') = formatDateTime(now(), '%Y-%m-%d', 'UTC')
       GROUP BY session_id
     ),
     session_durations AS (
@@ -108,7 +108,7 @@ export function createTodayBuilder(websiteId: string) {
       FROM analytics.events
       WHERE 
         client_id = '${websiteId}'
-        AND toDate(time) = today()
+        AND formatDateTime(time, '%Y-%m-%d', 'UTC') = formatDateTime(now(), '%Y-%m-%d', 'UTC')
       GROUP BY session_id
       HAVING duration > 0
     ),
@@ -118,7 +118,7 @@ export function createTodayBuilder(websiteId: string) {
       FROM analytics.events
       WHERE 
         client_id = '${websiteId}'
-        AND toDate(time) = today()
+        AND formatDateTime(time, '%Y-%m-%d', 'UTC') = formatDateTime(now(), '%Y-%m-%d', 'UTC')
         AND event_name = 'screen_view'
     )
     SELECT
@@ -160,7 +160,7 @@ export function createTodayByHourBuilder(websiteId: string) {
       FROM analytics.events
       WHERE 
         client_id = '${websiteId}'
-        AND toDate(time) = today()
+        AND formatDateTime(time, '%Y-%m-%d', 'UTC') = formatDateTime(now(), '%Y-%m-%d', 'UTC')
       GROUP BY event_hour, session_id
     ),
     hourly_visitors AS (
@@ -170,7 +170,7 @@ export function createTodayByHourBuilder(websiteId: string) {
       FROM analytics.events
       WHERE 
         client_id = '${websiteId}'
-        AND toDate(time) = today()
+        AND formatDateTime(time, '%Y-%m-%d', 'UTC') = formatDateTime(now(), '%Y-%m-%d', 'UTC')
         AND event_name = 'screen_view'
       GROUP BY event_hour
     ),
@@ -187,7 +187,7 @@ export function createTodayByHourBuilder(websiteId: string) {
         FROM analytics.events
         WHERE 
           client_id = '${websiteId}'
-          AND toDate(time) = today()
+          AND formatDateTime(time, '%Y-%m-%d', 'UTC') = formatDateTime(now(), '%Y-%m-%d', 'UTC')
         GROUP BY session_id
         HAVING min_time < max_time
       )
