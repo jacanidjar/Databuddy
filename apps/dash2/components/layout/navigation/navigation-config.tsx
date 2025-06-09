@@ -1,17 +1,18 @@
-import { 
-  Globe, 
-  BarChart, 
-  Settings, 
-  CreditCard, 
-  Clock, 
-  Users, 
+import {
+  Globe,
+  BarChart,
+  Settings,
+  CreditCard,
+  Clock,
+  Users,
   Link as LinkIcon,
   Map as MapIcon,
   MessageCircle,
   Home,
   Bot,
   TestTube,
-  Bug
+  Bug,
+  GitBranch
 } from "lucide-react";
 import type { NavigationSection } from "./types";
 
@@ -41,6 +42,7 @@ export const websiteNavigation: NavigationSection[] = [
       { name: "Overview", icon: Home, href: "", highlight: true },
       { name: "Sessions", icon: Clock, href: "/sessions", highlight: true },
       { name: "Profiles", icon: Users, href: "/profiles", highlight: true },
+      { name: "Journeys", icon: GitBranch, href: "/journeys", highlight: true },
       { name: "Errors", icon: Bug, href: "/errors", highlight: true },
       { name: "Map", icon: MapIcon, href: "/map", highlight: true },
       { name: "Test", icon: TestTube, href: "/test", highlight: true, production: false },

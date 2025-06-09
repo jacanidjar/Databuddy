@@ -472,27 +472,67 @@ export function useBatchDynamicQuery(
     enabled: options?.enabled !== false && !!websiteId && queries.length > 0,
   });
 
-  // Process batch data into a more usable format
+  // Enhanced processing with better debugging and clearer structure
   const processedResults = useMemo(() => {
-    return query.data?.results.map(result => ({
-      queryId: result.queryId,
-      success: result.success,
-      data: result.success 
-        ? result.data.reduce((acc, paramResult) => {
-            if (paramResult.success) {
-              acc[paramResult.parameter] = paramResult.data;
-            }
-            return acc;
-          }, {} as Record<string, any>)
-        : {},
-      errors: result.success 
-        ? result.data
-            .filter(paramResult => !paramResult.success)
-            .map(paramResult => ({ parameter: paramResult.parameter, error: paramResult.error }))
-        : [{ parameter: 'query', error: result.error }],
-      meta: result.success ? result.meta : undefined,
-    })) || [];
+    if (!query.data?.results) {
+      return [];
+    }
+
+    return query.data.results.map((result, index) => {
+      const processedResult = {
+        queryId: result.queryId,
+        success: result.success,
+        data: {} as Record<string, any>,
+        errors: [] as Array<{ parameter: string; error?: string }>,
+        meta: result.success ? result.meta : undefined,
+        rawResult: result, // Keep raw result for debugging
+      };
+
+      if (result.success && result.data) {
+        // Process each parameter result
+        result.data.forEach(paramResult => {
+          if (paramResult.success && paramResult.data) {
+            processedResult.data[paramResult.parameter] = paramResult.data;
+          } else {
+            processedResult.errors.push({
+              parameter: paramResult.parameter,
+              error: paramResult.error
+            });
+          }
+        });
+      } else {
+        processedResult.errors.push({
+          parameter: 'query',
+          error: result.error || 'Unknown query error'
+        });
+      }
+
+      return processedResult;
+    });
   }, [query.data]);
+
+  // Helper functions for easier data access
+  const getDataForQuery = useCallback((queryId: string, parameter: string) => {
+    const result = processedResults.find(r => r.queryId === queryId);
+    if (!result?.success) {
+      return [];
+    }
+    const data = result.data[parameter];
+    if (!data) {
+      return [];
+    }
+    return data;
+  }, [processedResults]);
+
+  const hasDataForQuery = useCallback((queryId: string, parameter: string) => {
+    const result = processedResults.find(r => r.queryId === queryId);
+    return result?.success && result.data[parameter] && Array.isArray(result.data[parameter]) && result.data[parameter].length > 0;
+  }, [processedResults]);
+
+  const getErrorsForQuery = useCallback((queryId: string) => {
+    const result = processedResults.find(r => r.queryId === queryId);
+    return result?.errors || [];
+  }, [processedResults]);
 
   return {
     results: processedResults,
@@ -502,6 +542,17 @@ export function useBatchDynamicQuery(
     error: query.error,
     refetch: query.refetch,
     isFetching: query.isFetching,
+    // Helper functions
+    getDataForQuery,
+    hasDataForQuery,
+    getErrorsForQuery,
+    // Debug info
+    debugInfo: {
+      queryCount: queries.length,
+      successfulQueries: processedResults.filter(r => r.success).length,
+      failedQueries: processedResults.filter(r => !r.success).length,
+      totalParameters: processedResults.reduce((sum, r) => sum + Object.keys(r.data).length, 0),
+    }
   };
 }
 
@@ -750,6 +801,47 @@ export function useComprehensiveAnalytics(
   return useBatchDynamicQuery(websiteId, dateRange, queries, options);
 }
 
+// Journey-specific data interfaces
+export interface JourneyTransition {
+  from_page: string;
+  to_page: string;
+  transitions: number;
+  sessions: number;
+  users: number;
+  avg_step_in_journey: number;
+}
+
+export interface JourneyPath {
+  name: string;
+  entry_page: string;
+  exit_page: string;
+  frequency: number;
+  unique_users: number;
+  avg_pages_in_path: number;
+  avg_duration_seconds: number;
+  avg_duration_minutes: number;
+}
+
+export interface JourneyDropoff {
+  name: string;
+  total_visits: number;
+  total_sessions: number;
+  total_users: number;
+  exits: number;
+  continuations: number;
+  exit_rate: number;
+  continuation_rate: number;
+}
+
+export interface JourneyEntryPoint {
+  name: string;
+  entries: number;
+  sessions: number;
+  users: number;
+  bounce_rate: number;
+  avg_pages_per_session: number;
+}
+
 /**
  * Enhanced Error Data Hook for comprehensive error analytics
  */
@@ -778,4 +870,82 @@ export function useEnhancedErrorData(
       ...options,
     }
   );
+}
+
+/**
+ * Convenience hook for comprehensive journey analytics
+ */
+export function useJourneyAnalytics(
+  websiteId: string,
+  dateRange: DateRange,
+  options?: Partial<UseQueryOptions<BatchQueryResponse>>
+) {
+  const queries: DynamicQueryRequest[] = [
+    {
+      id: 'user-journeys',
+      parameters: ['user_journeys'],
+      limit: 50,
+    },
+    {
+      id: 'journey-paths',
+      parameters: ['journey_paths'],
+      limit: 25,
+    },
+    {
+      id: 'journey-dropoffs',
+      parameters: ['journey_dropoffs'],
+      limit: 20,
+    },
+    {
+      id: 'journey-entry-points',
+      parameters: ['journey_entry_points'],
+      limit: 20,
+    },
+  ];
+
+  const batchResult = useBatchDynamicQuery(websiteId, dateRange, queries, options);
+
+  // Convenient accessors with proper typing
+  const journeyData = useMemo(() => ({
+    transitions: batchResult.getDataForQuery('user-journeys', 'user_journeys') as JourneyTransition[],
+    paths: batchResult.getDataForQuery('journey-paths', 'journey_paths') as JourneyPath[],
+    dropoffs: batchResult.getDataForQuery('journey-dropoffs', 'journey_dropoffs') as JourneyDropoff[],
+    entryPoints: batchResult.getDataForQuery('journey-entry-points', 'journey_entry_points') as JourneyEntryPoint[],
+  }), [batchResult]);
+
+  // Calculate summary statistics
+  const summaryStats = useMemo(() => {
+    const { transitions, dropoffs, paths } = journeyData;
+    
+    const totalTransitions = transitions.reduce((sum, item) => sum + item.transitions, 0);
+    const totalUsers = transitions.reduce((sum, item) => sum + item.users, 0);
+    const avgStepInJourney = transitions.length > 0
+      ? transitions.reduce((sum, item) => sum + item.avg_step_in_journey, 0) / transitions.length
+      : 0;
+    const avgExitRate = dropoffs.length > 0
+      ? dropoffs.reduce((sum, item) => sum + item.exit_rate, 0) / dropoffs.length
+      : 0;
+
+    // Fallback stats from other queries when user_journeys query fails
+    const fallbackUsers = paths.reduce((sum, item) => sum + item.unique_users, 0);
+    const fallbackTransitions = paths.reduce((sum, item) => sum + item.frequency, 0);
+
+    return {
+      totalTransitions: totalTransitions || fallbackTransitions,
+      totalUsers: totalUsers || fallbackUsers,
+      avgStepInJourney: Math.round(avgStepInJourney * 100) / 100,
+      avgExitRate: Math.round(avgExitRate * 100) / 100
+    };
+  }, [journeyData]);
+
+  return {
+    ...batchResult,
+    journeyData,
+    summaryStats,
+    // Convenience methods
+    hasJourneyData: batchResult.hasDataForQuery('user-journeys', 'user_journeys'),
+    hasPathData: batchResult.hasDataForQuery('journey-paths', 'journey_paths'),
+    hasDropoffData: batchResult.hasDataForQuery('journey-dropoffs', 'journey_dropoffs'),
+    hasEntryPointData: batchResult.hasDataForQuery('journey-entry-points', 'journey_entry_points'),
+  };
 } 
