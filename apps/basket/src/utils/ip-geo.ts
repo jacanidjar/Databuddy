@@ -25,7 +25,6 @@ const ignore = ['127.0.0.1', '::1'];
 const IPINFO_TOKEN = process.env.IPINFO_TOKEN;
 
 function urlConstructor(ip: string) {
-  logger.info(`IP: ${ip}`);
   return `https://ipinfo.io/${ip}?token=${IPINFO_TOKEN}`;
 }
 

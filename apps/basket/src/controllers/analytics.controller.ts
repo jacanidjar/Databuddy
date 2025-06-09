@@ -5,9 +5,8 @@
  */
 
 import type { Context } from 'hono';
-import { clickHouse } from '../clickhouse/client';
+import { clickHouse } from '@databuddy/db';
 import { parseUserAgent } from '../utils/user-agent';
-import { getGeoData } from '../utils/ip-geo';
 import { getRedisCache } from '@databuddy/redis';
 import { logger } from '../lib/logger';
 import { randomUUID } from 'node:crypto';
@@ -93,9 +92,6 @@ export async function processEvent(c: Context) {
     
     // Parse user agent
     const userAgent = parseUserAgent(enriched.user_agent || '');
-    
-    // Get geo data
-    const geo = await getGeoData(enriched.ip || '');
     // Map event data to ClickHouse columns
     const eventData = {
       id: randomUUID(),
@@ -124,8 +120,8 @@ export async function processEvent(c: Context) {
       connection_type: properties.connection_type || properties.connectionType || enriched.connection_type || '',
       rtt: properties.rtt || enriched.rtt || null,
       time_on_page: properties.timeOnPage || properties.time_on_page || properties.timeSpent || enriched.time_on_page || null,
-      country: geo.country || enriched.country || '',
-      region: geo.region || enriched.region || '',
+      country: enriched.country || '',
+      region: enriched.region || '',
       utm_source: properties.utmSource || properties.utm_source || (properties.utmParams?.utm_source) || enriched.utm_source || '',
       utm_medium: properties.utmMedium || properties.utm_medium || (properties.utmParams?.utm_medium) || enriched.utm_medium || '',
       utm_campaign: properties.utmCampaign || properties.utm_campaign || (properties.utmParams?.utm_campaign) || enriched.utm_campaign || '',
@@ -159,7 +155,7 @@ export async function processEvent(c: Context) {
         __enriched: {
           timestamp_ms: properties.__enriched?.timestamp_ms,
           userAgent: userAgent,
-          geo: geo
+          geo: { country: enriched.country, region: enriched.region }
         }
       }),
       created_at: now
