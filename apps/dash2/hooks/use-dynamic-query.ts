@@ -626,11 +626,6 @@ export function useEnhancedPerformanceData(
       limit: 100,
     },
     {
-      id: 'browsers_with_versions',
-      parameters: ['browsers_grouped'],
-      limit: 100,
-    },
-    {
       id: 'operating_systems',
       parameters: ['performance_by_os'],
       limit: 100,
