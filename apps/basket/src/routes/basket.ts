@@ -71,7 +71,7 @@ const enrichEvent = (properties: Record<string, any>, enriched: any) => {
         referrerName = 'Direct';
       }
     } catch (e) {
-      logger.warn('Invalid referrer URL', { referrer });
+      logger.warn(new Error(`Invalid referrer URL: ${referrer}`));
       // If URL parsing fails, keep the original referrer
     }
   }
