@@ -305,7 +305,7 @@ basketRouter.post('/batch', async (c) => {
       processed: results
     }, 200);
   } catch (error) {
-    logger.error('Error processing batch events', { error: error instanceof Error ? error.message : String(error) });
+    logger.error({ message: `Error processing batch events: ${error instanceof Error ? error.message : String(error)}` });
     return c.json({ 
       status: 'error', 
       message: 'Failed to process batch events'
