@@ -311,7 +311,7 @@ export function DataTable<TData extends { name: string | number }, TValue>(
         {tabs && tabs.length > 1 && (
           <div className="mt-3 overflow-hidden">
             <div className="overflow-x-auto pb-1 -mb-1">
-              <nav className="inline-flex gap-0.5 p-0.5 bg-muted/40 rounded-lg" role="tablist" aria-label="Data view options">
+              <nav className="inline-flex gap-0.5 p-0.5 bg-muted/40 rounded" role="tablist" aria-label="Data view options">
                 {tabs.map((tab) => {
                   const isActive = activeTab === tab.id;
                   const itemCount = tab.data?.length || 0;
@@ -633,7 +633,7 @@ export function DataTable<TData extends { name: string | number }, TValue>(
                   <ChevronLeft className="h-3.5 w-3.5" />
                 </Button>
 
-                <div className="flex items-center gap-1 px-2 py-1 bg-muted/20 rounded-md">
+                <div className="flex items-center gap-1 px-2 py-1 bg-muted/20 rounded">
                   <span className="text-xs font-medium min-w-0">
                     {table.getState().pagination.pageIndex + 1}
                   </span>

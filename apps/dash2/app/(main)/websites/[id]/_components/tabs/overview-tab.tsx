@@ -671,7 +671,7 @@ export function WebsiteOverviewTab({
       </div>
 
       {/* Chart */}
-      <div className="rounded-xl border shadow-sm">
+      <div className="rounded border shadow-sm">
         <div className="p-4 border-b flex flex-col sm:flex-row justify-between items-start gap-3">
           <div>
             <h2 className="text-lg font-semibold tracking-tight">Traffic Trends</h2>
@@ -759,7 +759,7 @@ export function WebsiteOverviewTab({
                   <div className="text-sm font-bold text-slate-600 dark:text-slate-400">
                     {propertyTotal.toLocaleString()}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-500 bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded-full">
+                  <div className="text-xs text-white dark:text-black bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded-full">
                     {propertyValues.length} values
                   </div>
                 </div>
@@ -775,7 +775,7 @@ export function WebsiteOverviewTab({
                     >
                       <div className="flex items-center gap-3 pl-8">
                         <div className="w-1 h-1 bg-slate-400 rounded-full flex-shrink-0" />
-                        <span className="text-sm font-medium text-slate-600 dark:text-slate-400 truncate" title={valueItem.value}>
+                        <span className="text-sm font-medium text-white dark:text-black truncate" title={valueItem.value}>
                           {valueItem.value}
                         </span>
                       </div>
