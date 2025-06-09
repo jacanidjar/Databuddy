@@ -43,14 +43,14 @@ export function MapComponent({
   // Process country data from locations data
   const countryData = useMemo(() => {
     if (!locationsData?.countries) return null;
-    
+
     // Filter out empty country codes and ensure proper formatting
-    const validCountries = locationsData.countries.filter((country: any) => 
+    const validCountries = locationsData.countries.filter((country: any) =>
       country.country && country.country.trim() !== ""
     );
-    
+
     const totalVisitors = validCountries.reduce((sum: number, c: any) => sum + c.visitors, 0) || 1;
-    
+
     return {
       data: validCountries.map((country: any) => ({
         value: country.country.toUpperCase(), // Ensure uppercase for ISO matching
@@ -62,10 +62,10 @@ export function MapComponent({
 
   const subdivisionData = useMemo(() => {
     if (!locationsData?.cities) return null;
-    
+
     // Group cities by region
     const regions: Record<string, { visitors: number; pageviews: number }> = {};
-    
+
     for (const city of locationsData.cities) {
       const regionKey = `${city.country}-${city.region}`;
       if (!regions[regionKey]) {
@@ -74,7 +74,7 @@ export function MapComponent({
       regions[regionKey].visitors += city.visitors;
       regions[regionKey].pageviews += city.pageviews;
     }
-    
+
     return {
       data: Object.entries(regions).map(([key, data]) => ({
         value: key,
@@ -121,12 +121,12 @@ export function MapComponent({
     const metricToUse = mode === "perCapita" ? "perCapita" : "count";
     const values = processedCountryData?.map((d: any) => d[metricToUse]) || [0];
     const maxValue = Math.max(...values);
-    const minValue = Math.min(...values.filter(v => v > 0));
+    const minValue = Math.min(...values.filter((v: number) => v > 0));
 
     // Better blue color scheme with improved contrast
     const baseBlue = "59, 130, 246"; // Blue-500 RGB values
     const lightBlue = "147, 197, 253"; // Blue-300 RGB values
-    
+
     // Use a square root scale (exponent 0.5) for better visual distribution
     const scale = scalePow<number>()
       .exponent(0.5)
@@ -135,9 +135,9 @@ export function MapComponent({
 
     return (value: number) => {
       if (value === 0) return `rgba(229, 231, 235, 0.3)`; // Gray-200 for no data
-      
+
       const intensity = scale(value);
-      
+
       // Use a gradient from light blue to dark blue based on intensity
       if (intensity < 0.3) {
         return `rgba(${lightBlue}, ${0.2 + intensity * 0.4})`;
@@ -158,22 +158,22 @@ export function MapComponent({
 
     const metricValue = mode === "perCapita" ? foundData?.perCapita || 0 : foundData?.count || 0;
     const fillColor = colorScale(metricValue);
-    
+
     // Enhanced border styling based on data and hover state
     const isHovered = hoveredId === dataKey?.toString();
     const hasData = metricValue > 0;
-    
+
     // Dynamic border color and weight for better visual hierarchy
-    const borderColor = hasData 
+    const borderColor = hasData
       ? (isHovered ? "rgba(59, 130, 246, 0.9)" : "rgba(59, 130, 246, 0.4)")
       : "rgba(156, 163, 175, 0.3)"; // Gray-400 for no data
-      
-    const borderWeight = hasData 
+
+    const borderWeight = hasData
       ? (isHovered ? 2.5 : 1.2)
       : 0.8;
-    
+
     // Enhanced fill opacity with better contrast
-    const fillOpacity = hasData 
+    const fillOpacity = hasData
       ? (isHovered ? 0.95 : 0.8)
       : 0.2;
 
@@ -225,14 +225,14 @@ export function MapComponent({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [resolvedHeight, setResolvedHeight] = useState<number>(0);
-  
+
   useEffect(() => {
     const updateHeight = () => {
       if (containerRef.current) {
         setResolvedHeight(containerRef.current.clientHeight);
       }
     };
-    
+
     updateHeight();
     window.addEventListener('resize', updateHeight);
     return () => window.removeEventListener('resize', updateHeight);
@@ -266,7 +266,7 @@ export function MapComponent({
           </div>
         </div>
       )}
-      
+
       {(countriesGeoData || subdivisionsGeoData) && (
         <MapContainer
           preferCanvas={true}
