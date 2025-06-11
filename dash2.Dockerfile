@@ -3,7 +3,7 @@ FROM oven/bun:1-slim AS builder
 
 
 # Copy dependency files
-COPY package.json bun.lock turbo.json /app
+COPY package.json bun.lock turbo.json /app/
 COPY apps/dash2 /app/dash2
 COPY packages/ /app/packages
 
