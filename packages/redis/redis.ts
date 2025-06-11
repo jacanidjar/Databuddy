@@ -82,16 +82,14 @@ const createRedisClient = (
   return client;
 };
 
-// Singleton instance
 let redisInstance: ExtendedRedis | null = null;
 
-// Create singleton Redis instance
 export function getRedisCache(): ExtendedRedis {
   if (!redisInstance) {
     const redisUrl = process.env.REDIS_URL;
     if (!redisUrl) {
       logger.error('REDIS_URL environment variable is not set');
-      throw new Error('REDIS_URL environment variable is required');
+      return null;
     }
     
     redisInstance = createRedisClient(redisUrl, options);
