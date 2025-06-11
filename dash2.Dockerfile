@@ -30,7 +30,8 @@ WORKDIR /app
 # Set environment variables
 ENV NODE_ENV=production \
     PORT=3000 \
-    BUN_ENV=production
+    BUN_ENV=production \
+    REDIS_URL=redis://localhost
 
 # Expose port
 EXPOSE 3000
