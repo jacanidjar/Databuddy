@@ -17,6 +17,10 @@ RUN bun run build
 
 # build dash2
 WORKDIR /build/apps/dash2
+ENV NODE_ENV=production 
+ENV REDIS_URL=redis://localhost
+ENV PORT=3000
+ENV BUN_ENV=production 
 RUN bun install 
 RUN bun run build
 
