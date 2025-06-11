@@ -84,7 +84,7 @@ const createRedisClient = (
 
 let redisInstance: ExtendedRedis | null = null;
 
-export function getRedisCache(): ExtendedRedis {
+export function getRedisCache(): ExtendedRedis | null {
   if (!redisInstance) {
     const redisUrl = process.env.REDIS_URL;
     if (!redisUrl) {
