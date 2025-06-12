@@ -56,7 +56,7 @@ const MiniChart = memo(({ data, id }: { data: MiniChartDataPoint[]; id: string }
 
   return (
     <div className="chart-container group/chart">
-      <ResponsiveContainer width="100%" height={32}>
+      <ResponsiveContainer width="100%" height={28}>
         <AreaChart data={data} margin={{ top: 2, right: 1, left: 1, bottom: 2 }}>
           <defs>
             <linearGradient id={`gradient-${id}`} x1="0" y1="0" x2="0" y2="1">
@@ -149,22 +149,22 @@ export function StatCard({
   if (isLoading) {
     return (
       <Card className={cn(
-        "overflow-hidden py-1 sm:py-2 border",
+        "overflow-hidden border",
         "bg-gradient-to-br from-background to-muted/10",
         className
       )} id={id}>
-        <div className="p-2 sm:p-3">
-          <div className="flex items-center justify-between mb-2">
-            <Skeleton className="h-3 w-20 rounded" />
+        <div className="p-3 sm:p-4">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <Skeleton className="h-2.5 sm:h-3 w-16 sm:w-20 rounded" />
             {Icon && (
               <div className="p-1 rounded-md bg-muted/20">
                 <Skeleton className="h-3 w-3 sm:h-4 sm:w-4 rounded" />
               </div>
             )}
           </div>
-          <Skeleton className="h-6 sm:h-8 w-24 mb-2 rounded" />
-          <Skeleton className="h-4 w-16 mb-2 rounded" />
-          {showChart && <Skeleton className="h-9 w-full rounded" />}
+          <Skeleton className="h-5 sm:h-6 md:h-8 w-20 sm:w-24 mb-1.5 sm:mb-2 rounded" />
+          <Skeleton className="h-3 sm:h-4 w-12 sm:w-16 mb-1.5 sm:mb-2 rounded" />
+          {showChart && <Skeleton className="h-7 sm:h-9 w-full rounded" />}
         </div>
       </Card>
     );
@@ -182,42 +182,42 @@ export function StatCard({
 
   return (
     <Card className={cn(
-      "group overflow-hidden transition-all duration-300 ease-out",
+      "group overflow-hidden transition-all duration-300 ease-out pt-0",
       "hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5",
       "border-border/50 hover:border-primary/20",
       "bg-gradient-to-br from-background to-muted/10",
       getVariantClasses(),
       className
     )} id={id}>
-      <div className="p-3 relative">
+      <div className="p-3 sm:p-4 relative">
         {/* Background decoration */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-        <div className="relative z-10 space-y-2">
+        <div className="relative z-10 space-y-1.5 sm:space-y-2">
           {/* Header with title and icon */}
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider line-clamp-1 mb-1">
+              <p className="text-[9px] sm:text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-wider line-clamp-1 mb-0.5 sm:mb-1">
                 {title}
               </p>
               <div className={cn(
                 "font-bold leading-tight text-foreground group-hover:text-primary transition-colors duration-300",
-                isTimeValue ? "text-lg sm:text-xl" : "text-xl sm:text-2xl",
-                typeof value === 'string' && value.length > 8 ? "text-lg sm:text-xl" : ""
+                isTimeValue ? "text-base sm:text-lg md:text-xl" : "text-lg sm:text-xl md:text-2xl",
+                typeof value === 'string' && value.length > 8 ? "text-base sm:text-lg md:text-xl" : ""
               )}>
                 {displayValue}
               </div>
             </div>
             {Icon && (
-              <div className="p-1.5 rounded-lg bg-primary/5 group-hover:bg-primary/10 transition-colors duration-300 ml-2 flex-shrink-0">
-                <Icon className="h-4 w-4 text-primary/70 group-hover:text-primary transition-colors duration-300" />
+              <div className="p-1 sm:p-1.5 rounded-lg bg-primary/5 group-hover:bg-primary/10 transition-colors duration-300 ml-1.5 sm:ml-2 flex-shrink-0">
+                <Icon className="h-3 w-3 sm:h-4 sm:w-4 text-primary/70 group-hover:text-primary transition-colors duration-300" />
               </div>
             )}
           </div>
 
           {/* Trend and description row */}
-          <div className="flex items-center justify-between text-[10px] sm:text-xs">
-            <div className="flex items-center min-h-[14px]">
+          <div className="flex items-center justify-between text-[9px] sm:text-[10px] md:text-xs">
+            <div className="flex items-center min-h-[12px] sm:min-h-[14px]">
               {trend !== undefined && !Number.isNaN(trend) && (
                 <div className="flex items-center">
                   <TrendArrow value={trend} invertColor={invertTrend} />
@@ -231,7 +231,7 @@ export function StatCard({
               )}
             </div>
             {trendLabel && trend !== undefined && !Number.isNaN(trend) && (
-              <span className="text-muted-foreground font-medium text-right hidden sm:block">
+              <span className="text-muted-foreground font-medium text-right hidden md:block">
                 {trendLabel}
               </span>
             )}
@@ -239,7 +239,7 @@ export function StatCard({
 
           {/* Chart */}
           {hasValidChartData && (
-            <div className="[--chart-color:theme(colors.primary.DEFAULT)] group-hover:[--chart-color:theme(colors.primary.500)] transition-colors duration-300 -mb-1">
+            <div className="[--chart-color:theme(colors.primary.DEFAULT)] group-hover:[--chart-color:theme(colors.primary.500)] transition-colors duration-300 -mb-0.5 sm:-mb-1">
               <MiniChart data={chartData} id={id || `chart-${Math.random()}`} />
             </div>
           )}
