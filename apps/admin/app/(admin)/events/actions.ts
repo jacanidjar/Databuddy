@@ -9,24 +9,96 @@ export interface ClickhouseEvent {
   anonymous_id: string;
   time: string;
   session_id: string;
+  event_type: string;
+  event_id: string;
+  session_start_time: string | null;
+  timestamp: string;
+  
+  // Page context
   referrer: string | null;
   url: string;
   path: string;
   title: string | null;
+  
+  // Server enrichment
   ip: string;
-  user_agent: string;
+  user_agent: string | null;
   browser_name: string | null;
   browser_version: string | null;
   os_name: string | null;
   os_version: string | null;
   device_type: string | null;
-  screen_resolution: string | null;
-  language: string | null;
+  device_brand: string | null;
+  device_model: string | null;
   country: string | null;
   region: string | null;
   city: string | null;
+  
+  // User context
+  screen_resolution: string | null;
+  viewport_size: string | null;
+  language: string | null;
+  timezone: string | null;
+  
+  // Connection info
+  connection_type: string | null;
+  rtt: number | null;
+  downlink: number | null;
+  
+  // Engagement metrics
+  time_on_page: number | null;
+  scroll_depth: number | null;
+  interaction_count: number | null;
+  exit_intent: number | null;
+  page_count: number | null;
+  is_bounce: number | null;
+  has_exit_intent: boolean | null;
+  page_size: number | null;
+  
+  // UTM parameters
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_term: string | null;
+  utm_content: string | null;
+  
+  // Performance metrics
+  load_time: number | null;
+  dom_ready_time: number | null;
+  dom_interactive: number | null;
+  ttfb: number | null;
+  connection_time: number | null;
+  request_time: number | null;
+  render_time: number | null;
+  redirect_time: number | null;
+  domain_lookup_time: number | null;
+  
+  // Web Vitals
+  fcp: number | null;
+  lcp: number | null;
+  cls: number | null;
+  fid: number | null;
+  inp: number | null;
+  
+  // Link tracking
+  href: string | null;
+  text: string | null;
+  
+  // Custom event value
+  value: number | null;
+  
+  // Error tracking
+  error_message: string | null;
+  error_filename: string | null;
+  error_lineno: number | null;
+  error_colno: number | null;
+  error_stack: string | null;
+  error_type: string | null;
+  
+  // Legacy
   properties: string;
   created_at: string;
+  
   [key: string]: any;
 }
 

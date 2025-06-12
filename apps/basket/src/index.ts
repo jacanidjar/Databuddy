@@ -54,5 +54,5 @@ app.get('/health', () => ({ status: 'ok', version: '1.0.0' }));
 
 export default {
   fetch: app.fetch,
-  port: process.env.PORT || 4000,
+  port: process.env.PORT || 4001,
 };

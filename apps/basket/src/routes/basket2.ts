@@ -26,25 +26,26 @@ async function insertError(errorData: any, clientId: string): Promise<void> {
   const errorEvent: ErrorEvent = {
     id: randomUUID(),
     client_id: clientId,
-    event_id: errorData.payload.eventId,
-    anonymous_id: errorData.payload.anonymousId,
-    session_id: errorData.payload.sessionId,
-    timestamp: errorData.payload.timestamp,
-    path: errorData.payload.path,
-    message: errorData.payload.message,
-    filename: errorData.payload.filename,
+    event_id: sanitizeString(errorData.payload.eventId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
+    anonymous_id: sanitizeString(errorData.payload.anonymousId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
+    session_id: validateSessionId(errorData.payload.sessionId),
+    timestamp: errorData.payload.timestamp && typeof errorData.payload.timestamp === 'number' ? errorData.payload.timestamp : new Date().getTime(),
+    path: sanitizeString(errorData.payload.path, VALIDATION_LIMITS.STRING_MAX_LENGTH),
+    message: sanitizeString(errorData.payload.message, VALIDATION_LIMITS.STRING_MAX_LENGTH),
+    filename: sanitizeString(errorData.payload.filename, VALIDATION_LIMITS.STRING_MAX_LENGTH),
     lineno: errorData.payload.lineno,
     colno: errorData.payload.colno,
-    stack: errorData.payload.stack,
-    error_type: errorData.payload.errorType,
+    stack: sanitizeString(errorData.payload.stack, VALIDATION_LIMITS.STRING_MAX_LENGTH),
+    error_type: sanitizeString(errorData.payload.errorType, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
     created_at: new Date().getTime()
   }
-
+  
   await clickHouse.insert({
     table: 'analytics.errors',
     values: [errorEvent],
     format: 'JSONEachRow'
   })
+
 }
 
 async function insertWebVitals(vitalsData: any, clientId: string): Promise<void> {
@@ -58,16 +59,16 @@ async function insertWebVitals(vitalsData: any, clientId: string): Promise<void>
   const webVitalsEvent: WebVitalsEvent = {
     id: randomUUID(),
     client_id: clientId,
-    event_id: vitalsData.payload.eventId,
-    anonymous_id: vitalsData.payload.anonymousId,
-    session_id: vitalsData.payload.sessionId,
-    timestamp: vitalsData.payload.timestamp,
-    path: vitalsData.payload.path,
-    fcp: vitalsData.payload.fcp,
-    lcp: vitalsData.payload.lcp,
-    cls: vitalsData.payload.cls,
-    fid: vitalsData.payload.fid,
-    inp: vitalsData.payload.inp,
+    event_id: sanitizeString(vitalsData.payload.eventId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
+    anonymous_id: sanitizeString(vitalsData.payload.anonymousId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
+    session_id: validateSessionId(vitalsData.payload.sessionId),
+    timestamp: vitalsData.payload.timestamp && typeof vitalsData.payload.timestamp === 'number' ? vitalsData.payload.timestamp : new Date().getTime(),
+    path: sanitizeString(vitalsData.payload.path, VALIDATION_LIMITS.STRING_MAX_LENGTH),
+    fcp: validatePerformanceMetric(vitalsData.payload.fcp),
+    lcp: validatePerformanceMetric(vitalsData.payload.lcp),
+    cls: validatePerformanceMetric(vitalsData.payload.cls),
+    fid: validatePerformanceMetric(vitalsData.payload.fid),
+    inp: validatePerformanceMetric(vitalsData.payload.inp),
     created_at: new Date().getTime()
   }
 
@@ -76,6 +77,7 @@ async function insertWebVitals(vitalsData: any, clientId: string): Promise<void>
     values: [webVitalsEvent],
     format: 'JSONEachRow'
   })
+
 }
 
 async function insertTrackEvent(trackData: any, clientId: string, userAgent: string, ip: string): Promise<void> {
@@ -94,12 +96,12 @@ async function insertTrackEvent(trackData: any, clientId: string, userAgent: str
     client_id: clientId,
     event_name: sanitizeString(trackData.name, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
     anonymous_id: sanitizeString(trackData.anonymousId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
-    time: validatePerformanceMetric(trackData.timestamp),
+    time: trackData.timestamp && typeof trackData.timestamp === 'number' ? trackData.timestamp : new Date().getTime(),
     session_id: validateSessionId(trackData.sessionId),
     event_type: 'track',
     event_id: sanitizeString(trackData.eventId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
-    session_start_time: validatePerformanceMetric(trackData.sessionStartTime),
-    timestamp: validatePerformanceMetric(trackData.timestamp),
+    session_start_time: trackData.sessionStartTime && typeof trackData.sessionStartTime === 'number' ? trackData.sessionStartTime : new Date().getTime(),
+    timestamp: trackData.timestamp && typeof trackData.timestamp === 'number' ? trackData.timestamp : new Date().getTime(),
     
     // Page context
     referrer: sanitizeString(trackData.referrer, VALIDATION_LIMITS.STRING_MAX_LENGTH),
@@ -107,17 +109,17 @@ async function insertTrackEvent(trackData: any, clientId: string, userAgent: str
     path: sanitizeString(trackData.path, VALIDATION_LIMITS.STRING_MAX_LENGTH),
     title: sanitizeString(trackData.title, VALIDATION_LIMITS.STRING_MAX_LENGTH),
     
-    ip: anonymizedIP,
-    user_agent: null,
-    browser_name: browserName,
-    browser_version: browserVersion,
-    os_name: osName,
-    os_version: osVersion,
-    device_type: deviceType,
-    device_brand: deviceBrand,
-    device_model: deviceModel,
-    country: country,
-    region: region,
+    ip: anonymizedIP || null,
+    user_agent: sanitizeString(userAgent, VALIDATION_LIMITS.STRING_MAX_LENGTH) || null,
+    browser_name: browserName || null,
+    browser_version: browserVersion || null,
+    os_name: osName || null,
+    os_version: osVersion || null,
+    device_type: deviceType || null,
+    device_brand: deviceBrand || null,
+    device_model: deviceModel || null,
+    country: country || null,
+    region: region || null,
     city: null, // No thanks
     
     // User context
@@ -193,6 +195,7 @@ async function insertTrackEvent(trackData: any, clientId: string, userAgent: str
     values: [trackEvent],
     format: 'JSONEachRow'
   })
+
 }
 
 async function checkDuplicate(eventId: string, eventType: string): Promise<boolean> {
