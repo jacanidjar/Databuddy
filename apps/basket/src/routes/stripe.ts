@@ -7,7 +7,7 @@ import { clickHouse } from '@databuddy/db'
  * STRIPE CHECKOUT SETUP GUIDE
  * 
  * To properly track revenue analytics, you MUST include client_id and session_id 
- * in your Stripe Checkout session metadata when creating sessions server-side:
+ * when creating Stripe Checkout sessions server-side:
  * 
  * Example:
  * ```typescript
@@ -17,17 +17,17 @@ import { clickHouse } from '@databuddy/db'
  *   line_items: [{ price: 'price_abc123', quantity: 1 }],
  *   success_url: 'https://yourapp.com/success',
  *   cancel_url: 'https://yourapp.com/cancel',
+ *   client_reference_id: 'session_id',  // REQUIRED: Pass your analytics session_id here
  *   metadata: {
- *     client_id: 'your_website_id',        // Required: Website/client identifier
- *     session_id: 'user_session_id',       // Required: Anonymous user session ID
- *     user_id: 'user_1234',               // Optional: Your internal user ID
- *   },
- *   client_reference_id: 'user_session_id' // Alternative way to pass session_id
+ *     client_id: 'your_website_id',          // REQUIRED: Website/client identifier
+ *   }
  * });
  * ```
  * 
- * This metadata will be available in all webhook events (payment_intent.*, charge.*, refund.*)
- * and allows proper linking between payment data and analytics events.
+ * IMPORTANT:
+ * - client_reference_id should contain your analytics session_id (anonymous user ID)
+ * - metadata.client_id should contain your website/client identifier
+ * - This links Stripe payments to your analytics events automatically
  */
 
 const app = new Elysia()
@@ -41,38 +41,176 @@ interface StripeConfig {
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 const ENABLE_IP_VALIDATION = process.env.ENABLE_IP_VALIDATION === 'true' || IS_PRODUCTION
-const ENABLE_RATE_LIMITING = process.env.ENABLE_RATE_LIMITING === 'true' || IS_PRODUCTION
 const ENABLE_MODE_VALIDATION = process.env.ENABLE_MODE_VALIDATION === 'true' || IS_PRODUCTION
 
 const STRIPE_WEBHOOK_IPS = [
-    '3.18.12.63',
-    '3.130.192.231',
-    '13.235.14.237',
-    '13.235.122.149',
-    '18.211.135.69',
-    '35.154.171.200',
-    '52.15.183.38',
-    '54.88.130.119',
-    '54.88.130.237',
-    '54.187.174.169',
-    '54.187.205.235',
-    '54.187.216.72'
+    "13.112.224.240",
+    "13.115.13.148",
+    "13.210.129.177",
+    "13.210.176.167",
+    "13.228.126.182",
+    "13.228.224.121",
+    "13.230.11.13",
+    "13.230.90.110",
+    "13.55.153.188",
+    "13.55.5.15",
+    "13.56.126.253",
+    "13.56.173.200",
+    "13.56.173.232",
+    "13.57.108.134",
+    "13.57.155.157",
+    "13.57.156.206",
+    "13.57.157.116",
+    "13.57.90.254",
+    "13.57.98.27",
+    "18.194.147.12",
+    "18.195.120.229",
+    "18.195.125.165",
+    "34.200.27.109",
+    "34.200.47.89",
+    "34.202.153.183",
+    "34.204.109.15",
+    "34.213.149.138",
+    "34.214.229.69",
+    "34.223.201.215",
+    "34.237.201.68",
+    "34.237.253.141",
+    "34.238.187.115",
+    "34.239.14.72",
+    "34.240.123.193",
+    "34.241.202.139",
+    "34.241.54.72",
+    "34.241.59.225",
+    "34.250.29.31",
+    "34.250.89.120",
+    "35.156.131.6",
+    "35.156.194.238",
+    "35.157.227.67",
+    "35.158.254.198",
+    "35.163.82.19",
+    "35.164.105.206",
+    "35.164.124.216",
+    "50.16.2.231",
+    "50.18.212.157",
+    "50.18.212.223",
+    "50.18.219.232",
+    "52.1.23.197",
+    "52.196.53.105",
+    "52.196.95.231",
+    "52.204.6.233",
+    "52.205.132.193",
+    "52.211.198.11",
+    "52.212.99.37",
+    "52.213.35.125",
+    "52.22.83.139",
+    "52.220.44.249",
+    "52.25.214.31",
+    "52.26.11.205",
+    "52.26.132.102",
+    "52.26.14.11",
+    "52.36.167.221",
+    "52.53.133.6",
+    "52.54.150.82",
+    "52.57.221.37",
+    "52.59.173.230",
+    "52.62.14.35",
+    "52.62.203.73",
+    "52.63.106.9",
+    "52.63.119.77",
+    "52.65.161.237",
+    "52.73.161.98",
+    "52.74.114.251",
+    "52.74.98.83",
+    "52.76.14.176",
+    "52.76.156.251",
+    "52.76.174.156",
+    "52.77.80.43",
+    "52.8.19.58",
+    "52.8.8.189",
+    "54.149.153.72",
+    "54.152.36.104",
+    "54.183.95.195",
+    "54.187.182.230",
+    "54.187.199.38",
+    "54.187.208.163",
+    "54.238.140.239",
+    "54.65.115.204",
+    "54.65.97.98",
+    "54.67.48.128",
+    "54.67.52.245",
+    "54.68.165.206",
+    "54.68.183.151",
+    "107.23.48.182",
+    "107.23.48.232",
+    "198.137.150.21",
+    "198.137.150.22",
+    "198.137.150.23",
+    "198.137.150.24",
+    "198.137.150.25",
+    "198.137.150.26",
+    "198.137.150.27",
+    "198.137.150.28",
+    "198.137.150.101",
+    "198.137.150.102",
+    "198.137.150.103",
+    "198.137.150.104",
+    "198.137.150.105",
+    "198.137.150.106",
+    "198.137.150.107",
+    "198.137.150.108",
+    "198.137.150.171",
+    "198.137.150.172",
+    "198.137.150.173",
+    "198.137.150.174",
+    "198.137.150.175",
+    "198.137.150.176",
+    "198.137.150.177",
+    "198.137.150.178",
+    "198.137.150.221",
+    "198.137.150.222",
+    "198.137.150.223",
+    "198.137.150.224",
+    "198.137.150.225",
+    "198.137.150.226",
+    "198.137.150.227",
+    "198.137.150.228",
+    "198.202.176.21",
+    "198.202.176.22",
+    "198.202.176.23",
+    "198.202.176.24",
+    "198.202.176.25",
+    "198.202.176.26",
+    "198.202.176.27",
+    "198.202.176.28",
+    "198.202.176.101",
+    "198.202.176.102",
+    "198.202.176.103",
+    "198.202.176.104",
+    "198.202.176.105",
+    "198.202.176.106",
+    "198.202.176.107",
+    "198.202.176.108",
+    "198.202.176.171",
+    "198.202.176.172",
+    "198.202.176.173",
+    "198.202.176.174",
+    "198.202.176.175",
+    "198.202.176.176",
+    "198.202.176.177",
+    "198.202.176.178",
+    "198.202.176.221",
+    "198.202.176.222",
+    "198.202.176.223",
+    "198.202.176.224",
+    "198.202.176.225",
+    "198.202.176.226",
+    "198.202.176.227",
+    "198.202.176.228",
 ]
-
-// Rate limiting map (in production, use Redis)
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
-const RATE_LIMIT_WINDOW = 60000 // 1 minute
-const RATE_LIMIT_MAX = 100 // Max requests per window
 
 // Secure webhook endpoint using webhook token: /stripe/webhook/{webhookToken}
 app.post('/stripe/webhook/:webhookToken', async ({ params, request, set }) => {
     const clientIp = getClientIp(request)
-    
-    // Rate limiting (conditional)
-    if (ENABLE_RATE_LIMITING && !checkRateLimit(params.webhookToken, clientIp)) {
-        set.status = 429
-        return { error: 'Rate limit exceeded' }
-    }
 
     // IP validation (conditional)
     if (ENABLE_IP_VALIDATION && !isStripeIp(clientIp)) {
@@ -119,27 +257,6 @@ function getClientIp(request: Request): string {
            request.headers.get('x-forwarded-for')?.split(',')[0] || 
            request.headers.get('x-real-ip') || 
            'unknown'
-}
-
-/**
- * Simple rate limiting check
- */
-function checkRateLimit(identifier: string, ip: string): boolean {
-    const key = `${identifier}:${ip}`
-    const now = Date.now()
-    const limit = rateLimitMap.get(key)
-
-    if (!limit || now > limit.resetTime) {
-        rateLimitMap.set(key, { count: 1, resetTime: now + RATE_LIMIT_WINDOW })
-        return true
-    }
-
-    if (limit.count >= RATE_LIMIT_MAX) {
-        return false
-    }
-
-    limit.count++
-    return true
 }
 
 /**
@@ -310,24 +427,20 @@ function extractClientId(stripeObject: any): string | null {
 }
 
 /**
- * Extract session ID from Stripe metadata or client_reference_id
+ * Extract session ID from Stripe client_reference_id (recommended) or metadata fallback
  */
 function extractSessionId(stripeObject: any): string | null {
     try {
-        // Try client_reference_id first (recommended approach)
+        // Primary: client_reference_id (recommended - most reliable)
         if (stripeObject.client_reference_id) {
             return stripeObject.client_reference_id
         }
         
-        // Fallback to metadata
+        // Fallback: metadata.session_id
         if (stripeObject.metadata?.session_id) {
             return stripeObject.metadata.session_id
         }
-        
-        // Also try anonymous_user_id in metadata
-        if (stripeObject.metadata?.anonymous_user_id) {
-            return stripeObject.metadata.anonymous_user_id
-        }
+
     } catch (error) {
         console.warn('Error extracting session ID:', error)
     }
@@ -344,9 +457,8 @@ async function insertPaymentIntent(pi: Stripe.PaymentIntent, config: StripeConfi
         const sessionId = extractSessionId(pi)
         
         if (!clientId) {
-            console.warn('No client_id found in PaymentIntent metadata:', pi.id)
-            // You might want to skip insertion or use a default value
-            return
+            console.error('❌ REQUIRED: client_id not found in PaymentIntent metadata:', pi.id)
+            throw new Error(`Missing required client_id in PaymentIntent ${pi.id} metadata. Please include client_id in your Stripe Checkout session metadata.`)
         }
 
         await clickHouse.insert({
@@ -354,6 +466,7 @@ async function insertPaymentIntent(pi: Stripe.PaymentIntent, config: StripeConfi
             values: [{
                 id: pi.id,
                 client_id: clientId,
+                webhook_token: config.webhookToken,
                 created: new Date(pi.created * 1000).toISOString().replace('T', ' ').replace('Z', ''),
                 status: pi.status,
                 currency: pi.currency,
@@ -370,13 +483,12 @@ async function insertPaymentIntent(pi: Stripe.PaymentIntent, config: StripeConfi
                 description: pi.description,
                 application_fee_amount: pi.application_fee_amount,
                 setup_future_usage: pi.setup_future_usage,
-                anonymized_user_id: sessionId, // This is the session_id from analytics events
-                session_id: sessionId // Keep both for compatibility
+                session_id: sessionId
             }],
             format: 'JSONEachRow'
         })
         
-        console.log(`✅ Inserted PaymentIntent ${pi.id} for client ${clientId} with session ${sessionId}`)
+        console.log(`✅ Inserted PaymentIntent ${pi.id} for client ${clientId} with session ${sessionId} via webhook ${config.webhookToken}`)
     } catch (error) {
         console.error('Error inserting payment intent:', error)
         throw error
@@ -393,9 +505,8 @@ async function insertCharge(charge: Stripe.Charge, config: StripeConfig) {
         const card = charge.payment_method_details?.card
 
         if (!clientId) {
-            console.warn('No client_id found in Charge metadata:', charge.id)
-            // You might want to skip insertion or use a default value
-            return
+            console.error('❌ REQUIRED: client_id not found in Charge metadata:', charge.id)
+            throw new Error(`Missing required client_id in Charge ${charge.id} metadata. Please include client_id in your Stripe Checkout session metadata.`)
         }
 
         await clickHouse.insert({
@@ -403,6 +514,7 @@ async function insertCharge(charge: Stripe.Charge, config: StripeConfig) {
             values: [{
                 id: charge.id,
                 client_id: clientId,
+                webhook_token: config.webhookToken,
                 created: new Date(charge.created * 1000).toISOString().replace('T', ' ').replace('Z', ''),
                 status: charge.status,
                 currency: charge.currency,
@@ -418,13 +530,12 @@ async function insertCharge(charge: Stripe.Charge, config: StripeConfig) {
                 card_brand: card?.brand || null,
                 payment_intent_id: charge.payment_intent as string || null,
                 customer_id: charge.customer as string || null,
-                anonymized_user_id: sessionId, // This is the session_id from analytics events
-                session_id: sessionId // Keep both for compatibility
+                session_id: sessionId
             }],
             format: 'JSONEachRow'
         })
         
-        console.log(`✅ Inserted Charge ${charge.id} for client ${clientId} with session ${sessionId}`)
+        console.log(`✅ Inserted Charge ${charge.id} for client ${clientId} with session ${sessionId} via webhook ${config.webhookToken}`)
     } catch (error) {
         console.error('Error inserting charge:', error)
         throw error
@@ -440,9 +551,8 @@ async function insertRefund(refund: Stripe.Refund, config: StripeConfig) {
         const sessionId = extractSessionId(refund)
         
         if (!clientId) {
-            console.warn('No client_id found in Refund metadata:', refund.id)
-            // You might want to skip insertion or use a default value
-            return
+            console.error('❌ REQUIRED: client_id not found in Refund metadata:', refund.id)
+            throw new Error(`Missing required client_id in Refund ${refund.id} metadata. Please include client_id in your Stripe Checkout session metadata.`)
         }
 
         await clickHouse.insert({
@@ -450,6 +560,7 @@ async function insertRefund(refund: Stripe.Refund, config: StripeConfig) {
             values: [{
                 id: refund.id,
                 client_id: clientId,
+                webhook_token: config.webhookToken,
                 created: new Date(refund.created * 1000).toISOString().replace('T', ' ').replace('Z', ''),
                 amount: refund.amount,
                 status: refund.status,
@@ -458,13 +569,12 @@ async function insertRefund(refund: Stripe.Refund, config: StripeConfig) {
                 charge_id: refund.charge as string,
                 payment_intent_id: refund.payment_intent as string || null,
                 metadata: refund.metadata,
-                anonymized_user_id: sessionId, // This is the session_id from analytics events
-                session_id: sessionId // Keep both for compatibility
+                session_id: sessionId
             }],
             format: 'JSONEachRow'
         })
         
-        console.log(`✅ Inserted Refund ${refund.id} for client ${clientId} with session ${sessionId}`)
+        console.log(`✅ Inserted Refund ${refund.id} for client ${clientId} with session ${sessionId} via webhook ${config.webhookToken}`)
     } catch (error) {
         console.error('Error inserting refund:', error)
         throw error

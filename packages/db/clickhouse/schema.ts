@@ -188,6 +188,7 @@ const CREATE_STRIPE_PAYMENT_INTENTS_TABLE = `
 CREATE TABLE IF NOT EXISTS ${ANALYTICS_DATABASE}.stripe_payment_intents (
   id String,
   client_id String,
+  webhook_token String,
   created DateTime64(3, 'UTC'),
   status LowCardinality(String),
   currency LowCardinality(String),
@@ -204,12 +205,11 @@ CREATE TABLE IF NOT EXISTS ${ANALYTICS_DATABASE}.stripe_payment_intents (
   description Nullable(String),
   application_fee_amount Nullable(UInt64),
   setup_future_usage Nullable(String),
-  anonymized_user_id Nullable(String),
   session_id Nullable(String),
   created_at DateTime64(3, 'UTC') DEFAULT now()
 ) ENGINE = MergeTree()
 PARTITION BY toYYYYMM(created)
-ORDER BY (client_id, created, id)
+ORDER BY (client_id, webhook_token, created, id)
 SETTINGS index_granularity = 8192
 `;
 
@@ -218,6 +218,7 @@ const CREATE_STRIPE_CHARGES_TABLE = `
 CREATE TABLE IF NOT EXISTS ${ANALYTICS_DATABASE}.stripe_charges (
   id String,
   client_id String,
+  webhook_token String,
   created DateTime64(3, 'UTC'),
   status LowCardinality(String),
   currency LowCardinality(String),
@@ -233,12 +234,11 @@ CREATE TABLE IF NOT EXISTS ${ANALYTICS_DATABASE}.stripe_charges (
   card_brand LowCardinality(String),
   payment_intent_id Nullable(String),
   customer_id Nullable(String),
-  anonymized_user_id Nullable(String),
   session_id Nullable(String),
   created_at DateTime64(3, 'UTC') DEFAULT now()
 ) ENGINE = MergeTree()
 PARTITION BY toYYYYMM(created)
-ORDER BY (client_id, created, id)
+ORDER BY (client_id, webhook_token, created, id)
 SETTINGS index_granularity = 8192
 `;
 
@@ -247,6 +247,7 @@ const CREATE_STRIPE_REFUNDS_TABLE = `
 CREATE TABLE IF NOT EXISTS ${ANALYTICS_DATABASE}.stripe_refunds (
   id String,
   client_id String,
+  webhook_token String,
   created DateTime64(3, 'UTC'),
   amount UInt64,
   status LowCardinality(String),
@@ -255,12 +256,11 @@ CREATE TABLE IF NOT EXISTS ${ANALYTICS_DATABASE}.stripe_refunds (
   charge_id String,
   payment_intent_id Nullable(String),
   metadata JSON,
-  anonymized_user_id Nullable(String),
   session_id Nullable(String),
   created_at DateTime64(3, 'UTC') DEFAULT now()
 ) ENGINE = MergeTree()
 PARTITION BY toYYYYMM(created)
-ORDER BY (client_id, created, id)
+ORDER BY (client_id, webhook_token, created, id)
 SETTINGS index_granularity = 8192
 `;
 
@@ -320,6 +320,7 @@ export interface WebVitalsEvent {
 export interface StripePaymentIntent {
   id: string;
   client_id: string;
+  webhook_token: string;
   created: number;
   status: string;
   currency: string;
@@ -336,13 +337,13 @@ export interface StripePaymentIntent {
   description?: string;
   application_fee_amount?: number;
   setup_future_usage?: string;
-  anonymized_user_id?: string;
   session_id?: string;
 }
 
 export interface StripeCharge {
   id: string;
   client_id: string;
+  webhook_token: string;
   created: number;
   status: string;
   currency: string;
@@ -358,13 +359,13 @@ export interface StripeCharge {
   card_brand?: string;
   payment_intent_id?: string;
   customer_id?: string;
-  anonymized_user_id?: string;
   session_id?: string;
 }
 
 export interface StripeRefund {
   id: string;
   client_id: string;
+  webhook_token: string;
   created: number;
   amount: number;
   status: string;
@@ -373,7 +374,6 @@ export interface StripeRefund {
   charge_id: string;
   payment_intent_id?: string;
   metadata: Record<string, any>;
-  anonymized_user_id?: string;
   session_id?: string;
 }
 

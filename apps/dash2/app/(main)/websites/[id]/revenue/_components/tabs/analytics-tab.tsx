@@ -26,7 +26,8 @@ import {
     Eye,
     EyeOff,
     Calendar,
-    Filter
+    Filter,
+    type LucideIcon
 } from "lucide-react";
 import { useRevenueAnalytics } from "../../hooks/use-revenue-analytics";
 import { useAtom } from 'jotai';
@@ -44,7 +45,7 @@ interface EnhancedMetricCardProps {
     value: string;
     change?: string;
     changeType?: 'positive' | 'negative' | 'neutral';
-    icon: React.ReactNode;
+    icon: LucideIcon;
     description?: string;
     trend?: number;
     chartData?: Array<{ date: string; value: number }>;
@@ -446,7 +447,7 @@ export function RevenueAnalyticsTab() {
                     value={summary?.total_revenue_formatted || '$0.00'}
                     change={stats?.revenueGrowth_formatted}
                     changeType={summaryStats?.revenueGrowth && summaryStats.revenueGrowth >= 0 ? 'positive' : 'negative'}
-                    icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
+                    icon={DollarSign}
                     trend={summaryStats?.revenueGrowth}
                     chartData={miniChartData.revenue}
                 />
@@ -455,14 +456,14 @@ export function RevenueAnalyticsTab() {
                     value={summary?.total_transactions?.toLocaleString() || '0'}
                     change={stats?.transactionGrowth_formatted}
                     changeType={summaryStats?.transactionGrowth && summaryStats.transactionGrowth >= 0 ? 'positive' : 'negative'}
-                    icon={<Receipt className="h-4 w-4 text-muted-foreground" />}
+                    icon={Receipt}
                     trend={summaryStats?.transactionGrowth}
                     chartData={miniChartData.transactions}
                 />
                 <EnhancedMetricCard
                     title="AVERAGE ORDER VALUE"
                     value={summary?.avg_order_value_formatted || '$0.00'}
-                    icon={<CreditCard className="h-4 w-4 text-muted-foreground" />}
+                    icon={CreditCard}
                     description="Per successful transaction"
                     chartData={miniChartData.avgOrderValue}
                 />
@@ -470,7 +471,7 @@ export function RevenueAnalyticsTab() {
                     title="SUCCESS RATE"
                     value={summary?.success_rate_formatted || '0%'}
                     description={`${summary?.total_refunds || 0} refunds (${stats?.refundRate_formatted || '0%'})`}
-                    icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
+                    icon={TrendingUp}
                     chartData={miniChartData.successRate}
                 />
             </div>
