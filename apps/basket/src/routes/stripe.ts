@@ -6,7 +6,6 @@ import { clickHouse } from '@databuddy/db'
 const app = new Elysia()
 
 interface StripeConfig {
-    secretKey: string
     webhookSecret: string
     userId: string
     webhookToken: string
@@ -134,7 +133,12 @@ function isStripeIp(clientIp: string): boolean {
 async function getStripeConfigByToken(webhookToken: string): Promise<StripeConfig | null> {
     try {
         const userConfig = await db
-            .select()
+            .select({
+                webhookSecret: userStripeConfig.webhookSecret,
+                userId: userStripeConfig.userId,
+                isLiveMode: userStripeConfig.isLiveMode,
+                isActive: userStripeConfig.isActive
+            })
             .from(userStripeConfig)
             .where(eq(userStripeConfig.webhookToken, webhookToken))
             .limit(1)
@@ -145,7 +149,6 @@ async function getStripeConfigByToken(webhookToken: string): Promise<StripeConfi
 
         const config = userConfig[0]
         return {
-            secretKey: config.stripeSecretKey,
             webhookSecret: config.webhookSecret,
             userId: config.userId,
             webhookToken: webhookToken,
@@ -161,15 +164,13 @@ async function getStripeConfigByToken(webhookToken: string): Promise<StripeConfi
  * Get global Stripe configuration from environment
  */
 function getGlobalStripeConfig(): StripeConfig | null {
-    const secretKey = process.env.STRIPE_SECRET_KEY
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
-    if (!secretKey || !webhookSecret) {
+    if (!webhookSecret) {
         return null
     }
 
     return {
-        secretKey,
         webhookSecret,
         userId: 'global',
         webhookToken: 'global',
@@ -190,9 +191,7 @@ async function handleWebhook(request: Request, set: any, config: StripeConfig) {
     }
 
     try {
-        // Initialize Stripe and verify signature
-        const stripe = new Stripe(config.secretKey, { apiVersion: '2025-05-28.basil' })
-        const event = await stripe.webhooks.constructEventAsync(body, sig, config.webhookSecret)
+        const event = await Stripe.webhooks.constructEventAsync(body, sig, config.webhookSecret)
 
         // Validate live/test mode consistency (conditional)
         if (ENABLE_MODE_VALIDATION && event.livemode !== config.isLiveMode) {
