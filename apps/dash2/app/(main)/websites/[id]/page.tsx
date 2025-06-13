@@ -341,15 +341,13 @@ function WebsiteDetailsPage() {
           </TabsList>
         </div>
 
-        {tabs.map((tab) => (
-          <TabsContent
-            key={tab.id}
-            value={tab.id}
-            className={`${tab.className || ''} transition-all duration-200 animate-fadeIn`}
-          >
-            {renderTabContent(tab.id)}
-          </TabsContent>
-        ))}
+        <TabsContent
+          key={activeTab}
+          value={activeTab as TabId}
+          className={`${tabs.find(t => t.id === activeTab)?.className || ''} transition-all duration-200 animate-fadeIn`}
+        >
+          {renderTabContent(activeTab as TabId)}
+        </TabsContent>
       </Tabs>
     </div>
   );
