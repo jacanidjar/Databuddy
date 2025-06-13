@@ -110,7 +110,6 @@ export function WebsiteOverviewTab({
   setIsRefreshing,
 }: FullTabProps) {
 
-  // Memoize the queries array to prevent double fetching
   const queries = useMemo(() => [
     {
       id: 'overview-summary',

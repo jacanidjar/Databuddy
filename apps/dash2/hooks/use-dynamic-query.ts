@@ -545,7 +545,15 @@ export function useBatchDynamicQuery(
   }, [websiteId, dateRange, queries, userTimezone]);
 
   const query = useQuery({
-    queryKey: ['batch-dynamic-query', websiteId, dateRange, queries, userTimezone],
+    queryKey: [
+      'batch-dynamic-query',
+      websiteId,
+      dateRange.start_date,
+      dateRange.end_date,
+      dateRange.granularity,
+      dateRange.timezone,
+      JSON.stringify(queries)
+    ],
     queryFn: fetchData,
     ...defaultQueryOptions,
     ...options,
