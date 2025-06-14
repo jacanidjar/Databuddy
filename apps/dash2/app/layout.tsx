@@ -7,17 +7,12 @@ import { Toaster } from "sonner";
 import Providers from "./providers";
 import Script from "next/script";
 import { Databuddy } from "@databuddy/sdk";
+import { Geist_Mono } from "next/font/google";
 
-const inter = Inter({
+const geistMono = Geist_Mono({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-inter",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-jetbrains-mono",
+  variable: "--font-geist-mono",
 });
 
 export const metadata: Metadata = {
@@ -106,7 +101,7 @@ export default function RootLayout({
   const isLocalhost = process.env.NODE_ENV === 'development';
 
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${jetbrainsMono.variable} h-full`}>
+    <html lang="en" suppressHydrationWarning className={`${geistMono.variable} h-full`}>
       <head />
       {/* <Script
         src={isLocalhost ? "http://localhost:3000/databuddy.js" : "https://app.databuddy.cc/databuddy.js"}

@@ -13,7 +13,8 @@ import {
   TestTube,
   Bug,
   GitBranch,
-  Funnel
+  Funnel,
+  DollarSign
 } from "lucide-react";
 import type { NavigationSection } from "./types";
 
@@ -22,6 +23,7 @@ export const mainNavigation: NavigationSection[] = [
     title: "Main",
     items: [
       { name: "Websites", icon: Globe, href: "/websites", rootLevel: true, highlight: true },
+      { name: "Revenue", icon: DollarSign, href: "/revenue", rootLevel: true, highlight: true },
       { name: "Domains", icon: LinkIcon, href: "/domains", rootLevel: true, highlight: true },
       { name: "Settings", icon: Settings, href: "/settings", rootLevel: true, highlight: true },
       { name: "Billing", icon: CreditCard, href: "/billing", rootLevel: true, highlight: true },

@@ -49,19 +49,19 @@ export const useAuthSession = () => useContext(SessionContext);
 // SessionProvider component
 const SessionProvider = ({ children }: { children: ReactNode }) => {
   const { data: session, isPending, error } = useSession();
-  
+
   // Clear React Query cache when session changes
   useEffect(() => {
     if (!session && !isPending) {
       queryClient.clear();
     }
   }, [session, isPending]);
-  
+
   return (
-    <SessionContext.Provider value={{ 
-      session: session as Session | null, 
-      isLoading: isPending, 
-      error: error as Error | null 
+    <SessionContext.Provider value={{
+      session: session as Session | null,
+      isLoading: isPending,
+      error: error as Error | null
     }}>
       {children}
     </SessionContext.Provider>

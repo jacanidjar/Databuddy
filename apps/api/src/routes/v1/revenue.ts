@@ -1,11 +1,13 @@
 import { Hono } from 'hono';
-import { db, userStripeConfig, eq } from '@databuddy/db';
+import { db, userStripeConfig, eq, websites } from '@databuddy/db';
 import { authMiddleware } from '../../middleware/auth';
 import { logger } from '../../lib/logger';
 import { nanoid } from 'nanoid';
 import { cacheable } from '@databuddy/redis';
 import type { AppVariables } from '../../types';
 import { randomBytes } from 'crypto';
+import { chQuery } from '../../clickhouse/client';
+import { escapeSqlString } from '../../query/utils';
 
 type RevenueContext = {
   Variables: AppVariables & {
@@ -23,7 +25,19 @@ function generateSecureToken(length: number = 32): string {
   return randomBytes(length).toString('hex');
 }
 
-// Helper function to generate webhook secret is removed - user provides it
+// Helper function to mask webhook secret for security
+function maskWebhookSecret(secret: string): string {
+  if (!secret || secret.length <= 8) {
+    return secret; // Return as-is if too short to mask
+  }
+  
+  const firstFour = secret.substring(0, 4);
+  const lastFour = secret.substring(secret.length - 4);
+  const middleLength = secret.length - 8;
+  const maskedMiddle = '*'.repeat(middleLength);
+  
+  return `${firstFour}${maskedMiddle}${lastFour}`;
+}
 
 // Cache user revenue config for 5 minutes
 async function _getUserRevenueConfig(userId: string) {
@@ -43,6 +57,20 @@ const getUserRevenueConfig = cacheable(_getUserRevenueConfig, {
   staleWhileRevalidate: true,
   staleTime: 60 // Revalidate if cache is older than 1 minute
 });
+
+// Helper function to get user's website IDs
+async function getUserWebsiteIds(userId: string): Promise<string[]> {
+  try {
+    const userWebsites = await db.query.websites.findMany({
+      where: eq(websites.userId, userId),
+      columns: { id: true }
+    });
+    return userWebsites.map(w => w.id);
+  } catch (error) {
+    logger.error('[Revenue API] Error fetching user websites:', { error });
+    return [];
+  }
+}
 
 // GET /revenue/config - Get user's revenue configuration (auto-create if doesn't exist)
 revenueRouter.get('/config', async (c) => {
@@ -86,7 +114,7 @@ revenueRouter.get('/config', async (c) => {
       id: config.id,
       userId: config.userId,
       webhookToken: config.webhookToken,
-      webhookSecret: config.webhookSecret,
+      webhookSecret: maskWebhookSecret(config.webhookSecret || ''),
       isLiveMode: config.isLiveMode,
       isActive: config.isActive,
       lastWebhookAt: config.lastWebhookAt,
@@ -104,6 +132,472 @@ revenueRouter.get('/config', async (c) => {
     return c.json({ 
       success: false, 
       error: "Failed to fetch revenue configuration" 
+    }, 500);
+  }
+});
+
+// GET /revenue/analytics/batch - Get all global revenue analytics in one request
+revenueRouter.get('/analytics/batch', async (c) => {
+  const user = c.get('user');
+  const startDate = c.req.query('start_date');
+  const endDate = c.req.query('end_date');
+  const granularity = c.req.query('granularity') || 'daily';
+  const isLiveMode = c.req.query('live_mode') === 'true';
+  const trendsLimit = parseInt(c.req.query('trends_limit') || '100');
+  const transactionsLimit = parseInt(c.req.query('transactions_limit') || '50');
+  const countryLimit = parseInt(c.req.query('country_limit') || '20');
+
+  if (!user) {
+    return c.json({ success: false, error: "Unauthorized" }, 401);
+  }
+
+  if (!startDate || !endDate) {
+    return c.json({ success: false, error: "start_date and end_date are required" }, 400);
+  }
+
+  try {
+    const config = await getUserRevenueConfig(user.id);
+    if (!config) {
+      return c.json({ success: false, error: "Revenue configuration not found" }, 404);
+    }
+
+    const websiteIds = await getUserWebsiteIds(user.id);
+    if (websiteIds.length === 0) {
+      return c.json({
+        success: true,
+        data: {
+          summary: {
+            total_revenue: 0,
+            total_transactions: 0,
+            total_refunds: 0,
+            avg_order_value: 0,
+            success_rate: 0,
+          },
+          trends: [],
+          recentTransactions: [],
+          byCountry: [],
+        }
+      });
+    }
+
+    const websiteIdList = websiteIds.map(id => `'${id}'`).join(',');
+    const liveModeCondition = `AND livemode = ${isLiveMode ? 1 : 0}`;
+    const timeFormat = granularity === 'hourly' 
+      ? 'toDateTime(toStartOfHour(toDateTime(created)))' 
+      : 'toDate(toDateTime(created))';
+
+    // Execute all queries in parallel
+    const [summaryResult, trendsResult, transactionsResult, countryResult] = await Promise.all([
+      // Summary query
+      (async () => {
+        const refundsQuery = `(SELECT COUNT(*) FROM analytics.stripe_refunds r
+           JOIN analytics.stripe_payment_intents pi ON r.payment_intent_id = pi.id
+           WHERE r.created >= parseDateTimeBestEffort(${escapeSqlString(startDate)})
+           AND r.created <= parseDateTimeBestEffort(${escapeSqlString(endDate)})
+           AND r.client_id IN (${websiteIdList})
+           AND pi.livemode = ${isLiveMode ? 1 : 0})`;
+
+        const sql = `
+          SELECT 
+            SUM(CASE WHEN status = 'succeeded' THEN amount ELSE 0 END) / 100 as total_revenue,
+            COUNT(DISTINCT CASE WHEN status = 'succeeded' THEN id END) as total_transactions,
+            COUNT(DISTINCT CASE WHEN status = 'succeeded' THEN id END) as successful_transactions,
+            ${refundsQuery} as total_refunds,
+            AVG(CASE WHEN status = 'succeeded' THEN amount ELSE NULL END) / 100 as avg_order_value,
+            100.0 as success_rate
+          FROM analytics.stripe_payment_intents 
+          WHERE created >= parseDateTimeBestEffort(${escapeSqlString(startDate)})
+            AND created <= parseDateTimeBestEffort(${escapeSqlString(endDate)})
+            AND client_id IN (${websiteIdList})
+            AND status = 'succeeded'
+            ${liveModeCondition}
+        `;
+
+        const result = await chQuery<any>(sql);
+        return result[0] || {
+          total_revenue: 0,
+          total_transactions: 0,
+          total_refunds: 0,
+          avg_order_value: 0,
+          success_rate: 0,
+        };
+      })(),
+
+      // Trends query
+      (async () => {
+        const sql = `
+          SELECT 
+            ${timeFormat} as time,
+            SUM(amount) / 100 as total_revenue,
+            COUNT(DISTINCT id) as total_transactions,
+            AVG(amount) / 100 as avg_order_value,
+            100.0 as success_rate
+          FROM analytics.stripe_payment_intents 
+          WHERE created >= parseDateTimeBestEffort(${escapeSqlString(startDate)})
+            AND created <= parseDateTimeBestEffort(${escapeSqlString(endDate)})
+            AND client_id IN (${websiteIdList})
+            AND status = 'succeeded'
+            ${liveModeCondition}
+          GROUP BY time 
+          ORDER BY time DESC 
+          LIMIT ${trendsLimit}
+        `;
+
+        return await chQuery<any>(sql);
+      })(),
+
+      // Recent transactions query
+      (async () => {
+        const sql = `
+          SELECT 
+            id,
+            toDateTime(created) as created,
+            status,
+            currency,
+            amount / 100 as amount,
+            customer_id,
+            session_id
+          FROM analytics.stripe_payment_intents 
+          WHERE created >= parseDateTimeBestEffort(${escapeSqlString(startDate)})
+            AND created <= parseDateTimeBestEffort(${escapeSqlString(endDate)})
+            AND client_id IN (${websiteIdList})
+            AND status = 'succeeded'
+            ${liveModeCondition}
+          ORDER BY created DESC 
+          LIMIT ${transactionsLimit}
+        `;
+
+        return await chQuery<any>(sql);
+      })(),
+
+      // Revenue by country query
+      (async () => {
+        const sql = `
+          SELECT 
+            e.country as name,
+            SUM(pi.amount) / 100 as total_revenue,
+            COUNT(pi.id) as total_transactions,
+            AVG(pi.amount) / 100 as avg_order_value
+          FROM analytics.stripe_payment_intents pi
+          LEFT JOIN analytics.events e ON pi.session_id = e.session_id
+          WHERE pi.created >= parseDateTimeBestEffort(${escapeSqlString(startDate)})
+            AND pi.created <= parseDateTimeBestEffort(${escapeSqlString(endDate)})
+            AND pi.client_id IN (${websiteIdList})
+            AND pi.status = 'succeeded'
+            ${liveModeCondition}
+            AND e.country IS NOT NULL 
+            AND e.country != ''
+          GROUP BY e.country 
+          ORDER BY total_revenue DESC 
+          LIMIT ${countryLimit}
+        `;
+
+        return await chQuery<any>(sql);
+      })(),
+    ]);
+
+    return c.json({
+      success: true,
+      data: {
+        summary: summaryResult,
+        trends: trendsResult,
+        recentTransactions: transactionsResult,
+        byCountry: countryResult,
+      }
+    });
+  } catch (error) {
+    logger.error('[Revenue API] Error fetching batched revenue analytics:', { error });
+    return c.json({ 
+      success: false, 
+      error: "Failed to fetch revenue analytics" 
+    }, 500);
+  }
+});
+
+// GET /revenue/analytics/summary - Get global revenue summary
+revenueRouter.get('/analytics/summary', async (c) => {
+  const user = c.get('user');
+  const startDate = c.req.query('start_date');
+  const endDate = c.req.query('end_date');
+  const isLiveMode = c.req.query('live_mode') === 'true';
+
+  if (!user) {
+    return c.json({ success: false, error: "Unauthorized" }, 401);
+  }
+
+  if (!startDate || !endDate) {
+    return c.json({ success: false, error: "start_date and end_date are required" }, 400);
+  }
+
+  try {
+    const config = await getUserRevenueConfig(user.id);
+    if (!config) {
+      return c.json({ success: false, error: "Revenue configuration not found" }, 404);
+    }
+
+    const websiteIds = await getUserWebsiteIds(user.id);
+    if (websiteIds.length === 0) {
+      return c.json({
+        success: true,
+        data: {
+          total_revenue: 0,
+          total_transactions: 0,
+          total_refunds: 0,
+          avg_order_value: 0,
+          success_rate: 0,
+        }
+      });
+    }
+
+    const websiteIdList = websiteIds.map(id => `'${id}'`).join(',');
+    const liveModeCondition = `AND livemode = ${isLiveMode ? 1 : 0}`;
+
+    const refundsQuery = `(SELECT COUNT(*) FROM analytics.stripe_refunds r
+       JOIN analytics.stripe_payment_intents pi ON r.payment_intent_id = pi.id
+       WHERE r.created >= parseDateTimeBestEffort(${escapeSqlString(startDate)})
+       AND r.created <= parseDateTimeBestEffort(${escapeSqlString(endDate)})
+       AND r.client_id IN (${websiteIdList})
+       AND pi.livemode = ${isLiveMode ? 1 : 0})`;
+
+    const sql = `
+      SELECT 
+        SUM(CASE WHEN status = 'succeeded' THEN amount ELSE 0 END) / 100 as total_revenue,
+        COUNT(DISTINCT CASE WHEN status = 'succeeded' THEN id END) as total_transactions,
+        COUNT(DISTINCT CASE WHEN status = 'succeeded' THEN id END) as successful_transactions,
+        ${refundsQuery} as total_refunds,
+        AVG(CASE WHEN status = 'succeeded' THEN amount ELSE NULL END) / 100 as avg_order_value,
+        100.0 as success_rate
+      FROM analytics.stripe_payment_intents 
+      WHERE created >= parseDateTimeBestEffort(${escapeSqlString(startDate)})
+        AND created <= parseDateTimeBestEffort(${escapeSqlString(endDate)})
+        AND client_id IN (${websiteIdList})
+        AND status = 'succeeded'
+        ${liveModeCondition}
+    `;
+
+    const result = await chQuery<any>(sql);
+    const summary = result[0] || {
+      total_revenue: 0,
+      total_transactions: 0,
+      total_refunds: 0,
+      avg_order_value: 0,
+      success_rate: 0,
+    };
+
+    return c.json({
+      success: true,
+      data: summary
+    });
+  } catch (error) {
+    logger.error('[Revenue API] Error fetching revenue summary:', { error });
+    return c.json({ 
+      success: false, 
+      error: "Failed to fetch revenue summary" 
+    }, 500);
+  }
+});
+
+// GET /revenue/analytics/trends - Get global revenue trends
+revenueRouter.get('/analytics/trends', async (c) => {
+  const user = c.get('user');
+  const startDate = c.req.query('start_date');
+  const endDate = c.req.query('end_date');
+  const granularity = c.req.query('granularity') || 'daily';
+  const isLiveMode = c.req.query('live_mode') === 'true';
+  const limit = parseInt(c.req.query('limit') || '100');
+
+  if (!user) {
+    return c.json({ success: false, error: "Unauthorized" }, 401);
+  }
+
+  if (!startDate || !endDate) {
+    return c.json({ success: false, error: "start_date and end_date are required" }, 400);
+  }
+
+  try {
+    const config = await getUserRevenueConfig(user.id);
+    if (!config) {
+      return c.json({ success: false, error: "Revenue configuration not found" }, 404);
+    }
+
+    const websiteIds = await getUserWebsiteIds(user.id);
+    if (websiteIds.length === 0) {
+      return c.json({
+        success: true,
+        data: []
+      });
+    }
+
+    const websiteIdList = websiteIds.map(id => `'${id}'`).join(',');
+    const timeFormat = granularity === 'hourly' 
+      ? 'toDateTime(toStartOfHour(toDateTime(created)))' 
+      : 'toDate(toDateTime(created))';
+    const liveModeCondition = `AND livemode = ${isLiveMode ? 1 : 0}`;
+
+    const sql = `
+      SELECT 
+        ${timeFormat} as time,
+        SUM(amount) / 100 as total_revenue,
+        COUNT(DISTINCT id) as total_transactions,
+        AVG(amount) / 100 as avg_order_value,
+        100.0 as success_rate
+      FROM analytics.stripe_payment_intents 
+      WHERE created >= parseDateTimeBestEffort(${escapeSqlString(startDate)})
+        AND created <= parseDateTimeBestEffort(${escapeSqlString(endDate)})
+        AND client_id IN (${websiteIdList})
+        AND status = 'succeeded'
+        ${liveModeCondition}
+      GROUP BY time 
+      ORDER BY time DESC 
+      LIMIT ${limit}
+    `;
+
+    const result = await chQuery<any>(sql);
+
+    return c.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    logger.error('[Revenue API] Error fetching revenue trends:', { error });
+    return c.json({ 
+      success: false, 
+      error: "Failed to fetch revenue trends" 
+    }, 500);
+  }
+});
+
+// GET /revenue/analytics/transactions - Get recent transactions
+revenueRouter.get('/analytics/transactions', async (c) => {
+  const user = c.get('user');
+  const startDate = c.req.query('start_date');
+  const endDate = c.req.query('end_date');
+  const isLiveMode = c.req.query('live_mode') === 'true';
+  const limit = parseInt(c.req.query('limit') || '50');
+
+  if (!user) {
+    return c.json({ success: false, error: "Unauthorized" }, 401);
+  }
+
+  if (!startDate || !endDate) {
+    return c.json({ success: false, error: "start_date and end_date are required" }, 400);
+  }
+
+  try {
+    const config = await getUserRevenueConfig(user.id);
+    if (!config) {
+      return c.json({ success: false, error: "Revenue configuration not found" }, 404);
+    }
+
+    const websiteIds = await getUserWebsiteIds(user.id);
+    if (websiteIds.length === 0) {
+      return c.json({
+        success: true,
+        data: []
+      });
+    }
+
+    const websiteIdList = websiteIds.map(id => `'${id}'`).join(',');
+    const liveModeCondition = `AND livemode = ${isLiveMode ? 1 : 0}`;
+
+    const sql = `
+      SELECT 
+        id,
+        toDateTime(created) as created,
+        status,
+        currency,
+        amount / 100 as amount,
+        customer_id,
+        session_id
+      FROM analytics.stripe_payment_intents 
+      WHERE created >= parseDateTimeBestEffort(${escapeSqlString(startDate)})
+        AND created <= parseDateTimeBestEffort(${escapeSqlString(endDate)})
+        AND client_id IN (${websiteIdList})
+        AND status = 'succeeded'
+        ${liveModeCondition}
+      ORDER BY created DESC 
+      LIMIT ${limit}
+    `;
+
+    const result = await chQuery<any>(sql);
+
+    return c.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    logger.error('[Revenue API] Error fetching recent transactions:', { error });
+    return c.json({ 
+      success: false, 
+      error: "Failed to fetch recent transactions" 
+    }, 500);
+  }
+});
+
+// GET /revenue/analytics/breakdown/country - Get revenue by country
+revenueRouter.get('/analytics/breakdown/country', async (c) => {
+  const user = c.get('user');
+  const startDate = c.req.query('start_date');
+  const endDate = c.req.query('end_date');
+  const isLiveMode = c.req.query('live_mode') === 'true';
+  const limit = parseInt(c.req.query('limit') || '20');
+
+  if (!user) {
+    return c.json({ success: false, error: "Unauthorized" }, 401);
+  }
+
+  if (!startDate || !endDate) {
+    return c.json({ success: false, error: "start_date and end_date are required" }, 400);
+  }
+
+  try {
+    const config = await getUserRevenueConfig(user.id);
+    if (!config) {
+      return c.json({ success: false, error: "Revenue configuration not found" }, 404);
+    }
+
+    const websiteIds = await getUserWebsiteIds(user.id);
+    if (websiteIds.length === 0) {
+      return c.json({
+        success: true,
+        data: []
+      });
+    }
+
+    const websiteIdList = websiteIds.map(id => `'${id}'`).join(',');
+    const liveModeCondition = `AND pi.livemode = ${isLiveMode ? 1 : 0}`;
+
+    const sql = `
+      SELECT 
+        e.country as name,
+        SUM(pi.amount) / 100 as total_revenue,
+        COUNT(pi.id) as total_transactions,
+        AVG(pi.amount) / 100 as avg_order_value
+      FROM analytics.stripe_payment_intents pi
+      LEFT JOIN analytics.events e ON pi.session_id = e.session_id
+      WHERE pi.created >= parseDateTimeBestEffort(${escapeSqlString(startDate)})
+        AND pi.created <= parseDateTimeBestEffort(${escapeSqlString(endDate)})
+        AND pi.client_id IN (${websiteIdList})
+        AND pi.status = 'succeeded'
+        ${liveModeCondition}
+        AND e.country IS NOT NULL 
+        AND e.country != ''
+      GROUP BY e.country 
+      ORDER BY total_revenue DESC 
+      LIMIT ${limit}
+    `;
+
+    const result = await chQuery<any>(sql);
+
+    return c.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    logger.error('[Revenue API] Error fetching revenue by country:', { error });
+    return c.json({ 
+      success: false, 
+      error: "Failed to fetch revenue by country" 
     }, 500);
   }
 });
@@ -166,7 +660,7 @@ revenueRouter.post('/config', async (c) => {
       id: config.id,
       userId: config.userId,
       webhookToken: config.webhookToken,
-      webhookSecret: config.webhookSecret,
+      webhookSecret: maskWebhookSecret(config.webhookSecret || ''),
       isLiveMode: config.isLiveMode,
       isActive: config.isActive,
       lastWebhookAt: config.lastWebhookAt,

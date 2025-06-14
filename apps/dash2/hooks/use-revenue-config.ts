@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import type { RevenueConfig, CreateRevenueConfigData, ApiResponse } from '@/app/(main)/websites/[id]/revenue/utils/types';
+import type { RevenueConfig, CreateRevenueConfigData, ApiResponse } from '@/app/(main)/revenue/utils/types';
 
 // API client functions - following the same pattern as use-websites.ts
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001';

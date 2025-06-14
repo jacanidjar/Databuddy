@@ -158,12 +158,18 @@ export function useRevenueConfig() {
   }, []);
 
   const updateConfig = useCallback((updates: { webhookSecret?: string; isLiveMode?: boolean }) => {
-    createOrUpdateMutation.mutate({
-      webhookSecret: updates.webhookSecret ?? config?.webhookSecret ?? '',
+    const updateData: CreateRevenueConfigData = {
       isLiveMode: updates.isLiveMode ?? config?.isLiveMode ?? false,
       isActive: true
-    });
-  }, [createOrUpdateMutation, config?.webhookSecret, config?.isLiveMode]);
+    };
+    
+    // Only include webhookSecret if it's explicitly provided
+    if (updates.webhookSecret !== undefined) {
+      updateData.webhookSecret = updates.webhookSecret;
+    }
+    
+    createOrUpdateMutation.mutate(updateData);
+  }, [createOrUpdateMutation, config?.isLiveMode]);
 
   const setWebhookSecret = useCallback((secret: string) => {
     updateConfig({ webhookSecret: secret });
