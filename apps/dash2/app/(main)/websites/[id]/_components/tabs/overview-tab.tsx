@@ -237,7 +237,6 @@ export function WebsiteOverviewTab({
 
     return analytics.events_by_date
       .filter((event: any) => {
-        // Filter out future data points
         const eventDate = dayjs(event.date);
         return eventDate.isBefore(now) || eventDate.isSame(now, dateRange.granularity === 'hourly' ? 'hour' : 'day');
       })
