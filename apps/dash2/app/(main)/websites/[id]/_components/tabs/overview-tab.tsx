@@ -233,25 +233,33 @@ export function WebsiteOverviewTab({
   const chartData = useMemo(() => {
     if (!analytics.events_by_date?.length) return [];
 
-    return analytics.events_by_date.map((event: any): ChartDataPoint => {
-      const filtered: ChartDataPoint = {
-        date: formatDateByGranularity(event.date, dateRange.granularity)
-      };
+    const now = dayjs().utc();
 
-      if (visibleMetrics.pageviews) {
-        filtered.pageviews = event.pageviews;
-      }
+    return analytics.events_by_date
+      .filter((event: any) => {
+        // Filter out future data points
+        const eventDate = dayjs(event.date);
+        return eventDate.isBefore(now) || eventDate.isSame(now, dateRange.granularity === 'hourly' ? 'hour' : 'day');
+      })
+      .map((event: any): ChartDataPoint => {
+        const filtered: ChartDataPoint = {
+          date: formatDateByGranularity(event.date, dateRange.granularity)
+        };
 
-      if (visibleMetrics.visitors) {
-        filtered.visitors = event.visitors || event.unique_visitors || 0;
-      }
+        if (visibleMetrics.pageviews) {
+          filtered.pageviews = event.pageviews;
+        }
 
-      if (visibleMetrics.sessions) {
-        filtered.sessions = event.sessions;
-      }
+        if (visibleMetrics.visitors) {
+          filtered.visitors = event.visitors || event.unique_visitors || 0;
+        }
 
-      return filtered;
-    });
+        if (visibleMetrics.sessions) {
+          filtered.sessions = event.sessions;
+        }
+
+        return filtered;
+      });
   }, [analytics.events_by_date, visibleMetrics, dateRange.granularity]);
 
   const currentTime = useMemo(() => {
