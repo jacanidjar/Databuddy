@@ -631,18 +631,49 @@ export default function ErrorsPage({ params }: { params: Promise<{ id: string }>
   // Show error state
   if (error && !isLoading) {
     return (
-      <div className="container mx-auto py-6">
-        <EmptyState
-          icon={<AlertCircle className="h-10 w-10" />}
-          title="Error loading error data"
-          description="Unable to load error analytics for this website."
-          action={
-            <Button onClick={() => router.back()} variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Go Back
-            </Button>
-          }
-        />
+      <div className="p-3 sm:p-4 lg:p-6 max-w-[1600px] mx-auto space-y-6">
+        <div className="border-b bg-gradient-to-r from-background via-background to-muted/20 -mx-3 sm:-mx-4 lg:-mx-6 px-3 sm:px-4 lg:px-6 pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.back()}
+                  className="p-2 rounded-lg hover:bg-muted/50"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
+                  <Bug className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Error Analytics</h1>
+                  <p className="text-muted-foreground text-sm sm:text-base">Monitor and analyze errors affecting your website</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center text-center space-y-3">
+          <div className="p-3 rounded-full bg-destructive/10 border border-destructive/20">
+            <AlertCircle className="h-6 w-6 text-destructive" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-destructive">Error loading error data</h4>
+            <p className="text-destructive/80 text-sm mt-1">Unable to load error analytics for this website.</p>
+          </div>
+          <Button
+            onClick={() => router.back()}
+            variant="outline"
+            size="sm"
+            className="gap-2 rounded-lg"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Go Back
+          </Button>
+        </div>
       </div>
     );
   }
@@ -650,20 +681,27 @@ export default function ErrorsPage({ params }: { params: Promise<{ id: string }>
   // Show empty state
   if (!isLoading && (!processedData.recent_errors?.length && !processedData.error_types?.length)) {
     return (
-      <div className="container mx-auto py-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className="p-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Error Analytics</h1>
-              <p className="text-muted-foreground">Monitor and analyze errors affecting your website</p>
+      <div className="p-3 sm:p-4 lg:p-6 max-w-[1600px] mx-auto space-y-6">
+        <div className="border-b bg-gradient-to-r from-background via-background to-muted/20 -mx-3 sm:-mx-4 lg:-mx-6 px-3 sm:px-4 lg:px-6 pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.back()}
+                  className="p-2 rounded-lg hover:bg-muted/50"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
+                  <Bug className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Error Analytics</h1>
+                  <p className="text-muted-foreground text-sm sm:text-base">Monitor and analyze errors affecting your website</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -673,8 +711,8 @@ export default function ErrorsPage({ params }: { params: Promise<{ id: string }>
           title="No errors detected"
           description="We haven't detected any errors on your website during this time period."
           action={
-            <Button onClick={handleRefresh} variant="outline">
-              <RefreshCw className="mr-2 h-4 w-4" />
+            <Button onClick={handleRefresh} variant="outline" className="gap-2 rounded-lg">
+              <RefreshCw className="h-4 w-4" />
               Refresh Data
             </Button>
           }
@@ -684,35 +722,40 @@ export default function ErrorsPage({ params }: { params: Promise<{ id: string }>
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="p-3 sm:p-4 lg:p-6 max-w-[1600px] mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="p-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Error Analytics</h1>
-            <p className="text-muted-foreground">
-              Monitor and analyze errors affecting your website
-            </p>
+      <div className="border-b bg-gradient-to-r from-background via-background to-muted/20 -mx-3 sm:-mx-4 lg:-mx-6 px-3 sm:px-4 lg:px-6 pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.back()}
+                className="p-2 rounded-lg hover:bg-muted/50"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
+                <Bug className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Error Analytics</h1>
+                <p className="text-muted-foreground text-sm sm:text-base">
+                  Monitor and analyze errors affecting your website
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2">
           <Button
             onClick={handleRefresh}
             disabled={isLoading || isRefreshing}
             variant="outline"
-            size="sm"
+            size="default"
+            className="gap-2 rounded-lg px-4 py-2 font-medium border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300"
           >
-            <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Refresh
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh Data
           </Button>
         </div>
       </div>
@@ -743,145 +786,151 @@ export default function ErrorsPage({ params }: { params: Promise<{ id: string }>
       ) : (
         <>
           {/* Summary Stats & Chart */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            {/* Left Column: Error Trends Chart */}
-            <div className="lg:col-span-2">
-              {errorChartData.length > 0 ? (
-                <div className="rounded-lg border shadow-sm h-full flex flex-col">
-                  <div className="p-3 border-b flex flex-col sm:flex-row justify-between items-start gap-2">
-                    <div>
-                      <h3 className="text-base font-semibold">Error Trends</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Error occurrences and impact over time
-                      </p>
-                    </div>
-                    {errorChartData.length > 5 && (
-                      <div className="flex items-center gap-2">
-                        {isZoomed && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={resetZoom}
-                            className="h-7 px-2 text-xs"
-                          >
-                            <RotateCcw className="h-3 w-3 mr-1" />
-                            Reset Zoom
-                          </Button>
-                        )}
-                        <div className="text-xs text-muted-foreground">
-                          Drag to zoom
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-2 flex-1">
-                    <div style={{ width: '100%', height: 300 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart
-                          data={errorChartData}
-                          margin={{ top: 10, right: 10, left: 0, bottom: errorChartData.length > 5 ? 35 : 5 }}
-                        >
-                          <defs>
-                            <linearGradient id="colorTotalErrors" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.25} />
-                              <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
-                            </linearGradient>
-                            <linearGradient id="colorAffectedUsers" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.25} />
-                              <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.05} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" strokeOpacity={0.5} />
-                          <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} tickLine={false} axisLine={false} dy={5} />
-                          <YAxis tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} tickLine={false} axisLine={false} width={30} tickFormatter={(value) => {
-                            if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-                            if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
-                            return value.toString();
-                          }} />
-                          <Tooltip content={<ErrorChartTooltip />} wrapperStyle={{ outline: 'none' }} />
-                          <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '5px', bottom: errorChartData.length > 5 ? 20 : 0 }} iconType="circle" iconSize={8} />
-                          <Area type="monotone" dataKey="Total Errors" stroke="#ef4444" fillOpacity={1} fill="url(#colorTotalErrors)" strokeWidth={2} name="Total Errors" />
-                          <Area type="monotone" dataKey="Affected Users" stroke="#f59e0b" fillOpacity={1} fill="url(#colorAffectedUsers)" strokeWidth={2} name="Affected Users" />
-                          {errorChartData.length > 5 && (
-                            <Brush dataKey="date" padding={{ top: 5, bottom: 5 }} height={25} stroke="var(--border)" fill="var(--muted)" fillOpacity={0.1} onChange={handleBrushChange} startIndex={zoomDomain.startIndex} endIndex={zoomDomain.endIndex} />
-                          )}
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-lg border shadow-sm h-full flex items-center justify-center p-6 bg-muted/20">
-                  <div className="text-center">
-                    <Bug className="mx-auto h-8 w-8 text-muted-foreground" />
-                    <h3 className="mt-2 text-sm font-medium text-muted-foreground">No error trend data</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">Not enough data to display a trend chart.</p>
-                  </div>
-                </div>
-              )}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">Error Overview</h2>
             </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            {/* Right Column: KPIs and Top Error */}
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <StatCard
-                  title="Total Errors"
-                  value={errorSummary.totalErrors.toLocaleString()}
-                  icon={AlertTriangle}
-                  isLoading={isLoading}
-                  variant="danger"
-                  description="All error occurrences"
-                />
-                <StatCard
-                  title="Error Rate"
-                  value={`${errorSummary.errorRate.toFixed(2)}%`}
-                  icon={TrendingUp}
-                  isLoading={isLoading}
-                  variant="danger"
-                  description="Error sessions"
-                />
-                <StatCard
-                  title="Affected Users"
-                  value={errorSummary.affectedUsers.toLocaleString()}
-                  icon={Users}
-                  isLoading={isLoading}
-                  variant="warning"
-                  description="Unique users with errors"
-                />
-                <StatCard
-                  title="Affected Sessions"
-                  value={errorSummary.affectedSessions.toLocaleString()}
-                  icon={Activity}
-                  isLoading={isLoading}
-                  variant="warning"
-                  description="Unique sessions with errors"
-                />
+              {/* Left Column: Error Trends Chart */}
+              <div className="lg:col-span-2">
+                {errorChartData.length > 0 ? (
+                  <div className="rounded-lg border shadow-sm h-full flex flex-col">
+                    <div className="p-3 border-b flex flex-col sm:flex-row justify-between items-start gap-2">
+                      <div>
+                        <h3 className="text-base font-semibold">Error Trends</h3>
+                        <p className="text-xs text-muted-foreground">
+                          Error occurrences and impact over time
+                        </p>
+                      </div>
+                      {errorChartData.length > 5 && (
+                        <div className="flex items-center gap-2">
+                          {isZoomed && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={resetZoom}
+                              className="h-7 px-2 text-xs"
+                            >
+                              <RotateCcw className="h-3 w-3 mr-1" />
+                              Reset Zoom
+                            </Button>
+                          )}
+                          <div className="text-xs text-muted-foreground">
+                            Drag to zoom
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-2 flex-1">
+                      <div style={{ width: '100%', height: 300 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart
+                            data={errorChartData}
+                            margin={{ top: 10, right: 10, left: 0, bottom: errorChartData.length > 5 ? 35 : 5 }}
+                          >
+                            <defs>
+                              <linearGradient id="colorTotalErrors" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.25} />
+                                <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
+                              </linearGradient>
+                              <linearGradient id="colorAffectedUsers" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.25} />
+                                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.05} />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" strokeOpacity={0.5} />
+                            <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} tickLine={false} axisLine={false} dy={5} />
+                            <YAxis tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} tickLine={false} axisLine={false} width={30} tickFormatter={(value) => {
+                              if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+                              if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
+                              return value.toString();
+                            }} />
+                            <Tooltip content={<ErrorChartTooltip />} wrapperStyle={{ outline: 'none' }} />
+                            <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '5px', bottom: errorChartData.length > 5 ? 20 : 0 }} iconType="circle" iconSize={8} />
+                            <Area type="monotone" dataKey="Total Errors" stroke="#ef4444" fillOpacity={1} fill="url(#colorTotalErrors)" strokeWidth={2} name="Total Errors" />
+                            <Area type="monotone" dataKey="Affected Users" stroke="#f59e0b" fillOpacity={1} fill="url(#colorAffectedUsers)" strokeWidth={2} name="Affected Users" />
+                            {errorChartData.length > 5 && (
+                              <Brush dataKey="date" padding={{ top: 5, bottom: 5 }} height={25} stroke="var(--border)" fill="var(--muted)" fillOpacity={0.1} onChange={handleBrushChange} startIndex={zoomDomain.startIndex} endIndex={zoomDomain.endIndex} />
+                            )}
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border shadow-sm h-full flex items-center justify-center p-6 bg-muted/20">
+                    <div className="text-center">
+                      <Bug className="mx-auto h-8 w-8 text-muted-foreground" />
+                      <h3 className="mt-2 text-sm font-medium text-muted-foreground">No error trend data</h3>
+                      <p className="mt-1 text-xs text-muted-foreground">Not enough data to display a trend chart.</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {topError && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <Bug className="h-5 w-5 text-yellow-500" />
-                      Most Frequent Error
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm font-medium line-clamp-2" title={topError.name}>{topError.name}</p>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground mt-3">
-                      <span className="flex items-center gap-1 font-semibold">
-                        <AlertCircle className="h-3 w-3" />
-                        {topError.total_occurrences.toLocaleString()} times
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        {topError.affected_users.toLocaleString()} users
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+              {/* Right Column: KPIs and Top Error */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <StatCard
+                    title="Total Errors"
+                    value={errorSummary.totalErrors.toLocaleString()}
+                    icon={AlertTriangle}
+                    isLoading={isLoading}
+                    variant="danger"
+                    description="All error occurrences"
+                  />
+                  <StatCard
+                    title="Error Rate"
+                    value={`${errorSummary.errorRate.toFixed(2)}%`}
+                    icon={TrendingUp}
+                    isLoading={isLoading}
+                    variant="danger"
+                    description="Error sessions"
+                  />
+                  <StatCard
+                    title="Affected Users"
+                    value={errorSummary.affectedUsers.toLocaleString()}
+                    icon={Users}
+                    isLoading={isLoading}
+                    variant="warning"
+                    description="Unique users with errors"
+                  />
+                  <StatCard
+                    title="Affected Sessions"
+                    value={errorSummary.affectedSessions.toLocaleString()}
+                    icon={Activity}
+                    isLoading={isLoading}
+                    variant="warning"
+                    description="Unique sessions with errors"
+                  />
+                </div>
+
+                {topError && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Bug className="h-5 w-5 text-yellow-500" />
+                        Most Frequent Error
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm font-medium line-clamp-2" title={topError.name}>{topError.name}</p>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground mt-3">
+                        <span className="flex items-center gap-1 font-semibold">
+                          <AlertCircle className="h-3 w-3" />
+                          {topError.total_occurrences.toLocaleString()} times
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          {topError.affected_users.toLocaleString()} users
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </div>
           </div>
 
