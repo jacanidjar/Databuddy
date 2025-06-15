@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import type { AppVariables } from "../../types";
 import { chQuery } from "@databuddy/db";
 import { createSqlBuilder } from "../../builders/analytics";
-import { createSessionEventsBuilder, createSessionsBuilder, parseReferrers } from "../../builders";
+import { createSessionEventsBuilder, createSessionsBuilder, createSessionsWithEventsBuilder, parseReferrers } from "../../builders";
 import { generateSessionName } from "../../utils/sessions";
 import { timezoneMiddleware, useTimezone, timezoneQuerySchema } from "../../middleware/timezone";
 import { z } from "zod";
@@ -36,7 +36,41 @@ const formatSessionObject = (session: any, visitorSessionCount: number) => {
   const referrerInfo = parseReferrer(session.referrer, undefined);
   const sessionName = generateSessionName(session.session_id);
   
-  const { user_agent, ...sessionWithoutUserAgent } = session;
+  const { user_agent, events, region, ...sessionWithoutUserAgent } = session;
+  
+  let processedEvents: any[] = [];
+  if (events && Array.isArray(events)) {
+    processedEvents = events.map((eventTuple: any) => {
+      const [
+        event_id,
+        time,
+        event_name,
+        path,
+        error_message,
+        error_type,
+        properties_json
+      ] = eventTuple;
+      
+      let properties: Record<string, any> = {};
+      if (properties_json) {
+        try {
+          properties = JSON.parse(properties_json);
+        } catch {
+          // If parsing fails, keep empty object
+        }
+      }
+      
+      return {
+        event_id,
+        time,
+        event_name,
+        path,
+        error_message,
+        error_type,
+        properties
+      };
+    }).filter(event => event.event_id);
+  }
   
   return {
     ...sessionWithoutUserAgent,
@@ -52,7 +86,8 @@ const formatSessionObject = (session: any, visitorSessionCount: number) => {
       domain: referrerInfo.domain,
     } : null,
     is_returning_visitor: visitorSessionCount > 1,
-    visitor_session_count: visitorSessionCount
+    visitor_session_count: visitorSessionCount,
+    events: processedEvents
   };
 };
 
@@ -69,10 +104,8 @@ sessionsRouter.get('/', async (c) => {
     // Calculate pagination
     const offset = (page - 1) * limit;
     
-    // Get paginated sessions
-    const sessionsBuilder = createSessionsBuilder(params.website_id, startDate, endDate, limit);
-    sessionsBuilder.sb.limit = limit;
-    sessionsBuilder.sb.offset = offset;
+    // Get paginated sessions with events
+    const sessionsBuilder = createSessionsWithEventsBuilder(params.website_id, startDate, endDate, limit, offset);
     
     const sessionsResult = await chQuery(sessionsBuilder.getSql());
     

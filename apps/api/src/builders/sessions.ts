@@ -46,6 +46,79 @@ export function createSessionsBuilder(websiteId: string, startDate: string, endD
 }
 
 /**
+ * Creates a builder for fetching sessions with their events data
+ */
+export function createSessionsWithEventsBuilder(websiteId: string, startDate: string, endDate: string, limit = 20, offset = 0) {
+  const builder = createSqlBuilder();
+  
+  const sql = `
+    WITH session_list AS (
+      SELECT
+        session_id,
+        MIN(time) as first_visit,
+        MAX(time) as last_visit,
+        LEAST(dateDiff('second', MIN(time), MAX(time)), 28800) as duration,
+        countIf(event_name = 'screen_view') as page_views,
+        any(anonymous_id) as visitor_id,
+        any(user_agent) as user_agent,
+        any(country) as country,
+        any(referrer) as referrer
+      FROM analytics.events
+      WHERE 
+        client_id = '${websiteId}'
+        AND time >= parseDateTimeBestEffort('${startDate}')
+        AND time <= parseDateTimeBestEffort('${endDate} 23:59:59')
+      GROUP BY session_id
+      ORDER BY first_visit DESC
+      LIMIT ${limit} OFFSET ${offset}
+    ),
+    session_events AS (
+      SELECT
+        e.session_id,
+        groupArray(
+          tuple(
+            e.id,
+            e.time,
+            e.event_name,
+            e.path,
+            e.error_message,
+            e.error_type,
+            CASE 
+              WHEN e.event_name NOT IN ('screen_view', 'page_exit', 'error', 'web_vitals', 'link_out') 
+                AND e.properties IS NOT NULL 
+                AND e.properties != '{}' 
+              THEN CAST(e.properties AS String)
+              ELSE NULL
+            END
+          )
+        ) as events
+      FROM analytics.events e
+      INNER JOIN session_list sl ON e.session_id = sl.session_id
+      WHERE e.client_id = '${websiteId}'
+      GROUP BY e.session_id
+    )
+    SELECT
+      sl.session_id,
+      sl.first_visit,
+      sl.last_visit,
+      sl.duration,
+      sl.page_views,
+      sl.visitor_id,
+      sl.user_agent,
+      sl.country,
+      sl.referrer,
+      COALESCE(se.events, []) as events
+    FROM session_list sl
+    LEFT JOIN session_events se ON sl.session_id = se.session_id
+    ORDER BY sl.first_visit DESC
+  `;
+  
+  builder.getSql = () => sql;
+  
+  return builder;
+}
+
+/**
  * Creates a builder for fetching session detail data
  */
 export function createSessionDetailBuilder(websiteId: string, sessionId: string) {

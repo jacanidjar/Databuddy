@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 
 // Types
 export interface AnalyticsSummary {
@@ -141,7 +141,6 @@ export interface SessionData {
   browser: string;
   os: string;
   country: string;
-  region: string;
   referrer: string;
   is_returning_visitor: boolean;
   visitor_session_count: number;
@@ -150,6 +149,7 @@ export interface SessionData {
     name: string;
     domain: string;
   };
+  events?: SessionEventData[];
 }
 
 export interface SessionEventData {
@@ -157,18 +157,9 @@ export interface SessionEventData {
   time: string;
   event_name: string;
   path: string;
-  url: string;
-  referrer: string;
-  title: string;
-  time_on_page: number;
-  screen_resolution: string;
-  user_agent?: string;
-  device_type: string;
-  browser: string;
-  os: string;
-  utm_source: string;
-  utm_medium: string;
-  utm_campaign: string;
+  error_message?: string;
+  error_type?: string;
+  properties?: Record<string, any>;
 }
 
 export interface SessionWithEvents extends SessionData {
@@ -700,6 +691,37 @@ export function useAnalyticsSessions(
     enabled: !!websiteId,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook to fetch sessions list with infinite scrolling
+ */
+export function useInfiniteAnalyticsSessions(
+  websiteId: string,
+  dateRange?: DateRange,
+  limit = 50
+) {
+  return useInfiniteQuery({
+    queryKey: ['analytics', 'sessions-infinite', websiteId, dateRange, limit],
+    queryFn: ({ pageParam = 1, signal }) => 
+      fetchAnalyticsData<SessionsResponse>(
+        '/analytics/sessions', 
+        websiteId, 
+        dateRange, 
+        { limit, page: pageParam }, 
+        signal
+      ),
+    enabled: !!websiteId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.hasNext ? lastPage.pagination.page + 1 : undefined;
+    },
+    getPreviousPageParam: (firstPage) => {
+      return firstPage.pagination.hasPrev ? firstPage.pagination.page - 1 : undefined;
+    },
   });
 }
 

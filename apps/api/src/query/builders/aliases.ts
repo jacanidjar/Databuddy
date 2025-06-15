@@ -4,11 +4,6 @@ import { geographyBuilders } from './geography'
 import { pageBuilders } from './pages'
 import { utmBuilders } from './utm'
 
-// Helper function to create aliases that resolve to other builders
-function createAlias(targetBuilder: ParameterBuilder): ParameterBuilder {
-  return targetBuilder;
-}
-
 export const aliasBuilders: Record<string, ParameterBuilder> = {
   // Aliases for backward compatibility and convenience
   browser_versions: deviceBuilders.browser_name,
