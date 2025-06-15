@@ -7,26 +7,38 @@ steps:
   - name: Build Dash2
     image: woodpeckerci/plugin-docker-buildx:6.0.0
     settings:
-      repo: databuddy-analytics/dash2
+      registry: http://registry.databuddy.cc/v2
+      repo: registry.databuddy.cc/dash2
       dockerfile: dash2.Dockerfile
-      tag: latest
-      dry-run: true
+      auto_tag: true
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
 
   - name: Build API
     image: woodpeckerci/plugin-docker-buildx:6.0.0
     settings:
-      repo: databuddy-analytics/api
+      registry: http://registry.databuddy.cc/v2
+      repo: registry.databuddy.cc/api
       dockerfile: api.Dockerfile
-      tag: latest
-      dry-run: true
+      auto_tag: true
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
 
   - name: Build Basket
     image: woodpeckerci/plugin-docker-buildx:6.0.0
     settings:
-      repo: databuddy-analytics/basket
+      registry: http://registry.databuddy.cc/v2
+      repo: registry.databuddy.cc/basket
       dockerfile: basket.Dockerfile
-      tag: latest
-      dry-run: true
+      auto_tag: true
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
   
   
 
