@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Globe, Plus, TrendingUp, Shield, Sparkles } from "lucide-react";
+import { GlobeIcon, PlusIcon, TrendUpIcon, ShieldIcon, SparkleIcon } from "@phosphor-icons/react";
 import { useDomainManagement } from "./hooks/use-domain-management";
 import { cn } from "@/lib/utils";
 
@@ -84,7 +84,7 @@ export default function DomainsPage() {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10 border border-primary/20 animate-pulse">
-                <Shield className="h-5 w-5 text-primary" />
+                <ShieldIcon size={20} weight="duotone" className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate">
@@ -110,14 +110,14 @@ export default function DomainsPage() {
                 data-button-type="primary-cta"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                <Plus className="h-4 w-4 group-hover:rotate-90 transition-transform duration-300 relative z-10" />
+                <PlusIcon size={16} weight="duotone" className="h-4 w-4 group-hover:rotate-90 transition-transform duration-300 relative z-10" />
                 <span className="truncate relative z-10">Add Domain</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <div className="flex items-center gap-2 mb-1">
-                  <Globe className="h-5 w-5" />
+                  <GlobeIcon size={20} weight="duotone" className="h-5 w-5" />
                   <DialogTitle>Add New Domain</DialogTitle>
                 </div>
                 <DialogDescription className="text-xs">
@@ -142,7 +142,7 @@ export default function DomainsPage() {
                 <div className="bg-muted/50 rounded-lg p-3 border">
                   <div className="flex items-start gap-2">
                     <div className="p-1 rounded bg-primary/10">
-                      <Sparkles className="h-3 w-3 text-primary" />
+                      <SparkleIcon size={12} weight="fill" className="h-3 w-3 text-primary" />
                     </div>
                     <div className="text-left">
                       <p className="font-semibold text-xs mb-1">💡 Next steps</p>
@@ -199,7 +199,7 @@ export default function DomainsPage() {
                 data-section="domains-tabs"
                 data-tab-name="domains"
               >
-                <Globe className="h-4 w-4 mr-2" />
+                <GlobeIcon size={16} weight="duotone" className="h-4 w-4 mr-2" />
                 <span>Domains</span>
                 {activeTab === "domains" && (
                   <div className="absolute bottom-0 left-0 w-full h-[2px] bg-primary rounded-t" />
@@ -216,7 +216,7 @@ export default function DomainsPage() {
                 data-section="domains-tabs"
                 data-tab-name="ranks"
               >
-                <TrendingUp className="h-4 w-4 mr-2" />
+                <TrendUpIcon size={16} weight="fill" className="h-4 w-4 mr-2" />
                 <span>Domain Ranks</span>
                 {activeTab === "ranks" && (
                   <div className="absolute bottom-0 left-0 w-full h-[2px] bg-primary rounded-t" />

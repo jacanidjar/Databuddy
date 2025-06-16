@@ -1,4 +1,4 @@
-import { BookOpen, MessageSquare, Laptop } from "lucide-react";
+import { BookOpenIcon, ChatCircleIcon, LaptopIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,7 +26,7 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
         <div className="grid gap-3 py-4">
           <Button variant="outline" className="justify-start text-left h-auto py-3">
             <div className="flex items-start gap-3">
-              <BookOpen className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+              <BookOpenIcon size={32} weight="duotone" className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-medium text-sm">Documentation</h4>
                 <span className="text-xs text-muted-foreground mt-1 block">Read guides and API references</span>
@@ -35,7 +35,7 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
           </Button>
           <Button variant="outline" className="justify-start text-left h-auto py-3">
             <div className="flex items-start gap-3">
-              <MessageSquare className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+              <ChatCircleIcon size={32} weight="duotone" className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-medium text-sm">Contact Support</h4>
                 <span className="text-xs text-muted-foreground mt-1 block">Get help from our support team</span>
@@ -44,7 +44,7 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
           </Button>
           <Button variant="outline" className="justify-start text-left h-auto py-3">
             <div className="flex items-start gap-3">
-              <Laptop className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+              <LaptopIcon size={32} weight="duotone" className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-medium text-sm">Tutorials</h4>
                 <span className="text-xs text-muted-foreground mt-1 block">Learn Databuddy step by step</span>

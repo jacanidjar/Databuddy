@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Globe } from "lucide-react";
+import { GlobeIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
@@ -59,7 +59,7 @@ export function WebsiteList({ websites, isLoading, pathname }: WebsiteListProps)
               : "text-foreground hover:bg-accent/70"
           )}
         >
-          <Globe className={cn("h-4 w-4", pathname === `/websites/${site.id}` && "text-primary")} />
+          <GlobeIcon size={32} weight="duotone" className={cn("h-4 w-4", pathname === `/websites/${site.id}` && "text-primary")} />
           <span className="truncate">{site.name || site.domain}</span>
         </Link>
       ))}

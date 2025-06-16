@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Globe, AlertCircle, Plus, ChevronRight, ChevronDown } from "lucide-react";
+import { GlobeIcon, PlusIcon, CaretDownIcon, CaretRightIcon, ClockClockwiseIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FaviconImage } from "@/components/analytics/favicon-image";
 import { formatDistanceToNow } from "date-fns";
@@ -10,7 +10,7 @@ import { StatusBadge } from "./status-badge";
 import { useDomainManagement } from "../hooks/use-domain-management";
 import type { Domain } from "../types";
 import { copyToClipboard } from "../utils";
-import React, { useMemo } from "react";
+import React from "react";
 import { DomainRowActions } from "./domain-row-actions";
 import { VerificationDetails } from "./verification-details";
 
@@ -86,7 +86,7 @@ export function DomainsTab() {
                   data-section="domains"
                   data-domain-name={domain.name}
                 >
-                  {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                  {isExpanded ? <CaretDownIcon size={16} weight="fill" className="h-3 w-3" /> : <CaretRightIcon size={16} weight="fill" className="h-3 w-3" />}
                 </Button>
               )}
               <div className="relative">
@@ -162,14 +162,14 @@ export function DomainsTab() {
       {state.hasError ? (
         <>
           <div className="rounded-full bg-red-50 p-8 border border-red-200 mb-8">
-            <AlertCircle className="h-16 w-16 text-red-500" />
+            <WarningCircleIcon size={64} weight="duotone" className="h-16 w-16 text-red-500" />
           </div>
           <h3 className="text-2xl font-bold mb-4">Failed to Load Domains</h3>
           <p className="text-muted-foreground mb-8 max-w-md leading-relaxed">
             There was a problem loading your domains. Please check your connection and try again.
           </p>
           <Button size="lg" onClick={fetchDomains}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <ClockClockwiseIcon className="h-4 w-4 mr-2" />
             Try Again
           </Button>
         </>
@@ -177,10 +177,10 @@ export function DomainsTab() {
         <>
           <div className="relative mb-8">
             <div className="rounded-full bg-muted/50 p-8 border">
-              <Globe className="h-16 w-16 text-muted-foreground" />
+              <GlobeIcon size={64} weight="duotone" className="h-16 w-16 text-muted-foreground" />
             </div>
             <div className="absolute -top-2 -right-2 p-2 rounded-full bg-primary/10 border border-primary/20">
-              <Plus className="h-6 w-6 text-primary" />
+              <PlusIcon size={24} weight="fill" className="h-6 w-6 text-primary" />
             </div>
           </div>
           <h3 className="text-2xl font-bold mb-4">No Domains Yet</h3>
@@ -190,7 +190,7 @@ export function DomainsTab() {
           <div className="bg-muted/50 rounded-xl p-6 max-w-md border">
             <div className="flex items-start gap-3">
               <div className="p-2 rounded-lg bg-primary/10">
-                <Globe className="h-5 w-5 text-primary" />
+                <GlobeIcon size={20} weight="fill" className="h-5 w-5 text-primary" />
               </div>
               <div className="text-left">
                 <p className="font-semibold text-sm mb-2">💡 Quick tip</p>
@@ -212,7 +212,7 @@ export function DomainsTab() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-700">
       {/* Domain count */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 border border-muted">
-        <Globe className="h-4 w-4 flex-shrink-0" />
+        <GlobeIcon size={16} weight="duotone" className="h-4 w-4 flex-shrink-0" />
         <span>
           Managing <span className="font-medium text-foreground">{domains.length}</span> domain{domains.length !== 1 ? 's' : ''}
           {verifiedDomains.length > 0 && unverifiedDomains.length > 0 && (

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Globe, ArrowRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { GlobeIcon, ArrowRightIcon, TrendUpIcon, TrendDownIcon, MinusIcon } from '@phosphor-icons/react';
 import type { MiniChartDataPoint } from '@/hooks/use-analytics';
 import { useMiniChartData } from '@/hooks/use-analytics';
 import type { Website } from '@databuddy/shared';
@@ -103,11 +103,11 @@ export const WebsiteCard = memo(({ website }: WebsiteCardProps) => {
                                 {website.name}
                             </CardTitle>
                             <CardDescription className="flex items-center gap-1 pt-0.5">
-                                <Globe className="h-3 w-3 flex-shrink-0" />
+                                <GlobeIcon size={32} weight="duotone" className="h-4 w-4 flex-shrink-0" />
                                 <span className="truncate text-xs">{website.domain}</span>
                             </CardDescription>
                         </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground transition-all duration-200 group-hover:translate-x-1 group-hover:text-primary flex-shrink-0" />
+                        <ArrowRightIcon size={32} weight="fill" className="h-4 w-4 text-muted-foreground transition-all duration-200 group-hover:translate-x-1 group-hover:text-primary flex-shrink-0" />
                     </div>
                 </CardHeader>
 
@@ -132,9 +132,9 @@ export const WebsiteCard = memo(({ website }: WebsiteCardProps) => {
                                     <div className={`flex items-center gap-1 text-xs font-medium ${trend.type === 'up' ? 'text-green-600' :
                                         trend.type === 'down' ? 'text-red-600' : 'text-muted-foreground'
                                         }`}>
-                                        {trend.type === 'up' ? <TrendingUp className="h-3 w-3" /> :
-                                            trend.type === 'down' ? <TrendingDown className="h-3 w-3" /> :
-                                                <Minus className="h-3 w-3" />}
+                                        {trend.type === 'up' ? <TrendUpIcon size={32} weight="fill" className="h-4 w-4" /> :
+                                            trend.type === 'down' ? <TrendDownIcon size={32} weight="fill" className="h-4 w-4" /> :
+                                                <MinusIcon size={32} weight="fill" className="h-4 w-4" />}
                                         <span>{trend.type === 'neutral' ? '—' : `${trend.type === 'up' ? '+' : '-'}${trend.value.toFixed(0)}%`}</span>
                                     </div>
                                 )}

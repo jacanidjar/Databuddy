@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Plus, Globe, BarChart3, Sparkles, TrendingUp } from 'lucide-react';
+import { PlusIcon, GlobeIcon, ChartLineIcon, SparkleIcon, TrendUpIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -48,10 +48,10 @@ function EnhancedEmptyState({ onAddWebsite }: { onAddWebsite: () => void }) {
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
       <div className="relative mb-8">
         <div className="rounded-full bg-muted/50 p-8 border">
-          <Globe className="h-16 w-16 text-muted-foreground" />
+          <GlobeIcon size={64} weight="duotone" className="h-16 w-16 text-muted-foreground" />
         </div>
         <div className="absolute -top-2 -right-2 p-2 rounded-full bg-primary/10 border border-primary/20">
-          <BarChart3 className="h-6 w-6 text-primary" />
+          <ChartLineIcon size={24} weight="fill" className="h-6 w-6 text-primary" />
         </div>
       </div>
 
@@ -73,14 +73,14 @@ function EnhancedEmptyState({ onAddWebsite }: { onAddWebsite: () => void }) {
         )}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-        <Plus className="h-5 w-5 group-hover:rotate-90 transition-transform duration-300 relative z-10" />
+        <PlusIcon size={24} weight="fill" className="h-5 w-5 group-hover:rotate-90 transition-transform duration-300 relative z-10" />
         <span className="relative z-10">Add First Website</span>
       </Button>
 
       <div className="bg-muted/50 rounded-xl p-6 max-w-md border mt-8">
         <div className="flex items-start gap-3">
           <div className="p-2 rounded-lg bg-primary/10">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <SparkleIcon size={24} weight="fill" className="h-5 w-5 text-primary" />
           </div>
           <div className="text-left">
             <p className="font-semibold text-sm mb-2">💡 Quick tip</p>
@@ -98,7 +98,7 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
       <div className="rounded-full bg-red-50 p-8 border border-red-200 mb-8">
-        <Globe className="h-16 w-16 text-red-500" />
+        <GlobeIcon size={64} weight="duotone" className="h-16 w-16 text-red-500" />
       </div>
       <h3 className="text-2xl font-bold mb-4">Failed to Load Websites</h3>
       <p className="text-muted-foreground mb-8 max-w-md leading-relaxed">
@@ -132,7 +132,7 @@ export default function WebsitesPage() {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10 border border-primary/20 animate-pulse">
-                <TrendingUp className="h-5 w-5 text-primary" />
+                <TrendUpIcon size={24} weight="fill" className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate">
@@ -157,7 +157,7 @@ export default function WebsitesPage() {
             )}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-            <Plus className="h-4 w-4 group-hover:rotate-90 transition-transform duration-300 relative z-10" />
+            <PlusIcon size={24} className="h-4 w-4 group-hover:rotate-90 transition-transform duration-300 relative z-10" />
             <span className="truncate relative z-10">New Website</span>
           </Button>
         </div>
@@ -169,7 +169,7 @@ export default function WebsitesPage() {
         {!isLoading && websites && websites.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 border border-muted">
-              <Globe className="h-4 w-4 flex-shrink-0" />
+              <GlobeIcon size={24} weight="duotone" className="h-4 w-4 flex-shrink-0" />
               <span>
                 Tracking <span className="font-medium text-foreground">{websites.length}</span> website{websites.length !== 1 ? 's' : ''}
               </span>

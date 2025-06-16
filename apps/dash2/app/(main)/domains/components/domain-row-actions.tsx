@@ -1,13 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { RefreshCw, Plus, Trash2, AlertCircle, MoreVertical, CheckCircle, Clock, XCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { TrashIcon, WarningCircleIcon, CaretDownIcon, CheckCircleIcon, ArrowClockwiseIcon } from "@phosphor-icons/react";
 import type { Domain, DomainActions } from "../types";
 import { useState } from "react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface DomainRowActionsProps {
   domain: Domain;
@@ -58,13 +57,13 @@ export function DomainRowActions({
         >
           {domainIsVerifying ? (
             <span className="flex items-center justify-center">
-              <RefreshCw className="h-3 w-3 mr-1.5 animate-spin" />
+              <ArrowClockwiseIcon size={12} weight="fill" className="h-3 w-3 mr-1.5 animate-spin" />
               <span className="hidden sm:inline">{domainVerificationProgress}%</span>
               <span className="sm:hidden">Verifying</span>
             </span>
           ) : (
             <>
-              <CheckCircle className="h-3 w-3 mr-1.5" />
+              <CheckCircleIcon size={12} weight="fill" className="h-3 w-3 mr-1.5" />
               Verify
             </>
           )}
@@ -84,7 +83,7 @@ export function DomainRowActions({
           data-section="domains"
           data-domain-name={domain.name}
         >
-          <RefreshCw className={`h-3 w-3 mr-1.5 ${domainIsRegenerating || isRetrying ? "animate-spin" : ""}`} />
+          <ArrowClockwiseIcon size={12} weight="fill" className={`h-3 w-3 mr-1.5 ${domainIsRegenerating || isRetrying ? "animate-spin" : ""}`} />
           Retry
         </Button>
       );
@@ -108,7 +107,7 @@ export function DomainRowActions({
     if (domain.verificationStatus === "PENDING") {
       secondaryActionsList.push({
         label: "Regenerate Token",
-        icon: RefreshCw,
+        icon: ArrowClockwiseIcon,
         onClick: () => {
           setDropdownOpen(false);
           updateActions({
@@ -123,7 +122,7 @@ export function DomainRowActions({
 
     secondaryActionsList.push({
       label: "Delete Domain",
-      icon: Trash2,
+      icon: TrashIcon,
       onClick: () => {
         setDropdownOpen(false);
         updateActions({
@@ -164,7 +163,7 @@ export function DomainRowActions({
                 data-section="domains"
                 data-domain-name={domain.name}
               >
-                <MoreVertical className="h-3 w-3" />
+                <CaretDownIcon size={12} weight="fill" className="h-3 w-3" />
                 <span className="sr-only">More actions</span>
               </Button>
             </DropdownMenuTrigger>
@@ -195,7 +194,7 @@ export function DomainRowActions({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <RefreshCw className="h-5 w-5 text-amber-600" />
+              <ArrowClockwiseIcon size={20} weight="fill" className="h-5 w-5 text-amber-600" />
               Regenerate Verification Token
             </DialogTitle>
             <DialogDescription>
@@ -204,7 +203,7 @@ export function DomainRowActions({
             </DialogDescription>
           </DialogHeader>
           <Alert className="my-4 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20">
-            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <WarningCircleIcon size={16} weight="fill" className="h-4 w-4 text-amber-600" />
             <AlertTitle className="text-amber-700 dark:text-amber-400">Important</AlertTitle>
             <AlertDescription className="text-amber-700 dark:text-amber-300">
               After regenerating, your current DNS record will no longer work.
@@ -228,12 +227,12 @@ export function DomainRowActions({
             >
               {domainIsRegenerating ? (
                 <span className="flex items-center">
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  <ArrowClockwiseIcon size={16} weight="fill" className="h-4 w-4 mr-2 animate-spin" />
                   Regenerating...
                 </span>
               ) : (
                 <>
-                  <RefreshCw className="h-4 w-4 mr-2" />
+                  <ArrowClockwiseIcon size={16} weight="fill" className="h-4 w-4 mr-2" />
                   Regenerate Token
                 </>
               )}
@@ -252,7 +251,7 @@ export function DomainRowActions({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-red-600" />
+              <TrashIcon size={20} weight="fill" className="h-5 w-5 text-red-600" />
               Delete Domain
             </DialogTitle>
             <DialogDescription>
@@ -260,7 +259,7 @@ export function DomainRowActions({
             </DialogDescription>
           </DialogHeader>
           <Alert className="my-4 border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20">
-            <AlertCircle className="h-4 w-4 text-red-600" />
+            <WarningCircleIcon size={16} weight="fill" className="h-4 w-4 text-red-600" />
             <AlertTitle className="text-red-600">Warning</AlertTitle>
             <AlertDescription className="text-red-700 dark:text-red-300">
               This will permanently delete the domain and all associated websites and analytics data.
@@ -284,12 +283,12 @@ export function DomainRowActions({
             >
               {domainIsDeleting ? (
                 <span className="flex items-center">
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  <ArrowClockwiseIcon size={16} weight="fill" className="h-4 w-4 mr-2 animate-spin" />
                   Deleting...
                 </span>
               ) : (
                 <>
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <TrashIcon size={16} weight="fill" className="h-4 w-4 mr-2" />
                   Delete Domain
                 </>
               )}

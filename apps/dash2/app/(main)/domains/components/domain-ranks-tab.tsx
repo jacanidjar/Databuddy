@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, RefreshCw, AlertCircle, TrendingDown } from "lucide-react";
+import { TrendUpIcon, ArrowClockwiseIcon, WarningCircleIcon, TrendDownIcon } from "@phosphor-icons/react";
 import { FaviconImage } from "@/components/analytics/favicon-image";
 import { useDomainManagement } from "../hooks/use-domain-management";
 import { useDomainRanks } from "@/hooks/use-domain-info";
@@ -46,14 +46,14 @@ const LoadingSkeleton = () => (
 const ErrorState = ({ error, onRetry }: { error: Error | null; onRetry: () => void }) => (
   <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
     <div className="rounded-full bg-red-50 p-8 border border-red-200 mb-8">
-      <AlertCircle className="h-16 w-16 text-red-500" />
+      <WarningCircleIcon size={64} weight="duotone" className="h-16 w-16 text-red-500" />
     </div>
     <h3 className="text-2xl font-bold mb-4">Failed to Load Rankings</h3>
     <p className="text-muted-foreground mb-8 max-w-md leading-relaxed">
       {error?.message || "Unable to fetch domain ranking data. This might be a temporary issue."}
     </p>
     <Button size="lg" onClick={onRetry}>
-      <RefreshCw className="h-4 w-4 mr-2" />
+      <ArrowClockwiseIcon size={16} weight="fill" className="h-4 w-4 mr-2" />
       Try Again
     </Button>
   </div>
@@ -63,10 +63,10 @@ const EmptyState = () => (
   <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
     <div className="relative mb-8">
       <div className="rounded-full bg-muted/50 p-8 border">
-        <TrendingDown className="h-16 w-16 text-muted-foreground" />
+        <TrendDownIcon size={64} weight="fill" className="h-16 w-16 text-muted-foreground" />
       </div>
       <div className="absolute -top-2 -right-2 p-2 rounded-full bg-primary/10 border border-primary/20">
-        <TrendingUp className="h-6 w-6 text-primary" />
+        <TrendUpIcon size={24} weight="fill" className="h-6 w-6 text-primary" />
       </div>
     </div>
     <h3 className="text-2xl font-bold mb-4">No Rankings Available</h3>
@@ -76,7 +76,7 @@ const EmptyState = () => (
     <div className="bg-muted/50 rounded-xl p-6 max-w-md border">
       <div className="flex items-start gap-3">
         <div className="p-2 rounded-lg bg-primary/10">
-          <TrendingUp className="h-5 w-5 text-primary" />
+          <TrendUpIcon size={20} weight="fill" className="h-5 w-5 text-primary" />
         </div>
         <div className="text-left">
           <p className="font-semibold text-sm mb-2">💡 About DR Scores</p>
@@ -89,27 +89,27 @@ const EmptyState = () => (
   </div>
 );
 
-const DomainRankCard = ({ domain, rankData, onViewDetails }: { 
-  domain: any; 
-  rankData: any; 
-  onViewDetails: () => void; 
+const DomainRankCard = ({ domain, rankData, onViewDetails }: {
+  domain: any;
+  rankData: any;
+  onViewDetails: () => void;
 }) => {
   const hasData = rankData && rankData.status_code === 200;
   const isLoading = !rankData;
-  
+
   return (
     <Card className="group hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 border hover:border-primary/60 hover:-translate-y-1 bg-gradient-to-br from-background to-muted/20">
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3 flex-1">
             <div className="relative">
-              <FaviconImage 
-                domain={domain.name} 
-                className="h-10 w-10 rounded-full ring-2 ring-border" 
+              <FaviconImage
+                domain={domain.name}
+                className="h-10 w-10 rounded-full ring-2 ring-border"
               />
               {isLoading && (
                 <div className="absolute -bottom-1 -right-1 bg-background border rounded-full w-4 h-4 flex items-center justify-center">
-                  <RefreshCw className="h-2 w-2 animate-spin text-muted-foreground" />
+                  <ArrowClockwiseIcon size={8} weight="fill" className="h-2 w-2 animate-spin text-muted-foreground" />
                 </div>
               )}
             </div>
@@ -128,7 +128,7 @@ const DomainRankCard = ({ domain, rankData, onViewDetails }: {
             <p className="text-xs text-muted-foreground mt-1">DR Score</p>
           </div>
         </div>
-        
+
         {hasData && (
           <>
             <div className="flex items-center justify-between text-sm mb-2">
@@ -136,12 +136,11 @@ const DomainRankCard = ({ domain, rankData, onViewDetails }: {
               <span className="font-medium">{Math.round(rankData.page_rank_decimal)}%</span>
             </div>
             <div className="w-full bg-muted rounded-full h-2 mb-3">
-              <div 
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  rankData.page_rank_decimal >= 70 ? 'bg-green-500' :
+              <div
+                className={`h-2 rounded-full transition-all duration-300 ${rankData.page_rank_decimal >= 70 ? 'bg-green-500' :
                   rankData.page_rank_decimal >= 40 ? 'bg-blue-500' :
-                  rankData.page_rank_decimal >= 20 ? 'bg-yellow-500' : 'bg-red-500'
-                }`}
+                    rankData.page_rank_decimal >= 20 ? 'bg-yellow-500' : 'bg-red-500'
+                  }`}
                 style={{ width: `${Math.min(100, rankData.page_rank_decimal)}%` }}
               />
             </div>
@@ -165,7 +164,7 @@ const DomainRankCard = ({ domain, rankData, onViewDetails }: {
 export function DomainRanksTab() {
   const { state } = useDomainManagement();
   const { ranks, isLoading, isError, error, refetch, isFetching } = useDomainRanks();
-  const [selectedRankDetails, setSelectedRankDetails] = useState<{domainName: string; domainId: string} | null>(null);
+  const [selectedRankDetails, setSelectedRankDetails] = useState<{ domainName: string; domainId: string } | null>(null);
 
   if (isLoading) return <LoadingSkeleton />;
   if (isError) return <ErrorState error={error} onRetry={() => refetch()} />;
@@ -182,7 +181,7 @@ export function DomainRanksTab() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-primary/10 border border-primary/20 animate-pulse">
-            <TrendingUp className="h-5 w-5 text-primary" />
+            <TrendUpIcon size={20} weight="fill" className="h-5 w-5 text-primary" />
           </div>
           <div>
             <h2 className="text-2xl font-bold">Domain Rankings</h2>
@@ -197,14 +196,14 @@ export function DomainRanksTab() {
           disabled={isFetching}
           className="gap-2"
         >
-          <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+          <ArrowClockwiseIcon size={16} weight="fill" className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
           {isFetching ? 'Refreshing...' : 'Refresh'}
         </Button>
       </div>
 
       {/* Domain count */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 border border-muted">
-        <TrendingUp className="h-4 w-4 flex-shrink-0" />
+        <TrendUpIcon size={16} weight="fill" className="h-4 w-4 flex-shrink-0" />
         <span>
           Tracking <span className="font-medium text-foreground">{rankedDomains.length}</span> domain{rankedDomains.length !== 1 ? 's' : ''}
         </span>
@@ -221,7 +220,7 @@ export function DomainRanksTab() {
             <DomainRankCard
               domain={domain}
               rankData={ranks[domain.id]}
-              onViewDetails={() => setSelectedRankDetails({domainName: domain.name, domainId: domain.id})}
+              onViewDetails={() => setSelectedRankDetails({ domainName: domain.name, domainId: domain.id })}
             />
           </div>
         ))}

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Copy } from "lucide-react";
+import { ClipboardIcon } from "@phosphor-icons/react";
 
 interface CopyFieldProps {
   label: string;
@@ -18,7 +18,7 @@ export function CopyField({ label, value, onCopy }: CopyFieldProps) {
           {value}
         </code>
         <Button size="sm" variant="outline" onClick={onCopy} className="flex-shrink-0 w-full sm:w-auto h-8">
-          <Copy className="h-3 w-3" />
+          <ClipboardIcon size={16} weight="duotone" className="h-4 w-4" />
           <span className="ml-1.5 sm:sr-only">Copy</span>
         </Button>
       </div>

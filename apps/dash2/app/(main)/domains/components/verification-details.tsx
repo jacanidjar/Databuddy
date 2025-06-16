@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { ArrowClockwiseIcon } from "@phosphor-icons/react";
 import { CopyField } from "./copy-field";
 import type { Domain, DomainActions, VerificationResult } from "../types";
 
@@ -64,7 +64,7 @@ export function VerificationDetails({
             >
               {isVerifying ? (
                 <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  <ArrowClockwiseIcon size={16} weight="fill" className="h-4 w-4 mr-2 animate-spin" />
                   Verifying...
                 </>
               ) : (

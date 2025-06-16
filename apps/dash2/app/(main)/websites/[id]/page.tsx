@@ -6,7 +6,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { useQueryState } from "nuqs";
-import { RefreshCw, Calendar, AlertTriangle } from "lucide-react";
+import { ArrowClockwiseIcon, CalendarIcon, WarningIcon } from '@phosphor-icons/react';
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -170,7 +170,7 @@ function WebsiteDetailsPage() {
     return (
       <div className="pt-8">
         <EmptyState
-          icon={<AlertTriangle className="h-10 w-10" />}
+          icon={<WarningIcon size={48} weight="duotone" className="h-10 w-10" />}
           title="Website not found"
           description="The website you are looking for does not exist or you do not have access."
           action={<Link href="/websites"><Button variant="outline">Back to Websites</Button></Link>}
@@ -224,7 +224,7 @@ function WebsiteDetailsPage() {
                 onClick={handleRefresh}
                 disabled={isRefreshing || isLoading}
               >
-                <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <ArrowClockwiseIcon size={24} weight="fill" className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
                 <span className="hidden sm:inline">
                   {isRefreshing ? 'Refreshing...' : 'Refresh'}
                 </span>
@@ -262,7 +262,7 @@ function WebsiteDetailsPage() {
                     size="sm"
                     className="h-6 text-xs gap-1 sm:gap-1.5 whitespace-nowrap px-2 sm:px-2.5 border-l border-border/50 ml-1 pl-2 sm:pl-3 touch-manipulation"
                   >
-                    <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary flex-shrink-0" />
+                    <CalendarIcon size={24} weight="fill" className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary flex-shrink-0" />
                     <span className="font-medium text-xs truncate">
                       {dayPickerSelectedRange?.from ? format(dayPickerSelectedRange.from, 'MMM d') : ''} - {dayPickerSelectedRange?.to ? format(dayPickerSelectedRange.to, 'MMM d') : ''}
                     </span>

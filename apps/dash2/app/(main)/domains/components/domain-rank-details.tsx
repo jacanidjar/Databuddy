@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { Globe, TrendingUp, Target, Award, BarChart3, Users, Activity, ExternalLink } from 'lucide-react';
+import { GlobeIcon, TrendUpIcon, TargetIcon, MedalIcon, ChartLineIcon, UsersIcon, ActivityIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { getTierInfo, formatRank } from '../utils';
 
@@ -27,17 +27,17 @@ interface DomainRankDetailsProps {
   domainName: string;
 }
 
-const StatCard = ({ 
-  icon, 
-  title, 
-  value, 
+const StatCard = ({
+  icon,
+  title,
+  value,
   subtitle,
   description,
   className = ""
-}: { 
-  icon: React.ReactNode; 
-  title: string; 
-  value: string | number; 
+}: {
+  icon: React.ReactNode;
+  title: string;
+  value: string | number;
   subtitle?: string;
   description?: string;
   className?: string;
@@ -63,7 +63,7 @@ const ScoreIndicator = ({ score, maxScore = 100 }: { score: number; maxScore?: n
   const percentage = (score / maxScore) * 100;
   const getColor = () => {
     if (percentage >= 80) return "bg-green-500";
-    if (percentage >= 60) return "bg-blue-500"; 
+    if (percentage >= 60) return "bg-blue-500";
     if (percentage >= 40) return "bg-yellow-500";
     if (percentage >= 20) return "bg-orange-500";
     return "bg-red-500";
@@ -107,17 +107,17 @@ export function DomainRankDetails({ isOpen, onClose, rankData, domainName }: Dom
           <div className="mx-auto w-full max-w-4xl">
             <DrawerHeader className="text-center px-4 sm:px-6">
               <DrawerTitle className="flex items-center justify-center gap-2 text-lg sm:text-xl">
-                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
+                <TrendUpIcon size={16} weight="fill" className="h-4 w-4 sm:h-5 sm:w-5" />
                 Domain Rank Details
               </DrawerTitle>
               <DrawerDescription className="text-sm">
                 Ranking data for <span className="font-mono font-medium">{domainName}</span>
               </DrawerDescription>
             </DrawerHeader>
-            
+
             <div className="p-4 sm:p-6 text-center">
               <div className="text-muted-foreground mb-4">
-                <Globe className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-4 opacity-30" />
+                <GlobeIcon size={48} weight="duotone" className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-4 opacity-30" />
               </div>
               <h3 className="text-base sm:text-lg font-medium mb-2">No Ranking Data Available</h3>
               <p className="text-muted-foreground mb-4 text-sm leading-relaxed">
@@ -139,14 +139,14 @@ export function DomainRankDetails({ isOpen, onClose, rankData, domainName }: Dom
         <div className="mx-auto w-full max-w-4xl overflow-y-auto">
           <DrawerHeader className="text-center px-4 sm:px-6">
             <DrawerTitle className="flex items-center justify-center gap-2 text-lg sm:text-xl">
-              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
+              <TrendUpIcon size={16} weight="fill" className="h-4 w-4 sm:h-5 sm:w-5" />
               Domain Rank Analysis
             </DrawerTitle>
             <DrawerDescription className="text-sm">
               Comprehensive ranking metrics for <span className="font-mono font-medium">{domainName}</span>
             </DrawerDescription>
           </DrawerHeader>
-          
+
           <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
             {/* Hero Section with Score */}
             <Card className="relative overflow-hidden">
@@ -168,31 +168,31 @@ export function DomainRankDetails({ isOpen, onClose, rankData, domainName }: Dom
             {/* Key Metrics Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <StatCard
-                icon={<Target className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />}
+                icon={<TargetIcon size={12} weight="fill" className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />}
                 title="Domain Authority"
                 value={`${rankData.page_rank_decimal.toFixed(1)}/100`}
                 subtitle="Authority score"
                 description="Domain strength based on backlink profile analysis"
               />
-              
+
               <StatCard
-                icon={<Globe className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />}
+                icon={<GlobeIcon size={12} weight="fill" className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />}
                 title="Global Rank"
                 value={`#${formatRank(rankData.rank)}`}
                 subtitle="Worldwide position"
                 description="Ranking among all indexed websites globally"
               />
-              
+
               <StatCard
-                icon={<BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500" />}
+                icon={<ChartLineIcon size={12} weight="fill" className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500" />}
                 title="Authority Score"
                 value={`${Math.round(rankData.page_rank_decimal)}%`}
                 subtitle="Domain strength"
                 description="Percentage-based authority measurement"
               />
-              
+
               <StatCard
-                icon={<Activity className="h-3 w-3 sm:h-4 sm:w-4 text-orange-500" />}
+                icon={<ActivityIcon size={12} weight="fill" className="h-3 w-3 sm:h-4 sm:w-4 text-orange-500" />}
                 title="Status"
                 value="Active"
                 subtitle="Ranking available"
@@ -206,7 +206,7 @@ export function DomainRankDetails({ isOpen, onClose, rankData, domainName }: Dom
               <Card>
                 <CardHeader className="pb-3 sm:pb-4">
                   <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                    <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <ChartLineIcon size={12} weight="fill" className="h-3 w-3 sm:h-4 sm:w-4" />
                     Score Breakdown
                   </CardTitle>
                 </CardHeader>
@@ -218,9 +218,9 @@ export function DomainRankDetails({ isOpen, onClose, rankData, domainName }: Dom
                     </div>
                     <Progress value={Math.min(100, rankData.page_rank_decimal)} className="h-2" />
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div className="space-y-2 text-xs sm:text-sm">
                     <div className="flex justify-between">
                       <span>Precise Score:</span>
@@ -238,7 +238,7 @@ export function DomainRankDetails({ isOpen, onClose, rankData, domainName }: Dom
               <Card>
                 <CardHeader className="pb-3 sm:pb-4">
                   <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                    <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <UsersIcon size={12} weight="fill" className="h-3 w-3 sm:h-4 sm:w-4" />
                     Ranking Context
                   </CardTitle>
                 </CardHeader>
@@ -250,7 +250,7 @@ export function DomainRankDetails({ isOpen, onClose, rankData, domainName }: Dom
                       Among all websites worldwide
                     </div>
                   </div>
-                  
+
                   <div className="text-xs text-muted-foreground space-y-1">
                     <p>• Higher ranks indicate stronger backlink profiles</p>
                     <p>• Rankings are updated periodically based on crawl data</p>
@@ -264,7 +264,7 @@ export function DomainRankDetails({ isOpen, onClose, rankData, domainName }: Dom
             <Card>
               <CardHeader className="pb-3 sm:pb-4">
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                  <Award className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <MedalIcon size={12} weight="fill" className="h-3 w-3 sm:h-4 sm:w-4" />
                   Understanding Your Domain Rank
                 </CardTitle>
               </CardHeader>

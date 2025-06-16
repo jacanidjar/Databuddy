@@ -2,19 +2,16 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import {
-  Globe,
-  Users,
-  MousePointer,
-  AlertTriangle,
-  BarChart,
-  Timer,
-  LayoutDashboard,
-  Zap,
-  ChevronDown,
-  ChevronRight,
-  Info,
-  BookOpen,
-} from "lucide-react";
+  GlobeIcon,
+  UsersIcon,
+  CursorIcon,
+  WarningIcon,
+  ChartLineIcon,
+  TimerIcon,
+  LayoutIcon,
+  CaretDownIcon,
+  CaretRightIcon,
+} from "@phosphor-icons/react";
 import { differenceInDays } from "date-fns";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
@@ -77,7 +74,7 @@ function UnauthorizedAccessError() {
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-red-100 dark:bg-red-900/30 rounded-full">
-            <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+            <WarningIcon size={24} weight="fill" className="h-6 w-6 text-red-600 dark:text-red-400" />
           </div>
           <div>
             <CardTitle className="text-lg">Access Denied</CardTitle>
@@ -737,7 +734,7 @@ export function WebsiteOverviewTab({
         <StatCard
           title="UNIQUE VISITORS"
           value={analytics.summary?.unique_visitors || 0}
-          icon={Users}
+          icon={UsersIcon}
           description={`${analytics.today?.visitors || 0} today`}
           isLoading={isLoading}
           variant="default"
@@ -751,7 +748,7 @@ export function WebsiteOverviewTab({
         <StatCard
           title="SESSIONS"
           value={analytics.summary?.sessions || 0}
-          icon={BarChart}
+          icon={ChartLineIcon}
           description={`${analytics.today?.sessions || 0} today`}
           isLoading={isLoading}
           variant="default"
@@ -765,7 +762,7 @@ export function WebsiteOverviewTab({
         <StatCard
           title="PAGEVIEWS"
           value={analytics.summary?.pageviews || 0}
-          icon={Globe}
+          icon={GlobeIcon}
           description={`${analytics.today?.pageviews || 0} today`}
           isLoading={isLoading}
           variant="default"
@@ -784,7 +781,7 @@ export function WebsiteOverviewTab({
               '0'
             ) : '0'
           }
-          icon={LayoutDashboard}
+          icon={LayoutIcon}
           isLoading={isLoading}
           variant="default"
           trend={calculateTrends.pages_per_session}
@@ -797,7 +794,7 @@ export function WebsiteOverviewTab({
         <StatCard
           title="BOUNCE RATE"
           value={analytics.summary?.bounce_rate_pct || '0%'}
-          icon={MousePointer}
+          icon={CursorIcon}
           isLoading={isLoading}
           trend={calculateTrends.bounce_rate}
           trendLabel={calculateTrends.bounce_rate !== undefined ? "vs previous period" : undefined}
@@ -811,7 +808,7 @@ export function WebsiteOverviewTab({
         <StatCard
           title="SESSION DURATION"
           value={analytics.summary?.avg_session_duration_formatted || '0s'}
-          icon={Timer}
+          icon={TimerIcon}
           isLoading={isLoading}
           variant="default"
           trend={calculateTrends.session_duration}
@@ -833,7 +830,7 @@ export function WebsiteOverviewTab({
             </p>
             {dateRange.granularity === 'hourly' && dateDiff > 7 && (
               <div className="mt-1 flex items-center text-amber-600 gap-1 text-xs">
-                <AlertTriangle className="h-3 w-3" />
+                <WarningIcon size={16} weight="fill" />
                 <span>Large date ranges may affect performance</span>
               </div>
             )}
@@ -904,9 +901,9 @@ export function WebsiteOverviewTab({
               >
                 <div className="flex items-center gap-2">
                   {isPropertyExpanded ? (
-                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                    <CaretDownIcon size={16} weight="fill" className="h-3 w-3 text-muted-foreground" />
                   ) : (
-                    <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                    <CaretRightIcon size={16} weight="fill" className="h-3 w-3 text-muted-foreground" />
                   )}
                   <span className="text-sm font-medium text-foreground">{propertyKey}</span>
                 </div>

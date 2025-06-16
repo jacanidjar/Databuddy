@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { ArrowSquareOut } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { NavigationItem as NavigationItemType } from "./types";
 import { useRouter } from "next/navigation";
@@ -65,7 +65,7 @@ export function NavigationItem({
       )}
     >
       <span className={cn("flex-shrink-0", isActive && "text-primary")}>
-        <Icon className="h-4 w-4" />
+        <Icon size={32} weight="duotone" className="h-5 w-5" />
       </span>
       <span className="flex-grow truncate">{name}</span>
       <div className="flex items-center gap-1">
@@ -74,7 +74,7 @@ export function NavigationItem({
             Alpha
           </span>
         )}
-        {isExternal && <ExternalLink className="h-3 w-3 text-muted-foreground" />}
+        {isExternal && <ArrowSquareOut weight="duotone" className="h-3 w-3 text-muted-foreground" />}
       </div>
     </LinkComponent>
   );

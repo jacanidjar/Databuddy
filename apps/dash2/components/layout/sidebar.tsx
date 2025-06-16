@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Globe, X, Menu } from "lucide-react";
+import { GlobeIcon, XIcon, } from "@phosphor-icons/react";
 import { TopHeader } from "./top-header";
 import { useWebsites } from "@/hooks/use-websites";
 import { WebsiteHeader } from "./navigation/website-header";
@@ -220,7 +220,7 @@ export function Sidebar() {
             className="absolute top-3 right-3 z-50 md:hidden h-8 w-8 p-0"
             onClick={closeSidebar}
           >
-            <X className="h-4 w-4" />
+            <XIcon size={32} weight="duotone" className="h-4 w-4" />
             <span className="sr-only">Close sidebar</span>
           </Button>
 
@@ -257,7 +257,7 @@ export function Sidebar() {
                   {/* Websites section */}
                   <div className="border-t pt-4">
                     <h3 className="px-2 mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                      <Globe className="h-3 w-3" />
+                      <GlobeIcon size={32} weight="duotone" className="h-5 w-5" />
                       Websites
                     </h3>
                     <WebsiteList

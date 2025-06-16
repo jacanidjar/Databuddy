@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, HelpCircle } from "lucide-react";
+import { ListIcon, InfoIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import dynamic from "next/dynamic";
 import { Logo } from "./logo";
 import { ThemeToggle } from "./theme-toggle";
 import { UserMenu } from "./user-menu";
 import { NotificationsPopover } from "@/components/notifications/notifications-popover";
-import Image from "next/image";
 
 
 const HelpDialog = dynamic(() => import("./help-dialog").then(mod => mod.HelpDialog), {
@@ -34,7 +33,7 @@ export function TopHeader({ setMobileOpen }: TopHeaderProps) {
             className="md:hidden"
             onClick={setMobileOpen}
           >
-            <Menu className="h-5 w-5" />
+            <ListIcon size={32} weight="duotone" className="h-5 w-5" />
             <span className="sr-only">Toggle menu</span>
           </Button>
 
@@ -56,7 +55,7 @@ export function TopHeader({ setMobileOpen }: TopHeaderProps) {
             className="hidden md:flex h-8 w-8"
             onClick={() => setHelpOpen(true)}
           >
-            <HelpCircle className="h-4 w-4" />
+            <InfoIcon size={32} weight="duotone" className="h-6 w-6" />
             <span className="sr-only">Help</span>
           </Button>
 

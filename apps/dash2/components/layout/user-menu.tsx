@@ -2,7 +2,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSession, authClient } from "@databuddy/auth/client";
 import { toast } from "sonner";
-import { LayoutDashboard, LogOut, User } from "lucide-react";
+import { HouseIcon, SignOutIcon, UserIcon } from "@phosphor-icons/react";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -90,32 +90,32 @@ export function UserMenu() {
             </span>
           </div>
         </div>
-        
+
         <DropdownMenuSeparator className="my-1" />
-        
+
         <DropdownMenuGroup>
           <DropdownMenuItem asChild className="h-9 rounded-md">
             <Link href="/websites" className="flex items-center w-full">
-              <LayoutDashboard className="mr-2.5 h-4 w-4" />
+              <HouseIcon size={32} weight="duotone" className="mr-2.5 h-4 w-4" />
               Websites
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild className="h-9 rounded-md">
             <Link href="/settings?tab=profile" className="flex items-center w-full">
-              <User className="mr-2.5 h-4 w-4" />
+              <UserIcon size={32} weight="duotone" className="mr-2.5 h-4 w-4" />
               Profile
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
-        
+
         <DropdownMenuSeparator className="my-1" />
-        
-        <DropdownMenuItem 
+
+        <DropdownMenuItem
           onClick={handleLogout}
           disabled={isLoggingOut}
           className="cursor-pointer h-9 rounded-md text-destructive focus:text-destructive hover:bg-destructive/10"
         >
-          <LogOut className="mr-2.5 h-4 w-4" />
+          <SignOutIcon size={32} weight="duotone" className="mr-2.5 h-5 w-5" />
           {isLoggingOut ? "Signing out..." : "Sign out"}
         </DropdownMenuItem>
       </DropdownMenuContent>
