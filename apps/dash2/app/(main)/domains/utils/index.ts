@@ -1,21 +1,22 @@
 import { toast } from "sonner";
+import { parse } from 'tldts';
 
 export const cleanDomainInput = (input: string): string => {
-  // Remove protocol if present
-  let cleaned = input.replace(/^(https?:\/\/)?(www\.)?/, '');
-  
-  // Remove any subdomains, keeping only the top-level domain
-  const parts = cleaned.split('.');
-  if (parts.length > 2) {
-    cleaned = parts.slice(-2).join('.');
+  if (!input?.trim()) {
+    return '';
   }
   
-  return cleaned;
+  const parsed = parse(input.trim());
+  return parsed.domain || '';
 };
 
-export const validateDomainFormat = (domain: string): boolean => {
-  const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/;
-  return domainRegex.test(domain);
+export const validateDomainFormat = (input: string): boolean => {
+  if (!input?.trim()) {
+    return false;
+  }
+  
+  const parsed = parse(input.trim());
+  return !!(parsed.domain && parsed.publicSuffix);
 };
 
 export const formatRank = (rank: string | undefined | null): string => {
