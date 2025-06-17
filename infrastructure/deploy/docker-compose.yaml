@@ -1,20 +1,20 @@
 x-databuddy-env:
   &databuddy-env
     CLICKHOUSE_URL: "http://databuddy:databuddy@localhost:8123/database=databuddy "
-    IPINFO_TOKEN: {{ipinfo_token}} # secret
-    REDIS_URL: redis://redis:6379
-    QUEUE_REDIS_URL: redis://redis:6379
-    AI_API_KEY: {{ai_api_key}} # secret
-    BETTER_AUTH_SECRET: {{better_auth_secret}} # secret
-    BETTER_AUTH_URL: {{better_auth_url}} 
-    GITHUB_CLIENT_ID: {{github_client_id}} 
-    GITHUB_CLIENT_SECRET: {{github_client_secret}}  # secret
-    GOOGLE_CLIENT_ID: {{google_client_id}}
-    GOOGLE_CLIENT_SECRET: {{google_client_secret}} # secret
-    DATABASE_URL: postgresql://databuddy:databuddy@pgsql:5432/databuddy
-    OPR_API_KEY: {{opr_api_key}} # secret
-    NEXT_PUBLIC_API_URL: https://{{api_host}}
-    NEXT_PUBLIC_BASKET_URL: https://{{basket_host}}
+    IPINFO_TOKEN: "{{ipinfo_token}}" # secret
+    REDIS_URL: "redis://redis:6379"
+    QUEUE_REDIS_URL: "redis://redis:6379"
+    AI_API_KEY: "{{ai_api_key}}" # secret
+    BETTER_AUTH_SECRET: "{{better_auth_secret}}" # secret
+    BETTER_AUTH_URL: "{{better_auth_url}}" 
+    GITHUB_CLIENT_ID: "{{github_client_id}}"
+    GITHUB_CLIENT_SECRET: "{{github_client_secret}}"  # secret
+    GOOGLE_CLIENT_ID: "{{google_client_id}}"
+    GOOGLE_CLIENT_SECRET: "{{google_client_secret}}" # secret
+    DATABASE_URL: "postgresql://databuddy:databuddy@pgsql:5432/databuddy"
+    OPR_API_KEY: "{{opr_api_key}}" # secret
+    NEXT_PUBLIC_API_URL: "https://{{api_host}}"
+    NEXT_PUBLIC_BASKET_URL: "https://{{basket_host}}"
     PORT: 3000
     DEBUG: 0
 
