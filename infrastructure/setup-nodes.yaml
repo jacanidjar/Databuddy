@@ -190,4 +190,10 @@
         test_command: systemctl is-active docker
       when: (resultHard.changed or resultSoft.changed)
       throttle: 1
+    
+    - name: Add Ansible Public Key
+      ansible.posix.authorized_key:
+        user: root
+        state: present
+        key: "{{lookup('file', 'ansible-key.pub') }}" 
    

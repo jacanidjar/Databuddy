@@ -1,0 +1,36 @@
+---
+- hosts: "{{ hosts_group }}"
+  name: Add SSH keys on Nodes
+  remote_user: ubuntu
+  gather_facts: true
+  become: true
+  vars:
+    hosts_group: dev-nodes
+    public_keys: "./dev-access"
+    keys_glob : "{{public_keys}}/*.pub"
+    all_keys_glob: "./public-keys/*.pub"
+    
+    
+  tasks:
+    - name: Read Files
+      set_fact: 
+        read_keys: "{{read_keys | default([]) | union([lookup('file', item)])}}"
+      delegate_to: localhost
+      become: false
+      with_fileglob: "{{keys_glob}}"
+  
+    - name: Read All Files
+      set_fact: 
+        all_keys: "{{all_keys | default([]) | union([lookup('file', item)])}}"
+      delegate_to: localhost
+      become: false
+      with_fileglob: "{{all_keys_glob}}"
+
+    - name: Set up multiple authorized keys
+      ansible.posix.authorized_key:
+        user: ubuntu
+        state: present
+        key: "{{ item }}"
+      with_items: "{{read_keys}}"
+
+      

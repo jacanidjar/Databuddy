@@ -36,7 +36,7 @@ deploy-registry: install-dependencies
 	cd registry && ansible-playbook --timeout 60 --ssh-common-args="-i $(SSH_PRIVATE_KEY) -o ServerAliveInterval=15" -i ../inventory.ini deploy-registry.yaml
 
 deploy-app: install-dependencies
-	cd deploy && ansible-playbook --timeout 60 --ssh-common-args="-i $(SSH_PRIVATE_KEY) -o ServerAliveInterval=15" -i ../inventory.ini deploy-databuddy.yaml \
+	ansible-playbook --timeout 60 --ssh-common-args="-i $(SSH_PRIVATE_KEY) -o ServerAliveInterval=15" -i ./inventory.ini deploy/deploy-databuddy.yaml \
 		--extra-vars "ipinfo_token=$$IPINFO_TOKEN" \
 		--extra-vars "ai_api_key=$$AI_API_KEY" \
 		--extra-vars "better_auth_url=$$BETTER_AUTH_URL" \
