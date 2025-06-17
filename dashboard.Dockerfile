@@ -43,9 +43,10 @@ ENV REDIS_URL=redis://localhost
 ENV DATABASE_URL=postgres://localhost
 ENV CLICKHOUSE_URL=https://localhost
 ENV NEXT_PUBLIC_API_URL=https://localhost
-
+ENV HOSTNAME=0.0.0.0
 # Expose port
 EXPOSE 3000
+
 WORKDIR /app/apps/dashboard
 # Start API
 CMD ["bun", "run", "start"]

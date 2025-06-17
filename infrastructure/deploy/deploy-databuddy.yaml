@@ -7,7 +7,7 @@
   vars:
     working_dir_name: "databuddy-app"
     version: "{{version | default('latest')}}"
-    api_host: beta-api.databyddy.cc
+    api_host: beta-api.databuddy.cc
     basket_host: beta-basket.databuddy.cc
     dashboard_host: beta-app.databuddy.cc
     
