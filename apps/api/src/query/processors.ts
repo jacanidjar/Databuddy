@@ -23,10 +23,30 @@ export const processPageData = (data: any[]) =>
     try {
       if (cleanPath.startsWith('http')) {
         const url = new URL(cleanPath);
-        cleanPath = url.pathname + url.search + url.hash;
+        // Only use pathname, strip query parameters and hash for cleaner display
+        cleanPath = url.pathname;
+      } else {
+        // For relative paths, strip query parameters
+        const questionMarkIndex = cleanPath.indexOf('?');
+        if (questionMarkIndex !== -1) {
+          cleanPath = cleanPath.substring(0, questionMarkIndex);
+        }
+        // Also strip hash fragments
+        const hashIndex = cleanPath.indexOf('#');
+        if (hashIndex !== -1) {
+          cleanPath = cleanPath.substring(0, hashIndex);
+        }
       }
     } catch (e) {
-      // If URL parsing fails, keep the original path
+      // If URL parsing fails, still try to clean query params manually
+      const questionMarkIndex = cleanPath.indexOf('?');
+      if (questionMarkIndex !== -1) {
+        cleanPath = cleanPath.substring(0, questionMarkIndex);
+      }
+      const hashIndex = cleanPath.indexOf('#');
+      if (hashIndex !== -1) {
+        cleanPath = cleanPath.substring(0, hashIndex);
+      }
     }
     
     cleanPath = cleanPath || '/';

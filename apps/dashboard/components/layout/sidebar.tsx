@@ -8,7 +8,8 @@ import { GlobeIcon, XIcon, } from "@phosphor-icons/react";
 import { TopHeader } from "./top-header";
 import { useWebsites } from "@/hooks/use-websites";
 import { WebsiteHeader } from "./navigation/website-header";
-import { mainNavigation, websiteNavigation } from "./navigation/navigation-config";
+import { SandboxHeader } from "./navigation/sandbox-header";
+import { mainNavigation, websiteNavigation, sandboxNavigation } from "./navigation/navigation-config";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 
@@ -93,6 +94,9 @@ export function Sidebar() {
   const websitePathMatch = pathname.match(/^\/websites\/([^\/]+)(?:\/(.*))?$/);
   const currentWebsiteId = websitePathMatch ? websitePathMatch[1] : null;
   const isInWebsiteContext = !!currentWebsiteId;
+
+  // Check if we're in sandbox context
+  const isInSandboxContext = pathname.startsWith('/sandbox');
 
   // Find current website details
   const currentWebsite = isInWebsiteContext
@@ -238,6 +242,21 @@ export function Sidebar() {
                       items={section.items}
                       pathname={pathname}
                       currentWebsiteId={currentWebsiteId}
+                    />
+                  ))}
+                </div>
+              ) : isInSandboxContext ? (
+                // Sandbox-specific navigation
+                <div className="space-y-4">
+                  <SandboxHeader />
+
+                  {sandboxNavigation.map((section) => (
+                    <NavigationSection
+                      key={section.title}
+                      title={section.title}
+                      items={section.items}
+                      pathname={pathname}
+                      currentWebsiteId="sandbox"
                     />
                   ))}
                 </div>

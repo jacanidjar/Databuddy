@@ -27,7 +27,16 @@ export function NavigationItem({
   currentWebsiteId
 }: NavigationItemProps) {
   const router = useRouter();
-  const fullPath = isRootLevel ? href : `/websites/${currentWebsiteId}${href}`;
+
+  let fullPath: string;
+  if (isRootLevel) {
+    fullPath = href;
+  } else if (currentWebsiteId === "sandbox") {
+    fullPath = href === "" ? "/sandbox" : `/sandbox${href}`;
+  } else {
+    fullPath = `/websites/${currentWebsiteId}${href}`;
+  }
+
   const LinkComponent = isExternal ? 'a' : Link;
 
   if (production === false && process.env.NODE_ENV === "production") {
