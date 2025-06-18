@@ -15,8 +15,7 @@ import { useWebsite } from "@/hooks/use-websites";
 import { useWebsiteAnalytics } from "@/hooks/use-analytics";
 import { format, subDays, subHours } from "date-fns";
 import type { DateRange as DayPickerRange } from "react-day-picker";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { DateRangePicker } from "@/components/date-range-picker";
 import { useAtom } from "jotai";
 import {
   dateRangeAtom,
@@ -255,63 +254,19 @@ function WebsiteDetailsPage() {
                 );
               })}
 
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 text-xs gap-1 sm:gap-1.5 whitespace-nowrap px-2 sm:px-2.5 border-l border-border/50 ml-1 pl-2 sm:pl-3 touch-manipulation"
-                  >
-                    <CalendarIcon size={24} weight="fill" className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary flex-shrink-0" />
-                    <span className="font-medium text-xs truncate">
-                      {dayPickerSelectedRange?.from ? format(dayPickerSelectedRange.from, 'MMM d') : ''} - {dayPickerSelectedRange?.to ? format(dayPickerSelectedRange.to, 'MMM d') : ''}
-                    </span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-2 border shadow-lg" align="end">
-                  <div className="grid gap-2">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-2">
-                      <span className="text-sm font-medium">Select date range</span>
-                      <div className="flex gap-1 flex-wrap">
-                        {quickRanges.map((range) => (
-                          <Button
-                            key={range.label}
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-xs touch-manipulation"
-                            onClick={() => handleQuickRangeSelect(range)}
-                          >
-                            {range.label}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                    <CalendarComponent
-                      initialFocus
-                      mode="range"
-                      defaultMonth={dayPickerSelectedRange?.from}
-                      selected={dayPickerSelectedRange}
-                      onSelect={handleDateRangeChange}
-                      numberOfMonths={window.innerWidth < 640 ? 1 : 2}
-                      disabled={(d) => d > new Date() || d < new Date(2020, 0, 1)}
-                      className="rounded-md border"
-                    />
-                    <div className="flex justify-end">
-                      <Button
-                        size="sm"
-                        className="mt-2 touch-manipulation"
-                        onClick={() => {
-                          if (dayPickerSelectedRange?.from && dayPickerSelectedRange?.to) {
-                            setDateRangeAction({ startDate: dayPickerSelectedRange.from, endDate: dayPickerSelectedRange.to });
-                          }
-                        }}
-                      >
-                        Apply Range
-                      </Button>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <div className="border-l border-border/50 ml-1 pl-2 sm:pl-3">
+                <DateRangePicker
+                  value={dayPickerSelectedRange}
+                  onChange={(range) => {
+                    if (range?.from && range?.to) {
+                      setDateRangeAction({ startDate: range.from, endDate: range.to });
+                    }
+                  }}
+                  maxDate={new Date()}
+                  minDate={new Date(2020, 0, 1)}
+                  className="w-auto"
+                />
+              </div>
             </div>
           </div>
         )}

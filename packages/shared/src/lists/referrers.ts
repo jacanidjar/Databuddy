@@ -1,7 +1,7 @@
 // The data is fetch from snowplow-referer-parser https://github.com/snowplow-referer-parser/referer-parser
 // The orginal referers.yml is based on Piwik's SearchEngines.php and Socials.php, copyright 2012 Matthieu Aubry and available under the GNU General Public License v3.
 
-const referrers: Record<string, { type: string; name: string }> = {
+export const referrers: Record<string, { type: string; name: string }> = {
     'support.google.com': { type: 'unknown', name: 'Google' },
     'developers.google.com': { type: 'unknown', name: 'Google' },
     'maps.google.com': { type: 'unknown', name: 'Google' },

@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { useAuthSession } from "@/app/providers";
 import { RedirectToSignIn } from "@/components/auth/redirect-to-sign-in";
 import { AuthLoading } from "@/components/auth/auth-loading";
+import { MantineProvider } from "@mantine/core";
 
 export default function MainLayout({
   children,
