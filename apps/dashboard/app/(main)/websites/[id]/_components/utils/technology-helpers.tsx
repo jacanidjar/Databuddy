@@ -1,8 +1,8 @@
-import { 
-  Smartphone, 
-  Tablet, 
-  Monitor, 
-  Laptop, 
+import {
+  Smartphone,
+  Tablet,
+  Monitor,
+  Laptop,
   Tv,
   HelpCircle,
   Globe
@@ -42,10 +42,10 @@ export const getDeviceTypeIcon = (deviceType: string, size: 'sm' | 'md' | 'lg' =
     md: 'h-4 w-4',
     lg: 'h-5 w-5'
   };
-  
+
   const typeLower = deviceType.toLowerCase();
   const className = `${sizeClasses[size]}`;
-  
+
   if (typeLower.includes('mobile') || typeLower.includes('phone')) {
     return <Smartphone className={`${className} text-blue-600 dark:text-blue-400`} />;
   }
@@ -61,14 +61,14 @@ export const getDeviceTypeIcon = (deviceType: string, size: 'sm' | 'md' | 'lg' =
   if (typeLower.includes('tv')) {
     return <Tv className={`${className} text-red-600 dark:text-red-400`} />;
   }
-  
+
   return <HelpCircle className={`${className} text-muted-foreground`} />;
 };
 
 // Enhanced browser icon mapping
 export const getBrowserIcon = (browser: string): string => {
   const browserLower = browser.toLowerCase();
-  
+
   const iconMap: Record<string, string> = {
     chrome: '/browsers/Chrome.svg',
     firefox: '/browsers/Firefox.svg',
@@ -86,20 +86,20 @@ export const getBrowserIcon = (browser: string): string => {
     brave: '/browsers/Brave.svg',
     vivaldi: '/browsers/Vivaldi.svg'
   };
-  
+
   for (const [key, path] of Object.entries(iconMap)) {
     if (browserLower.includes(key)) {
       return path;
     }
   }
-  
+
   return '/browsers/Chrome.svg';
 };
 
 // Enhanced OS icon mapping
 export const getOSIcon = (os: string): string => {
   const osLower = os.toLowerCase();
-  
+
   const iconMap: Record<string, string> = {
     windows: '/operating-systems/Windows.svg',
     mac: '/operating-systems/macOS.svg',
@@ -111,29 +111,29 @@ export const getOSIcon = (os: string): string => {
     harmony: '/operating-systems/HarmonyOS.svg',
     ios: '/operating-systems/Apple.svg'
   };
-  
+
   for (const [key, path] of Object.entries(iconMap)) {
     if (osLower.includes(key)) {
       return path;
     }
   }
-  
+
   return '/operating-systems/Ubuntu.svg';
 };
 
 export const processDeviceData = (deviceTypes: DeviceTypeEntry[]): TechnologyTableEntry[] => {
   const deviceGroups: Record<string, number> = {};
-  
+
   for (const item of deviceTypes) {
     const deviceType = item.device_type || 'Unknown';
     const capitalizedType = deviceType.charAt(0).toUpperCase() + deviceType.slice(1);
     deviceGroups[capitalizedType] = (deviceGroups[capitalizedType] || 0) + (item.visitors || 0);
   }
-  
+
   const totalVisitors = Object.values(deviceGroups).reduce((sum, count) => sum + count, 0);
-  
+
   return Object.entries(deviceGroups)
-    .sort(([,a], [,b]) => (b as number) - (a as number))
+    .sort(([, a], [, b]) => (b as number) - (a as number))
     .slice(0, 10)
     .map(([name, visitors]) => ({
       name,
@@ -147,17 +147,17 @@ export const processDeviceData = (deviceTypes: DeviceTypeEntry[]): TechnologyTab
 // Process browser data with percentages and enhanced icons
 export const processBrowserData = (browserVersions: BrowserVersionEntry[]): TechnologyTableEntry[] => {
   const browserGroups: Record<string, number> = {};
-  
+
   for (const item of browserVersions) {
     let browserName = item.browser || 'Unknown';
     browserName = browserName.replace(/^Mobile\s+/, '').replace(/\s+Mobile$/, '');
     browserGroups[browserName] = (browserGroups[browserName] || 0) + (item.visitors || 0);
   }
-  
+
   const totalVisitors = Object.values(browserGroups).reduce((sum, count) => sum + count, 0);
-  
+
   return Object.entries(browserGroups)
-    .sort(([,a], [,b]) => (b as number) - (a as number))
+    .sort(([, a], [, b]) => (b as number) - (a as number))
     .slice(0, 10)
     .map(([name, visitors]) => ({
       name,
@@ -170,16 +170,16 @@ export const processBrowserData = (browserVersions: BrowserVersionEntry[]): Tech
 
 // Infer operating systems with percentages
 export const inferOperatingSystems = (
-  deviceTypes: DeviceTypeEntry[], 
+  deviceTypes: DeviceTypeEntry[],
   browserVersions: BrowserVersionEntry[]
 ): TechnologyTableEntry[] => {
   const osGroups: Record<string, number> = {};
-  
+
   for (const device of deviceTypes) {
     let os = 'Unknown';
     const brand = device.device_brand?.toLowerCase() || '';
     const deviceType = device.device_type?.toLowerCase() || '';
-    
+
     if (brand.includes('apple')) {
       if (deviceType.includes('mobile') || deviceType.includes('tablet')) {
         os = 'iOS';
@@ -191,21 +191,21 @@ export const inferOperatingSystems = (
     } else {
       os = 'Windows';
     }
-    
+
     osGroups[os] = (osGroups[os] || 0) + (device.visitors || 0);
   }
-  
+
   for (const browser of browserVersions) {
     const browserName = browser.browser?.toLowerCase() || '';
     if (browserName.includes('safari') && !browserName.includes('mobile')) {
       osGroups.macOS = (osGroups.macOS || 0) + Math.floor((browser.visitors || 0) * 0.1);
     }
   }
-  
+
   const totalVisitors = Object.values(osGroups).reduce((sum, count) => sum + count, 0);
-  
+
   return Object.entries(osGroups)
-    .sort(([,a], [,b]) => (b as number) - (a as number))
+    .sort(([, a], [, b]) => (b as number) - (a as number))
     .slice(0, 10)
     .map(([name, visitors]) => ({
       name,
@@ -217,27 +217,27 @@ export const inferOperatingSystems = (
 };
 
 // Enhanced icon component for tables
-export const TechnologyIcon = ({ 
-  entry, 
-  size = 'md' 
-}: { 
-  entry: TechnologyTableEntry; 
-  size?: 'sm' | 'md' | 'lg' 
+export const TechnologyIcon = ({
+  entry,
+  size = 'md'
+}: {
+  entry: TechnologyTableEntry;
+  size?: 'sm' | 'md' | 'lg'
 }) => {
   if (entry.iconComponent) {
     return <>{entry.iconComponent}</>;
   }
-  
+
   if (entry.icon) {
     const sizeClasses = {
       sm: 'h-3 w-3',
       md: 'h-4 w-4',
       lg: 'h-5 w-5'
     };
-    
+
     return (
-      <img 
-        src={entry.icon} 
+      <img
+        src={entry.icon}
         alt={entry.name}
         className={`${sizeClasses[size]} object-contain`}
         onError={(e) => {
@@ -246,7 +246,7 @@ export const TechnologyIcon = ({
       />
     );
   }
-  
+
   return <Globe className="h-4 w-4 text-muted-foreground" />;
 };
 
@@ -258,7 +258,7 @@ export const PercentageBadge = ({ percentage }: { percentage: number }) => {
     if (pct >= 10) return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400';
     return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
   };
-  
+
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getColorClass(percentage)}`}>
       {percentage}%

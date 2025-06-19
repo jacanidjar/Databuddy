@@ -381,7 +381,6 @@ export function WebsitePerformanceTab({
         title="Performance Analysis"
         description="Detailed performance metrics across pages, locations, devices, and browsers"
         isLoading={isLoading || isRefreshing}
-        initialPageSize={15}
         minHeight={400}
       />
     </div>
