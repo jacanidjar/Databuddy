@@ -234,7 +234,7 @@ function groupQueriesByColumnStructure(
       const { startDate, endDate, limit, page, filters, timeZone, granularity } = query
       const offset = (page - 1) * limit
       
-      let sql = builder(websiteId, startDate, `${endDate} 23:59:59`, limit, offset, granularity, timeZone, filters)
+      let sql = builder(websiteId, startDate, endDate, limit, offset, granularity, timeZone, filters)
       
       // Don't apply generic filters to revenue queries - they handle filtering internally
       const isRevenueQuery = parameter.startsWith('revenue_') || parameter.startsWith('recent_') || parameter === 'all_revenue_by_client'
@@ -299,7 +299,7 @@ function buildUnifiedQueries(
       const builder = PARAMETER_BUILDERS[parameter as keyof typeof PARAMETER_BUILDERS]
       if (!builder) continue
       
-      let sql = builder(websiteId, startDate, `${endDate} 23:59:59`, limit, offset, granularity, timeZone, filters)
+      let sql = builder(websiteId, startDate, endDate, limit, offset, granularity, timeZone, filters)
       
       const isRevenueQuery = parameter.startsWith('revenue_') || parameter.startsWith('recent_') || parameter === 'all_revenue_by_client'
       if (!isRevenueQuery) {
@@ -415,7 +415,7 @@ async function executeIndividualQuery(query: QueryRequest, websiteId: string, we
   const results = await Promise.all(
     parameters.map(async (parameter: string) => {
       const builder = PARAMETER_BUILDERS[parameter as keyof typeof PARAMETER_BUILDERS]
-      let sql = builder(websiteId, startDate, `${endDate} 23:59:59`, limit, offset, granularity, timeZone, filters)
+      let sql = builder(websiteId, startDate, endDate, limit, offset, granularity, timeZone, filters)
       
       const isRevenueQuery = parameter.startsWith('revenue_') || parameter.startsWith('recent_') || parameter === 'all_revenue_by_client'
       if (!isRevenueQuery) {

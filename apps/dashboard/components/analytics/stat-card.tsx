@@ -1,26 +1,34 @@
-import type { LucideIcon } from "lucide-react";
-import {
-  Card,
-} from "@/components/ui/card";
+import { memo, ElementType } from 'react';
+import dayjs from "dayjs";
+import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
+
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
 import { formatMetricNumber } from "@/lib/formatters";
 import TrendArrow from "@/components/atomic/TrendArrow";
 import TrendPercentage from "@/components/atomic/TrendPercentage";
-import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
-import { memo } from 'react';
 
 interface MiniChartDataPoint {
   date: string;
   value: number;
 }
 
+interface Trend {
+  change?: number;
+  current: number;
+  previous: number;
+  currentPeriod: { start: string; end: string };
+  previousPeriod: { start: string; end: string };
+}
+
 interface StatCardProps {
   title: string;
   value: string | number;
   description?: string;
-  icon?: LucideIcon;
-  trend?: number;
+  icon?: ElementType;
+  trend?: Trend;
   trendLabel?: string;
   isLoading?: boolean;
   className?: string;
@@ -31,7 +39,20 @@ interface StatCardProps {
   // Mini chart data
   chartData?: MiniChartDataPoint[];
   showChart?: boolean;
+  formatValue?: (value: number) => string;
 }
+
+const formatTrendValue = (value: string | number, formatter?: (v: number) => string) => {
+  if (typeof value === 'number') {
+    if (formatter) {
+      return formatter(value);
+    }
+    // Show 1 decimal place for non-integers, otherwise format as a whole number.
+    return Number.isInteger(value) ? formatMetricNumber(value) : value.toFixed(1);
+  }
+  // It's a pre-formatted string like "1m 23s" or "50%", so return as is.
+  return value;
+};
 
 // Memoized mini chart component
 const MiniChart = memo(({ data, id }: { data: MiniChartDataPoint[]; id: string }) => {
@@ -129,6 +150,7 @@ export function StatCard({
   id,
   chartData,
   showChart = false,
+  formatValue,
 }: StatCardProps) {
   // Determine color based on variant
   const getVariantClasses = () => {
@@ -145,6 +167,8 @@ export function StatCard({
         return "";
     }
   };
+
+  const trendValue = trend?.change;
 
   if (isLoading) {
     return (
@@ -180,7 +204,7 @@ export function StatCard({
 
   const hasValidChartData = showChart && chartData && chartData.length > 0;
 
-  return (
+  const cardContent = (
     <Card className={cn(
       "group overflow-hidden transition-all duration-300 ease-out pt-0",
       "hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5",
@@ -218,19 +242,19 @@ export function StatCard({
           {/* Trend and description row */}
           <div className="flex items-center justify-between text-[9px] sm:text-[10px] md:text-xs">
             <div className="flex items-center min-h-[12px] sm:min-h-[14px]">
-              {trend !== undefined && !Number.isNaN(trend) && (
+              {trendValue !== undefined && !Number.isNaN(trendValue) && (
                 <div className="flex items-center">
-                  <TrendArrow value={trend} invertColor={invertTrend} />
-                  <TrendPercentage value={trend} invertColor={invertTrend} className="ml-0.5" />
+                  <TrendArrow value={trendValue} invertColor={invertTrend} />
+                  <TrendPercentage value={trendValue} invertColor={invertTrend} className="ml-0.5" />
                 </div>
               )}
-              {description && (trend === undefined || Number.isNaN(trend)) && (
+              {description && (trendValue === undefined || Number.isNaN(trendValue)) && (
                 <span className="text-muted-foreground font-medium">
                   {description}
                 </span>
               )}
             </div>
-            {trendLabel && trend !== undefined && !Number.isNaN(trend) && (
+            {trendLabel && trendValue !== undefined && !Number.isNaN(trendValue) && (
               <span className="text-muted-foreground font-medium text-right hidden md:block">
                 {trendLabel}
               </span>
@@ -247,4 +271,45 @@ export function StatCard({
       </div>
     </Card>
   );
+
+  return trend ? (
+    <HoverCard>
+      <HoverCardTrigger asChild>
+        {cardContent}
+      </HoverCardTrigger>
+      <HoverCardContent className="w-80" sideOffset={10}>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 mb-2">
+            {Icon && <Icon className="h-4 w-4 text-primary" />}
+            <h4 className="font-semibold text-foreground">{title}</h4>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Previous</p>
+              <p className="text-xs text-muted-foreground/80">
+                {dayjs(trend.previousPeriod.start).format("MMM D")} - {dayjs(trend.previousPeriod.end).format("MMM D")}
+              </p>
+              <p className="font-bold text-lg text-foreground">{formatTrendValue(trend.previous, formatValue)}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Current</p>
+              <p className="text-xs text-muted-foreground/80">
+                {dayjs(trend.currentPeriod.start).format("MMM D")} - {dayjs(trend.currentPeriod.end).format("MMM D")}
+              </p>
+              <p className="font-bold text-lg text-foreground">{formatTrendValue(trend.current, formatValue)}</p>
+            </div>
+          </div>
+          <div className="border-t border-border/50 pt-3">
+            <div className="flex justify-between items-center">
+              <div className="text-sm text-muted-foreground">Change</div>
+              <div className="flex items-center font-bold text-base">
+                <TrendArrow value={trend.change || 0} invertColor={invertTrend} />
+                <TrendPercentage value={trend.change || 0} invertColor={invertTrend} className="ml-1" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </HoverCardContent>
+    </HoverCard>
+  ) : cardContent;
 } 

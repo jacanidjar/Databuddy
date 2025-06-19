@@ -1,8 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useCallback } from "react";
-import { Monitor, Smartphone, Zap, MapPin, TrendingUp, TrendingDown, AlertTriangle, CheckCircle } from "lucide-react";
-import { Question } from "@phosphor-icons/react";
+import {
+  MonitorIcon,
+  DeviceMobileIcon,
+  LightningIcon,
+  MapPinIcon,
+  TrendUpIcon,
+  WarningIcon,
+  CheckCircleIcon,
+  QuestionIcon
+} from "@phosphor-icons/react";
 import { DataTable } from "@/components/analytics/data-table";
 import { useEnhancedPerformanceData } from "@/hooks/use-dynamic-query";
 import type { FullTabProps } from "../utils/types";
@@ -43,8 +51,8 @@ function PerformanceMetricCell({ value, type = 'time' }: { value?: number; type?
   return (
     <div className="flex items-center gap-1">
       <span className={colorClass}>{formatted}</span>
-      {showIcon && value < (type === 'cls' ? 0.1 : 1000) && <CheckCircle className="h-3 w-3 text-green-600" />}
-      {showIcon && value >= (type === 'cls' ? 0.25 : 3000) && <AlertTriangle className="h-3 w-3 text-red-400" />}
+      {showIcon && value < (type === 'cls' ? 0.1 : 1000) && <CheckCircleIcon weight="duotone" className="h-3 w-3 text-green-600" />}
+      {showIcon && value >= (type === 'cls' ? 0.25 : 3000) && <WarningIcon weight="duotone" className="h-3 w-3 text-red-400" />}
     </div>
   );
 }
@@ -68,12 +76,12 @@ function PerformanceSummaryCard({ summary }: { summary: PerformanceSummary }) {
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div className="p-4 rounded-lg border bg-background">
         <div className="flex items-center gap-2 mb-2">
-          <Zap className="h-4 w-4 text-primary" />
+          <LightningIcon weight="duotone" className="h-4 w-4 text-primary" />
           <span className="text-sm font-medium text-muted-foreground">Performance Score</span>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
-                <Question className="h-3 w-3 text-muted-foreground" />
+                <QuestionIcon className="h-3 w-3 text-muted-foreground" />
               </TooltipTrigger>
               <TooltipContent>
                 <p>A weighted score based on page load times and visitor counts.</p>
@@ -89,7 +97,7 @@ function PerformanceSummaryCard({ summary }: { summary: PerformanceSummary }) {
 
       <div className="p-4 rounded-lg border bg-background">
         <div className="flex items-center gap-2 mb-2">
-          <TrendingUp className="h-4 w-4 text-blue-500" />
+          <TrendUpIcon weight="duotone" className="h-4 w-4 text-blue-500" />
           <span className="text-sm font-medium text-muted-foreground">Avg Load Time</span>
         </div>
         <div className={`text-2xl font-bold ${avgLoadTimeColor}`}>
@@ -102,7 +110,7 @@ function PerformanceSummaryCard({ summary }: { summary: PerformanceSummary }) {
 
       <div className="p-4 rounded-lg border bg-background">
         <div className="flex items-center gap-2 mb-2">
-          <CheckCircle className="h-4 w-4 text-green-500" />
+          <CheckCircleIcon weight="duotone" className="h-4 w-4 text-green-500" />
           <span className="text-sm font-medium text-muted-foreground">Fast Pages</span>
         </div>
         <div className="text-2xl font-bold text-green-600">
@@ -115,7 +123,7 @@ function PerformanceSummaryCard({ summary }: { summary: PerformanceSummary }) {
 
       <div className="p-4 rounded-lg border bg-background">
         <div className="flex items-center gap-2 mb-2">
-          <AlertTriangle className="h-4 w-4 text-red-500" />
+          <WarningIcon weight="duotone" className="h-4 w-4 text-red-500" />
           <span className="text-sm font-medium text-muted-foreground">Slow Pages</span>
         </div>
         <div className="text-2xl font-bold text-red-600">
@@ -294,7 +302,7 @@ export function WebsitePerformanceTab({
         id: 'regions',
         label: 'Regions',
         data: processedData.regions,
-        iconRenderer: () => <MapPin className="h-4 w-4 text-primary" />,
+        iconRenderer: () => <MapPinIcon weight="duotone" className="h-4 w-4 text-primary" />,
         nameFormatter: undefined
       },
       {
@@ -304,10 +312,10 @@ export function WebsitePerformanceTab({
         iconRenderer: (name: string) => {
           const device = name.toLowerCase();
           return device.includes('mobile') || device.includes('phone') ?
-            <Smartphone className="h-4 w-4 text-blue-500" /> :
+            <DeviceMobileIcon weight="duotone" className="h-4 w-4 text-blue-500" /> :
             device.includes('tablet') ?
-              <Monitor className="h-4 w-4 text-purple-500" /> :
-              <Monitor className="h-4 w-4 text-gray-500" />;
+              <MonitorIcon weight="duotone" className="h-4 w-4 text-purple-500" /> :
+              <MonitorIcon weight="duotone" className="h-4 w-4 text-gray-500" />;
         },
         nameFormatter: undefined
       },
@@ -359,7 +367,7 @@ export function WebsitePerformanceTab({
     <div className="space-y-4">
       <div className="p-4 bg-muted/20 rounded border">
         <div className="flex gap-2 items-start mb-4">
-          <Zap className="h-4 w-4 mt-0.5 flex-shrink-0 text-primary" />
+          <LightningIcon weight="duotone" className="h-4 w-4 mt-0.5 flex-shrink-0 text-primary" />
           <div>
             <p className="font-medium text-foreground mb-1">Performance Overview</p>
             <p className="text-xs text-muted-foreground">

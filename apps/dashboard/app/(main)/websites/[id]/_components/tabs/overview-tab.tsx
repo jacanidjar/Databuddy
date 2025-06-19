@@ -19,14 +19,13 @@ import { useRouter } from "next/navigation";
 import { StatCard } from "@/components/analytics/stat-card";
 import { MetricsChart } from "@/components/charts/metrics-chart";
 import { DataTable } from "@/components/analytics/data-table";
-import { useDynamicQuery, useBatchDynamicQuery } from "@/hooks/use-dynamic-query";
+import { useBatchDynamicQuery } from "@/hooks/use-dynamic-query";
 import {
   formatDateByGranularity,
-  getColorVariant,
   calculatePercentChange,
 } from "../utils/analytics-helpers";
 import { MetricToggles } from "../utils/ui-components";
-import type { FullTabProps, MetricPoint } from "../utils/types";
+import type { FullTabProps } from "../utils/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { ReferrerSourceCell, type ReferrerSourceCellData } from "@/components/atomic/ReferrerSourceCell";
@@ -37,18 +36,25 @@ import {
   TechnologyIcon,
   PercentageBadge,
 } from "../utils/technology-helpers";
+import { useTableTabs } from "@/lib/table-tabs";
 
 // Types
-interface TrendCalculation {
-  visitors?: number;
-  sessions?: number;
-  pageviews?: number;
-  bounce_rate?: number;
-  session_duration?: number;
-  pages_per_session?: number;
+interface Trend {
+  change?: number;
+  current: number;
+  previous: number;
+  currentPeriod: { start: string, end: string };
+  previousPeriod: { start: string, end: string };
 }
 
-import { useTableTabs } from "@/lib/table-tabs";
+interface TrendCalculation {
+  visitors?: Trend;
+  sessions?: Trend;
+  pageviews?: Trend;
+  bounce_rate?: Trend;
+  session_duration?: Trend;
+  pages_per_session?: Trend;
+}
 
 interface ChartDataPoint {
   date: string;
@@ -58,13 +64,27 @@ interface ChartDataPoint {
   [key: string]: unknown;
 }
 
+// Constants
 const MIN_PREVIOUS_SESSIONS_FOR_TREND = 5;
 const MIN_PREVIOUS_VISITORS_FOR_TREND = 5;
 const MIN_PREVIOUS_PAGEVIEWS_FOR_TREND = 10;
 
+function formatSessionDuration(seconds: number): string {
+  if (isNaN(seconds) || seconds < 0) {
+    return '0s';
+  }
 
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = Math.round(seconds % 60);
 
+  let formatted = '';
+  if (hours > 0) formatted += `${hours}h `;
+  if (minutes > 0) formatted += `${minutes}m `;
+  if (remainingSeconds > 0 || formatted === '') formatted += `${remainingSeconds}s`;
 
+  return formatted.trim();
+}
 
 function UnauthorizedAccessError() {
   const router = useRouter();
@@ -107,7 +127,6 @@ export function WebsiteOverviewTab({
   isRefreshing,
   setIsRefreshing,
 }: FullTabProps) {
-
   const queries = useMemo(() => [
     {
       id: 'overview-summary',
@@ -141,6 +160,17 @@ export function WebsiteOverviewTab({
     }
   ], [dateRange.granularity]);
 
+  const previousDateRange = useMemo(() => {
+    const start = dayjs(dateRange.start_date);
+    const end = dayjs(dateRange.end_date);
+    const diff = end.diff(start, 'day');
+    return {
+      start_date: start.subtract(diff + 1, 'day').format('YYYY-MM-DD'),
+      end_date: start.subtract(1, 'day').format('YYYY-MM-DD'),
+      granularity: dateRange.granularity,
+    };
+  }, [dateRange]);
+
   // Fetch all overview data in a single batch query
   const {
     results,
@@ -152,6 +182,18 @@ export function WebsiteOverviewTab({
     websiteId,
     dateRange,
     queries
+  );
+
+  const {
+    results: previousResults,
+    isLoading: previousLoading,
+    error: previousError,
+    refetch: refetchPrevious,
+  } = useBatchDynamicQuery(
+    websiteId,
+    previousDateRange,
+    queries,
+    { enabled: dateRange.start_date !== dateRange.end_date }
   );
 
   // Combine all data into analytics object for backward compatibility
@@ -170,6 +212,17 @@ export function WebsiteOverviewTab({
     browser_versions: getDataForQuery('overview-tech', 'browser_versions') || []
   }), [getDataForQuery]);
 
+  const previousAnalytics = useMemo(() => {
+    if (!previousResults) return null;
+    const getData = (queryId: string, param: string) =>
+      previousResults.find(r => r.queryId === queryId)?.data?.[param];
+
+    return {
+      summary: getData('overview-summary', 'summary_metrics')?.[0] || null,
+      events_by_date: getData('overview-summary', 'events_by_date') || [],
+    };
+  }, [previousResults]);
+
   // Extract custom events data
   const customEventsData = useMemo(() => ({
     custom_events: getDataForQuery('overview-custom-events', 'custom_events') || [],
@@ -177,10 +230,10 @@ export function WebsiteOverviewTab({
   }), [getDataForQuery]);
 
   const loading = {
-    summary: batchLoading || isRefreshing
+    summary: batchLoading || previousLoading || isRefreshing
   };
 
-  const error = batchError;
+  const error = batchError || previousError;
 
   const [visibleMetrics, setVisibleMetrics] = useState<Record<string, boolean>>({
     pageviews: true,
@@ -198,7 +251,7 @@ export function WebsiteOverviewTab({
     if (isRefreshing) {
       const doRefresh = async () => {
         try {
-          await refetchBatch();
+          await Promise.all([refetchBatch(), refetchPrevious()]);
         } catch (error) {
           console.error("Failed to refresh data:", error);
         } finally {
@@ -214,7 +267,7 @@ export function WebsiteOverviewTab({
     return () => {
       isMounted = false;
     };
-  }, [isRefreshing, refetchBatch, setIsRefreshing]);
+  }, [isRefreshing, refetchBatch, refetchPrevious, setIsRefreshing]);
 
   const isLoading = loading.summary || isRefreshing;
 
@@ -407,74 +460,39 @@ export function WebsiteOverviewTab({
   };
 
   const calculateTrends = useMemo<TrendCalculation>(() => {
-    if (!analytics.events_by_date?.length || analytics.events_by_date.length < 2) {
+    if (!previousAnalytics?.summary || !analytics.summary) {
       return {};
     }
 
-    const events = [...analytics.events_by_date].sort((a, b) =>
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+    const current = analytics.summary;
+    const previous = previousAnalytics.summary;
 
-    const midpoint = Math.floor(events.length / 2);
-    const previousPeriodData = events.slice(0, midpoint);
-    const currentPeriodData = events.slice(midpoint);
+    const getTrendObject = (currentValue: number, previousValue: number, minBase = 0): Trend | undefined => {
+      const change = calculatePercentChange(currentValue, previousValue);
+      if (previousValue < minBase && !(previousValue === 0 && currentValue === 0)) return undefined;
+      if (previousValue === 0 && currentValue > 0) return undefined;
 
-    if (previousPeriodData.length === 0 || currentPeriodData.length === 0) {
-      return {};
-    }
+      const roundedChange = Math.round(change);
+      if (Math.abs(roundedChange) > 1000) return undefined; // Do not show absurdly large changes
 
-    const sumCountMetric = (period: MetricPoint[], field: keyof Pick<MetricPoint, 'pageviews' | 'visitors' | 'sessions'>) =>
-      period.reduce((acc, item) => acc + (Number(item[field]) || 0), 0);
-
-    const currentSumVisitors = sumCountMetric(currentPeriodData, 'visitors');
-    const currentSumSessions = sumCountMetric(currentPeriodData, 'sessions');
-    const currentSumPageviews = sumCountMetric(currentPeriodData, 'pageviews');
-    const currentPagesPerSession = currentSumSessions > 0 ? currentSumPageviews / currentSumSessions : 0;
-
-    const previousSumVisitors = sumCountMetric(previousPeriodData, 'visitors');
-    const previousSumSessions = sumCountMetric(previousPeriodData, 'sessions');
-    const previousSumPageviews = sumCountMetric(previousPeriodData, 'pageviews');
-    const previousPagesPerSession = previousSumSessions > 0 ? previousSumPageviews / previousSumSessions : 0;
-
-    const averageRateMetric = (period: MetricPoint[], field: keyof Pick<MetricPoint, 'bounce_rate' | 'avg_session_duration'>) => {
-      const validEntries = period.map(item => Number(item[field])).filter(value => !Number.isNaN(value) && value > 0);
-      if (validEntries.length === 0) return 0;
-      return validEntries.reduce((acc, value) => acc + value, 0) / validEntries.length;
+      return {
+        change: roundedChange,
+        current: currentValue,
+        previous: previousValue,
+        currentPeriod: { start: dateRange.start_date, end: dateRange.end_date },
+        previousPeriod: { start: previousDateRange.start_date, end: previousDateRange.end_date },
+      };
     };
-
-    const currentBounceRateAvg = averageRateMetric(currentPeriodData, 'bounce_rate');
-    const previousBounceRateAvg = averageRateMetric(previousPeriodData, 'bounce_rate');
-    const currentSessionDurationAvg = averageRateMetric(currentPeriodData, 'avg_session_duration');
-    const previousSessionDurationAvg = averageRateMetric(previousPeriodData, 'avg_session_duration');
-
-    const calculateTrendPercentage = (current: number, previous: number, minimumBase = 0) => {
-      if (previous < minimumBase && !(previous === 0 && current === 0)) {
-        return undefined;
-      }
-      if (previous === 0) {
-        return current === 0 ? 0 : undefined;
-      }
-      const change = calculatePercentChange(current, previous);
-      return Math.max(-100, Math.min(1000, Math.round(change)));
-    };
-
-    const canShowSessionBasedTrend = previousSumSessions >= MIN_PREVIOUS_SESSIONS_FOR_TREND;
 
     return {
-      visitors: calculateTrendPercentage(currentSumVisitors, previousSumVisitors, MIN_PREVIOUS_VISITORS_FOR_TREND),
-      sessions: calculateTrendPercentage(currentSumSessions, previousSumSessions, MIN_PREVIOUS_SESSIONS_FOR_TREND),
-      pageviews: calculateTrendPercentage(currentSumPageviews, previousSumPageviews, MIN_PREVIOUS_PAGEVIEWS_FOR_TREND),
-      pages_per_session: canShowSessionBasedTrend
-        ? calculateTrendPercentage(currentPagesPerSession, previousPagesPerSession)
-        : undefined,
-      bounce_rate: canShowSessionBasedTrend
-        ? calculateTrendPercentage(currentBounceRateAvg, previousBounceRateAvg)
-        : undefined,
-      session_duration: canShowSessionBasedTrend
-        ? calculateTrendPercentage(currentSessionDurationAvg, previousSessionDurationAvg)
-        : undefined,
+      visitors: getTrendObject(current.visitors, previous.visitors, MIN_PREVIOUS_VISITORS_FOR_TREND),
+      sessions: getTrendObject(current.sessions, previous.sessions, MIN_PREVIOUS_SESSIONS_FOR_TREND),
+      pageviews: getTrendObject(current.pageviews, previous.pageviews, MIN_PREVIOUS_PAGEVIEWS_FOR_TREND),
+      bounce_rate: getTrendObject(current.bounce_rate, previous.bounce_rate),
+      session_duration: getTrendObject(current.avg_session_duration, previous.avg_session_duration),
+      pages_per_session: getTrendObject(current.sessions > 0 ? current.pageviews / current.sessions : 0, previous.sessions > 0 ? previous.pageviews / previous.sessions : 0),
     };
-  }, [analytics.events_by_date]);
+  }, [analytics.summary, previousAnalytics?.summary, dateRange, previousDateRange]);
 
   const processedDeviceData = useMemo(() => {
     const deviceData = analytics.device_types || [];
@@ -501,7 +519,6 @@ export function WebsiteOverviewTab({
   const processedOSData = useMemo(() => {
     const deviceData = analytics.device_types || [];
     const browserData = analytics.browser_versions || [];
-    // Transform data to match expected structure
     const transformedDeviceData = deviceData.map((item: any) => ({
       device_type: item.name,
       visitors: item.visitors,
@@ -727,96 +744,63 @@ export function WebsiteOverviewTab({
     },
   ], []);
 
+  const bounceRate = useMemo(() => {
+    if (!analytics.summary?.bounce_rate) return 0;
+    return Math.round(analytics.summary.bounce_rate);
+  }, [analytics.summary]);
+
+  const pagesPerSession = useMemo(() => {
+    if (!analytics.summary?.pages_per_session) return "0";
+    return analytics.summary.pages_per_session.toFixed(1);
+  }, [analytics.summary]);
+
   return (
     <div className="space-y-6">
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         <StatCard
-          title="UNIQUE VISITORS"
+          title="Visitors"
           value={analytics.summary?.unique_visitors || 0}
-          icon={UsersIcon}
-          description={`${analytics.today?.visitors || 0} today`}
-          isLoading={isLoading}
-          variant="default"
           trend={calculateTrends.visitors}
-          trendLabel={calculateTrends.visitors !== undefined ? "vs previous period" : undefined}
-          className="h-full"
-          chartData={miniChartData.visitors}
-          showChart={true}
-          id="visitors-chart"
-        />
-        <StatCard
-          title="SESSIONS"
-          value={analytics.summary?.sessions || 0}
-          icon={ChartLineIcon}
-          description={`${analytics.today?.sessions || 0} today`}
+          icon={UsersIcon}
           isLoading={isLoading}
-          variant="default"
-          trend={calculateTrends.sessions}
-          trendLabel={calculateTrends.sessions !== undefined ? "vs previous period" : undefined}
-          className="h-full"
-          chartData={miniChartData.sessions}
-          showChart={true}
-          id="sessions-chart"
         />
         <StatCard
-          title="PAGEVIEWS"
+          title="Pageviews"
           value={analytics.summary?.pageviews || 0}
-          icon={GlobeIcon}
-          description={`${analytics.today?.pageviews || 0} today`}
-          isLoading={isLoading}
-          variant="default"
           trend={calculateTrends.pageviews}
-          trendLabel={calculateTrends.pageviews !== undefined ? "vs previous period" : undefined}
-          className="h-full"
-          chartData={miniChartData.pageviews}
-          showChart={true}
-          id="pageviews-chart"
-        />
-        <StatCard
-          title="PAGES/SESSION"
-          value={analytics.summary ?
-            (analytics.summary.sessions > 0 ?
-              (analytics.summary.pageviews / analytics.summary.sessions).toFixed(1) :
-              '0'
-            ) : '0'
-          }
           icon={LayoutIcon}
           isLoading={isLoading}
-          variant="default"
-          trend={calculateTrends.pages_per_session}
-          trendLabel={calculateTrends.pages_per_session !== undefined ? "vs previous period" : undefined}
-          className="h-full"
-          chartData={miniChartData.pagesPerSession}
-          showChart={true}
-          id="pages-per-session-chart"
         />
         <StatCard
-          title="BOUNCE RATE"
-          value={analytics.summary?.bounce_rate_pct || '0%'}
+          title="Sessions"
+          value={analytics.summary?.sessions || 0}
+          trend={calculateTrends.sessions}
           icon={CursorIcon}
           isLoading={isLoading}
-          trend={calculateTrends.bounce_rate}
-          trendLabel={calculateTrends.bounce_rate !== undefined ? "vs previous period" : undefined}
-          variant={getColorVariant(analytics.summary?.bounce_rate || 0, 70, 50)}
-          invertTrend={true}
-          className="h-full"
-          chartData={miniChartData.bounceRate}
-          showChart={true}
-          id="bounce-rate-chart"
         />
         <StatCard
-          title="SESSION DURATION"
-          value={analytics.summary?.avg_session_duration_formatted || '0s'}
+          title="Bounce Rate"
+          value={`${bounceRate}%`}
+          trend={calculateTrends.bounce_rate}
+          icon={ChartLineIcon}
+          isLoading={isLoading}
+          invertTrend={true}
+        />
+        <StatCard
+          title="Avg. Session"
+          value={formatSessionDuration(analytics.summary?.avg_session_duration || 0)}
+          trend={calculateTrends.session_duration}
           icon={TimerIcon}
           isLoading={isLoading}
-          variant="default"
-          trend={calculateTrends.session_duration}
-          trendLabel={calculateTrends.session_duration !== undefined ? "vs previous period" : undefined}
-          className="h-full"
-          chartData={miniChartData.sessionDuration}
-          showChart={true}
-          id="session-duration-chart"
+          formatValue={formatSessionDuration}
+        />
+        <StatCard
+          title="Pages / Session"
+          value={pagesPerSession}
+          trend={calculateTrends.pages_per_session}
+          icon={GlobeIcon}
+          isLoading={isLoading}
         />
       </div>
 
