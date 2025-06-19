@@ -2,31 +2,22 @@
 
 import { useEffect, useMemo, useCallback } from "react";
 import { Monitor, Smartphone, Zap, MapPin, TrendingUp, TrendingDown, AlertTriangle, CheckCircle } from "lucide-react";
+import { Question } from "@phosphor-icons/react";
 import { DataTable } from "@/components/analytics/data-table";
 import { useEnhancedPerformanceData } from "@/hooks/use-dynamic-query";
 import type { FullTabProps } from "../utils/types";
 import { BrowserIcon, OSIcon } from "@/components/icon";
 import { CountryFlag } from "@/components/analytics/icons/CountryFlag";
+import { calculatePerformanceSummary } from "@/lib/performance-utils";
+import type { PerformanceEntry, PerformanceSummary } from "@/types/performance";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-interface PerformanceEntry {
-  name: string;
-  visitors: number;
-  avg_load_time: number;
-  avg_ttfb?: number;
-  avg_dom_ready_time?: number;
-  avg_render_time?: number;
-  avg_fcp?: number;
-  avg_lcp?: number;
-  avg_cls?: number;
-  _uniqueKey?: string;
-}
-
-interface PerformanceSummary {
-  avgLoadTime: number;
-  fastPages: number;
-  slowPages: number;
-  totalPages: number;
-  performanceScore: number;
+function getPerformanceRating(score: number): { rating: string; className: string } {
+  if (score >= 90) return { rating: "Excellent", className: "text-green-500" };
+  if (score >= 70) return { rating: "Good", className: "text-green-500" };
+  if (score >= 50) return { rating: "Moderate", className: "text-yellow-500" };
+  if (score >= 30) return { rating: "Poor", className: "text-orange-500" };
+  return { rating: "Very Poor", className: "text-red-500" };
 }
 
 function PerformanceMetricCell({ value, type = 'time' }: { value?: number; type?: 'time' | 'cls' }) {
@@ -72,16 +63,29 @@ function PerformanceSummaryCard({ summary }: { summary: PerformanceSummary }) {
     return 'text-red-600';
   }, [summary.avgLoadTime]);
 
+  const ratingInfo = getPerformanceRating(summary.performanceScore);
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div className="p-4 rounded-lg border bg-background">
         <div className="flex items-center gap-2 mb-2">
           <Zap className="h-4 w-4 text-primary" />
           <span className="text-sm font-medium text-muted-foreground">Performance Score</span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Question className="h-3 w-3 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>A weighted score based on page load times and visitor counts.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
         <div className={`text-2xl font-bold ${performanceColor}`}>
           {summary.performanceScore}/100
         </div>
+        <div className={`text-sm font-medium ${ratingInfo.className}`}>{ratingInfo.rating}</div>
       </div>
 
       <div className="p-4 rounded-lg border bg-background">
@@ -136,13 +140,28 @@ const performanceColumns = [
   {
     id: 'avg_load_time',
     accessorKey: 'avg_load_time',
-    header: 'Avg Load Time',
-    cell: ({ getValue }: any) => {
-      const value = getValue() as number;
-      if (!value) return '0ms';
-      return value < 1000 ? `${Math.round(value)}ms` : `${(value / 1000).toFixed(1)}s`;
-    }
-  }
+    header: 'Load Time',
+    cell: ({ row }: any) => <PerformanceMetricCell value={row.original.avg_load_time} />
+  },
+  {
+    id: 'avg_ttfb',
+    accessorKey: 'avg_ttfb',
+    header: 'TTFB',
+    cell: ({ row }: any) => <PerformanceMetricCell value={row.original.avg_ttfb} />
+  },
+  {
+    id: 'avg_dom_ready_time',
+    accessorKey: 'avg_dom_ready_time',
+    header: 'DOM Ready',
+    cell: ({ row }: any) => <PerformanceMetricCell value={row.original.avg_dom_ready_time} />
+  },
+  {
+    id: 'avg_render_time',
+    accessorKey: 'avg_render_time',
+    header: 'Render Time',
+    cell: ({ row }: any) => <PerformanceMetricCell value={row.original.avg_render_time} />
+  },
+
 ];
 
 const createNameColumn = (header: string, iconRenderer?: (name: string) => React.ReactNode, nameFormatter?: (name: string) => string) => ({
@@ -246,36 +265,7 @@ export function WebsitePerformanceTab({
 
   // Optimized performance summary calculation
   const performanceSummary = useMemo((): PerformanceSummary => {
-    const pages = processedData.pages;
-    if (!pages.length) {
-      return { avgLoadTime: 0, fastPages: 0, slowPages: 0, totalPages: 0, performanceScore: 0 };
-    }
-
-    // Single pass calculation
-    let totalLoadTime = 0;
-    let fastPages = 0;
-    let slowPages = 0;
-
-    for (const page of pages) {
-      totalLoadTime += page.avg_load_time;
-      if (page.avg_load_time < 1000) fastPages++;
-      else if (page.avg_load_time > 3000) slowPages++;
-    }
-
-    const avgLoadTime = totalLoadTime / pages.length;
-    const fastPercentage = fastPages / pages.length;
-    const slowPercentage = slowPages / pages.length;
-    const performanceScore = Math.max(0, Math.min(100,
-      Math.round((fastPercentage * 100) - (slowPercentage * 50))
-    ));
-
-    return {
-      avgLoadTime,
-      fastPages,
-      slowPages,
-      totalPages: pages.length,
-      performanceScore
-    };
+    return calculatePerformanceSummary(processedData.pages);
   }, [processedData.pages]);
 
   // Optimized tabs generation with stable references
