@@ -39,21 +39,13 @@ import {
 } from "../utils/technology-helpers";
 
 // Types
-interface Trend {
-  change?: number;
-  current: number;
-  previous: number;
-  currentPeriod: { start: string, end: string };
-  previousPeriod: { start: string, end: string };
-}
-
 interface TrendCalculation {
-  visitors?: Trend;
-  sessions?: Trend;
-  pageviews?: Trend;
-  bounce_rate?: Trend;
-  session_duration?: Trend;
-  pages_per_session?: Trend;
+  visitors?: number;
+  sessions?: number;
+  pageviews?: number;
+  bounce_rate?: number;
+  session_duration?: number;
+  pages_per_session?: number;
 }
 
 import { useTableTabs } from "@/lib/table-tabs";
@@ -431,15 +423,6 @@ export function WebsiteOverviewTab({
       return {};
     }
 
-    const previousPeriod = {
-      start: previousPeriodData[0]?.date || dateRange.start_date,
-      end: previousPeriodData[previousPeriodData.length - 1]?.date || dateRange.start_date
-    };
-    const currentPeriod = {
-      start: currentPeriodData[0]?.date || dateRange.start_date,
-      end: currentPeriodData[currentPeriodData.length - 1]?.date || dateRange.end_date
-    };
-
     const sumCountMetric = (period: MetricPoint[], field: keyof Pick<MetricPoint, 'pageviews' | 'visitors' | 'sessions'>) =>
       period.reduce((acc, item) => acc + (Number(item[field]) || 0), 0);
 
@@ -464,40 +447,34 @@ export function WebsiteOverviewTab({
     const currentSessionDurationAvg = averageRateMetric(currentPeriodData, 'avg_session_duration');
     const previousSessionDurationAvg = averageRateMetric(previousPeriodData, 'avg_session_duration');
 
-    const getTrendObject = (currentValue: number, previousValue: number, minBase = 0): Trend | undefined => {
-      const change = calculatePercentChange(currentValue, previousValue);
-      if (previousValue < minBase && !(previousValue === 0 && currentValue === 0)) return undefined;
-      if (previousValue === 0 && currentValue > 0) return undefined;
-
-      const roundedChange = Math.round(change);
-      if (Math.abs(roundedChange) > 1000) return undefined;
-
-      return {
-        change: roundedChange,
-        current: currentValue,
-        previous: previousValue,
-        currentPeriod,
-        previousPeriod,
-      };
+    const calculateTrendPercentage = (current: number, previous: number, minimumBase = 0) => {
+      if (previous < minimumBase && !(previous === 0 && current === 0)) {
+        return undefined;
+      }
+      if (previous === 0) {
+        return current === 0 ? 0 : undefined;
+      }
+      const change = calculatePercentChange(current, previous);
+      return Math.max(-100, Math.min(1000, Math.round(change)));
     };
 
     const canShowSessionBasedTrend = previousSumSessions >= MIN_PREVIOUS_SESSIONS_FOR_TREND;
 
     return {
-      visitors: getTrendObject(currentSumVisitors, previousSumVisitors, MIN_PREVIOUS_VISITORS_FOR_TREND),
-      sessions: getTrendObject(currentSumSessions, previousSumSessions, MIN_PREVIOUS_SESSIONS_FOR_TREND),
-      pageviews: getTrendObject(currentSumPageviews, previousSumPageviews, MIN_PREVIOUS_PAGEVIEWS_FOR_TREND),
+      visitors: calculateTrendPercentage(currentSumVisitors, previousSumVisitors, MIN_PREVIOUS_VISITORS_FOR_TREND),
+      sessions: calculateTrendPercentage(currentSumSessions, previousSumSessions, MIN_PREVIOUS_SESSIONS_FOR_TREND),
+      pageviews: calculateTrendPercentage(currentSumPageviews, previousSumPageviews, MIN_PREVIOUS_PAGEVIEWS_FOR_TREND),
       pages_per_session: canShowSessionBasedTrend
-        ? getTrendObject(currentPagesPerSession, previousPagesPerSession)
+        ? calculateTrendPercentage(currentPagesPerSession, previousPagesPerSession)
         : undefined,
       bounce_rate: canShowSessionBasedTrend
-        ? getTrendObject(currentBounceRateAvg, previousBounceRateAvg)
+        ? calculateTrendPercentage(currentBounceRateAvg, previousBounceRateAvg)
         : undefined,
       session_duration: canShowSessionBasedTrend
-        ? getTrendObject(currentSessionDurationAvg, previousSessionDurationAvg)
+        ? calculateTrendPercentage(currentSessionDurationAvg, previousSessionDurationAvg)
         : undefined,
     };
-  }, [analytics.events_by_date, dateRange]);
+  }, [analytics.events_by_date]);
 
   const processedDeviceData = useMemo(() => {
     const deviceData = analytics.device_types || [];
