@@ -1,5 +1,6 @@
 import './global.css';
 import { RootProvider } from 'fumadocs-ui/provider';
+import { ThemeProvider } from "next-themes";
 import { Databuddy } from '@databuddy/sdk';
 import type { ReactNode } from 'react';
 import type { Metadata, Viewport } from "next";
@@ -60,11 +61,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f172a",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "white" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
   width: "device-width",
   initialScale: 1,
   userScalable: true,
-  colorScheme: "dark"
 };
 
 export default function Layout({ children }: { children: ReactNode }) {
@@ -78,9 +81,11 @@ export default function Layout({ children }: { children: ReactNode }) {
         trackErrors={true}
       />
       <body className="flex flex-col min-h-screen">
-        <RootProvider >
-          {children}
-        </RootProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <RootProvider >
+            {children}
+          </RootProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

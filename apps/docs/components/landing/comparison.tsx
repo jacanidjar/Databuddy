@@ -85,20 +85,20 @@ const features = [
 
 export default function Comparison() {
     return (
-        <div className="md:w-10/12 mx-auto font-geist relative md:border-l-0 md:border-b-0 md:border-[1.2px] rounded-none -pr-2 dark:bg-black/[0.95]">
+        <div className="md:w-10/12 mx-auto font-geist relative md:border-l-0 md:border-b-0 md:border-[1.2px] border-border rounded-none -pr-2 bg-background/95">
             <div className="w-full md:mx-0">
                 {/* Single wide section for comparison */}
-                <div className="border-l-[1.2px] border-t-[1.2px] md:border-t-0 border-b-[1.2px] p-10">
+                <div className="border-l-[1.2px] border-t-[1.2px] border-border md:border-t-0 border-b-[1.2px] p-10">
                     <div className="flex items-center gap-2 my-1">
-                        <BarChart3 className="w-4 h-4" />
-                        <p className="text-gray-600 dark:text-gray-400">
+                        <BarChart3 className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-muted-foreground">
                             Feature Comparison
                         </p>
                     </div>
                     <div className="mt-2 mb-8">
                         <div className="max-w-full">
                             <div className="flex gap-3">
-                                <p className="max-w-lg text-xl font-normal tracking-tighter md:text-2xl">
+                                <p className="max-w-lg text-xl font-normal tracking-tighter md:text-2xl text-foreground">
                                     Better than <strong>all competitors</strong> in every way.
                                 </p>
                             </div>
@@ -109,54 +109,54 @@ export default function Comparison() {
                     </div>
 
                     {/* Comparison table */}
-                    <div className="border border-neutral-800/80 rounded-xl overflow-hidden bg-neutral-900/20">
-                        <div className="grid grid-cols-6 bg-neutral-900/50 p-4 border-b border-neutral-800/80">
-                            <div className="text-neutral-400 text-sm font-medium">Feature</div>
-                            <div className="text-center font-semibold text-sky-400 text-sm">Databuddy</div>
-                            <div className="text-center font-semibold text-neutral-400 text-sm">Google Analytics</div>
-                            <div className="text-center font-semibold text-neutral-400 text-sm">Plausible</div>
-                            <div className="text-center font-semibold text-neutral-400 text-sm">Fathom</div>
-                            <div className="text-neutral-400 text-sm font-medium">Business Impact</div>
+                    <div className="border border-border rounded-xl overflow-hidden bg-muted/20">
+                        <div className="grid grid-cols-6 bg-muted/50 p-4 border-b border-border">
+                            <div className="text-muted-foreground text-sm font-medium">Feature</div>
+                            <div className="text-center font-semibold text-primary text-sm">Databuddy</div>
+                            <div className="text-center font-semibold text-muted-foreground text-sm">Google Analytics</div>
+                            <div className="text-center font-semibold text-muted-foreground text-sm">Plausible</div>
+                            <div className="text-center font-semibold text-muted-foreground text-sm">Fathom</div>
+                            <div className="text-muted-foreground text-sm font-medium">Business Impact</div>
                         </div>
 
                         {features.map((feature, index) => (
-                            <div key={feature.name} className="grid grid-cols-6 p-4 border-b border-neutral-800/50 last:border-b-0 hover:bg-neutral-900/30 transition-colors">
-                                <div className="text-neutral-200 text-sm pr-4">{feature.name}</div>
+                            <div key={feature.name} className="grid grid-cols-6 p-4 border-b border-border/50 last:border-b-0 hover:bg-muted/30 transition-colors">
+                                <div className="text-foreground text-sm pr-4">{feature.name}</div>
                                 <div className="flex justify-center">
                                     {feature.us ? (
-                                        <Check className="h-5 w-5 text-sky-400" />
+                                        <Check className="h-5 w-5 text-primary" />
                                     ) : (
-                                        <X className="h-5 w-5 text-neutral-600" />
+                                        <X className="h-5 w-5 text-muted-foreground" />
                                     )}
                                 </div>
                                 <div className="flex justify-center">
                                     {feature.ga ? (
-                                        <Check className="h-5 w-5 text-neutral-400" />
+                                        <Check className="h-5 w-5 text-muted-foreground" />
                                     ) : (
-                                        <X className="h-5 w-5 text-neutral-600" />
+                                        <X className="h-5 w-5 text-muted-foreground" />
                                     )}
                                 </div>
                                 <div className="flex justify-center">
                                     {feature.plausible ? (
-                                        <Check className="h-5 w-5 text-neutral-400" />
+                                        <Check className="h-5 w-5 text-muted-foreground" />
                                     ) : (
-                                        <X className="h-5 w-5 text-neutral-600" />
+                                        <X className="h-5 w-5 text-muted-foreground" />
                                     )}
                                 </div>
                                 <div className="flex justify-center">
                                     {feature.fathom ? (
-                                        <Check className="h-5 w-5 text-neutral-400" />
+                                        <Check className="h-5 w-5 text-muted-foreground" />
                                     ) : (
-                                        <X className="h-5 w-5 text-neutral-600" />
+                                        <X className="h-5 w-5 text-muted-foreground" />
                                     )}
                                 </div>
-                                <div className="text-xs text-neutral-400">{feature.benefit}</div>
+                                <div className="text-xs text-muted-foreground">{feature.benefit}</div>
                             </div>
                         ))}
                     </div>
 
                     <div className="mt-6 text-center">
-                        <p className="text-xs text-neutral-500">
+                        <p className="text-xs text-muted-foreground">
                             All features available on our free plan with up to 50,000 monthly pageviews
                         </p>
                     </div>

@@ -1091,6 +1091,38 @@
         if (typeof window === 'undefined' || window.databuddy) {
             return;
         }
+        
+        // Check for opt-out flags
+        try {
+            if (localStorage.getItem('databuddy_opt_out') === 'true' || 
+                localStorage.getItem('databuddy_disabled') === 'true' ||
+                window.databuddyOptedOut === true ||
+                window.databuddyDisabled === true) {
+                // Set up no-op functions for compatibility
+                window.databuddy = {
+                    track: () => {},
+                    screenView: () => {},
+                    clear: () => {},
+                    flush: () => {},
+                    setGlobalProperties: () => {},
+                    trackCustomEvent: () => {},
+                    options: { disabled: true }
+                };
+                
+                window.db = {
+                    track: () => {},
+                    screenView: () => {},
+                    clear: () => {},
+                    flush: () => {},
+                    setGlobalProperties: () => {},
+                    trackCustomEvent: () => {}
+                };
+                
+                return;
+            }
+        } catch (e) {
+            // localStorage not available, continue with initialization
+        }
             
         const currentScript = document.currentScript || (() => {
             const scripts = document.getElementsByTagName('script');
@@ -1228,8 +1260,73 @@
     
     initializeDatabuddy();
     
+    // Opt-out functionality
     if (typeof window !== 'undefined') {
         window.Databuddy = d;
+        
+        // Global opt-out functions
+        window.databuddyOptOut = function() {
+            try {
+                localStorage.setItem('databuddy_opt_out', 'true');
+                localStorage.setItem('databuddy_disabled', 'true');
+            } catch (e) {
+                // localStorage not available
+            }
+            
+            window.databuddyOptedOut = true;
+            window.databuddyDisabled = true;
+            
+            // Disable existing instance
+            if (window.databuddy && typeof window.databuddy === 'object') {
+                window.databuddy.options.disabled = true;
+                
+                // Override methods to no-ops
+                const noop = () => {};
+                window.databuddy.track = noop;
+                window.databuddy.screenView = noop;
+                window.databuddy.trackCustomEvent = noop;
+                window.databuddy.clear = noop;
+                window.databuddy.flush = noop;
+                window.databuddy.setGlobalProperties = noop;
+            }
+            
+            if (window.db) {
+                const noop = () => {};
+                window.db.track = noop;
+                window.db.screenView = noop;
+                window.db.trackCustomEvent = noop;
+                window.db.clear = noop;
+                window.db.flush = noop;
+                window.db.setGlobalProperties = noop;
+            }
+            
+            console.log('Databuddy: Tracking has been disabled. Reload the page for full effect.');
+        };
+        
+        window.databuddyOptIn = function() {
+            try {
+                localStorage.removeItem('databuddy_opt_out');
+                localStorage.removeItem('databuddy_disabled');
+            } catch (e) {
+                // localStorage not available
+            }
+            
+            window.databuddyOptedOut = false;
+            window.databuddyDisabled = false;
+            
+            console.log('Databuddy: Tracking has been enabled. Reload the page for full effect.');
+        };
+        
+        // Check if user wants to opt out via URL parameter
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('databuddy_opt_out') === 'true' || urlParams.get('no_tracking') === 'true') {
+                window.databuddyOptOut();
+            }
+        } catch (e) {
+            // URL parsing failed
+        }
+        
     } else if (typeof exports === 'object') {
         module.exports = d;
     }

@@ -17,7 +17,7 @@ export function LogoContent() {
                     alt="DataBuddy Logo"
                     width={32}
                     height={32}
-                    className="drop-shadow-sm"
+                    className="drop-shadow-sm invert dark:invert-0"
                     priority
                 />
             </div>

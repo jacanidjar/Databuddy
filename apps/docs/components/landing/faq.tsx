@@ -1,4 +1,4 @@
-import { MessageSquareText } from "lucide-react"
+import { MessageSquareText, HelpCircle } from "lucide-react"
 
 const faqs = [
     {
@@ -21,21 +21,21 @@ const faqs = [
 
 export default function FAQ() {
     return (
-        <div className="md:w-10/12 mx-auto font-geist relative md:border-l-0 md:border-b-0 md:border-[1.2px] rounded-none -pr-2 dark:bg-black/[0.95]">
+        <div className="md:w-10/12 mx-auto font-geist relative md:border-l-0 md:border-b-0 md:border-[1.2px] border-border rounded-none -pr-2 bg-background/95">
             <div className="w-full md:mx-0">
-                {/* Header section */}
-                <div className="border-l-[1.2px] border-t-[1.2px] md:border-t-0 p-10">
+                {/* FAQ Header */}
+                <div className="border-l-[1.2px] border-t-[1.2px] border-border md:border-t-0 p-10 pb-2">
                     <div className="flex items-center gap-2 my-1">
-                        <MessageSquareText className="w-4 h-4" />
-                        <p className="text-gray-600 dark:text-gray-400">
+                        <HelpCircle className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-muted-foreground">
                             Frequently Asked Questions
                         </p>
                     </div>
                     <div className="mt-2">
                         <div className="max-w-full">
                             <div className="flex gap-3">
-                                <p className="max-w-lg text-xl font-normal tracking-tighter md:text-2xl">
-                                    Everything you need to know about <strong>Databuddy</strong>.
+                                <p className="max-w-lg text-xl font-normal tracking-tighter md:text-2xl text-foreground">
+                                    Everything you need to know about Databuddy
                                 </p>
                             </div>
                         </div>
@@ -45,23 +45,23 @@ export default function FAQ() {
                     </div>
                 </div>
 
-                {/* FAQ 2-column layout */}
-                <div className="grid grid-cols-1 md:grid-cols-2 border-b-[1.2px]">
+                {/* FAQ Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 border-b-[1.2px] border-border">
                     {faqs.map((faq, index) => (
                         <div
                             key={faq.question}
-                            className="border-l-[1.2px] border-t-[1.2px] p-8 hover:bg-neutral-900/20 transition-colors group"
+                            className="border-l-[1.2px] border-t-[1.2px] border-border p-8 hover:bg-muted/30 transition-colors group"
                         >
                             <div className="mb-4">
-                                <h3 className="text-base font-medium text-white group-hover:text-sky-400 transition-colors leading-tight">
+                                <h3 className="text-base font-medium text-foreground group-hover:text-primary transition-colors leading-tight">
                                     {faq.question}
                                 </h3>
                             </div>
                             <p className="text-sm text-muted-foreground leading-relaxed">
                                 {faq.answer}
                             </p>
-                            <div className="mt-4 pt-4 border-t border-neutral-800/50">
-                                <span className="text-xs text-neutral-500">
+                            <div className="mt-4 pt-4 border-t border-border/50">
+                                <span className="text-xs text-muted-foreground">
                                     Question {index + 1} of {faqs.length}
                                 </span>
                             </div>
