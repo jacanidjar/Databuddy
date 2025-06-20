@@ -12,6 +12,7 @@ import {
   VALIDATION_LIMITS 
 } from '../utils/validation'
 import { getRedisCache } from '@databuddy/redis'
+import { bots } from '@/packages/shared'
 import crypto from 'node:crypto'
 
 const redis = getRedisCache()
@@ -19,11 +20,7 @@ const redis = getRedisCache()
 function detectBot(userAgent: string, request: Request): { isBot: boolean } {
   const ua = userAgent?.toLowerCase() || '';
   
-  const botPatterns = [
-    'bot', 'crawl', 'spider', 'curl', 'wget',
-    'python', 'headless', 'selenium', 'playwright'
-  ];
-  const detectedBot = botPatterns.find(pattern => ua.includes(pattern));
+  const detectedBot = bots.find(bot => ua.includes(bot.regex));
   if (detectedBot) return { isBot: true };
 
   if (!userAgent) return { isBot: true };
@@ -37,93 +34,81 @@ function detectBot(userAgent: string, request: Request): { isBot: boolean } {
 
 async function insertError(errorData: any, clientId: string): Promise<void> {
   const eventId = sanitizeString(errorData.payload.eventId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH)
-  
-  if (await checkDuplicate(eventId, 'error')) {
-    return
-  }
+  if (await checkDuplicate(eventId, 'error')) return
 
-  const errorEvent: ErrorEvent = {
-    id: randomUUID(),
-    client_id: clientId,
-    event_id: sanitizeString(errorData.payload.eventId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
-    anonymous_id: sanitizeString(errorData.payload.anonymousId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
-    session_id: validateSessionId(errorData.payload.sessionId),
-    timestamp: errorData.payload.timestamp && typeof errorData.payload.timestamp === 'number' ? errorData.payload.timestamp : new Date().getTime(),
-    path: sanitizeString(errorData.payload.path, VALIDATION_LIMITS.STRING_MAX_LENGTH),
-    message: sanitizeString(errorData.payload.message, VALIDATION_LIMITS.STRING_MAX_LENGTH),
-    filename: sanitizeString(errorData.payload.filename, VALIDATION_LIMITS.STRING_MAX_LENGTH),
-    lineno: errorData.payload.lineno,
-    colno: errorData.payload.colno,
-    stack: sanitizeString(errorData.payload.stack, VALIDATION_LIMITS.STRING_MAX_LENGTH),
-    error_type: sanitizeString(errorData.payload.errorType, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
-    created_at: new Date().getTime()
-  }
-  
+  const payload = errorData.payload
+  const now = new Date().getTime()
+
   await clickHouse.insert({
     table: 'analytics.errors',
-    values: [errorEvent],
+    values: [{
+      id: randomUUID(),
+      client_id: clientId,
+      event_id: eventId,
+      anonymous_id: sanitizeString(payload.anonymousId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
+      session_id: validateSessionId(payload.sessionId),
+      timestamp: typeof payload.timestamp === 'number' ? payload.timestamp : now,
+      path: sanitizeString(payload.path, VALIDATION_LIMITS.STRING_MAX_LENGTH),
+      message: sanitizeString(payload.message, VALIDATION_LIMITS.STRING_MAX_LENGTH),
+      filename: sanitizeString(payload.filename, VALIDATION_LIMITS.STRING_MAX_LENGTH),
+      lineno: payload.lineno,
+      colno: payload.colno,
+      stack: sanitizeString(payload.stack, VALIDATION_LIMITS.STRING_MAX_LENGTH),
+      error_type: sanitizeString(payload.errorType, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
+      created_at: now
+    }],
     format: 'JSONEachRow'
   })
-
 }
 
 async function insertWebVitals(vitalsData: any, clientId: string): Promise<void> {
   const eventId = sanitizeString(vitalsData.payload.eventId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH)
-  
-  // Check for duplicate
-  if (await checkDuplicate(eventId, 'web_vitals')) {
-    return // Skip duplicate
-  }
+  if (await checkDuplicate(eventId, 'web_vitals')) return
 
-  const webVitalsEvent: WebVitalsEvent = {
-    id: randomUUID(),
-    client_id: clientId,
-    event_id: sanitizeString(vitalsData.payload.eventId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
-    anonymous_id: sanitizeString(vitalsData.payload.anonymousId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
-    session_id: validateSessionId(vitalsData.payload.sessionId),
-    timestamp: vitalsData.payload.timestamp && typeof vitalsData.payload.timestamp === 'number' ? vitalsData.payload.timestamp : new Date().getTime(),
-    path: sanitizeString(vitalsData.payload.path, VALIDATION_LIMITS.STRING_MAX_LENGTH),
-    fcp: validatePerformanceMetric(vitalsData.payload.fcp),
-    lcp: validatePerformanceMetric(vitalsData.payload.lcp),
-    cls: validatePerformanceMetric(vitalsData.payload.cls),
-    fid: validatePerformanceMetric(vitalsData.payload.fid),
-    inp: validatePerformanceMetric(vitalsData.payload.inp),
-    created_at: new Date().getTime()
-  }
+  const payload = vitalsData.payload
+  const now = new Date().getTime()
 
   await clickHouse.insert({
     table: 'analytics.web_vitals',
-    values: [webVitalsEvent],
+    values: [{
+      id: randomUUID(),
+      client_id: clientId,
+      event_id: eventId,
+      anonymous_id: sanitizeString(payload.anonymousId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
+      session_id: validateSessionId(payload.sessionId),
+      timestamp: typeof payload.timestamp === 'number' ? payload.timestamp : now,
+      path: sanitizeString(payload.path, VALIDATION_LIMITS.STRING_MAX_LENGTH),
+      fcp: validatePerformanceMetric(payload.fcp),
+      lcp: validatePerformanceMetric(payload.lcp),
+      cls: validatePerformanceMetric(payload.cls),
+      fid: validatePerformanceMetric(payload.fid),
+      inp: validatePerformanceMetric(payload.inp),
+      created_at: now
+    }],
     format: 'JSONEachRow'
   })
-
 }
 
 async function insertTrackEvent(trackData: any, clientId: string, userAgent: string, ip: string): Promise<void> {
   const eventId = sanitizeString(trackData.eventId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH)
-  const eventName = sanitizeString(trackData.name, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH)
-  
-  // Simple deduplication using event ID (now consistent for page_exit events)
-  if (await checkDuplicate(eventId, 'track')) {
-    return // Skip duplicate
-  }
+  if (await checkDuplicate(eventId, 'track')) return
 
   const { anonymizedIP, country, region } = await getGeo(ip)
   const { browserName, browserVersion, osName, osVersion, deviceType, deviceBrand, deviceModel } = parseUserAgent(userAgent)
+  const now = new Date().getTime()
   
   const trackEvent: AnalyticsEvent = {
     id: randomUUID(),
     client_id: clientId,
-    event_name: eventName,
+    event_name: sanitizeString(trackData.name, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
     anonymous_id: sanitizeString(trackData.anonymousId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
-    time: trackData.timestamp && typeof trackData.timestamp === 'number' ? trackData.timestamp : new Date().getTime(),
+    time: typeof trackData.timestamp === 'number' ? trackData.timestamp : now,
     session_id: validateSessionId(trackData.sessionId),
     event_type: 'track',
-    event_id: sanitizeString(trackData.eventId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
-    session_start_time: trackData.sessionStartTime && typeof trackData.sessionStartTime === 'number' ? trackData.sessionStartTime : new Date().getTime(),
-    timestamp: trackData.timestamp && typeof trackData.timestamp === 'number' ? trackData.timestamp : new Date().getTime(),
+    event_id: eventId,
+    session_start_time: typeof trackData.sessionStartTime === 'number' ? trackData.sessionStartTime : now,
+    timestamp: typeof trackData.timestamp === 'number' ? trackData.timestamp : now,
     
-    // Page context
     referrer: sanitizeString(trackData.referrer, VALIDATION_LIMITS.STRING_MAX_LENGTH),
     url: sanitizeString(trackData.path, VALIDATION_LIMITS.STRING_MAX_LENGTH),
     path: sanitizeString(trackData.path, VALIDATION_LIMITS.STRING_MAX_LENGTH),
@@ -140,20 +125,17 @@ async function insertTrackEvent(trackData: any, clientId: string, userAgent: str
     device_model: deviceModel || null,
     country: country || null,
     region: region || null,
-    city: null, // No thanks
+    city: null,
     
-    // User context
     screen_resolution: trackData.screen_resolution,
     viewport_size: trackData.viewport_size,
     language: trackData.language,
     timezone: trackData.timezone,
     
-    // Connection info
     connection_type: trackData.connection_type,
     rtt: trackData.rtt,
     downlink: trackData.downlink,
     
-    // Engagement metrics
     time_on_page: trackData.time_on_page,
     scroll_depth: trackData.scroll_depth,
     interaction_count: trackData.interaction_count,
@@ -163,14 +145,12 @@ async function insertTrackEvent(trackData: any, clientId: string, userAgent: str
     has_exit_intent: trackData.has_exit_intent,
     page_size: trackData.page_size,
     
-    // UTM parameters
     utm_source: trackData.utm_source,
     utm_medium: trackData.utm_medium,
     utm_campaign: trackData.utm_campaign,
     utm_term: trackData.utm_term,
     utm_content: trackData.utm_content,
     
-    // Performance metrics
     load_time: validatePerformanceMetric(trackData.load_time),
     dom_ready_time: validatePerformanceMetric(trackData.dom_ready_time),
     dom_interactive: validatePerformanceMetric(trackData.dom_interactive),
@@ -181,21 +161,16 @@ async function insertTrackEvent(trackData: any, clientId: string, userAgent: str
     redirect_time: validatePerformanceMetric(trackData.redirect_time),
     domain_lookup_time: validatePerformanceMetric(trackData.domain_lookup_time),
     
-    // Web Vitals
     fcp: validatePerformanceMetric(trackData.fcp),
     lcp: validatePerformanceMetric(trackData.lcp),
     cls: validatePerformanceMetric(trackData.cls),
     fid: validatePerformanceMetric(trackData.fid),
     inp: validatePerformanceMetric(trackData.inp),
     
-    // Link tracking
     href: trackData.href,
     text: trackData.text,
-    
-    // Custom event value
     value: trackData.value,
     
-    // Error tracking (not used for track events)
     error_message: undefined,
     error_filename: undefined,
     error_lineno: undefined,
@@ -203,11 +178,8 @@ async function insertTrackEvent(trackData: any, clientId: string, userAgent: str
     error_stack: undefined,
     error_type: undefined,
     
-    // Legacy properties
     properties: '{}',
-    
-    // Metadata
-    created_at: new Date().getTime()
+    created_at: now
   }
 
   await clickHouse.insert({
@@ -220,11 +192,7 @@ async function insertTrackEvent(trackData: any, clientId: string, userAgent: str
 
 async function checkDuplicate(eventId: string, eventType: string): Promise<boolean> {
   const key = `dedup:${eventType}:${eventId}`
-  const exists = await redis.exists(key)
-  
-  if (exists) {
-    return true
-  }
+  if (await redis.exists(key)) return true
   
   const ttl = eventId.startsWith('exit_') ? 172800 : 86400
   await redis.setex(key, ttl, '1')
@@ -237,12 +205,8 @@ const app = new Elysia()
       return { status: 'error', message: 'Payload too large' }
     }
     
-    const eventType = body.type || 'track'
     const clientId = sanitizeString(query.client_id, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH)
-    
-    if (!clientId) {
-      return { status: 'error', message: 'Missing client ID' }
-    }
+    if (!clientId) return { status: 'error', message: 'Missing client ID' }
     
     const website = await getWebsiteById(clientId)
     if (!website || website.status !== 'ACTIVE') {
@@ -274,6 +238,8 @@ const app = new Elysia()
     
     body.anonymous_id = createHash('sha256').update(body.anonymous_id + salt).digest('hex')
 
+    const eventType = body.type || 'track'
+    
     if (eventType === 'track') {
       await insertTrackEvent(body, clientId, userAgent, ip)
       return { status: 'success', type: 'track' }
@@ -289,7 +255,6 @@ const app = new Elysia()
       return { status: 'success', type: 'web_vitals' }
     }
 
-    
     return { status: 'error', message: 'Unknown event type' }
   })
   .post('/batch', async ({ body, query, request }: { body: any, query: any, request: Request }) => {
