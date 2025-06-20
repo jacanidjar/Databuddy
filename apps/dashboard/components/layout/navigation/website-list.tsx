@@ -59,7 +59,7 @@ export function WebsiteList({ websites, isLoading, pathname }: WebsiteListProps)
               : "text-foreground hover:bg-accent/70"
           )}
         >
-          <GlobeIcon size={32} weight="duotone" className={cn("h-4 w-4", pathname === `/websites/${site.id}` && "text-primary")} />
+          <GlobeIcon size={32} weight="duotone" className={cn("h-4 w-4 not-dark:text-primary", pathname === `/websites/${site.id}` && "text-primary")} />
           <span className="truncate">{site.name || site.domain}</span>
         </Link>
       ))}

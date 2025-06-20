@@ -2,10 +2,10 @@ import Link from "next/link";
 import { CaretLeftIcon, PlanetIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { WebsiteBasic } from "@databuddy/shared";
+import type { Website } from "@databuddy/shared";
 
 interface WebsiteHeaderProps {
-  website: WebsiteBasic | null | undefined;
+  website: Website | null | undefined;
 }
 
 export function WebsiteHeader({ website }: WebsiteHeaderProps) {

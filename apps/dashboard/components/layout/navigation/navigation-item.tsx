@@ -72,7 +72,7 @@ export function NavigationItem({
       )}
     >
       <span className="flex-shrink-0">
-        <Icon size={32} weight="duotone" className="h-4 w-4" />
+        <Icon size={32} weight="duotone" className="h-5 w-5 not-dark:text-primary" />
       </span>
       <span className="flex-grow truncate">{name}</span>
       <div className="flex items-center gap-1.5">
