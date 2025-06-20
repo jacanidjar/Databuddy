@@ -61,23 +61,23 @@ const testimonials = [
 
 function TestimonialCard({ testimonial }: { testimonial: typeof testimonials[0] }) {
 	const CardContent = () => (
-		<div className="group flex flex-col justify-between h-[220px] rounded-xl border border-border w-[420px] shrink-0 bg-card/70 backdrop-blur-sm shadow-inner transition-all duration-300 hover:border-border/80 hover:shadow-primary/10">
-			<p className="px-6 py-6 text-lg tracking-tight font-light text-foreground text-pretty">
+		<div className="group flex flex-col justify-between h-[180px] sm:h-[200px] md:h-[220px] rounded-xl border border-border w-[280px] sm:w-[350px] md:w-[420px] shrink-0 bg-card/70 backdrop-blur-sm shadow-inner transition-all duration-300 hover:border-border/80 hover:shadow-primary/10">
+			<p className="px-4 sm:px-5 md:px-6 py-4 sm:py-5 md:py-6 text-sm sm:text-base md:text-lg tracking-tight font-light text-foreground text-pretty">
 				&quot;{testimonial.description}&quot;
 			</p>
-			<div className="flex items-center h-[70px] gap-1 w-full border-t border-border bg-card/20">
-				<div className="flex items-center w-full gap-4 px-6 py-4">
-					<Avatar className="w-10 h-10 border border-border">
+			<div className="flex items-center h-[60px] sm:h-[65px] md:h-[70px] gap-1 w-full border-t border-border bg-card/20">
+				<div className="flex items-center w-full gap-3 sm:gap-4 px-4 sm:px-5 md:px-6 py-3 sm:py-4">
+					<Avatar className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 border border-border">
 						<AvatarImage src={testimonial.avatar.length > 2 ? testimonial.avatar : ""} />
-						<AvatarFallback className="bg-muted text-muted-foreground">
+						<AvatarFallback className="bg-muted text-muted-foreground text-xs sm:text-sm">
 							{testimonial.avatar}
 						</AvatarFallback>
 					</Avatar>
 					<div className="flex flex-col flex-1 gap-0">
-						<h5 className="text-base font-medium text-foreground">
+						<h5 className="text-sm sm:text-base font-medium text-foreground">
 							{testimonial.name}
 						</h5>
-						<p className="text-sm text-muted-foreground mt-[-2px]">
+						<p className="text-xs sm:text-sm text-muted-foreground mt-[-2px] truncate">
 							{testimonial.profession}
 						</p>
 					</div>
@@ -85,7 +85,7 @@ function TestimonialCard({ testimonial }: { testimonial: typeof testimonials[0] 
 				{testimonial.social && (
 					<>
 						<div className="h-full w-[1px] bg-border" />
-						<div className="flex items-center justify-center w-[70px] h-full">
+						<div className="flex items-center justify-center w-[50px] sm:w-[60px] md:w-[70px] h-full">
 							{testimonial.social}
 						</div>
 					</>
@@ -142,26 +142,26 @@ export default function Testimonials() {
 				}
 			`}</style>
 
-			<div className="relative bg-gradient-to-b from-muted/20 to-muted/50 py-16">
+			<div className="relative bg-gradient-to-b from-muted/20 to-muted/50 py-12 sm:py-16">
 				{/* Section header */}
-				<div className="px-8 pb-12">
-					<div className="flex items-center gap-4 mb-2">
-						<div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-							<MessageCircle className="w-5 h-5 text-primary-foreground" fill="currentColor" />
+				<div className="px-4 sm:px-6 md:px-8 pb-8 sm:pb-12">
+					<div className="flex items-center gap-3 sm:gap-4 mb-2">
+						<div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+							<MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" fill="currentColor" />
 						</div>
 						<div>
-							<h2 className="text-foreground text-2xl font-bold">
+							<h2 className="text-foreground text-xl sm:text-2xl font-bold">
 								What developers say
 							</h2>
 						</div>
 					</div>
-					<p className="text-muted-foreground text-sm max-w-2xl">
+					<p className="text-muted-foreground text-xs sm:text-sm max-w-2xl">
 						Trusted by over 30+ early adopters.
 					</p>
 				</div>
 
 				<div
-					className="flex flex-col gap-5"
+					className="flex flex-col gap-3 sm:gap-5"
 					style={{
 						maskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
 					}}

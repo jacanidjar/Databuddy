@@ -216,17 +216,17 @@ export default function Features({ stars }: FeaturesProps) {
 				</div>
 
 				{/* For Who Section */}
-				<div className="border-l-[1.2px] border-t-[1.2px] p-10 pb-2">
+				<div className="border-l-[1.2px] border-t-[1.2px] border-border p-10 pb-2">
 					<div className="flex items-center gap-2 my-1">
-						<Users className="w-4 h-4" />
-						<p className="text-gray-600 dark:text-gray-400">
+						<Users className="w-4 h-4 text-muted-foreground" />
+						<p className="text-muted-foreground">
 							For Who?
 						</p>
 					</div>
 					<div className="mt-2">
 						<div className="max-w-full">
 							<div className="flex gap-3">
-								<p className="max-w-lg text-xl font-normal tracking-tighter md:text-2xl">
+								<p className="max-w-lg text-xl font-normal tracking-tighter md:text-2xl text-foreground">
 									If you're a developer, indie hacker, or small team who wants to:
 								</p>
 							</div>
