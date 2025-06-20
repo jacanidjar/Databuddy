@@ -16,12 +16,30 @@ import crypto from 'node:crypto'
 
 const redis = getRedisCache()
 
+function detectBot(userAgent: string, request: Request): { isBot: boolean } {
+  const ua = userAgent?.toLowerCase() || '';
+  
+  const botPatterns = [
+    'bot', 'crawl', 'spider', 'curl', 'wget',
+    'python', 'headless', 'selenium', 'playwright'
+  ];
+  const detectedBot = botPatterns.find(pattern => ua.includes(pattern));
+  if (detectedBot) return { isBot: true };
+
+  if (!userAgent) return { isBot: true };
+  if (!request.headers.get('accept-language')) return { isBot: true };
+  if (!request.headers.get('accept')) return { isBot: true };
+  if (ua.length < 10) return { isBot: true };
+
+  return { isBot: false };
+}
+
+
 async function insertError(errorData: any, clientId: string): Promise<void> {
   const eventId = sanitizeString(errorData.payload.eventId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH)
   
-  // Check for duplicate
   if (await checkDuplicate(eventId, 'error')) {
-    return // Skip duplicate
+    return
   }
 
   const errorEvent: ErrorEvent = {
@@ -239,6 +257,12 @@ const app = new Elysia()
     const userAgent = sanitizeString(request.headers.get('user-agent'), VALIDATION_LIMITS.STRING_MAX_LENGTH) || ''
     const ip = extractIpFromRequest(request)
     
+    // Bot detection
+    const botCheck = detectBot(userAgent, request)
+    if (botCheck.isBot) {
+      return { status: 'ignored' }
+    }
+    
     const saltKey = `salt:${Math.floor(Date.now() / (24 * 60 * 60 * 1000))}`
     
     const salt = await redis.get(saltKey)
@@ -301,6 +325,11 @@ const app = new Elysia()
     
     const userAgent = sanitizeString(request.headers.get('user-agent'), VALIDATION_LIMITS.STRING_MAX_LENGTH) || ''
     const ip = extractIpFromRequest(request)
+    
+    const botCheck = detectBot(userAgent, request)
+    if (botCheck.isBot) {
+      return { status: 'ignored', batch: true }
+    }
     
     const results = []
     for (const event of body) {

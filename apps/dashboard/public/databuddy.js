@@ -155,7 +155,11 @@
             this.webVitalsVisibilityChangeHandler = null;
             this.webVitalsPageHideHandler = null;
 
+            this.isLikelyBot = this.detectBot();
+            this.hasInteracted = false;
+
             if (typeof window !== 'undefined') {
+                this.setupBotDetection();
                 this.setupExitTracking();
             }
         }
@@ -398,7 +402,7 @@
         }
         
         async track(eventName, properties) {
-            if (this.options.disabled) return;
+            if (this.options.disabled || this.isLikelyBot) return;
             
             if (this.options.samplingRate < 1.0) {
                 const samplingValue = Math.random();
@@ -586,6 +590,22 @@
                 utm_term: urlParams.get('utm_term'),
                 utm_content: urlParams.get('utm_content')
             };
+        }
+
+        detectBot() {
+            if (typeof window === 'undefined') return false;
+            
+            return navigator.webdriver ||
+                   !navigator.plugins.length ||
+                   !navigator.languages.length;
+        }
+
+        setupBotDetection() {
+            if (typeof window === 'undefined') return;
+            
+            ['mousemove', 'scroll', 'keydown'].forEach(event =>
+                window.addEventListener(event, () => { this.hasInteracted = true }, { once: true, passive: true })
+            );
         }
 
         setupExitTracking() {
