@@ -13,7 +13,7 @@ import {
     TrashIcon,
     FunnelIcon
 } from "@phosphor-icons/react";
-import type { Funnel, FunnelStep, FunnelFilter } from "@/hooks/use-funnels";
+import type { Funnel, FunnelStep, FunnelFilter, AutocompleteData } from "@/hooks/use-funnels";
 
 interface EditFunnelDialogProps {
     isOpen: boolean;
@@ -21,9 +21,10 @@ interface EditFunnelDialogProps {
     onSubmit: (funnel: Funnel) => Promise<void>;
     funnel: Funnel | null;
     isUpdating: boolean;
+    autocompleteData?: AutocompleteData;
 }
 
-export function EditFunnelDialog({ isOpen, onClose, onSubmit, funnel, isUpdating }: EditFunnelDialogProps) {
+export function EditFunnelDialog({ isOpen, onClose, onSubmit, funnel, isUpdating, autocompleteData }: EditFunnelDialogProps) {
     const [formData, setFormData] = useState<Funnel | null>(null);
 
     useEffect(() => {
@@ -108,6 +109,41 @@ export function EditFunnelDialog({ isOpen, onClose, onSubmit, funnel, isUpdating
         { value: 'not_equals', label: 'does not equal' },
     ];
 
+    const getSuggestions = (field: string): string[] => {
+        if (!autocompleteData) return [];
+
+        switch (field) {
+            case 'browser_name':
+                return autocompleteData.browsers || [];
+            case 'os_name':
+                return autocompleteData.operatingSystems || [];
+            case 'country':
+                return autocompleteData.countries || [];
+            case 'device_type':
+                return autocompleteData.deviceTypes || [];
+            case 'utm_source':
+                return autocompleteData.utmSources || [];
+            case 'utm_medium':
+                return autocompleteData.utmMediums || [];
+            case 'utm_campaign':
+                return autocompleteData.utmCampaigns || [];
+            default:
+                return [];
+        }
+    };
+
+    const getStepSuggestions = (stepType: string): string[] => {
+        if (!autocompleteData) return [];
+
+        if (stepType === 'PAGE_VIEW') {
+            return autocompleteData.pagePaths || [];
+        } else if (stepType === 'EVENT') {
+            return autocompleteData.customEvents || [];
+        }
+
+        return [];
+    };
+
     if (!formData) return null;
 
     return (
@@ -177,12 +213,20 @@ export function EditFunnelDialog({ isOpen, onClose, onSubmit, funnel, isUpdating
                                                 <SelectItem value="EVENT">Event</SelectItem>
                                             </SelectContent>
                                         </Select>
-                                        <Input
-                                            value={step.target}
-                                            onChange={(e) => updateStep(index, 'target', e.target.value)}
-                                            placeholder={step.type === 'PAGE_VIEW' ? '/path' : 'event_name'}
-                                            className="rounded border-border/50 focus:border-primary/50 focus:ring-primary/20"
-                                        />
+                                        <>
+                                            <Input
+                                                value={step.target}
+                                                onChange={(e) => updateStep(index, 'target', e.target.value)}
+                                                placeholder={step.type === 'PAGE_VIEW' ? '/path' : 'event_name'}
+                                                className="rounded border-border/50 focus:border-primary/50 focus:ring-primary/20"
+                                                list={`edit-step-${index}-suggestions`}
+                                            />
+                                            <datalist id={`edit-step-${index}-suggestions`}>
+                                                {getStepSuggestions(step.type).map((suggestion) => (
+                                                    <option key={suggestion} value={suggestion} />
+                                                ))}
+                                            </datalist>
+                                        </>
                                         <Input
                                             value={step.name}
                                             onChange={(e) => updateStep(index, 'name', e.target.value)}
@@ -259,12 +303,20 @@ export function EditFunnelDialog({ isOpen, onClose, onSubmit, funnel, isUpdating
                                             </SelectContent>
                                         </Select>
 
-                                        <Input
-                                            value={filter.value as string}
-                                            onChange={(e) => updateFilter(index, 'value', e.target.value)}
-                                            placeholder="Filter value"
-                                            className="flex-1 rounded border-border/50 focus:border-primary/50 focus:ring-primary/20"
-                                        />
+                                        <>
+                                            <Input
+                                                value={filter.value as string}
+                                                onChange={(e) => updateFilter(index, 'value', e.target.value)}
+                                                placeholder="Filter value"
+                                                className="flex-1 rounded border-border/50 focus:border-primary/50 focus:ring-primary/20"
+                                                list={`edit-filter-${index}-suggestions`}
+                                            />
+                                            <datalist id={`edit-filter-${index}-suggestions`}>
+                                                {getSuggestions(filter.field).map((suggestion) => (
+                                                    <option key={suggestion} value={suggestion} />
+                                                ))}
+                                            </datalist>
+                                        </>
 
                                         <Button
                                             size="sm"

@@ -81,6 +81,24 @@ interface FunnelAnalyticsResponse extends ApiResponse {
   date_range: DateRange;
 }
 
+// Simple autocomplete data types
+export interface AutocompleteData {
+  customEvents: string[];
+  pagePaths: string[];
+  browsers: string[];
+  operatingSystems: string[];
+  countries: string[];
+  deviceTypes: string[];
+  utmSources: string[];
+  utmMediums: string[];
+  utmCampaigns: string[];
+}
+
+export interface AutocompleteResponse {
+  success: boolean;
+  data: AutocompleteData;
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 // Base params builder - following use-analytics.ts pattern
@@ -475,5 +493,89 @@ export function useFunnelPerformance(
       funnelsQuery.refetch();
       batchResult.refetch();
     }
+  };
+}
+
+// Common query options for autocomplete
+const autocompleteQueryOptions = {
+  staleTime: 60 * 60 * 1000, // 1 hour - autocomplete data doesn't change often
+  gcTime: 2 * 60 * 60 * 1000, // 2 hours
+  refetchOnWindowFocus: false,
+  refetchOnMount: false,
+  retry: 2,
+  networkMode: 'online' as const,
+};
+
+// Autocomplete hook using TanStack Query (following use-dynamic-query.ts pattern)
+export function useAutocompleteData(websiteId: string, options?: Partial<UseQueryOptions<AutocompleteResponse>>) {
+  
+  const fetchData = useCallback(async ({ signal }: { signal?: AbortSignal }) => {
+    const params = buildParams(websiteId);
+    const url = `${API_BASE_URL}/v1/funnels/autocomplete?${params}`;
+    
+    const response = await fetch(url, {
+      credentials: 'include',
+      signal
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch autocomplete data');
+    }
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to fetch autocomplete data');
+    }
+    
+    return data;
+  }, [websiteId]);
+
+  const query = useQuery({
+    queryKey: ['funnel-autocomplete', websiteId],
+    queryFn: fetchData,
+    ...autocompleteQueryOptions,
+    ...options,
+    enabled: options?.enabled !== false && !!websiteId,
+  });
+
+  // Get suggestions for a specific field type
+  const getSuggestions = useCallback((fieldType: string, searchQuery = ''): string[] => {
+    if (!query.data?.data) return [];
+    
+    const fieldMap: Record<string, keyof AutocompleteData> = {
+      'event_name': 'customEvents',
+      'path': 'pagePaths',
+      'browser_name': 'browsers',
+      'os_name': 'operatingSystems',
+      'country': 'countries',
+      'device_type': 'deviceTypes',
+      'utm_source': 'utmSources', 
+      'utm_medium': 'utmMediums',
+      'utm_campaign': 'utmCampaigns'
+    };
+    
+    const fieldData = query.data.data[fieldMap[fieldType]] || [];
+    
+    if (!searchQuery.trim()) {
+      return fieldData.slice(0, 10);
+    }
+    
+    // Simple filtering
+    const filtered = fieldData.filter((value: string) =>
+      value.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    
+    return filtered.slice(0, 10);
+  }, [query.data]);
+  
+  return {
+    data: query.data?.data,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
+    isFetching: query.isFetching,
+    getSuggestions
   };
 } 

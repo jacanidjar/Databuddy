@@ -44,6 +44,162 @@ export const funnelRouter = new Hono<FunnelContext>()
 funnelRouter.use('*', authMiddleware)
 funnelRouter.use('*', websiteAuthHook)
 
+// Get autocomplete data for funnel creation
+async function getAutocompleteData(websiteId: string, startDate: string, endDate: string) {
+  const query = `
+    SELECT 'customEvents' as category, event_name as value
+    FROM analytics.events
+    WHERE client_id = '${websiteId}'
+      AND time >= parseDateTimeBestEffort('${startDate}')
+      AND time <= parseDateTimeBestEffort('${endDate}')
+      AND event_name NOT IN ('screen_view', 'page_exit', 'error', 'web_vitals', 'link_out')
+      AND event_name != ''
+    GROUP BY event_name
+    
+    UNION ALL
+    
+    SELECT 'pagePaths' as category, 
+           CASE 
+             WHEN path LIKE 'http%' THEN 
+               substring(path, position(path, '/', 9))
+             ELSE path
+           END as value
+    FROM analytics.events
+    WHERE client_id = '${websiteId}'
+      AND time >= parseDateTimeBestEffort('${startDate}')
+      AND time <= parseDateTimeBestEffort('${endDate}')
+      AND event_name = 'screen_view'
+      AND path != ''
+    GROUP BY value
+    HAVING value != '' AND value != '/'
+    
+    UNION ALL
+    
+    SELECT 'browsers' as category, browser_name as value
+    FROM analytics.events
+    WHERE client_id = '${websiteId}'
+      AND time >= parseDateTimeBestEffort('${startDate}')
+      AND time <= parseDateTimeBestEffort('${endDate}')
+      AND browser_name IS NOT NULL AND browser_name != '' AND browser_name != 'Unknown'
+    GROUP BY browser_name
+    
+    UNION ALL
+    
+    SELECT 'operatingSystems' as category, os_name as value
+    FROM analytics.events
+    WHERE client_id = '${websiteId}'
+      AND time >= parseDateTimeBestEffort('${startDate}')
+      AND time <= parseDateTimeBestEffort('${endDate}')
+      AND os_name IS NOT NULL AND os_name != '' AND os_name != 'Unknown'
+    GROUP BY os_name
+    
+    UNION ALL
+    
+    SELECT 'countries' as category, country as value
+    FROM analytics.events
+    WHERE client_id = '${websiteId}'
+      AND time >= parseDateTimeBestEffort('${startDate}')
+      AND time <= parseDateTimeBestEffort('${endDate}')
+      AND country IS NOT NULL AND country != ''
+    GROUP BY country
+    
+    UNION ALL
+    
+    SELECT 'deviceTypes' as category, device_type as value
+    FROM analytics.events
+    WHERE client_id = '${websiteId}'
+      AND time >= parseDateTimeBestEffort('${startDate}')
+      AND time <= parseDateTimeBestEffort('${endDate}')
+      AND device_type IS NOT NULL AND device_type != ''
+    GROUP BY device_type
+    
+    UNION ALL
+    
+    SELECT 'utmSources' as category, utm_source as value
+    FROM analytics.events
+    WHERE client_id = '${websiteId}'
+      AND time >= parseDateTimeBestEffort('${startDate}')
+      AND time <= parseDateTimeBestEffort('${endDate}')
+      AND utm_source IS NOT NULL AND utm_source != ''
+    GROUP BY utm_source
+    
+    UNION ALL
+    
+    SELECT 'utmMediums' as category, utm_medium as value
+    FROM analytics.events
+    WHERE client_id = '${websiteId}'
+      AND time >= parseDateTimeBestEffort('${startDate}')
+      AND time <= parseDateTimeBestEffort('${endDate}')
+      AND utm_medium IS NOT NULL AND utm_medium != ''
+    GROUP BY utm_medium
+    
+    UNION ALL
+    
+    SELECT 'utmCampaigns' as category, utm_campaign as value
+    FROM analytics.events
+    WHERE client_id = '${websiteId}'
+      AND time >= parseDateTimeBestEffort('${startDate}')
+      AND time <= parseDateTimeBestEffort('${endDate}')
+      AND utm_campaign IS NOT NULL AND utm_campaign != ''
+    GROUP BY utm_campaign
+  `
+
+  const results = await chQuery<{
+    category: string;
+    value: string;
+  }>(query)
+
+  // Group results by category - just simple arrays of strings
+  const categorized = {
+    customEvents: results.filter(r => r.category === 'customEvents').map(r => r.value),
+    pagePaths: results.filter(r => r.category === 'pagePaths').map(r => r.value),
+    browsers: results.filter(r => r.category === 'browsers').map(r => r.value),
+    operatingSystems: results.filter(r => r.category === 'operatingSystems').map(r => r.value),
+    countries: results.filter(r => r.category === 'countries').map(r => r.value),
+    deviceTypes: results.filter(r => r.category === 'deviceTypes').map(r => r.value),
+    utmSources: results.filter(r => r.category === 'utmSources').map(r => r.value),
+    utmMediums: results.filter(r => r.category === 'utmMediums').map(r => r.value),
+    utmCampaigns: results.filter(r => r.category === 'utmCampaigns').map(r => r.value)
+  }
+
+  return categorized
+}
+
+// Get autocomplete data for funnel creation
+funnelRouter.get('/autocomplete', async (c) => {
+  try {
+    const website = c.get('website')
+    const startDate = c.req.query('start_date') || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    const endDate = c.req.query('end_date') || new Date().toISOString().split('T')[0]
+    
+    const autocompleteData = await getAutocompleteData(website.id, startDate, endDate)
+
+    return c.json({
+      success: true,
+      data: autocompleteData,
+      meta: {
+        website_id: website.id,
+        date_range: {
+          start_date: startDate,
+          end_date: endDate
+        }
+      }
+    })
+  } catch (error: any) {
+    logger.error('Failed to fetch autocomplete data', {
+      error: error.message,
+      website_id: c.get('website')?.id
+    })
+    
+    return c.json({
+      success: false,
+      error: 'Failed to fetch autocomplete data'
+    }, 500)
+  }
+})
+
+
+
 // Get all funnels for a website
 funnelRouter.get('/', async (c) => {
   try {

@@ -14,6 +14,7 @@ import { TrendDownIcon } from "@phosphor-icons/react";
 import {
     useFunnels,
     useFunnelAnalytics,
+    useAutocompleteData,
     type Funnel,
     type CreateFunnelData,
 } from "@/hooks/use-funnels";
@@ -156,10 +157,13 @@ export default function FunnelsPage() {
         { enabled: !!expandedFunnelId }
     );
 
+    // Preload autocomplete data for instant suggestions in dialogs
+    const autocompleteQuery = useAutocompleteData(websiteId);
+
     const handleRefresh = useCallback(async () => {
         setIsRefreshing(true);
         try {
-            const promises: Promise<any>[] = [refetchFunnels()];
+            const promises: Promise<any>[] = [refetchFunnels(), autocompleteQuery.refetch()];
             if (expandedFunnelId) {
                 promises.push(refetchAnalytics());
             }
@@ -169,7 +173,7 @@ export default function FunnelsPage() {
         } finally {
             setIsRefreshing(false);
         }
-    }, [refetchFunnels, refetchAnalytics, expandedFunnelId]);
+    }, [refetchFunnels, refetchAnalytics, autocompleteQuery.refetch, expandedFunnelId]);
 
     const handleCreateFunnel = async (data: CreateFunnelData) => {
         try {
@@ -327,6 +331,7 @@ export default function FunnelsPage() {
                         onClose={() => setIsCreateDialogOpen(false)}
                         onSubmit={handleCreateFunnel}
                         isCreating={isCreating}
+                        autocompleteData={autocompleteQuery.data}
                     />
                 </Suspense>
             )}
@@ -342,6 +347,7 @@ export default function FunnelsPage() {
                         onSubmit={handleUpdateFunnel}
                         funnel={editingFunnel}
                         isUpdating={isUpdating}
+                        autocompleteData={autocompleteQuery.data}
                     />
                 </Suspense>
             )}

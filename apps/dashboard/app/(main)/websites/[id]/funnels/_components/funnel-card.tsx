@@ -71,7 +71,7 @@ export function FunnelCard({
 
                             <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                 <ChartBarIcon size={14} />
-                                <span>{funnel.steps.length} steps</span>
+                                <span>{funnel.steps?.length || 0} steps</span>
                             </div>
 
                             {funnel.filters && funnel.filters.length > 0 && (
@@ -134,17 +134,17 @@ export function FunnelCard({
                     </div>
 
                     <div className="flex items-center gap-2 overflow-x-auto">
-                        {funnel.steps.map((step, index) => (
+                        {(funnel.steps || []).map((step, index) => (
                             <div key={index} className="flex items-center gap-2 flex-shrink-0">
                                 <div className="flex items-center gap-2 bg-muted/50 rounded px-3 py-1.5 border">
                                     <div className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-medium">
                                         {index + 1}
                                     </div>
-                                    <span className="text-sm font-medium whitespace-nowrap max-w-32 truncate" title={step.name}>
-                                        {step.name}
+                                    <span className="text-sm font-medium whitespace-nowrap max-w-32 truncate" title={step?.name || 'Unnamed Step'}>
+                                        {step?.name || 'Unnamed Step'}
                                     </span>
                                 </div>
-                                {index < funnel.steps.length - 1 && (
+                                {index < (funnel.steps?.length || 0) - 1 && (
                                     <CaretRightIcon size={14} className="text-muted-foreground flex-shrink-0" />
                                 )}
                             </div>
@@ -161,7 +161,7 @@ export function FunnelCard({
                         </div>
 
                         <div className="flex items-center gap-2 overflow-x-auto">
-                            {funnel.filters.map((filter, index) => {
+                            {(funnel.filters || []).map((filter, index) => {
                                 const getFieldLabel = (field: string) => {
                                     const fieldMap: Record<string, string> = {
                                         'browser_name': 'Browser',
@@ -189,13 +189,13 @@ export function FunnelCard({
                                 return (
                                     <div key={index} className="flex items-center gap-1 bg-muted/30 border rounded px-2 py-1 flex-shrink-0">
                                         <span className="text-xs font-medium text-foreground">
-                                            {getFieldLabel(filter.field)}
+                                            {getFieldLabel(filter?.field || 'unknown')}
                                         </span>
                                         <span className="text-xs text-muted-foreground">
-                                            {getOperatorSymbol(filter.operator)}
+                                            {getOperatorSymbol(filter?.operator || 'equals')}
                                         </span>
-                                        <span className="text-xs font-medium text-foreground max-w-20 truncate" title={filter.value as string}>
-                                            {filter.value}
+                                        <span className="text-xs font-medium text-foreground max-w-20 truncate" title={filter?.value as string || 'No value'}>
+                                            {filter?.value || 'No value'}
                                         </span>
                                     </div>
                                 );
