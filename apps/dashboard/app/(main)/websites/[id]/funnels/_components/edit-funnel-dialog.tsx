@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,175 +11,12 @@ import {
     ChartBarIcon,
     PlusIcon,
     TrashIcon,
-    FunnelIcon,
-    DotsNineIcon
+    FunnelIcon
 } from "@phosphor-icons/react";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import type { Funnel, FunnelStep, FunnelFilter, AutocompleteData, CreateFunnelData } from "@/hooks/use-funnels";
+import { AutocompleteInput, DraggableStep } from "./funnel-components";
 
-// Simple Autocomplete Component
-const AutocompleteInput = ({ value, onValueChange, suggestions, placeholder, className }: {
-    value: string;
-    onValueChange: (value: string) => void;
-    suggestions: string[];
-    placeholder?: string;
-    className?: string;
-}) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
-    const containerRef = useRef<HTMLDivElement>(null);
-
-    // Handle click outside to close dropdown
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-
-        if (isOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-            return () => document.removeEventListener('mousedown', handleClickOutside);
-        }
-    }, [isOpen]);
-
-    const handleInputChange = (newValue: string) => {
-        onValueChange(newValue);
-
-        if (newValue.trim()) {
-            const filtered = suggestions.filter(s =>
-                s.toLowerCase().includes(newValue.toLowerCase())
-            ).slice(0, 8);
-            setFilteredSuggestions(filtered);
-            setIsOpen(filtered.length > 0);
-        } else {
-            setFilteredSuggestions(suggestions.slice(0, 8));
-            setIsOpen(suggestions.length > 0);
-        }
-    };
-
-    const handleFocus = () => {
-        if (value.trim()) {
-            const filtered = suggestions.filter(s =>
-                s.toLowerCase().includes(value.toLowerCase())
-            ).slice(0, 8);
-            setFilteredSuggestions(filtered);
-            setIsOpen(filtered.length > 0);
-        } else {
-            setFilteredSuggestions(suggestions.slice(0, 8));
-            setIsOpen(suggestions.length > 0);
-        }
-    };
-
-    const handleSelect = (suggestion: string) => {
-        onValueChange(suggestion);
-        setIsOpen(false);
-    };
-
-    return (
-        <div className="relative" ref={containerRef}>
-            <Input
-                value={value || ''}
-                onChange={(e) => handleInputChange(e.target.value)}
-                onFocus={handleFocus}
-                placeholder={placeholder}
-                className={className}
-            />
-            {isOpen && filteredSuggestions.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                    {filteredSuggestions.map((suggestion, index) => (
-                        <div
-                            key={index}
-                            className="px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground border-b last:border-b-0"
-                            onClick={() => handleSelect(suggestion)}
-                        >
-                            {suggestion}
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
-
-// Draggable Step Component
-const DraggableStep = ({
-    step,
-    index,
-    updateStep,
-    removeStep,
-    canRemove,
-    getStepSuggestions,
-    isDragging
-}: {
-    step: FunnelStep;
-    index: number;
-    updateStep: (index: number, field: keyof FunnelStep, value: string) => void;
-    removeStep: (index: number) => void;
-    canRemove: boolean;
-    getStepSuggestions: (stepType: string) => string[];
-    isDragging?: boolean;
-}) => {
-    return (
-        <div
-            className={`flex items-center gap-4 p-4 border rounded-xl transition-all duration-150 ${isDragging
-                ? 'opacity-60 scale-[0.98] shadow-xl bg-background/95 border-primary/30'
-                : 'hover:shadow-sm hover:border-border'
-                }`}
-        >
-            {/* Drag Handle */}
-            <div className="cursor-grab active:cursor-grabbing flex-shrink-0">
-                <DotsNineIcon size={16} className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
-            </div>
-
-            {/* Step Number */}
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground border-2 border-primary/20 flex items-center justify-center text-sm font-semibold shadow-sm flex-shrink-0">
-                {index + 1}
-            </div>
-
-            {/* Step Fields */}
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
-                <Select
-                    value={step.type}
-                    onValueChange={(value) => updateStep(index, 'type', value)}
-                >
-                    <SelectTrigger className="rounded-lg border-border/50 focus:border-primary/50">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-lg">
-                        <SelectItem value="PAGE_VIEW">Page View</SelectItem>
-                        <SelectItem value="EVENT">Event</SelectItem>
-                    </SelectContent>
-                </Select>
-                <AutocompleteInput
-                    value={step.target || ''}
-                    onValueChange={(value) => updateStep(index, 'target', value)}
-                    suggestions={getStepSuggestions(step.type)}
-                    placeholder={step.type === 'PAGE_VIEW' ? '/path' : 'event_name'}
-                    className="rounded-lg border-border/50 focus:border-primary/50 focus:ring-primary/20"
-                />
-                <Input
-                    value={step.name}
-                    onChange={(e) => updateStep(index, 'name', e.target.value)}
-                    placeholder="Step name"
-                    className="rounded-lg border-border/50 focus:border-primary/50 focus:ring-primary/20"
-                />
-            </div>
-
-            {/* Remove Button */}
-            {canRemove && (
-                <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => removeStep(index)}
-                    className="rounded-lg h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive transition-colors flex-shrink-0"
-                >
-                    <TrashIcon size={16} weight="duotone" className="h-4 w-4" />
-                </Button>
-            )}
-        </div>
-    );
-};
 
 interface EditFunnelDialogProps {
     isOpen: boolean;
@@ -237,7 +74,7 @@ export function EditFunnelDialog({ isOpen, onClose, onSubmit, onCreate, funnel, 
         }
     };
 
-    const resetForm = () => {
+    const resetForm = useCallback(() => {
         if (isCreateMode) {
             setFormData({
                 id: '',
@@ -253,25 +90,25 @@ export function EditFunnelDialog({ isOpen, onClose, onSubmit, onCreate, funnel, 
                 updatedAt: ''
             });
         }
-    };
+    }, [isCreateMode]);
 
-    const addStep = () => {
+    const addStep = useCallback(() => {
         if (!formData) return;
         setFormData(prev => prev ? ({
             ...prev,
             steps: [...prev.steps, { type: 'PAGE_VIEW' as const, target: '', name: '' }]
         }) : prev);
-    };
+    }, [formData]);
 
-    const removeStep = (index: number) => {
+    const removeStep = useCallback((index: number) => {
         if (!formData || formData.steps.length <= 2) return;
         setFormData(prev => prev ? ({
             ...prev,
             steps: prev.steps.filter((_, i) => i !== index)
         }) : prev);
-    };
+    }, [formData]);
 
-    const updateStep = (index: number, field: keyof FunnelStep, value: string) => {
+    const updateStep = useCallback((index: number, field: keyof FunnelStep, value: string) => {
         if (!formData) return;
         setFormData(prev => prev ? ({
             ...prev,
@@ -279,7 +116,7 @@ export function EditFunnelDialog({ isOpen, onClose, onSubmit, onCreate, funnel, 
                 i === index ? { ...step, [field]: value } : step
             )
         }) : prev);
-    };
+    }, [formData]);
 
     const reorderSteps = useCallback((result: DropResult) => {
         if (!result.destination || !formData) return;
@@ -300,23 +137,23 @@ export function EditFunnelDialog({ isOpen, onClose, onSubmit, onCreate, funnel, 
         }) : prev);
     }, [formData]);
 
-    const addFilter = () => {
+    const addFilter = useCallback(() => {
         if (!formData) return;
         setFormData(prev => prev ? ({
             ...prev,
             filters: [...(prev.filters || []), { field: 'browser_name', operator: 'equals' as const, value: '' }]
         }) : prev);
-    };
+    }, [formData]);
 
-    const removeFilter = (index: number) => {
+    const removeFilter = useCallback((index: number) => {
         if (!formData) return;
         setFormData(prev => prev ? ({
             ...prev,
             filters: (prev.filters || []).filter((_, i) => i !== index)
         }) : prev);
-    };
+    }, [formData]);
 
-    const updateFilter = (index: number, field: keyof FunnelFilter, value: string) => {
+    const updateFilter = useCallback((index: number, field: keyof FunnelFilter, value: string) => {
         if (!formData) return;
         setFormData(prev => prev ? ({
             ...prev,
@@ -324,9 +161,9 @@ export function EditFunnelDialog({ isOpen, onClose, onSubmit, onCreate, funnel, 
                 i === index ? { ...filter, [field]: value } : filter
             )
         }) : prev);
-    };
+    }, [formData]);
 
-    const filterOptions = [
+    const filterOptions = useMemo(() => [
         { value: 'browser_name', label: 'Browser' },
         { value: 'os_name', label: 'Operating System' },
         { value: 'country', label: 'Country' },
@@ -334,15 +171,15 @@ export function EditFunnelDialog({ isOpen, onClose, onSubmit, onCreate, funnel, 
         { value: 'utm_source', label: 'UTM Source' },
         { value: 'utm_medium', label: 'UTM Medium' },
         { value: 'utm_campaign', label: 'UTM Campaign' },
-    ];
+    ], []);
 
-    const operatorOptions = [
+    const operatorOptions = useMemo(() => [
         { value: 'equals', label: 'equals' },
         { value: 'contains', label: 'contains' },
         { value: 'not_equals', label: 'does not equal' },
-    ];
+    ], []);
 
-    const getSuggestions = (field: string): string[] => {
+    const getSuggestions = useCallback((field: string): string[] => {
         if (!autocompleteData) return [];
 
         switch (field) {
@@ -363,9 +200,9 @@ export function EditFunnelDialog({ isOpen, onClose, onSubmit, onCreate, funnel, 
             default:
                 return [];
         }
-    };
+    }, [autocompleteData]);
 
-    const getStepSuggestions = (stepType: string): string[] => {
+    const getStepSuggestions = useCallback((stepType: string): string[] => {
         if (!autocompleteData) return [];
 
         if (stepType === 'PAGE_VIEW') {
@@ -375,14 +212,24 @@ export function EditFunnelDialog({ isOpen, onClose, onSubmit, onCreate, funnel, 
         }
 
         return [];
-    };
+    }, [autocompleteData]);
 
-    const handleClose = () => {
+    const handleClose = useCallback(() => {
         onClose();
         if (isCreateMode) {
             resetForm();
         }
-    };
+    }, [onClose, isCreateMode, resetForm]);
+
+    // Memoize form validation
+    const isFormValid = useMemo(() => {
+        if (!formData) return false;
+        return formData.name &&
+            !formData.steps.some(s => !s.name || !s.target) &&
+            !(formData.filters || []).some(f => !f.value || f.value === '');
+    }, [formData]);
+
+
 
     if (!formData) return null;
 
@@ -584,9 +431,7 @@ export function EditFunnelDialog({ isOpen, onClose, onSubmit, onCreate, funnel, 
                         <Button
                             onClick={handleSubmit}
                             disabled={
-                                !formData.name ||
-                                formData.steps.some(s => !s.name || !s.target) ||
-                                (formData.filters || []).some(f => !f.value || f.value === '') ||
+                                !isFormValid ||
                                 (isCreateMode ? isCreating : isUpdating)
                             }
                             className="rounded relative"
