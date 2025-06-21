@@ -1,6 +1,5 @@
 export { FunnelCard } from './funnel-card';
 export { FunnelFlow } from './funnel-flow';
-export { CreateFunnelDialog } from './create-funnel-dialog';
 export { EditFunnelDialog } from './edit-funnel-dialog';
 export { DeleteFunnelDialog } from './delete-funnel-dialog';
 export { FunnelAnalytics } from './funnel-analytics';
