@@ -18,6 +18,7 @@ const app = new Elysia()
       set.headers['Access-Control-Allow-Methods'] = 'POST, GET, OPTIONS, PUT, DELETE'
       set.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, databuddy-client-id, databuddy-sdk-name, databuddy-sdk-version'
       set.headers['Access-Control-Allow-Credentials'] = 'true'
+      set.headers['Content-Encoding'] = 'gzip'
     }
   })
   .options('*', () => new Response(null, { status: 204 }))

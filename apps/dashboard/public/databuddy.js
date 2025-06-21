@@ -18,6 +18,7 @@
             }
             this.maxRetries = config.maxRetries ?? 3;
             this.initialRetryDelay = config.initialRetryDelay ?? 500;
+            this.compressRequests = config.compressRequests && typeof CompressionStream !== 'undefined';
         }
 
         async resolveHeaders() {
@@ -39,10 +40,29 @@
 
         async post(url, data, options = {}, retryCount = 0) {
             try {
+                const resolvedHeaders = await this.resolveHeaders();
+                let bodyToSend = JSON.stringify(data ?? {});
+                const requestHeaders = {
+                    "Content-Type": "application/json",
+                    ...resolvedHeaders
+                };
+
+                if (this.compressRequests) {
+                    try {
+                        const stream = new Response(bodyToSend).body;
+                        const compressedStream = stream.pipeThrough(new CompressionStream('gzip'));
+                        bodyToSend = await new Response(compressedStream).blob();
+                        requestHeaders['Content-Encoding'] = 'gzip';
+                        delete requestHeaders['Content-Type'];
+                    } catch (e) {
+                        // If compression fails, use original data
+                    }
+                }
+
                 const fetchOptions = {
                     method: "POST",
-                    headers: await this.resolveHeaders(),
-                    body: JSON.stringify(data ?? {}),
+                    headers: requestHeaders,
+                    body: bodyToSend,
                     keepalive: true,
                     credentials: 'omit',
                     ...options
@@ -130,7 +150,8 @@
                 baseUrl: this.options.apiUrl || "https://basket.databuddy.cc",
                 defaultHeaders: headers,
                 maxRetries: this.options.maxRetries,
-                initialRetryDelay: this.options.initialRetryDelay
+                initialRetryDelay: this.options.initialRetryDelay,
+                compressRequests: this.options.compressRequests
             });
             
             this.lastPath = "";
