@@ -20,6 +20,20 @@ function getPerformanceRating(score: number): { rating: string; className: strin
   return { rating: "Very Poor", className: "text-red-500" };
 }
 
+function formatPerformanceTime(value: number): string {
+  if (!value || value === 0) return "N/A";
+
+  // Use consistent formatting: show ms for values < 1000, seconds for >= 1000
+  // Always round to remove decimal places for cleaner display
+  if (value < 1000) {
+    return `${Math.round(value)}ms`;
+  } else {
+    // Round to 1 decimal place for seconds, but remove .0 if it's a whole number
+    const seconds = Math.round(value / 100) / 10; // This gives us 1 decimal place with rounding
+    return seconds % 1 === 0 ? `${seconds.toFixed(0)}s` : `${seconds.toFixed(1)}s`;
+  }
+}
+
 function PerformanceMetricCell({ value, type = 'time' }: { value?: number; type?: 'time' | 'cls' }) {
   if (!value || value === 0) {
     return <span className="text-muted-foreground">N/A</span>;
@@ -34,8 +48,7 @@ function PerformanceMetricCell({ value, type = 'time' }: { value?: number; type?
     colorClass = value < 0.1 ? "text-green-600" : value < 0.25 ? "text-yellow-600" : "text-red-400";
     showIcon = value < 0.1 || value >= 0.25;
   } else {
-    // Time-based metrics
-    formatted = value < 1000 ? `${Math.round(value)}ms` : `${(value / 1000).toFixed(2)}s`;
+    formatted = formatPerformanceTime(value);
     colorClass = value < 1000 ? "text-green-600" : value < 3000 ? "text-yellow-600" : "text-red-400";
     showIcon = value < 1000 || value >= 3000;
   }
@@ -109,10 +122,7 @@ function PerformanceSummaryCard({
           <span className="text-sm font-medium text-muted-foreground">Avg Load Time</span>
         </div>
         <div className={`text-2xl font-bold ${avgLoadTimeColor}`}>
-          {summary.avgLoadTime < 1000
-            ? `${Math.round(summary.avgLoadTime)}ms`
-            : `${(summary.avgLoadTime / 1000).toFixed(1)}s`
-          }
+          {formatPerformanceTime(summary.avgLoadTime)}
         </div>
       </div>
 
