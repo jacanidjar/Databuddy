@@ -5,6 +5,7 @@ import { Databuddy } from '@databuddy/sdk';
 import type { ReactNode } from 'react';
 import type { Metadata, Viewport } from "next";
 import { Geist } from 'next/font/google';
+import Script from 'next/script';
 
 const geist = Geist({
   subsets: ['latin'],
@@ -73,12 +74,16 @@ export const viewport: Viewport = {
 export default function Layout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={geist.className} suppressHydrationWarning>
-      <Databuddy
-        clientId="OXmNQsViBT-FOS_wZCTHc"
-        trackAttributes={true}
-        trackPerformance={true}
-        trackScreenViews={true}
-        trackErrors={true}
+      <Script src="https://www.databuddy.cc/databuddy.js" strategy="beforeInteractive" async
+        data-track-attributes={true}
+        data-track-performance={true}
+        data-track-screen-views={true}
+        data-track-errors={true}
+        data-track-outgoing-links={true}
+        data-track-exit-tracking={true}
+        data-track-scroll-depth={true}
+        data-track-web-vitals={true}
+        data-track-custom-events={true}
       />
       <body className="flex flex-col min-h-screen">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

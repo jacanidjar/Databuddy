@@ -68,7 +68,7 @@ export default function Performance() {
             </div>
           ))}
         </div>
-        
+
         <div className="text-center mb-10 sm:mb-16">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">Lightning fast performance</h2>
           <p className="text-slate-400 max-w-2xl mx-auto text-sm sm:text-base">
@@ -161,17 +161,17 @@ export default function Performance() {
           </div>
           <div className="text-sm text-slate-400 space-y-3">
             <p>
-              <span className="font-medium text-sky-400">CPU Impact:</span> Measured across multiple devices and browsers using the Performance API, 
+              <span className="font-medium text-sky-400">CPU Impact:</span> Measured across multiple devices and browsers using the Performance API,
               capturing CPU utilization during page load and user interactions. Range represents typical usage across different device capabilities.
             </p>
             <p>
-              <span className="font-medium text-sky-400">Energy Usage:</span> Estimated based on a model that considers both client-side script execution 
-              and server-side processing. We calculate energy consumption using industry benchmarks for data transfer costs, 
+              <span className="font-medium text-sky-400">Energy Usage:</span> Estimated based on a model that considers both client-side script execution
+              and server-side processing. We calculate energy consumption using industry benchmarks for data transfer costs,
               server processing efficiency, and client-side resource utilization.
             </p>
             <p>
-              <span className="font-medium text-sky-400">Commitment to Transparency:</span> We continuously refine our methodology and 
-              measurements to provide the most accurate performance data possible. Our goal is to deliver analytics that respect both 
+              <span className="font-medium text-sky-400">Commitment to Transparency:</span> We continuously refine our methodology and
+              measurements to provide the most accurate performance data possible. Our goal is to deliver analytics that respect both
               your users and the environment.
             </p>
           </div>
