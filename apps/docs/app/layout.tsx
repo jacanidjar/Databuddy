@@ -74,7 +74,7 @@ export const viewport: Viewport = {
 export default function Layout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={geist.className} suppressHydrationWarning>
-      <Script src="https://www.databuddy.cc/databuddy.js" strategy="afterInteractive" async
+      <Script src="https://app.databuddy.cc/databuddy.js" strategy="afterInteractive" async
         data-client-id="OXmNQsViBT-FOS_wZCTHc"
         data-track-attributes={true}
         data-track-errors={true}
