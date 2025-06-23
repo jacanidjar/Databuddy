@@ -395,7 +395,7 @@ function RegisterPageContent() {
                 >
                   I agree to the{" "}
                   <Link
-                    href="/terms"
+                    href="https://www.databuddy.cc/terms"
                     className="text-primary hover:text-primary/80 font-medium"
                     target="_blank"
                   >
@@ -403,7 +403,7 @@ function RegisterPageContent() {
                   </Link>{" "}
                   and{" "}
                   <Link
-                    href="/privacy"
+                    href="https://www.databuddy.cc/privacy"
                     className="text-primary hover:text-primary/80 font-medium"
                     target="_blank"
                   >
