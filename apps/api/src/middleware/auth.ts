@@ -27,7 +27,7 @@ export const verifyWebsiteAccess = cacheable(
             eq(projects.organizationId, userId)
           )
         });
-        
+
         return !!access;
       }
 
@@ -59,15 +59,15 @@ export const authMiddleware = createMiddleware(async (c, next) => {
     //     code: 'RATE_LIMIT_EXCEEDED'
     //   }, 429);
     // }
-    
+
     const websiteId = c.req.query('website_id');
     if (path.includes('OXmNQsViBT-FOS_wZCTHc') || websiteId === 'OXmNQsViBT-FOS_wZCTHc') {
       return next();
     }
 
     // Get session
-    const session = await auth.api.getSession({ 
-      headers: c.req.raw.headers 
+    const session = await auth.api.getSession({
+      headers: c.req.raw.headers
     });
 
     if (!session) {
@@ -81,29 +81,29 @@ export const authMiddleware = createMiddleware(async (c, next) => {
     c.set('user', session.user);
     c.set('session', session);
 
-      if (path.startsWith('/analytics/') && session) {
-        const websiteId = c.req.query('website_id');
-        if (websiteId) {
-          const hasAccess = await verifyWebsiteAccess(session.user.id, websiteId, session.user.role);
-          if (!hasAccess) {
-            return c.json({
-              success: false,
-              error: 'Unauthorized access to website',
-              code: 'UNAUTHORIZED_WEBSITE_ACCESS'
-            }, 403);
-          }
+    if (path.startsWith('/analytics/') && session) {
+      const websiteId = c.req.query('website_id');
+      if (websiteId) {
+        const hasAccess = await verifyWebsiteAccess(session.user.id, websiteId, session.user.role);
+        if (!hasAccess) {
+          return c.json({
+            success: false,
+            error: 'Unauthorized access to website',
+            code: 'UNAUTHORIZED_WEBSITE_ACCESS'
+          }, 403);
         }
       }
-      
+    }
+
     return next();
   } catch (error) {
-    logger.error('Auth middleware error:', { 
+    logger.error('Auth middleware error:', {
       error,
       path,
       method,
       ip
     });
-    
+
     return c.json({
       success: false,
       error: 'Authentication service error',

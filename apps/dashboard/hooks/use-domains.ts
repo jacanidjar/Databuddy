@@ -62,6 +62,24 @@ const domainApi = {
     if (!result.data) throw new Error('No data returned from delete domain');
     return result.data;
   },
+
+  verify: async (id: string): Promise<{ verified: boolean; message: string }> => {
+    const result = await apiRequest<{ verified: boolean; message: string }>(`/domains/${id}/verify`, {
+      method: 'POST',
+    });
+    if (result.error) throw new Error(result.error);
+    if (!result.data) throw new Error('No data returned from verify domain');
+    return result.data;
+  },
+
+  regenerateToken: async (id: string): Promise<Domain> => {
+    const result = await apiRequest<Domain>(`/domains/${id}/regenerate-token`, {
+      method: 'POST',
+    });
+    if (result.error) throw new Error(result.error);
+    if (!result.data) throw new Error('No data returned from regenerate token');
+    return result.data;
+  },
 };
 
 export function useDomain(id: string) {
@@ -144,6 +162,20 @@ export function useDomains() {
     },
   });
 
+  const verifyMutation = useMutation({
+    mutationFn: domainApi.verify,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['domains'] });
+    },
+  });
+
+  const regenerateTokenMutation = useMutation({
+    mutationFn: domainApi.regenerateToken,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['domains'] });
+    },
+  });
+
   return {
     domains: data || [],
     isLoading,
@@ -151,9 +183,13 @@ export function useDomains() {
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
+    isVerifying: verifyMutation.isPending,
+    isRegenerating: regenerateTokenMutation.isPending,
     createDomain: createMutation.mutate,
     updateDomain: updateMutation.mutate,
     deleteDomain: deleteMutation.mutate,
+    verifyDomain: verifyMutation.mutate,
+    regenerateToken: regenerateTokenMutation.mutate,
     refetch,
   };
 }

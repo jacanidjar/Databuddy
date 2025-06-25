@@ -239,7 +239,7 @@ domainsRouter.post('/', async (c) => {
       id: domainId,
       name: data.name,
       verificationToken,
-      verificationStatus: "VERIFIED",
+      verificationStatus: "PENDING",
       organizationId: organizationId || null,
       ...ownerData
     }).returning();
@@ -249,7 +249,7 @@ domainsRouter.post('/', async (c) => {
     // Discord notification for domain creation
     await discordLogger.success(
       'Domain Added',
-      `New domain "${data.name}" was added and auto-verified`,
+      `New domain "${data.name}" was added and is pending verification`,
       {
         domainId: domainId,
         domainName: data.name,

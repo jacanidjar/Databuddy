@@ -74,7 +74,7 @@ export const useDomainManagement = () => {
     }
 
     const cleanedDomain = cleanDomainInput(domain);
-    
+
     if (!validateDomainFormat(cleanedDomain)) {
       toast.error("Please enter a valid domain (e.g., example.com)");
       return;
@@ -96,101 +96,105 @@ export const useDomainManagement = () => {
       return;
     }
 
-    setActions(prev => ({ 
-      ...prev, 
+    setActions(prev => ({
+      ...prev,
       isVerifying: { ...prev.isVerifying, [domainId]: true },
       verificationProgress: { ...prev.verificationProgress, [domainId]: 25 }
     }));
-    
+
     const domainToVerify = domains.find(d => d.id === domainId);
-    
+
     if (domainToVerify?.verificationStatus === "FAILED") {
-      setActions(prev => ({ 
-        ...prev, 
+      setActions(prev => ({
+        ...prev,
         retryingDomains: { ...prev.retryingDomains, [domainId]: true }
       }));
     }
-    
-    setActions(prev => ({ 
-      ...prev, 
+
+    setActions(prev => ({
+      ...prev,
       verificationProgress: { ...prev.verificationProgress, [domainId]: 75 }
     }));
 
     // Use the domains hook to verify
-    domainsHook.verifyDomain(domainId, {
-      onSuccess: (result) => {
-        setActions(prev => ({ 
-          ...prev, 
-          verificationProgress: { ...prev.verificationProgress, [domainId]: 100 },
-          verificationResult: { 
-            ...prev.verificationResult, 
-            [domainId]: {
-              verified: Boolean(result.verified),
-              message: String(result.message || ""),
-              lastChecked: new Date()
-            }
-          },
-          isVerifying: { ...prev.isVerifying, [domainId]: false },
-          retryingDomains: { ...prev.retryingDomains, [domainId]: false }
-        }));
-        
-        if (result.verified) {
-          toast.success("Domain verified successfully");
-        }
-        
-        setTimeout(() => {
-          setActions(prev => ({ 
-            ...prev, 
-            verificationProgress: { ...prev.verificationProgress, [domainId]: 0 }
-          }));
-        }, 1000);
-      },
-      onError: (error) => {
-        setActions(prev => ({ 
-          ...prev, 
-          verificationResult: { 
-            ...prev.verificationResult, 
-            [domainId]: {
-              verified: false,
-              message: error.message || "Failed to verify domain",
-              error: error.message,
-              lastChecked: new Date()
-            }
-          },
-          isVerifying: { ...prev.isVerifying, [domainId]: false },
-          retryingDomains: { ...prev.retryingDomains, [domainId]: false }
-        }));
-        
-        setTimeout(() => {
-          setActions(prev => ({ 
-            ...prev, 
-            verificationProgress: { ...prev.verificationProgress, [domainId]: 0 }
-          }));
-        }, 1000);
+    try {
+      const result = await new Promise<{ verified: boolean; message: string }>((resolve, reject) => {
+        domainsHook.verifyDomain(domainId, {
+          onSuccess: resolve,
+          onError: reject
+        });
+      });
+
+      setActions(prev => ({
+        ...prev,
+        verificationProgress: { ...prev.verificationProgress, [domainId]: 100 },
+        verificationResult: {
+          ...prev.verificationResult,
+          [domainId]: {
+            verified: Boolean(result.verified),
+            message: String(result.message || ""),
+            lastChecked: new Date()
+          }
+        },
+        isVerifying: { ...prev.isVerifying, [domainId]: false },
+        retryingDomains: { ...prev.retryingDomains, [domainId]: false }
+      }));
+
+      if (result.verified) {
+        toast.success("Domain verified successfully");
       }
-    });
+
+      setTimeout(() => {
+        setActions(prev => ({
+          ...prev,
+          verificationProgress: { ...prev.verificationProgress, [domainId]: 0 }
+        }));
+      }, 1000);
+    } catch (error: any) {
+      setActions(prev => ({
+        ...prev,
+        verificationResult: {
+          ...prev.verificationResult,
+          [domainId]: {
+            verified: false,
+            message: error.message || "Failed to verify domain",
+            error: error.message,
+            lastChecked: new Date()
+          }
+        },
+        isVerifying: { ...prev.isVerifying, [domainId]: false },
+        retryingDomains: { ...prev.retryingDomains, [domainId]: false }
+      }));
+
+      setTimeout(() => {
+        setActions(prev => ({
+          ...prev,
+          verificationProgress: { ...prev.verificationProgress, [domainId]: 0 }
+        }));
+      }, 1000);
+    }
   };
 
   // Delete domain
   const handleDeleteDomain = async (domainId: string) => {
-    setActions(prev => ({ 
-      ...prev, 
+    setActions(prev => ({
+      ...prev,
       isDeleting: { ...prev.isDeleting, [domainId]: true }
     }));
-    
+
     domainsHook.deleteDomain(domainId, {
       onSuccess: () => {
         toast.success("Domain deleted successfully");
-        setActions(prev => ({ 
-          ...prev, 
+        setActions(prev => ({
+          ...prev,
           deleteDialogOpen: { ...prev.deleteDialogOpen, [domainId]: false },
           isDeleting: { ...prev.isDeleting, [domainId]: false }
         }));
       },
       onError: (error) => {
         toast.error(error.message || "Failed to delete domain");
-        setActions(prev => ({ 
-          ...prev, 
+        setActions(prev => ({
+          ...prev,
           isDeleting: { ...prev.isDeleting, [domainId]: false }
         }));
       }
@@ -199,63 +203,71 @@ export const useDomainManagement = () => {
 
   // Regenerate token
   const handleRegenerateToken = async (domainId: string) => {
-    setActions(prev => ({ 
-      ...prev, 
+    setActions(prev => ({
+      ...prev,
       isRegenerating: { ...prev.isRegenerating, [domainId]: true }
     }));
-    
-    domainsHook.regenerateToken(domainId, {
-      onSuccess: () => {
-        toast.success("Verification token regenerated", {
-          description: "Please update your DNS record with the new token"
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        domainsHook.regenerateToken(domainId, {
+          onSuccess: () => resolve(),
+          onError: reject
         });
-        setActions(prev => ({ 
-          ...prev, 
-          regenerateDialogOpen: { ...prev.regenerateDialogOpen, [domainId]: false },
-          isRegenerating: { ...prev.isRegenerating, [domainId]: false }
-        }));
-      },
-      onError: (error) => {
-        toast.error(error.message || "Failed to regenerate token");
-        setActions(prev => ({ 
-          ...prev, 
-          isRegenerating: { ...prev.isRegenerating, [domainId]: false }
-        }));
-      }
-    });
+      });
+
+      toast.success("Verification token regenerated", {
+        description: "Please update your DNS record with the new token"
+      });
+      setActions(prev => ({
+        ...prev,
+        regenerateDialogOpen: { ...prev.regenerateDialogOpen, [domainId]: false },
+        isRegenerating: { ...prev.isRegenerating, [domainId]: false }
+      }));
+    } catch (error: any) {
+      toast.error(error.message || "Failed to regenerate token");
+      setActions(prev => ({
+        ...prev,
+        isRegenerating: { ...prev.isRegenerating, [domainId]: false }
+      }));
+    }
   };
 
   // Retry failed domain
   const handleRetryFailedDomain = async (domainId: string) => {
-    setActions(prev => ({ 
-      ...prev, 
+    setActions(prev => ({
+      ...prev,
       isRegenerating: { ...prev.isRegenerating, [domainId]: true }
     }));
-    
-    domainsHook.regenerateToken(domainId, {
-      onSuccess: () => {
-        toast.success("Verification token regenerated", {
-          description: "Try adding the new DNS record and verify again"
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        domainsHook.regenerateToken(domainId, {
+          onSuccess: () => resolve(),
+          onError: reject
         });
-        
-        setState(prev => ({
-          ...prev,
-          expandedDomains: new Set([...prev.expandedDomains, domainId])
-        }));
-        
-        setActions(prev => ({ 
-          ...prev, 
-          isRegenerating: { ...prev.isRegenerating, [domainId]: false }
-        }));
-      },
-      onError: (error) => {
-        toast.error(`Failed to regenerate token: ${error.message}`);
-        setActions(prev => ({ 
-          ...prev, 
-          isRegenerating: { ...prev.isRegenerating, [domainId]: false }
-        }));
-      }
-    });
+      });
+
+      toast.success("Verification token regenerated", {
+        description: "Try adding the new DNS record and verify again"
+      });
+
+      setState(prev => ({
+        ...prev,
+        expandedDomains: new Set([...prev.expandedDomains, domainId])
+      }));
+
+      setActions(prev => ({
+        ...prev,
+        isRegenerating: { ...prev.isRegenerating, [domainId]: false }
+      }));
+    } catch (error: any) {
+      toast.error(`Failed to regenerate token: ${error.message}`);
+      setActions(prev => ({
+        ...prev,
+        isRegenerating: { ...prev.isRegenerating, [domainId]: false }
+      }));
+    }
   };
 
   // Create website
@@ -303,7 +315,7 @@ export const useDomainManagement = () => {
     addDialogOpen,
     setAddDialogOpen,
     domainsPerPage,
-    
+
     // Actions
     fetchDomains,
     handleAddDomain,

@@ -6,8 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { BuildingsIcon, UsersIcon } from "@phosphor-icons/react";
-import { useOrganizations, type CreateOrganizationData } from "@/hooks/use-organizations";
+import { useOrganizations } from "@/hooks/use-organizations";
 import { useRouter } from "next/navigation";
+
+interface CreateOrganizationData {
+    name: string;
+    slug: string;
+    logo: string;
+    metadata: Record<string, any>;
+}
 
 interface CreateOrganizationDialogProps {
     isOpen: boolean;
@@ -34,7 +41,7 @@ export function CreateOrganizationDialog({ isOpen, onClose }: CreateOrganization
                 .replace(/\s+/g, "-")
                 .replace(/-+/g, "-")
                 .trim();
-            setFormData(prev => ({ ...prev, slug: generatedSlug }));
+            setFormData((prev: CreateOrganizationData) => ({ ...prev, slug: generatedSlug }));
         }
     }, [formData.name, formData.slug]);
 
@@ -78,7 +85,7 @@ export function CreateOrganizationDialog({ isOpen, onClose }: CreateOrganization
             .toLowerCase()
             .replace(/[^a-z0-9-]/g, "")
             .replace(/-+/g, "-");
-        setFormData(prev => ({ ...prev, slug: cleanSlug }));
+        setFormData((prev: CreateOrganizationData) => ({ ...prev, slug: cleanSlug }));
     };
 
     return (
@@ -109,7 +116,7 @@ export function CreateOrganizationDialog({ isOpen, onClose }: CreateOrganization
                             <Input
                                 id="org-name"
                                 value={formData.name}
-                                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                onChange={(e) => setFormData((prev: CreateOrganizationData) => ({ ...prev, name: e.target.value }))}
                                 placeholder="e.g., Acme Corporation"
                                 className="rounded border-border/50 focus:border-primary/50 focus:ring-primary/20"
                                 maxLength={100}
@@ -145,7 +152,7 @@ export function CreateOrganizationDialog({ isOpen, onClose }: CreateOrganization
                                 id="org-logo"
                                 type="url"
                                 value={formData.logo || ""}
-                                onChange={(e) => setFormData(prev => ({ ...prev, logo: e.target.value }))}
+                                onChange={(e) => setFormData((prev: CreateOrganizationData) => ({ ...prev, logo: e.target.value }))}
                                 placeholder="https://example.com/logo.png"
                                 className="rounded border-border/50 focus:border-primary/50 focus:ring-primary/20"
                             />

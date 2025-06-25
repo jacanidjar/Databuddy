@@ -32,14 +32,6 @@ const createFunnelSchema = z.object({
   })).min(2).max(10), // Funnels need at least 2 steps, max 10 for performance
 });
 
-const updateFunnelSchema = createFunnelSchema.partial();
-
-const createGoalSchema = z.object({
-  goalType: z.enum(['COMPLETION', 'STEP_CONVERSION', 'TIME_TO_CONVERT']),
-  targetValue: z.string(),
-  description: z.string().optional(),
-});
-
 export const funnelRouter = new Hono<FunnelContext>()
 
 funnelRouter.use('*', authMiddleware)
@@ -172,7 +164,7 @@ funnelRouter.get('/autocomplete', async (c) => {
     const website = c.get('website')
     const startDate = c.req.query('start_date') || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     const endDate = c.req.query('end_date') || new Date().toISOString().split('T')[0]
-    
+
     const autocompleteData = await getAutocompleteData(website.id, startDate, endDate)
 
     return c.json({
@@ -191,7 +183,7 @@ funnelRouter.get('/autocomplete', async (c) => {
       error: error.message,
       website_id: c.get('website')?.id
     })
-    
+
     return c.json({
       success: false,
       error: 'Failed to fetch autocomplete data'
@@ -199,13 +191,11 @@ funnelRouter.get('/autocomplete', async (c) => {
   }
 })
 
-
-
 // Get all funnels for a website
 funnelRouter.get('/', async (c) => {
   try {
     const website = c.get('website')
-    
+
     const funnels = await db
       .select({
         id: funnelDefinitions.id,
@@ -237,7 +227,7 @@ funnelRouter.get('/', async (c) => {
       error: error.message,
       website_id: c.get('website')?.id
     })
-    
+
     return c.json({
       success: false,
       error: 'Failed to fetch funnels'
@@ -250,7 +240,7 @@ funnelRouter.get('/:id', async (c) => {
   try {
     const website = c.get('website')
     const funnelId = c.req.param('id')
-    
+
     const funnel = await db
       .select()
       .from(funnelDefinitions)
@@ -290,7 +280,7 @@ funnelRouter.get('/:id', async (c) => {
       funnel_id: c.req.param('id'),
       website_id: c.get('website')?.id
     })
-    
+
     return c.json({
       success: false,
       error: 'Failed to fetch funnel'
@@ -306,9 +296,9 @@ funnelRouter.post(
       const website = c.get('website')
       const user = c.get('user')
       const { name, description, steps, filters } = await c.req.json()
-      
+
       const funnelId = crypto.randomUUID()
-      
+
       const [newFunnel] = await db
         .insert(funnelDefinitions)
         .values({
@@ -340,7 +330,7 @@ funnelRouter.post(
         website_id: c.get('website')?.id,
         user_id: c.get('user')?.id
       })
-      
+
       return c.json({
         success: false,
         error: 'Failed to create funnel'
@@ -357,7 +347,7 @@ funnelRouter.put(
       const website = c.get('website')
       const funnelId = c.req.param('id')
       const updates = await c.req.json()
-      
+
       const [updatedFunnel] = await db
         .update(funnelDefinitions)
         .set({
@@ -388,7 +378,7 @@ funnelRouter.put(
         funnel_id: c.req.param('id'),
         website_id: c.get('website')?.id
       })
-      
+
       return c.json({
         success: false,
         error: 'Failed to update funnel'
@@ -402,7 +392,7 @@ funnelRouter.delete('/:id', async (c) => {
   try {
     const website = c.get('website')
     const funnelId = c.req.param('id')
-    
+
     const [deletedFunnel] = await db
       .update(funnelDefinitions)
       .set({
@@ -439,7 +429,7 @@ funnelRouter.delete('/:id', async (c) => {
       funnel_id: c.req.param('id'),
       website_id: c.get('website')?.id
     })
-    
+
     return c.json({
       success: false,
       error: 'Failed to delete funnel'
@@ -457,7 +447,7 @@ funnelRouter.post(
       const website = c.get('website')
       const funnelId = c.req.param('id')
       const { goalType, targetValue, description } = await c.req.json()
-      
+
       // Verify funnel exists and belongs to website
       const funnel = await db
         .select({ id: funnelDefinitions.id })
@@ -475,7 +465,7 @@ funnelRouter.post(
           error: 'Funnel not found'
         }, 404)
       }
-      
+
       const [newGoal] = await db
         .insert(funnelGoals)
         .values({
@@ -497,7 +487,7 @@ funnelRouter.post(
         funnel_id: c.req.param('id'),
         website_id: c.get('website')?.id
       })
-      
+
       return c.json({
         success: false,
         error: 'Failed to create goal'
@@ -511,7 +501,7 @@ funnelRouter.get('/:id/goals', async (c) => {
   try {
     const website = c.get('website')
     const funnelId = c.req.param('id')
-    
+
     // Verify funnel exists and belongs to website
     const funnel = await db
       .select({ id: funnelDefinitions.id })
@@ -548,7 +538,7 @@ funnelRouter.get('/:id/goals', async (c) => {
       funnel_id: c.req.param('id'),
       website_id: c.get('website')?.id
     })
-    
+
     return c.json({
       success: false,
       error: 'Failed to fetch goals'
@@ -563,7 +553,7 @@ funnelRouter.get('/:id/analytics', async (c) => {
     const funnelId = c.req.param('id')
     const startDate = c.req.query('start_date') || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     const endDate = c.req.query('end_date') || new Date().toISOString().split('T')[0]
-    
+
     // Get the funnel definition
     const funnel = await db
       .select()
@@ -589,11 +579,11 @@ funnelRouter.get('/:id/analytics', async (c) => {
     // Build filter conditions
     const buildFilterConditions = () => {
       if (!filters || filters.length === 0) return '';
-      
+
       const filterConditions = filters.map(filter => {
         const field = filter.field.replace(/'/g, "''");
         const value = Array.isArray(filter.value) ? filter.value : [filter.value];
-        
+
         switch (filter.operator) {
           case 'equals':
             return `${field} = '${value[0].replace(/'/g, "''")}'`;
@@ -609,7 +599,7 @@ funnelRouter.get('/:id/analytics', async (c) => {
             return '';
         }
       }).filter(Boolean);
-      
+
       return filterConditions.length > 0 ? ` AND ${filterConditions.join(' AND ')}` : '';
     };
 
@@ -617,7 +607,7 @@ funnelRouter.get('/:id/analytics', async (c) => {
 
     const stepQueries = steps.map((step, index) => {
       let whereCondition = '';
-      
+
       if (step.type === 'PAGE_VIEW') {
         const targetPath = step.target.replace(/'/g, "''");
         whereCondition = `event_name = 'screen_view' AND (path = '${targetPath}' OR path LIKE '%${targetPath}%')`;
@@ -625,7 +615,7 @@ funnelRouter.get('/:id/analytics', async (c) => {
         const eventName = step.target.replace(/'/g, "''");
         whereCondition = `event_name = '${eventName}'`;
       }
-      
+
       return `
         SELECT 
           ${index + 1} as step_number,
@@ -653,7 +643,7 @@ funnelRouter.get('/:id/analytics', async (c) => {
       FROM all_step_events
       ORDER BY session_id, first_occurrence
     `;
-    
+
 
 
     // Log the generated query for debugging
@@ -683,8 +673,8 @@ funnelRouter.get('/:id/analytics', async (c) => {
 
     // Process the results to calculate proper funnel progression
     // Group events by session and calculate funnel progression
-    const sessionEvents = new Map<string, Array<{step_number: number, step_name: string, first_occurrence: number}>>();
-    
+    const sessionEvents = new Map<string, Array<{ step_number: number, step_name: string, first_occurrence: number }>>();
+
     for (const event of rawResults) {
       if (!sessionEvents.has(event.session_id)) {
         sessionEvents.set(event.session_id, []);
@@ -698,15 +688,15 @@ funnelRouter.get('/:id/analytics', async (c) => {
 
     // Calculate funnel progression for each session
     const stepCounts = new Map<number, Set<string>>();
-    
+
     for (const [sessionId, events] of sessionEvents) {
       // Sort events by time
       events.sort((a, b) => a.first_occurrence - b.first_occurrence);
-      
+
       // Track which steps this session completed in order
       let currentStep = 1;
       const completedSteps = new Set<number>();
-      
+
       for (const event of events) {
         if (event.step_number === currentStep) {
           completedSteps.add(event.step_number);
@@ -725,12 +715,12 @@ funnelRouter.get('/:id/analytics', async (c) => {
       const users = stepCounts.get(stepNumber)?.size || 0;
       const prevStepUsers = index > 0 ? (stepCounts.get(index)?.size || 0) : users;
       const totalUsers = stepCounts.get(1)?.size || 0;
-      
-      const conversion_rate = index === 0 ? 100.0 : 
+
+      const conversion_rate = index === 0 ? 100.0 :
         prevStepUsers > 0 ? Math.round((users / prevStepUsers) * 100 * 100) / 100 : 0;
-      
+
       const dropoffs = index > 0 ? prevStepUsers - users : 0;
-      const dropoff_rate = index > 0 && prevStepUsers > 0 ? 
+      const dropoff_rate = index > 0 && prevStepUsers > 0 ?
         Math.round((dropoffs / prevStepUsers) * 100 * 100) / 100 : 0;
 
       return {
@@ -748,15 +738,15 @@ funnelRouter.get('/:id/analytics', async (c) => {
     // Calculate overall metrics
     const firstStep = analyticsResults[0];
     const lastStep = analyticsResults[analyticsResults.length - 1];
-    const biggestDropoff = analyticsResults.reduce((max, step) => 
+    const biggestDropoff = analyticsResults.reduce((max, step) =>
       step.dropoff_rate > max.dropoff_rate ? step : max, analyticsResults[1] || analyticsResults[0]);
 
     // Calculate average completion time across all steps
     const completionTimes = analyticsResults
       .filter(step => step.avg_time_to_complete && step.avg_time_to_complete > 0)
       .map(step => step.avg_time_to_complete!);
-    
-    const avgCompletionTime = completionTimes.length > 0 
+
+    const avgCompletionTime = completionTimes.length > 0
       ? Number((completionTimes.reduce((sum, time) => sum + time, 0) / completionTimes.length).toFixed(2))
       : 0;
 
@@ -801,7 +791,7 @@ funnelRouter.get('/:id/analytics', async (c) => {
       funnel_id: c.req.param('id'),
       website_id: c.get('website')?.id
     })
-    
+
     return c.json({
       success: false,
       error: 'Failed to fetch funnel analytics'
@@ -852,11 +842,11 @@ funnelRouter.get('/:funnel_id/analytics/referrer', async (c) => {
     // Build filter conditions
     const buildFilterConditions = () => {
       if (!filters || filters.length === 0) return '';
-      
+
       const filterConditions = filters.map(filter => {
         const field = filter.field.replace(/'/g, "''");
         const value = Array.isArray(filter.value) ? filter.value : [filter.value];
-        
+
         switch (filter.operator) {
           case 'equals':
             return `${field} = '${value[0].replace(/'/g, "''")}'`;
@@ -872,7 +862,7 @@ funnelRouter.get('/:funnel_id/analytics/referrer', async (c) => {
             return '';
         }
       }).filter(Boolean);
-      
+
       return filterConditions.length > 0 ? ` AND ${filterConditions.join(' AND ')}` : '';
     };
 
@@ -880,7 +870,7 @@ funnelRouter.get('/:funnel_id/analytics/referrer', async (c) => {
 
     const stepQueries = steps.map((step, index) => {
       let whereCondition = '';
-      
+
       if (step.type === 'PAGE_VIEW') {
         const targetPath = step.target.replace(/'/g, "''");
         whereCondition = `event_name = 'screen_view' AND (path = '${targetPath}' OR path LIKE '%${targetPath}%')`;
@@ -888,7 +878,7 @@ funnelRouter.get('/:funnel_id/analytics/referrer', async (c) => {
         const eventName = step.target.replace(/'/g, "''");
         whereCondition = `event_name = '${eventName}'`;
       }
-      
+
       return `
         SELECT 
           ${index + 1} as step_number,
@@ -955,30 +945,30 @@ funnelRouter.get('/:funnel_id/analytics/referrer', async (c) => {
       throw new Error(`SQL query failed: ${sqlError.message}`);
     }
 
-    const sessionReferrerMap = new Map<string, {normalizedKey: string, parsedReferrer: any}>();
+    const sessionReferrerMap = new Map<string, { normalizedKey: string, parsedReferrer: any }>();
     const referrerData = new Map<string, {
       parsedReferrer: any,
-      sessions: Map<string, Array<{step_number: number, step_name: string, first_occurrence: number}>>
+      sessions: Map<string, Array<{ step_number: number, step_name: string, first_occurrence: number }>>
     }>();
-    
+
     for (const event of rawResults) {
       const rawReferrer = event.session_referrer || '';
-      
+
       if (!sessionReferrerMap.has(event.session_id)) {
         let shouldSkip = false;
         if (website.domain && rawReferrer && rawReferrer !== 'direct') {
           try {
             const url = new URL(rawReferrer.startsWith('http') ? rawReferrer : `http://${rawReferrer}`);
             const hostname = url.hostname;
-            
-            if (hostname === website.domain || hostname.endsWith(`.${website.domain}`) || 
-                (website.domain.startsWith('www.') && hostname === website.domain.substring(4)) ||
-                (hostname.startsWith('www.') && website.domain === hostname.substring(4))) {
+
+            if (hostname === website.domain || hostname.endsWith(`.${website.domain}`) ||
+              (website.domain.startsWith('www.') && hostname === website.domain.substring(4)) ||
+              (hostname.startsWith('www.') && website.domain === hostname.substring(4))) {
               shouldSkip = true;
             }
-          } catch (e) {}
+          } catch (e) { }
         }
-        
+
         if (shouldSkip) {
           sessionReferrerMap.set(event.session_id, {
             normalizedKey: 'Direct',
@@ -992,22 +982,22 @@ funnelRouter.get('/:funnel_id/analytics/referrer', async (c) => {
           });
         }
       }
-      
+
       const sessionData = sessionReferrerMap.get(event.session_id)!;
       const normalizedReferrer = sessionData.normalizedKey;
-      
+
       if (!referrerData.has(normalizedReferrer)) {
         referrerData.set(normalizedReferrer, {
           parsedReferrer: sessionData.parsedReferrer,
           sessions: new Map()
         });
       }
-      
+
       const referrerGroup = referrerData.get(normalizedReferrer)!;
       if (!referrerGroup.sessions.has(event.session_id)) {
         referrerGroup.sessions.set(event.session_id, []);
       }
-      
+
       referrerGroup.sessions.get(event.session_id)!.push({
         step_number: event.step_number,
         step_name: event.step_name,
@@ -1016,14 +1006,14 @@ funnelRouter.get('/:funnel_id/analytics/referrer', async (c) => {
     }
 
     const referrerAnalytics = [];
-    
+
     for (const [normalizedKey, referrerGroup] of referrerData) {
       const stepCounts = new Map<number, Set<string>>();
-      
+
       // Calculate progression for each session
       for (const [sessionId, events] of referrerGroup.sessions) {
         events.sort((a, b) => a.first_occurrence - b.first_occurrence);
-        
+
         let currentStep = 1;
         for (const event of events) {
           if (event.step_number === currentStep) {
@@ -1042,12 +1032,12 @@ funnelRouter.get('/:funnel_id/analytics/referrer', async (c) => {
         const users = stepCounts.get(stepNumber)?.size || 0;
         const prevStepUsers = index > 0 ? (stepCounts.get(index)?.size || 0) : users;
         const totalUsers = stepCounts.get(1)?.size || 0;
-        
-        const conversion_rate = index === 0 ? 100.0 : 
+
+        const conversion_rate = index === 0 ? 100.0 :
           prevStepUsers > 0 ? Math.round((users / prevStepUsers) * 100 * 100) / 100 : 0;
-        
+
         const dropoffs = index > 0 ? prevStepUsers - users : 0;
-        const dropoff_rate = index > 0 && prevStepUsers > 0 ? 
+        const dropoff_rate = index > 0 && prevStepUsers > 0 ?
           Math.round((dropoffs / prevStepUsers) * 100 * 100) / 100 : 0;
 
         return {
@@ -1063,7 +1053,7 @@ funnelRouter.get('/:funnel_id/analytics/referrer', async (c) => {
 
       const firstStep = stepsAnalytics[0];
       const lastStep = stepsAnalytics[stepsAnalytics.length - 1];
-      const overallConversion = lastStep && firstStep && firstStep.users > 0 ? 
+      const overallConversion = lastStep && firstStep && firstStep.users > 0 ?
         Math.round((lastStep.users / firstStep.users) * 100 * 100) / 100 : 0;
 
       referrerAnalytics.push({
@@ -1112,7 +1102,7 @@ funnelRouter.get('/:id/goal-analytics', async (c) => {
     const funnelId = c.req.param('id')
     const startDate = c.req.query('start_date') || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     const endDate = c.req.query('end_date') || new Date().toISOString().split('T')[0]
-    
+
     // Get the funnel definition
     const funnel = await db
       .select()
@@ -1147,11 +1137,11 @@ funnelRouter.get('/:id/goal-analytics', async (c) => {
     // Build filter conditions
     const buildFilterConditions = () => {
       if (!filters || filters.length === 0) return '';
-      
+
       const filterConditions = filters.map(filter => {
         const field = filter.field.replace(/'/g, "''");
         const value = Array.isArray(filter.value) ? filter.value : [filter.value];
-        
+
         switch (filter.operator) {
           case 'equals':
             return `${field} = '${value[0].replace(/'/g, "''")}'`;
@@ -1167,7 +1157,7 @@ funnelRouter.get('/:id/goal-analytics', async (c) => {
             return '';
         }
       }).filter(Boolean);
-      
+
       return filterConditions.length > 0 ? ` AND ${filterConditions.join(' AND ')}` : '';
     };
 
@@ -1255,7 +1245,7 @@ funnelRouter.get('/:id/goal-analytics', async (c) => {
         total_users: result.total_users,
         conversion_rate: result.conversion_rate,
         dropoffs: result.total_users - result.goal_users,
-        dropoff_rate: result.total_users > 0 ? 
+        dropoff_rate: result.total_users > 0 ?
           Math.round(((result.total_users - result.goal_users) / result.total_users) * 100 * 100) / 100 : 0,
         avg_time_to_complete: 0
       }]
@@ -1276,7 +1266,7 @@ funnelRouter.get('/:id/goal-analytics', async (c) => {
       funnel_id: c.req.param('id'),
       website_id: c.get('website')?.id
     });
-    
+
     return c.json({
       success: false,
       error: 'Failed to fetch goal analytics'
