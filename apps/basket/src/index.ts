@@ -5,17 +5,17 @@ import { Elysia } from 'elysia'
 import basketRouter from './routes/basket';
 import stripeRouter from './routes/stripe';
 import { logger } from './lib/logger';
-import { checkBotId } from "botid/server";
+// import { checkBotId } from "botid/server";
 
 const app = new Elysia()
   .onError(({ error }) => {
     logger.error(new Error(`${error instanceof Error ? error.name : 'Unknown'}: ${error instanceof Error ? error.message : 'Unknown'}`));
   })
   .onBeforeHandle(async ({ request, set }) => {
-    const { isBot } = await checkBotId();
-    if (isBot) {
-      return new Response(null, { status: 403 });
-    }
+    // const { isBot } = await checkBotId();
+    // if (isBot) {
+    //   return new Response(null, { status: 403 });
+    // }
     const origin = request.headers.get('origin')
     if (origin) {
       set.headers ??= {}
