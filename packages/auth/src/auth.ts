@@ -8,7 +8,7 @@ import { nextCookies } from "better-auth/next-js";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { ac, owner, admin, member, viewer } from "./permissions";
 import { logger } from "@databuddy/shared";
-import { VerificationEmail, OtpEmail, MagicLinkEmail, InvitationEmail, ResetPasswordEmail } from "./emails";
+import { VerificationEmail, OtpEmail, MagicLinkEmail, InvitationEmail, ResetPasswordEmail } from "@databuddy/email";
 
 function isProduction() {
     return process.env.NODE_ENV === 'production';
@@ -74,7 +74,15 @@ export const auth = betterAuth({
         maxPasswordLength: 32,
         autoSignIn: false,
         requireEmailVerification: true,
-        sendResetPasswordEmail: true,
+        sendResetPasswordEmail: async ({ user, url }: { user: any, url: string }) => {
+            const resend = new Resend(process.env.RESEND_API_KEY as string);
+            await resend.emails.send({
+                from: 'noreply@databuddy.cc',
+                to: user.email,
+                subject: 'Reset your password',
+                react: ResetPasswordEmail({ url })
+            });
+        }
     },
     emailVerification: {
         sendOnSignUp: true,

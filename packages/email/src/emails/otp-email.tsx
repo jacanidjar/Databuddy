@@ -9,20 +9,20 @@ export const OtpEmail = ({ otp }: OtpEmailProps) => {
     return (
         <EmailLayout preview="Your verification code">
             <Section className="my-6">
-                <Heading className="text-center text-2xl font-semibold text-foreground">
+                <Heading className="text-center text-2xl font-semibold">
                     Your Verification Code
                 </Heading>
-                <Text className="text-center text-foreground/80">
+                <Text className="text-center">
                     Here is your one-time password to complete your sign-in.
                 </Text>
             </Section>
             <Section className="text-center">
-                <Text className="rounded bg-gray-200/50 px-10 py-4 text-center text-2xl font-bold tracking-widest text-foreground">
+                <Text className="rounded bg-muted px-10 py-4 text-center text-2xl font-bold tracking-widest">
                     {otp}
                 </Text>
             </Section>
             <Section className="my-6">
-                <Text className="text-center text-foreground/80">
+                <Text className="text-center">
                     This code will expire in 10 minutes. If you did not request this code, you can safely ignore
                     this email.
                 </Text>
