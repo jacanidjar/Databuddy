@@ -157,9 +157,12 @@ export const auth = betterAuth({
                 member,
             },
             sendInvitationEmail: async ({ email, inviter, organization, invitation }) => {
+                console.log(invitation);
                 const invitationLink = `${process.env.BETTER_AUTH_URL}/invitations/${invitation.id}`;
+                console.log(invitationLink);
                 const resend = new Resend(process.env.RESEND_API_KEY as string);
-                await resend.emails.send({
+                console.log(resend);
+                const result = await resend.emails.send({
                     from: 'noreply@databuddy.cc',
                     to: email,
                     subject: `You're invited to join ${organization.name}`,
@@ -170,6 +173,7 @@ export const auth = betterAuth({
                         <p>This invitation will expire in 48 hours.</p>
                     `
                 });
+                console.log(result);
             }
         }),
     ]
