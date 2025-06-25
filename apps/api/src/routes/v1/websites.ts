@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { db, websites, domains, projects, eq, and, or, inArray, sql, isNull } from '@databuddy/db';
+import { db, websites, domains, projects, member, eq, and, or, inArray, sql, isNull } from '@databuddy/db';
 import { authMiddleware } from '../../middleware/auth';
 import { logger } from '../../lib/logger';
 import { logger as discordLogger } from '../../lib/discord-webhook';
@@ -279,6 +279,41 @@ websitesRouter.patch(
     }
   }
 );
+
+websitesRouter.post(
+  '/:id/transfer',
+  websiteAuthHook({ website: ["update"] }),
+  async (c) => {
+    const user = c.get('user');
+    const website = c.get('website');
+    const { organizationId } = await c.req.json();
+
+    if (!user || !website) {
+      return c.json({ success: false, error: "Unauthorized or website not found" }, 401);
+    }
+
+    // If transferring to an organization, check for membership
+    if (organizationId) {
+      const membership = await db.query.member.findFirst({
+        where: and(
+          eq(member.userId, user.id),
+          eq(member.organizationId, organizationId)
+        )
+      });
+
+      if (!membership) {
+        return c.json({ success: false, error: "You are not a member of the target organization." }, 403);
+      }
+    }
+
+    const [updatedWebsite] = await db.update(websites).set({
+      organizationId: organizationId || null,
+      userId: organizationId ? website.userId : user.id,
+    }).where(eq(websites.id, website.id)).returning();
+
+    return c.json({ success: true, data: updatedWebsite });
+  }
+)
 
 // GET ALL - GET /websites
 websitesRouter.get('/', async (c) => {

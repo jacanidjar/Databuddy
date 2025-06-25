@@ -26,6 +26,7 @@ import {
 } from "@phosphor-icons/react";
 import { useOrganizations } from "@/hooks/use-organizations";
 import { toast } from "sonner";
+import { TransferAssets } from "./transfer-assets";
 
 interface SettingsTabProps {
     organization: any;
@@ -203,7 +204,9 @@ export function SettingsTab({ organization }: SettingsTabProps) {
                     Danger Zone
                 </h3>
 
-                <div className="space-y-4">
+                <div className="space-y-6">
+                    <TransferAssets organizationId={organization.id} />
+
                     <div>
                         <h4 className="font-medium mb-2">Delete Organization</h4>
                         <p className="text-sm text-muted-foreground mb-4">
