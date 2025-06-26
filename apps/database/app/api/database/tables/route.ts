@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { chQuery } from '@databuddy/db/clickhouse'
+import { chQuery } from '@databuddy/db'
 
 export async function POST(request: NextRequest) {
   try {
     const { includeSystem } = await request.json()
-    
+
     let query = `
       SELECT 
         name,
@@ -15,15 +15,15 @@ export async function POST(request: NextRequest) {
       FROM system.tables 
       WHERE database != 'system'
     `
-    
+
     if (!includeSystem) {
       query += ` AND database != 'information_schema' AND database != 'INFORMATION_SCHEMA'`
     }
-    
+
     query += ` ORDER BY database, name`
-    
+
     const tables = await chQuery(query)
-    
+
     return NextResponse.json({
       success: true,
       data: tables

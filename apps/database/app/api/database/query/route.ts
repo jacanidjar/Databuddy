@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { chQueryWithMeta } from '@databuddy/db/clickhouse'
+import { chQueryWithMeta } from '@databuddy/db'
 
 export async function POST(request: NextRequest) {
   try {
     const { query } = await request.json()
-    
+
     if (!query || typeof query !== 'string') {
       return NextResponse.json({
         success: false,
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     // Basic security check - prevent dangerous operations in production
     const dangerousKeywords = ['DROP DATABASE', 'TRUNCATE', 'DELETE FROM system']
     const upperQuery = query.toUpperCase()
-    
+
     for (const keyword of dangerousKeywords) {
       if (upperQuery.includes(keyword)) {
         return NextResponse.json({
@@ -24,9 +24,9 @@ export async function POST(request: NextRequest) {
         }, { status: 403 })
       }
     }
-    
+
     const result = await chQueryWithMeta(query)
-    
+
     return NextResponse.json({
       success: true,
       data: result
