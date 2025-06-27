@@ -1,11 +1,15 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
-import { useBatchDynamicQuery, type DynamicQueryRequest, type DynamicQueryFilter } from './use-dynamic-query';
-import type { DateRange } from './use-analytics';
+import { type UseQueryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { DateRange } from "./use-analytics";
+import {
+  type DynamicQueryFilter,
+  type DynamicQueryRequest,
+  useBatchDynamicQuery,
+} from "./use-dynamic-query";
 
 // Types
 export interface FunnelStep {
-  type: 'PAGE_VIEW' | 'EVENT' | 'CUSTOM';
+  type: "PAGE_VIEW" | "EVENT" | "CUSTOM";
   target: string;
   name: string;
   conditions?: Record<string, any>;
@@ -13,7 +17,7 @@ export interface FunnelStep {
 
 export interface FunnelFilter {
   field: string;
-  operator: 'equals' | 'contains' | 'not_equals' | 'in' | 'not_in';
+  operator: "equals" | "contains" | "not_equals" | "in" | "not_in";
   value: string | string[];
   label?: string;
 }
@@ -127,34 +131,34 @@ export interface AutocompleteResponse {
   data: AutocompleteData;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 // Base params builder - following use-analytics.ts pattern
 function buildParams(
-  websiteId: string, 
-  dateRange?: DateRange, 
+  websiteId: string,
+  dateRange?: DateRange,
   additionalParams?: Record<string, string | number>
 ): URLSearchParams {
   const params = new URLSearchParams({
     website_id: websiteId,
-    ...additionalParams
+    ...additionalParams,
   });
-  
+
   if (dateRange?.start_date) {
-    params.append('start_date', dateRange.start_date);
+    params.append("start_date", dateRange.start_date);
   }
-  
+
   if (dateRange?.end_date) {
-    params.append('end_date', dateRange.end_date);
+    params.append("end_date", dateRange.end_date);
   }
 
   if (dateRange?.granularity) {
-    params.append('granularity', dateRange.granularity);
+    params.append("granularity", dateRange.granularity);
   }
-  
+
   // Add cache busting
-  params.append('_t', Date.now().toString());
-  
+  params.append("_t", Date.now().toString());
+
   return params;
 }
 
@@ -168,22 +172,22 @@ async function fetchFunnelData<T extends ApiResponse>(
 ): Promise<T> {
   const params = buildParams(websiteId, dateRange, additionalParams);
   const url = `${API_BASE_URL}/v1${endpoint}?${params}`;
-  
+
   const response = await fetch(url, {
-    credentials: 'include',
-    signal
+    credentials: "include",
+    signal,
   });
-  
+
   if (!response.ok) {
     throw new Error(`Failed to fetch data from ${endpoint}`);
   }
-  
+
   const data = await response.json();
-  
+
   if (!data.success) {
     throw new Error(data.error || `Failed to fetch data from ${endpoint}`);
   }
-  
+
   return data;
 }
 
@@ -191,34 +195,34 @@ async function fetchFunnelData<T extends ApiResponse>(
 async function mutateFunnelData<T extends ApiResponse>(
   endpoint: string,
   websiteId: string,
-  method: 'POST' | 'PUT' | 'DELETE' = 'POST',
+  method: "POST" | "PUT" | "DELETE" = "POST",
   body?: any,
   signal?: AbortSignal
 ): Promise<T> {
   const url = `${API_BASE_URL}/v1${endpoint}`;
-  
+
   const response = await fetch(url, {
     method,
     headers: {
-      'Content-Type': 'application/json',
-      'X-Website-Id': websiteId,
+      "Content-Type": "application/json",
+      "X-Website-Id": websiteId,
     },
-    credentials: 'include',
+    credentials: "include",
     signal,
     ...(body && { body: JSON.stringify(body) }),
   });
-  
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.error || `Failed to ${method} funnel data`);
   }
-  
+
   const data = await response.json();
-  
+
   if (!data.success) {
     throw new Error(data.error || `Failed to ${method} funnel data`);
   }
-  
+
   return data;
 }
 
@@ -230,12 +234,12 @@ const defaultQueryOptions = {
   refetchOnMount: false,
   refetchInterval: 10 * 60 * 1000, // Background refetch every 10 minutes
   retry: (failureCount: number, error: Error) => {
-    if (error instanceof DOMException && error.name === 'AbortError') {
+    if (error instanceof DOMException && error.name === "AbortError") {
       return false;
     }
     return failureCount < 2;
   },
-  networkMode: 'online' as const,
+  networkMode: "online" as const,
   refetchIntervalInBackground: false,
 };
 
@@ -243,12 +247,15 @@ const defaultQueryOptions = {
 export function useFunnels(websiteId: string, options?: Partial<UseQueryOptions<FunnelsResponse>>) {
   const queryClient = useQueryClient();
 
-  const fetchData = useCallback(async ({ signal }: { signal?: AbortSignal }) => {
-    return fetchFunnelData<FunnelsResponse>('/funnels', websiteId, undefined, undefined, signal);
-  }, [websiteId]);
+  const fetchData = useCallback(
+    async ({ signal }: { signal?: AbortSignal }) => {
+      return fetchFunnelData<FunnelsResponse>("/funnels", websiteId, undefined, undefined, signal);
+    },
+    [websiteId]
+  );
 
   const query = useQuery({
-    queryKey: ['funnels', websiteId],
+    queryKey: ["funnels", websiteId],
     queryFn: fetchData,
     ...defaultQueryOptions,
     ...options,
@@ -258,32 +265,38 @@ export function useFunnels(websiteId: string, options?: Partial<UseQueryOptions<
   // Create funnel mutation
   const createMutation = useMutation({
     mutationFn: async (funnelData: CreateFunnelData) => {
-      return mutateFunnelData<FunnelResponse>('/funnels', websiteId, 'POST', funnelData);
+      return mutateFunnelData<FunnelResponse>("/funnels", websiteId, "POST", funnelData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['funnels', websiteId] });
+      queryClient.invalidateQueries({ queryKey: ["funnels", websiteId] });
     },
   });
 
   // Update funnel mutation
   const updateMutation = useMutation({
-    mutationFn: async ({ funnelId, updates }: { funnelId: string; updates: Partial<CreateFunnelData> }) => {
-      return mutateFunnelData<FunnelResponse>(`/funnels/${funnelId}`, websiteId, 'PUT', updates);
+    mutationFn: async ({
+      funnelId,
+      updates,
+    }: {
+      funnelId: string;
+      updates: Partial<CreateFunnelData>;
+    }) => {
+      return mutateFunnelData<FunnelResponse>(`/funnels/${funnelId}`, websiteId, "PUT", updates);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['funnels', websiteId] });
-      queryClient.invalidateQueries({ queryKey: ['funnel-analytics'] });
+      queryClient.invalidateQueries({ queryKey: ["funnels", websiteId] });
+      queryClient.invalidateQueries({ queryKey: ["funnel-analytics"] });
     },
   });
 
   // Delete funnel mutation
   const deleteMutation = useMutation({
     mutationFn: async (funnelId: string) => {
-      return mutateFunnelData<ApiResponse>(`/funnels/${funnelId}`, websiteId, 'DELETE');
+      return mutateFunnelData<ApiResponse>(`/funnels/${funnelId}`, websiteId, "DELETE");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['funnels', websiteId] });
-      queryClient.invalidateQueries({ queryKey: ['funnel-analytics'] });
+      queryClient.invalidateQueries({ queryKey: ["funnels", websiteId] });
+      queryClient.invalidateQueries({ queryKey: ["funnel-analytics"] });
     },
   });
 
@@ -292,17 +305,17 @@ export function useFunnels(websiteId: string, options?: Partial<UseQueryOptions<
     isLoading: query.isLoading,
     error: query.error,
     refetch: query.refetch,
-    
+
     // Mutations
     createFunnel: createMutation.mutateAsync,
     updateFunnel: updateMutation.mutateAsync,
     deleteFunnel: deleteMutation.mutateAsync,
-    
+
     // Mutation states
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
-    
+
     createError: createMutation.error,
     updateError: updateMutation.error,
     deleteError: deleteMutation.error,
@@ -310,13 +323,26 @@ export function useFunnels(websiteId: string, options?: Partial<UseQueryOptions<
 }
 
 // Hook for single funnel details
-export function useFunnel(websiteId: string, funnelId: string, options?: Partial<UseQueryOptions<FunnelResponse>>) {
-  const fetchData = useCallback(async ({ signal }: { signal?: AbortSignal }) => {
-    return fetchFunnelData<FunnelResponse>(`/funnels/${funnelId}`, websiteId, undefined, undefined, signal);
-  }, [websiteId, funnelId]);
+export function useFunnel(
+  websiteId: string,
+  funnelId: string,
+  options?: Partial<UseQueryOptions<FunnelResponse>>
+) {
+  const fetchData = useCallback(
+    async ({ signal }: { signal?: AbortSignal }) => {
+      return fetchFunnelData<FunnelResponse>(
+        `/funnels/${funnelId}`,
+        websiteId,
+        undefined,
+        undefined,
+        signal
+      );
+    },
+    [websiteId, funnelId]
+  );
 
   return useQuery({
-    queryKey: ['funnel', websiteId, funnelId],
+    queryKey: ["funnel", websiteId, funnelId],
     queryFn: fetchData,
     ...defaultQueryOptions,
     ...options,
@@ -326,23 +352,26 @@ export function useFunnel(websiteId: string, funnelId: string, options?: Partial
 
 // Hook for funnel analytics data
 export function useFunnelAnalytics(
-  websiteId: string, 
-  funnelId: string, 
+  websiteId: string,
+  funnelId: string,
   dateRange: DateRange,
   options?: Partial<UseQueryOptions<FunnelAnalyticsResponse>>
 ) {
-  const fetchData = useCallback(async ({ signal }: { signal?: AbortSignal }) => {
-    return fetchFunnelData<FunnelAnalyticsResponse>(
-      `/funnels/${funnelId}/analytics`, 
-      websiteId, 
-      dateRange,
-      undefined,
-      signal
-    );
-  }, [websiteId, funnelId, dateRange]);
+  const fetchData = useCallback(
+    async ({ signal }: { signal?: AbortSignal }) => {
+      return fetchFunnelData<FunnelAnalyticsResponse>(
+        `/funnels/${funnelId}/analytics`,
+        websiteId,
+        dateRange,
+        undefined,
+        signal
+      );
+    },
+    [websiteId, funnelId, dateRange]
+  );
 
   return useQuery({
-    queryKey: ['funnel-analytics', websiteId, funnelId, dateRange],
+    queryKey: ["funnel-analytics", websiteId, funnelId, dateRange],
     queryFn: fetchData,
     ...defaultQueryOptions,
     ...options,
@@ -352,23 +381,26 @@ export function useFunnelAnalytics(
 
 // Hook for funnel analytics grouped by referrer
 export function useFunnelAnalyticsByReferrer(
-  websiteId: string, 
-  funnelId: string, 
-  dateRange?: DateRange, 
+  websiteId: string,
+  funnelId: string,
+  dateRange?: DateRange,
   options?: Partial<UseQueryOptions<FunnelAnalyticsByReferrerResponse>>
 ) {
-  const fetchData = useCallback(async ({ signal }: { signal?: AbortSignal }) => {
-    return fetchFunnelData<FunnelAnalyticsByReferrerResponse>(
-      `/funnels/${funnelId}/analytics/referrer`, 
-      websiteId, 
-      dateRange, 
-      undefined, 
-      signal
-    );
-  }, [websiteId, funnelId, dateRange]);
+  const fetchData = useCallback(
+    async ({ signal }: { signal?: AbortSignal }) => {
+      return fetchFunnelData<FunnelAnalyticsByReferrerResponse>(
+        `/funnels/${funnelId}/analytics/referrer`,
+        websiteId,
+        dateRange,
+        undefined,
+        signal
+      );
+    },
+    [websiteId, funnelId, dateRange]
+  );
 
   return useQuery({
-    queryKey: ['funnel-analytics-referrer', websiteId, funnelId, dateRange],
+    queryKey: ["funnel-analytics-referrer", websiteId, funnelId, dateRange],
     queryFn: fetchData,
     ...defaultQueryOptions,
     ...options,
@@ -385,10 +417,10 @@ export function useEnhancedFunnelAnalytics(
 ) {
   // Get funnel definition
   const funnelQuery = useFunnel(websiteId, funnelId);
-  
+
   // Get analytics data using direct endpoint
   const analyticsQuery = useFunnelAnalytics(websiteId, funnelId, dateRange);
-  
+
   // Process and structure the enhanced data
   const enhancedData = useMemo(() => {
     const analytics = analyticsQuery.data?.data;
@@ -397,7 +429,7 @@ export function useEnhancedFunnelAnalytics(
       return {
         performance: null,
         stepsBreakdown: [],
-        summary: null
+        summary: null,
       };
     }
 
@@ -412,7 +444,7 @@ export function useEnhancedFunnelAnalytics(
     return {
       performance: analytics,
       stepsBreakdown: analytics.steps_analytics,
-      summary
+      summary,
     };
   }, [analyticsQuery.data]);
 
@@ -424,32 +456,32 @@ export function useEnhancedFunnelAnalytics(
     // Main data
     funnel: funnelQuery.data?.data,
     enhancedData,
-    
+
     // Loading states
     isLoading,
     isFunnelLoading: funnelQuery.isLoading,
     isAnalyticsLoading: analyticsQuery.isLoading,
-    
+
     // Errors
     error,
     funnelError: funnelQuery.error,
     analyticsError: analyticsQuery.error,
-    
+
     // Data availability
     hasPerformanceData: !!analyticsQuery.data?.data,
     hasStepsData: !!analyticsQuery.data?.data?.steps_analytics?.length,
-    
+
     // Refetch functions
     refetch: () => {
       funnelQuery.refetch();
       analyticsQuery.refetch();
     },
-    
+
     // Individual query results for advanced usage
     queries: {
       funnel: funnelQuery,
-      analytics: analyticsQuery
-    }
+      analytics: analyticsQuery,
+    },
   };
 }
 
@@ -461,7 +493,7 @@ export function useFunnelComparison(
   options?: Partial<UseQueryOptions>
 ) {
   // Get analytics for each funnel using direct endpoints
-  const funnelQueries = funnelIds.map(funnelId => ({
+  const funnelQueries = funnelIds.map((funnelId) => ({
     funnelId,
     analytics: useFunnelAnalytics(websiteId, funnelId, dateRange),
   }));
@@ -473,31 +505,37 @@ export function useFunnelComparison(
       data: analytics.data?.data || null,
       hasData: !!analytics.data?.data,
       isLoading: analytics.isLoading,
-      error: analytics.error
+      error: analytics.error,
     }));
   }, [funnelQueries]);
 
-  const isLoading = funnelQueries.some(q => q.analytics.isLoading);
-  const error = funnelQueries.find(q => q.analytics.error)?.analytics.error;
+  const isLoading = funnelQueries.some((q) => q.analytics.isLoading);
+  const error = funnelQueries.find((q) => q.analytics.error)?.analytics.error;
 
   return {
     comparisonData,
     isLoading,
     error,
-    
+
     // Helper to get best/worst performing funnels
-    getBestPerforming: () => comparisonData
-      .filter(f => f.hasData)
-      .sort((a, b) => (b.data?.overall_conversion_rate || 0) - (a.data?.overall_conversion_rate || 0))[0],
-    getWorstPerforming: () => comparisonData
-      .filter(f => f.hasData)
-      .sort((a, b) => (a.data?.overall_conversion_rate || 0) - (b.data?.overall_conversion_rate || 0))[0],
-      
+    getBestPerforming: () =>
+      comparisonData
+        .filter((f) => f.hasData)
+        .sort(
+          (a, b) => (b.data?.overall_conversion_rate || 0) - (a.data?.overall_conversion_rate || 0)
+        )[0],
+    getWorstPerforming: () =>
+      comparisonData
+        .filter((f) => f.hasData)
+        .sort(
+          (a, b) => (a.data?.overall_conversion_rate || 0) - (b.data?.overall_conversion_rate || 0)
+        )[0],
+
     refetch: () => {
-      funnelQueries.forEach(q => {
+      funnelQueries.forEach((q) => {
         q.analytics.refetch();
       });
-    }
+    },
   };
 }
 
@@ -509,33 +547,36 @@ export function useFunnelPerformance(
 ) {
   // Get all funnels
   const funnelsQuery = useFunnels(websiteId);
-  
+
   // Get basic analytics data using simple queries instead of broken funnel queries
-  const queries: DynamicQueryRequest[] = useMemo(() => [
-    {
-      id: 'overall_performance',
-      parameters: ['sessions_summary'],
-      limit: 1,
-      filters: []
-    }
-  ], []);
+  const queries: DynamicQueryRequest[] = useMemo(
+    () => [
+      {
+        id: "overall_performance",
+        parameters: ["sessions_summary"],
+        limit: 1,
+        filters: [],
+      },
+    ],
+    []
+  );
 
   const batchResult = useBatchDynamicQuery(websiteId, dateRange, queries);
 
   // Process performance data
   const performanceData = useMemo(() => {
-    const sessionData = batchResult.getDataForQuery('overall_performance', 'sessions_summary')[0];
+    const sessionData = batchResult.getDataForQuery("overall_performance", "sessions_summary")[0];
     const funnels = funnelsQuery.data || [];
-    
+
     return {
       totalFunnels: funnels.length,
-      activeFunnels: funnels.filter(f => f.isActive).length,
+      activeFunnels: funnels.filter((f) => f.isActive).length,
       totalSessions: sessionData?.total_sessions || 0,
       totalUsers: sessionData?.total_users || 0,
       // Mock some funnel-specific metrics
       avgConversionRate: Math.random() * 20 + 5,
-      topPerformingFunnel: funnels[0]?.name || 'N/A',
-      totalConversions: Math.floor((sessionData?.total_sessions || 0) * 0.15)
+      topPerformingFunnel: funnels[0]?.name || "N/A",
+      totalConversions: Math.floor((sessionData?.total_sessions || 0) * 0.15),
     };
   }, [batchResult, funnelsQuery.data]);
 
@@ -546,7 +587,7 @@ export function useFunnelPerformance(
     refetch: () => {
       funnelsQuery.refetch();
       batchResult.refetch();
-    }
+    },
   };
 }
 
@@ -557,36 +598,41 @@ const autocompleteQueryOptions = {
   refetchOnWindowFocus: false,
   refetchOnMount: false,
   retry: 2,
-  networkMode: 'online' as const,
+  networkMode: "online" as const,
 };
 
 // Autocomplete hook using TanStack Query (following use-dynamic-query.ts pattern)
-export function useAutocompleteData(websiteId: string, options?: Partial<UseQueryOptions<AutocompleteResponse>>) {
-  
-  const fetchData = useCallback(async ({ signal }: { signal?: AbortSignal }) => {
-    const params = buildParams(websiteId);
-    const url = `${API_BASE_URL}/v1/funnels/autocomplete?${params}`;
-    
-    const response = await fetch(url, {
-      credentials: 'include',
-      signal
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch autocomplete data');
-    }
-    
-    const data = await response.json();
-    
-    if (!data.success) {
-      throw new Error(data.error || 'Failed to fetch autocomplete data');
-    }
-    
-    return data;
-  }, [websiteId]);
+export function useAutocompleteData(
+  websiteId: string,
+  options?: Partial<UseQueryOptions<AutocompleteResponse>>
+) {
+  const fetchData = useCallback(
+    async ({ signal }: { signal?: AbortSignal }) => {
+      const params = buildParams(websiteId);
+      const url = `${API_BASE_URL}/v1/funnels/autocomplete?${params}`;
+
+      const response = await fetch(url, {
+        credentials: "include",
+        signal,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch autocomplete data");
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Failed to fetch autocomplete data");
+      }
+
+      return data;
+    },
+    [websiteId]
+  );
 
   const query = useQuery({
-    queryKey: ['funnel-autocomplete', websiteId],
+    queryKey: ["funnel-autocomplete", websiteId],
     queryFn: fetchData,
     ...autocompleteQueryOptions,
     ...options,
@@ -594,35 +640,38 @@ export function useAutocompleteData(websiteId: string, options?: Partial<UseQuer
   });
 
   // Get suggestions for a specific field type
-  const getSuggestions = useCallback((fieldType: string, searchQuery = ''): string[] => {
-    if (!query.data?.data) return [];
-    
-    const fieldMap: Record<string, keyof AutocompleteData> = {
-      'event_name': 'customEvents',
-      'path': 'pagePaths',
-      'browser_name': 'browsers',
-      'os_name': 'operatingSystems',
-      'country': 'countries',
-      'device_type': 'deviceTypes',
-      'utm_source': 'utmSources', 
-      'utm_medium': 'utmMediums',
-      'utm_campaign': 'utmCampaigns'
-    };
-    
-    const fieldData = query.data.data[fieldMap[fieldType]] || [];
-    
-    if (!searchQuery.trim()) {
-      return fieldData.slice(0, 10);
-    }
-    
-    // Simple filtering
-    const filtered = fieldData.filter((value: string) =>
-      value.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    
-    return filtered.slice(0, 10);
-  }, [query.data]);
-  
+  const getSuggestions = useCallback(
+    (fieldType: string, searchQuery = ""): string[] => {
+      if (!query.data?.data) return [];
+
+      const fieldMap: Record<string, keyof AutocompleteData> = {
+        event_name: "customEvents",
+        path: "pagePaths",
+        browser_name: "browsers",
+        os_name: "operatingSystems",
+        country: "countries",
+        device_type: "deviceTypes",
+        utm_source: "utmSources",
+        utm_medium: "utmMediums",
+        utm_campaign: "utmCampaigns",
+      };
+
+      const fieldData = query.data.data[fieldMap[fieldType]] || [];
+
+      if (!searchQuery.trim()) {
+        return fieldData.slice(0, 10);
+      }
+
+      // Simple filtering
+      const filtered = fieldData.filter((value: string) =>
+        value.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+      return filtered.slice(0, 10);
+    },
+    [query.data]
+  );
+
   return {
     data: query.data?.data,
     isLoading: query.isLoading,
@@ -630,40 +679,43 @@ export function useAutocompleteData(websiteId: string, options?: Partial<UseQuer
     error: query.error,
     refetch: query.refetch,
     isFetching: query.isFetching,
-    getSuggestions
+    getSuggestions,
   };
 }
 
 // Hook for individual goal analytics (using goal-specific endpoint)
 export function useGoalAnalytics(
-  websiteId: string, 
-  goalId: string, 
+  websiteId: string,
+  goalId: string,
   dateRange: DateRange,
   options?: Partial<UseQueryOptions<FunnelAnalyticsResponse>>
 ) {
-  const queryKey = ['goal-analytics', websiteId, goalId, dateRange];
-  
-  const fetchData = useCallback(async ({ signal }: { signal?: AbortSignal }) => {
-    const params = buildParams(websiteId, dateRange);
-    const url = `${API_BASE_URL}/v1/funnels/${goalId}/goal-analytics?${params}`;
-    
-    const response = await fetch(url, {
-      credentials: 'include',
-      signal
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch goal analytics');
-    }
-    
-    const data = await response.json();
-    
-    if (!data.success) {
-      throw new Error(data.error || 'Failed to fetch goal analytics');
-    }
-    
-    return data;
-  }, [websiteId, goalId, dateRange]);
+  const queryKey = ["goal-analytics", websiteId, goalId, dateRange];
+
+  const fetchData = useCallback(
+    async ({ signal }: { signal?: AbortSignal }) => {
+      const params = buildParams(websiteId, dateRange);
+      const url = `${API_BASE_URL}/v1/funnels/${goalId}/goal-analytics?${params}`;
+
+      const response = await fetch(url, {
+        credentials: "include",
+        signal,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch goal analytics");
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Failed to fetch goal analytics");
+      }
+
+      return data;
+    },
+    [websiteId, goalId, dateRange]
+  );
 
   return useQuery({
     queryKey,
@@ -682,59 +734,62 @@ export function useBulkGoalAnalytics(
   dateRange: DateRange,
   options?: Partial<UseQueryOptions<any>>
 ) {
-  const queryKey = ['bulk-goal-analytics', websiteId, goalIds, dateRange];
-  
-  const fetchData = useCallback(async ({ signal }: { signal?: AbortSignal }) => {
-    if (!goalIds.length) return { goalAnalytics: [] };
-    
-    // Fetch all goal analytics in parallel
-    const promises = goalIds.map(async (goalId) => {
-      const params = buildParams(websiteId, dateRange);
-      const url = `${API_BASE_URL}/v1/funnels/${goalId}/goal-analytics?${params}`;
-      
-      try {
-        const response = await fetch(url, {
-          credentials: 'include',
-          signal
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch goal analytics');
+  const queryKey = ["bulk-goal-analytics", websiteId, goalIds, dateRange];
+
+  const fetchData = useCallback(
+    async ({ signal }: { signal?: AbortSignal }) => {
+      if (!goalIds.length) return { goalAnalytics: [] };
+
+      // Fetch all goal analytics in parallel
+      const promises = goalIds.map(async (goalId) => {
+        const params = buildParams(websiteId, dateRange);
+        const url = `${API_BASE_URL}/v1/funnels/${goalId}/goal-analytics?${params}`;
+
+        try {
+          const response = await fetch(url, {
+            credentials: "include",
+            signal,
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to fetch goal analytics");
+          }
+
+          const data = await response.json();
+
+          if (!data.success) {
+            throw new Error(data.error || "Failed to fetch goal analytics");
+          }
+
+          const steps = data.data?.steps_analytics;
+          const step = steps?.[0]; // Only one step for goals
+          const totalUsers = step?.total_users || 0;
+          const completions = step?.users || 0;
+          const conversionRate = totalUsers > 0 ? (completions / totalUsers) * 100 : 0;
+
+          return {
+            goalId,
+            conversionRate,
+            totalUsers,
+            completions,
+            error: null,
+          };
+        } catch (error) {
+          return {
+            goalId,
+            conversionRate: 0,
+            totalUsers: 0,
+            completions: 0,
+            error: error as Error,
+          };
         }
-        
-        const data = await response.json();
-        
-        if (!data.success) {
-          throw new Error(data.error || 'Failed to fetch goal analytics');
-        }
-        
-        const steps = data.data?.steps_analytics;
-        const step = steps?.[0]; // Only one step for goals
-        const totalUsers = step?.total_users || 0;
-        const completions = step?.users || 0;
-        const conversionRate = totalUsers > 0 ? (completions / totalUsers) * 100 : 0;
-        
-        return {
-          goalId,
-          conversionRate,
-          totalUsers,
-          completions,
-          error: null
-        };
-      } catch (error) {
-        return {
-          goalId,
-          conversionRate: 0,
-          totalUsers: 0,
-          completions: 0,
-          error: error as Error
-        };
-      }
-    });
-    
-    const results = await Promise.all(promises);
-    return { goalAnalytics: results };
-  }, [websiteId, goalIds, dateRange]);
+      });
+
+      const results = await Promise.all(promises);
+      return { goalAnalytics: results };
+    },
+    [websiteId, goalIds, dateRange]
+  );
 
   const query = useQuery({
     queryKey,
@@ -749,6 +804,6 @@ export function useBulkGoalAnalytics(
     goalAnalytics: query.data?.goalAnalytics || [],
     isLoading: query.isLoading,
     error: query.error,
-    refetch: query.refetch
+    refetch: query.refetch,
   };
-} 
+}

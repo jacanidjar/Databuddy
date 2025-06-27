@@ -1,12 +1,12 @@
 "use client";
 
+import { useSession } from "@databuddy/auth/client";
+import type { session } from "@databuddy/db";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
-import { useSession } from "@databuddy/auth/client"
-import { useState, createContext, useContext, useEffect } from "react";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import type { ReactNode } from "react";
-import type { session } from "@databuddy/db";
-import { NuqsAdapter } from 'nuqs/adapters/next/app'
+import { createContext, useContext, useEffect, useState } from "react";
 
 type Session = typeof session.$inferSelect;
 // Default query client configuration
@@ -19,7 +19,7 @@ const defaultQueryClientOptions = {
       refetchOnMount: true,
       refetchOnReconnect: true,
       retry: 1,
-      retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30_000),
     },
     mutations: {
       retry: false,
@@ -51,17 +51,19 @@ const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   // Clear React Query cache when session changes
   useEffect(() => {
-    if (!session && !isPending) {
+    if (!(session || isPending)) {
       queryClient.clear();
     }
   }, [session, isPending]);
 
   return (
-    <SessionContext.Provider value={{
-      session: session as Session | null,
-      isLoading: isPending,
-      error: error as Error | null
-    }}>
+    <SessionContext.Provider
+      value={{
+        session: session as Session | null,
+        isLoading: isPending,
+        error: error as Error | null,
+      }}
+    >
       {children}
     </SessionContext.Provider>
   );
@@ -69,17 +71,20 @@ const SessionProvider = ({ children }: { children: ReactNode }) => {
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   // Create a client-specific query client to avoid shared state between users
-  const [clientQueryClient] = useState(() => new QueryClient({
-    ...defaultQueryClientOptions,
-    defaultOptions: {
-      ...defaultQueryClientOptions.defaultOptions,
-      queries: {
-        ...defaultQueryClientOptions.defaultOptions.queries,
-        gcTime: 1000 * 60 * 5, // 5 minutes
-        staleTime: 1000 * 60 * 2, // 2 minutes
-      }
-    }
-  }));
+  const [clientQueryClient] = useState(
+    () =>
+      new QueryClient({
+        ...defaultQueryClientOptions,
+        defaultOptions: {
+          ...defaultQueryClientOptions.defaultOptions,
+          queries: {
+            ...defaultQueryClientOptions.defaultOptions.queries,
+            gcTime: 1000 * 60 * 5, // 5 minutes
+            staleTime: 1000 * 60 * 2, // 2 minutes
+          },
+        },
+      })
+  );
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>

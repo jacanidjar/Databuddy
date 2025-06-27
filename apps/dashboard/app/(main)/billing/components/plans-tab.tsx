@@ -1,10 +1,10 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowRight, CheckCircle2, Crown, ExternalLink, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, Star, ArrowRight, ExternalLink, Crown } from "lucide-react";
 
 interface SubscriptionPlan {
   id: string;
@@ -36,66 +36,64 @@ export function PlansTab({ plans, onUpgrade, formatCurrency, isLoading }: PlansT
   return (
     <div className="space-y-4">
       <div className="text-center">
-        <h2 className="text-xl font-bold">Choose Your Plan</h2>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h2 className="font-bold text-xl">Choose Your Plan</h2>
+        <p className="mt-1 text-muted-foreground text-sm">
           Upgrade or downgrade anytime. All plans include a 14-day free trial.
         </p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
         {plans.map((plan) => (
-          <Card 
-            key={plan.id} 
+          <Card
             className={`relative transition-all hover:shadow-md ${
               plan.current ? "ring-2 ring-primary" : ""
-            } ${plan.popular ? "ring-2 ring-purple-500 scale-[1.02]" : ""}`}
+            } ${plan.popular ? "scale-[1.02] ring-2 ring-purple-500" : ""}`}
+            key={plan.id}
           >
             {plan.popular && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <Badge className="bg-purple-500 text-white px-3 py-1">
-                  <Star className="h-3 w-3 mr-1" />
+              <div className="-top-3 -translate-x-1/2 absolute left-1/2">
+                <Badge className="bg-purple-500 px-3 py-1 text-white">
+                  <Star className="mr-1 h-3 w-3" />
                   Most Popular
                 </Badge>
               </div>
             )}
             {plan.recommended && (
-              <div className="absolute -top-3 right-3">
+              <div className="-top-3 absolute right-3">
                 <Badge variant="secondary">Recommended</Badge>
               </div>
             )}
             {plan.badge && (
-              <div className="absolute -top-3 left-3">
-                <Badge variant="outline" className="bg-orange-100 text-orange-700">
+              <div className="-top-3 absolute left-3">
+                <Badge className="bg-orange-100 text-orange-700" variant="outline">
                   {plan.badge}
                 </Badge>
               </div>
             )}
 
-            <CardHeader className="text-center pb-3">
+            <CardHeader className="pb-3 text-center">
               <CardTitle className="flex items-center justify-center gap-2">
                 {plan.name}
-                {plan.current && (
-                  <Badge variant="secondary">Current</Badge>
-                )}
+                {plan.current && <Badge variant="secondary">Current</Badge>}
               </CardTitle>
-              <p className="text-sm text-muted-foreground">{plan.description}</p>
+              <p className="text-muted-foreground text-sm">{plan.description}</p>
               <div className="mt-3">
                 {plan.price === null ? (
                   <div>
-                    <span className="text-2xl font-bold">Custom</span>
-                    <p className="text-xs text-muted-foreground mt-1">Contact sales</p>
+                    <span className="font-bold text-2xl">Custom</span>
+                    <p className="mt-1 text-muted-foreground text-xs">Contact sales</p>
                   </div>
                 ) : (
                   <div>
                     <div className="flex items-center justify-center gap-2">
-                      <span className="text-2xl font-bold">{formatCurrency(plan.price)}</span>
+                      <span className="font-bold text-2xl">{formatCurrency(plan.price)}</span>
                       {plan.originalPrice && (
-                        <span className="text-sm text-muted-foreground line-through">
+                        <span className="text-muted-foreground text-sm line-through">
                           {formatCurrency(plan.originalPrice)}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">per month</p>
+                    <p className="text-muted-foreground text-xs">per month</p>
                   </div>
                 )}
               </div>
@@ -132,25 +130,25 @@ export function PlansTab({ plans, onUpgrade, formatCurrency, isLoading }: PlansT
                 <h4 className="font-medium text-sm">Features</h4>
                 <ul className="space-y-0.5">
                   {plan.features.slice(0, 5).map((feature) => (
-                    <li key={feature} className="flex items-center text-xs">
-                      <CheckCircle2 className="h-3 w-3 text-green-500 mr-2 flex-shrink-0" />
+                    <li className="flex items-center text-xs" key={feature}>
+                      <CheckCircle2 className="mr-2 h-3 w-3 flex-shrink-0 text-green-500" />
                       {feature}
                     </li>
                   ))}
                   {plan.features.length > 5 && (
-                    <li className="text-xs text-muted-foreground ml-5">
+                    <li className="ml-5 text-muted-foreground text-xs">
                       +{plan.features.length - 5} more
                     </li>
                   )}
                 </ul>
               </div>
 
-              <Button 
-                className="w-full mt-4" 
-                variant={plan.current ? "outline" : plan.popular ? "default" : "outline"}
-                onClick={() => onUpgrade(plan)}
+              <Button
+                className="mt-4 w-full"
                 disabled={plan.current || isLoading}
+                onClick={() => onUpgrade(plan)}
                 size="sm"
+                variant={plan.current ? "outline" : plan.popular ? "default" : "outline"}
               >
                 {plan.current ? (
                   "Current Plan"
@@ -172,4 +170,4 @@ export function PlansTab({ plans, onUpgrade, formatCurrency, isLoading }: PlansT
       </div>
     </div>
   );
-} 
+}

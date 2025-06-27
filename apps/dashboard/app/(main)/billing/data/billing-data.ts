@@ -29,7 +29,7 @@ export interface UsageData {
 
 export interface BillingAlert {
   id: string;
-  type: 'warning' | 'error' | 'info';
+  type: "warning" | "error" | "info";
   title: string;
   message: string;
   action?: { label: string; onClick: () => void };
@@ -69,16 +69,16 @@ export const subscriptionPlans: SubscriptionPlan[] = [
       "Page view analytics",
       "Referrer tracking",
       "Mobile-responsive reports",
-      "Email support"
+      "Email support",
     ],
     limits: {
       websites: 3,
-      pageviews: 10000,
+      pageviews: 10_000,
       dataRetention: "7 days",
-      teamMembers: 1
+      teamMembers: 1,
     },
     current: true,
-    popular: false
+    popular: false,
   },
   {
     id: "pro",
@@ -96,17 +96,17 @@ export const subscriptionPlans: SubscriptionPlan[] = [
       "API access",
       "Priority support",
       "Custom domains",
-      "White-label reports"
+      "White-label reports",
     ],
     limits: {
       websites: null,
-      pageviews: 100000,
+      pageviews: 100_000,
       dataRetention: "90 days",
-      teamMembers: 5
+      teamMembers: 5,
     },
     current: false,
     popular: true,
-    badge: "Save $10/mo"
+    badge: "Save $10/mo",
   },
   {
     id: "enterprise",
@@ -123,61 +123,61 @@ export const subscriptionPlans: SubscriptionPlan[] = [
       "SLA guarantee (99.9%)",
       "On-premise deployment",
       "Custom reporting",
-      "24/7 phone support"
+      "24/7 phone support",
     ],
     limits: {
       websites: null,
       pageviews: null,
       dataRetention: "Custom",
-      teamMembers: null
+      teamMembers: null,
     },
     current: false,
     popular: false,
-    recommended: true
-  }
+    recommended: true,
+  },
 ];
 
 export const usageData: UsageData = {
   websites: { current: 2, limit: 3 },
-  pageviews: { current: 7500, limit: 10000 },
+  pageviews: { current: 7500, limit: 10_000 },
   teamMembers: { current: 1, limit: 1 },
   dataRetention: "7 days",
   billingCycle: "monthly",
   nextBillingDate: "2024-04-15",
-  renewalAmount: 0
+  renewalAmount: 0,
 };
 
 export const billingHistory: BillingHistoryItem[] = [
   {
     id: "INV-2024-003",
     date: "2024-03-15",
-    amount: 29.00,
+    amount: 29.0,
     status: "paid",
     description: "Professional Plan - Monthly",
     period: "Mar 15 - Apr 15, 2024",
     pdfUrl: "#",
-    paymentMethod: "•••• 4242"
+    paymentMethod: "•••• 4242",
   },
   {
     id: "INV-2024-002",
     date: "2024-02-15",
-    amount: 29.00,
+    amount: 29.0,
     status: "paid",
     description: "Professional Plan - Monthly",
     period: "Feb 15 - Mar 15, 2024",
     pdfUrl: "#",
-    paymentMethod: "•••• 4242"
+    paymentMethod: "•••• 4242",
   },
   {
     id: "INV-2024-001",
     date: "2024-01-15",
-    amount: 29.00,
+    amount: 29.0,
     status: "failed",
     description: "Professional Plan - Monthly",
     period: "Jan 15 - Feb 15, 2024",
     pdfUrl: "#",
-    paymentMethod: "•••• 8888"
-  }
+    paymentMethod: "•••• 8888",
+  },
 ];
 
 export const paymentMethods: PaymentMethod[] = [
@@ -189,7 +189,7 @@ export const paymentMethods: PaymentMethod[] = [
     expiry: "12/25",
     default: true,
     name: "John Doe",
-    country: "US"
+    country: "US",
   },
   {
     id: "pm_2",
@@ -199,6 +199,6 @@ export const paymentMethods: PaymentMethod[] = [
     expiry: "06/24",
     default: false,
     name: "John Doe",
-    country: "US"
-  }
-]; 
+    country: "US",
+  },
+];

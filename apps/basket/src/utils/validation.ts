@@ -44,9 +44,9 @@ export function sanitizeString(input: unknown, maxLength?: number): string {
   if (typeof input !== 'string') {
     return '';
   }
-  
+
   const actualMaxLength = maxLength ?? VALIDATION_LIMITS.STRING_MAX_LENGTH;
-  
+
   return input
     .trim()
     .slice(0, actualMaxLength)
@@ -66,15 +66,15 @@ export function sanitizeString(input: unknown, maxLength?: number): string {
  */
 export function validateTimezone(timezone: unknown): string {
   if (typeof timezone !== 'string') return '';
-  
+
   const sanitized = sanitizeString(timezone, VALIDATION_LIMITS.TIMEZONE_MAX_LENGTH);
-  
+
   // Basic timezone format validation (IANA timezone format)
   const timezoneRegex = /^[A-Za-z_/+-]{1,64}$/;
   if (!timezoneRegex.test(sanitized)) {
     return '';
   }
-  
+
   return sanitized;
 }
 
@@ -96,15 +96,15 @@ export function validateTimezoneOffset(offset: unknown): number | null {
  */
 export function validateLanguage(language: unknown): string {
   if (typeof language !== 'string') return '';
-  
+
   const sanitized = sanitizeString(language, VALIDATION_LIMITS.LANGUAGE_MAX_LENGTH);
-  
+
   // Basic language tag validation (RFC 5646)
   const languageRegex = /^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8})*$/;
   if (!languageRegex.test(sanitized)) {
     return '';
   }
-  
+
   return sanitized.toLowerCase();
 }
 
@@ -113,15 +113,15 @@ export function validateLanguage(language: unknown): string {
  */
 export function validateSessionId(sessionId: unknown): string {
   if (typeof sessionId !== 'string') return '';
-  
+
   const sanitized = sanitizeString(sessionId, VALIDATION_LIMITS.SESSION_ID_MAX_LENGTH);
-  
+
   // Session ID should be alphanumeric with hyphens/underscores
   const sessionIdRegex = /^[a-zA-Z0-9_-]+$/;
   if (!sessionIdRegex.test(sanitized)) {
     return '';
   }
-  
+
   return sanitized;
 }
 
@@ -130,7 +130,7 @@ export function validateSessionId(sessionId: unknown): string {
  */
 export function validateUtmParameter(utm: unknown): string {
   if (typeof utm !== 'string') return '';
-  
+
   return sanitizeString(utm, VALIDATION_LIMITS.UTM_MAX_LENGTH);
 }
 
@@ -157,9 +157,9 @@ export function validateNumeric(value: unknown, min = 0, max = Number.MAX_SAFE_I
  */
 export function validateUrl(url: unknown): string {
   if (typeof url !== 'string') return '';
-  
+
   const sanitized = sanitizeString(url);
-  
+
   try {
     const parsed = new URL(sanitized);
     // Only allow http/https protocols
@@ -177,7 +177,7 @@ export function validateUrl(url: unknown): string {
  */
 export function filterSafeHeaders(headers: Record<string, string | string[] | undefined>): Record<string, string> {
   const safeHeaders: Record<string, string> = {};
-  
+
   for (const [key, value] of Object.entries(headers)) {
     const lowerKey = key.toLowerCase();
     if (SAFE_HEADERS.has(lowerKey) && value) {
@@ -187,7 +187,7 @@ export function filterSafeHeaders(headers: Record<string, string | string[] | un
       }
     }
   }
-  
+
   return safeHeaders;
 }
 
@@ -198,19 +198,19 @@ export function validateProperties(properties: unknown): Record<string, unknown>
   if (!properties || typeof properties !== 'object' || Array.isArray(properties)) {
     return {};
   }
-  
+
   const validated: Record<string, unknown> = {};
   const props = properties as Record<string, unknown>;
-  
+
   // Limit number of properties to prevent DoS
   const keys = Object.keys(props).slice(0, 100);
-  
+
   for (const key of keys) {
     const sanitizedKey = sanitizeString(key, 128);
     if (!sanitizedKey) continue;
-    
+
     const value = props[key];
-    
+
     // Validate different value types
     if (typeof value === 'string') {
       validated[sanitizedKey] = sanitizeString(value);
@@ -223,7 +223,7 @@ export function validateProperties(properties: unknown): Record<string, unknown>
     }
     // Skip complex objects/arrays for security
   }
-  
+
   return validated;
 }
 
@@ -267,10 +267,10 @@ export function validatePerformanceMetric(value: unknown): number | null {
  */
 export function validateScreenResolution(resolution: unknown): string {
   if (typeof resolution !== 'string') return '';
-  
+
   const sanitized = sanitizeString(resolution, 32);
   const resolutionRegex = /^\d{1,5}x\d{1,5}$/;
-  
+
   return resolutionRegex.test(sanitized) ? sanitized : '';
 }
 

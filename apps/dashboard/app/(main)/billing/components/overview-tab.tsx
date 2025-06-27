@@ -1,11 +1,11 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart3, Crown, DollarSign, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Crown, DollarSign, BarChart3, TrendingUp } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 interface OverviewTabProps {
   currentPlan: string;
@@ -34,13 +34,13 @@ const getUsageColor = (percentage: number) => {
   return "text-success";
 };
 
-export function OverviewTab({ 
-  currentPlan, 
-  usageData, 
-  onUpgrade, 
-  onCancel, 
-  formatCurrency, 
-  formatDate 
+export function OverviewTab({
+  currentPlan,
+  usageData,
+  onUpgrade,
+  onCancel,
+  formatCurrency,
+  formatDate,
 }: OverviewTabProps) {
   return (
     <div className="space-y-4">
@@ -55,12 +55,12 @@ export function OverviewTab({
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-bold">{currentPlan}</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-bold text-xl">{currentPlan}</h3>
+                <p className="text-muted-foreground text-sm">
                   {formatCurrency(usageData.renewalAmount)}/{usageData.billingCycle}
                 </p>
               </div>
-              <Badge variant="secondary" className="bg-green-100 text-green-700">
+              <Badge className="bg-green-100 text-green-700" variant="secondary">
                 Active
               </Badge>
             </div>
@@ -76,11 +76,11 @@ export function OverviewTab({
               </div>
             </div>
             <div className="flex gap-2 pt-1">
-              <Button variant="outline" size="sm" onClick={onUpgrade}>
-                <TrendingUp className="h-3 w-3 mr-1" />
+              <Button onClick={onUpgrade} size="sm" variant="outline">
+                <TrendingUp className="mr-1 h-3 w-3" />
                 Upgrade
               </Button>
-              <Button variant="ghost" size="sm" onClick={onCancel}>
+              <Button onClick={onCancel} size="sm" variant="ghost">
                 Cancel
               </Button>
             </div>
@@ -96,13 +96,13 @@ export function OverviewTab({
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <p className="text-xl font-bold">{formatCurrency(29.00)}</p>
-              <p className="text-xs text-muted-foreground">Total spent</p>
+              <p className="font-bold text-xl">{formatCurrency(29.0)}</p>
+              <p className="text-muted-foreground text-xs">Total spent</p>
             </div>
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
                 <span>Subscription</span>
-                <span>{formatCurrency(29.00)}</span>
+                <span>{formatCurrency(29.0)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Add-ons</span>
@@ -125,23 +125,22 @@ export function OverviewTab({
             {[
               { label: "Websites", ...usageData.websites },
               { label: "Monthly Pageviews", ...usageData.pageviews },
-              { label: "Team Members", ...usageData.teamMembers }
+              { label: "Team Members", ...usageData.teamMembers },
             ].map((item) => {
               const percentage = getUsagePercentage(item.current, item.limit);
               return (
-                <div key={item.label} className="space-y-2">
+                <div className="space-y-2" key={item.label}>
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">{item.label}</span>
                     <span className={getUsageColor(percentage)}>
                       {item.current.toLocaleString()} / {item.limit?.toLocaleString() || "∞"}
                     </span>
                   </div>
-                  <Progress value={percentage} className="h-1.5" />
-                  <p className="text-xs text-muted-foreground">
-                    {item.limit ? 
-                      `${(item.limit - item.current).toLocaleString()} remaining` : 
-                      "Unlimited"
-                    }
+                  <Progress className="h-1.5" value={percentage} />
+                  <p className="text-muted-foreground text-xs">
+                    {item.limit
+                      ? `${(item.limit - item.current).toLocaleString()} remaining`
+                      : "Unlimited"}
                   </p>
                 </div>
               );
@@ -151,4 +150,4 @@ export function OverviewTab({
       </Card>
     </div>
   );
-} 
+}

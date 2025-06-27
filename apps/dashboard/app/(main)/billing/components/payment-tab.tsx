@@ -1,12 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CreditCard, Edit3, Loader2, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { CreditCard, Plus, Edit3, Trash2, Loader2 } from "lucide-react";
 
 interface PaymentMethod {
   id: string;
@@ -26,11 +26,11 @@ interface PaymentTabProps {
   loadingStates: Record<string, boolean>;
 }
 
-export function PaymentTab({ 
-  paymentMethods, 
-  onAddPayment, 
-  onDeletePayment, 
-  loadingStates 
+export function PaymentTab({
+  paymentMethods,
+  onAddPayment,
+  onDeletePayment,
+  loadingStates,
 }: PaymentTabProps) {
   return (
     <div className="space-y-4">
@@ -40,7 +40,7 @@ export function PaymentTab({
             <CreditCard className="h-4 w-4" />
             Payment Methods
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Manage your payment methods and billing information
           </p>
         </CardHeader>
@@ -48,36 +48,38 @@ export function PaymentTab({
           <div className="space-y-3">
             {paymentMethods.map((method) => (
               <div
+                className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
                 key={method.id}
-                className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-1.5 bg-muted rounded-lg">
+                  <div className="rounded-lg bg-muted p-1.5">
                     <CreditCard className="h-4 w-4" />
                   </div>
                   <div>
                     <div className="font-medium text-sm capitalize">
                       {method.brand} •••• {method.last4}
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-muted-foreground text-xs">
                       Expires {method.expiry} • {method.name}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {method.default && (
-                    <Badge variant="secondary" className="text-xs">Default</Badge>
+                    <Badge className="text-xs" variant="secondary">
+                      Default
+                    </Badge>
                   )}
-                  <Button variant="ghost" size="sm">
-                    <Edit3 className="h-3 w-3 mr-1" />
+                  <Button size="sm" variant="ghost">
+                    <Edit3 className="mr-1 h-3 w-3" />
                     Edit
                   </Button>
                   {!method.default && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => onDeletePayment(method.id)}
+                    <Button
                       disabled={loadingStates[`delete-${method.id}`]}
+                      onClick={() => onDeletePayment(method.id)}
+                      size="sm"
+                      variant="ghost"
                     >
                       {loadingStates[`delete-${method.id}`] ? (
                         <Loader2 className="h-3 w-3 animate-spin" />
@@ -89,15 +91,15 @@ export function PaymentTab({
                 </div>
               </div>
             ))}
-            
+
             <Separator className="my-4" />
-            
+
             <Button
               className="w-full"
-              variant="outline"
-              onClick={onAddPayment}
               disabled={loadingStates["add-payment"]}
+              onClick={onAddPayment}
               size="sm"
+              variant="outline"
             >
               {loadingStates["add-payment"] ? (
                 <>
@@ -118,40 +120,44 @@ export function PaymentTab({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Billing Settings</CardTitle>
-          <p className="text-sm text-muted-foreground">Configure your billing preferences</p>
+          <p className="text-muted-foreground text-sm">Configure your billing preferences</p>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="auto-pay" className="text-sm font-medium">Automatic payments</Label>
-              <p className="text-xs text-muted-foreground">
+              <Label className="font-medium text-sm" htmlFor="auto-pay">
+                Automatic payments
+              </Label>
+              <p className="text-muted-foreground text-xs">
                 Automatically charge your default payment method
               </p>
             </div>
-            <Switch id="auto-pay" defaultChecked />
+            <Switch defaultChecked id="auto-pay" />
           </div>
           <Separator />
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="email-receipts" className="text-sm font-medium">Email receipts</Label>
-              <p className="text-xs text-muted-foreground">
-                Send payment receipts to your email
-              </p>
+              <Label className="font-medium text-sm" htmlFor="email-receipts">
+                Email receipts
+              </Label>
+              <p className="text-muted-foreground text-xs">Send payment receipts to your email</p>
             </div>
-            <Switch id="email-receipts" defaultChecked />
+            <Switch defaultChecked id="email-receipts" />
           </div>
           <Separator />
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="usage-alerts" className="text-sm font-medium">Usage alerts</Label>
-              <p className="text-xs text-muted-foreground">
+              <Label className="font-medium text-sm" htmlFor="usage-alerts">
+                Usage alerts
+              </Label>
+              <p className="text-muted-foreground text-xs">
                 Get notified when approaching plan limits
               </p>
             </div>
-            <Switch id="usage-alerts" defaultChecked />
+            <Switch defaultChecked id="usage-alerts" />
           </div>
         </CardContent>
       </Card>
     </div>
   );
-} 
+}

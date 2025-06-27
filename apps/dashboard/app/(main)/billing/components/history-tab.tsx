@@ -1,9 +1,9 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckCircle2, Download, History, Loader2, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, XCircle, Download, Loader2, History } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface BillingHistoryItem {
   id: string;
@@ -24,12 +24,12 @@ interface HistoryTabProps {
   loadingStates: Record<string, boolean>;
 }
 
-export function HistoryTab({ 
-  billingHistory, 
-  onDownload, 
-  formatCurrency, 
-  formatDate, 
-  loadingStates 
+export function HistoryTab({
+  billingHistory,
+  onDownload,
+  formatCurrency,
+  formatDate,
+  loadingStates,
 }: HistoryTabProps) {
   return (
     <Card>
@@ -38,7 +38,7 @@ export function HistoryTab({
           <History className="h-4 w-4" />
           Billing History
         </CardTitle>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           View and download your invoices and payment history
         </p>
       </CardHeader>
@@ -46,14 +46,16 @@ export function HistoryTab({
         <div className="space-y-3">
           {billingHistory.map((invoice) => (
             <div
+              className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
               key={invoice.id}
-              className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className={`p-1.5 rounded-full ${
-                  invoice.status === 'paid' ? 'bg-green-100' : 'bg-red-100'
-                }`}>
-                  {invoice.status === 'paid' ? (
+                <div
+                  className={`rounded-full p-1.5 ${
+                    invoice.status === "paid" ? "bg-green-100" : "bg-red-100"
+                  }`}
+                >
+                  {invoice.status === "paid" ? (
                     <CheckCircle2 className="h-3 w-3 text-green-600" />
                   ) : (
                     <XCircle className="h-3 w-3 text-red-600" />
@@ -61,10 +63,10 @@ export function HistoryTab({
                 </div>
                 <div>
                   <div className="font-medium text-sm">{invoice.description}</div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-muted-foreground text-xs">
                     {invoice.id} • {formatDate(invoice.date)}
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-muted-foreground text-xs">
                     {invoice.period} • {invoice.paymentMethod}
                   </div>
                 </div>
@@ -72,19 +74,19 @@ export function HistoryTab({
               <div className="flex items-center gap-3">
                 <div className="text-right">
                   <div className="font-medium text-sm">{formatCurrency(invoice.amount)}</div>
-                  <Badge 
-                    variant={invoice.status === 'paid' ? 'secondary' : 'destructive'}
+                  <Badge
                     className="text-xs"
+                    variant={invoice.status === "paid" ? "secondary" : "destructive"}
                   >
                     {invoice.status}
                   </Badge>
                 </div>
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onDownload(invoice.id)}
-                  disabled={loadingStates[`download-${invoice.id}`]}
                   className="h-8 w-8"
+                  disabled={loadingStates[`download-${invoice.id}`]}
+                  onClick={() => onDownload(invoice.id)}
+                  size="icon"
+                  variant="ghost"
                 >
                   {loadingStates[`download-${invoice.id}`] ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -99,4 +101,4 @@ export function HistoryTab({
       </CardContent>
     </Card>
   );
-} 
+}

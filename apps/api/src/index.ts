@@ -125,6 +125,6 @@ app.notFound((c) => {
 
 Bun.serve({
   fetch: app.fetch,
-  port: process.env.PORT || 4001,
+  port: process.env.PORT || 4000,
   idleTimeout: 30,
 });
