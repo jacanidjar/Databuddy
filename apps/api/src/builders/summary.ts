@@ -4,37 +4,37 @@
  * Builders for high-level summary metrics including today's data
  */
 
-import { createSqlBuilder, buildWhereClauses } from './utils';
+import { createSqlBuilder, buildWhereClauses } from "./utils";
 
 // Data types
 export interface SummaryData {
-  pageviews: number;
-  unique_visitors: number;
-  sessions: number;
-  bounce_rate: number;
-  avg_session_duration: number;
-  total_events: number;
+	pageviews: number;
+	unique_visitors: number;
+	sessions: number;
+	bounce_rate: number;
+	avg_session_duration: number;
+	total_events: number;
 }
 
 export interface TodayData {
-  pageviews: number;
-  visitors: number;
-  sessions: number;
-  bounce_rate: number;
+	pageviews: number;
+	visitors: number;
+	sessions: number;
+	bounce_rate: number;
 }
 
 /**
  * Creates a builder for fetching summary analytics data over a period
  */
 export function createSummaryBuilder(
-  websiteId: string,
-  startDate: string,
-  endDate: string
+	websiteId: string,
+	startDate: string,
+	endDate: string,
 ) {
-  const builder = createSqlBuilder();
+	const builder = createSqlBuilder();
 
-  // Use raw SQL to calculate bounce rate and session duration properly
-  const sql = `
+	// Use raw SQL to calculate bounce rate and session duration properly
+	const sql = `
     WITH session_metrics AS (
       SELECT
         session_id,
@@ -88,20 +88,20 @@ export function createSummaryBuilder(
     LEFT JOIN session_durations as sd ON session_metrics.session_id = sd.session_id
   `;
 
-  // Override the getSql method
-  builder.getSql = () => sql;
+	// Override the getSql method
+	builder.getSql = () => sql;
 
-  return builder;
+	return builder;
 }
 
 /**
  * Creates a builder for fetching today's analytics data
  */
 export function createTodayBuilder(websiteId: string) {
-  const builder = createSqlBuilder();
-  
-  // Use raw SQL to calculate bounce rate properly
-  const sql = `
+	const builder = createSqlBuilder();
+
+	// Use raw SQL to calculate bounce rate properly
+	const sql = `
     WITH session_metrics AS (
       SELECT
         session_id,
@@ -150,11 +150,11 @@ export function createTodayBuilder(websiteId: string) {
     FROM session_metrics
     LEFT JOIN session_durations as sd ON session_metrics.session_id = sd.session_id
   `;
-  
-  // Override the getSql method
-  builder.getSql = () => sql;
-  
-  return builder;
+
+	// Override the getSql method
+	builder.getSql = () => sql;
+
+	return builder;
 }
 
 /**
@@ -162,10 +162,10 @@ export function createTodayBuilder(websiteId: string) {
  * This allows for more accurate aggregation of today's data
  */
 export function createTodayByHourBuilder(websiteId: string) {
-  const builder = createSqlBuilder();
-  const today = new Date().toISOString().split('T')[0];
-  
-  const sql = `
+	const builder = createSqlBuilder();
+	const today = new Date().toISOString().split("T")[0];
+
+	const sql = `
     WITH hour_range AS (
       SELECT arrayJoin(arrayMap(
         h -> toDateTime('${today} 00:00:00') + (h * 3600),
@@ -244,9 +244,9 @@ export function createTodayByHourBuilder(websiteId: string) {
       hm.bounced_sessions
     ORDER BY hour_range.datetime ASC
   `;
-  
-  // Override the getSql method to return our custom query
-  builder.getSql = () => sql;
-  
-  return builder;
-} 
+
+	// Override the getSql method to return our custom query
+	builder.getSql = () => sql;
+
+	return builder;
+}

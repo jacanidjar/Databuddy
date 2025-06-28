@@ -4,54 +4,66 @@
  * Builders for session analytics metrics
  */
 
-import { createSqlBuilder } from './utils';
+import { createSqlBuilder } from "./utils";
 
 /**
  * Creates a builder for fetching session list data
  */
-export function createSessionsBuilder(websiteId: string, startDate: string, endDate: string, limit = 20) {
-  const builder = createSqlBuilder();
-  
-  builder.sb.select = {
-    session_id: 'session_id',
-    first_visit: 'MIN(time) as first_visit',
-    last_visit: 'MAX(time) as last_visit',
-    duration: 'LEAST(dateDiff(\'second\', MIN(time), MAX(time)), 28800) as duration', // Cap at 8 hours max
-    page_views: 'countIf(event_name = \'screen_view\') as page_views',
-    visitor_id: 'any(anonymous_id) as visitor_id',
-    user_agent: 'any(user_agent) as user_agent',
-    country: 'any(country) as country',
-    region: 'any(region) as region',
-    referrer: 'any(referrer) as referrer'
-  };
-  
-  builder.sb.from = 'analytics.events';
-  
-  builder.sb.where = {
-    client_filter: `client_id = '${websiteId}'`,
-    date_filter: `time >= parseDateTimeBestEffort('${startDate}') AND time <= parseDateTimeBestEffort('${endDate} 23:59:59')`
-  };
-  
-  builder.sb.groupBy = {
-    session_id: 'session_id'
-  };
-  
-  builder.sb.orderBy = {
-    first_visit: 'first_visit DESC'
-  };
-  
-  builder.sb.limit = limit;
-  
-  return builder;
+export function createSessionsBuilder(
+	websiteId: string,
+	startDate: string,
+	endDate: string,
+	limit = 20,
+) {
+	const builder = createSqlBuilder();
+
+	builder.sb.select = {
+		session_id: "session_id",
+		first_visit: "MIN(time) as first_visit",
+		last_visit: "MAX(time) as last_visit",
+		duration:
+			"LEAST(dateDiff('second', MIN(time), MAX(time)), 28800) as duration", // Cap at 8 hours max
+		page_views: "countIf(event_name = 'screen_view') as page_views",
+		visitor_id: "any(anonymous_id) as visitor_id",
+		user_agent: "any(user_agent) as user_agent",
+		country: "any(country) as country",
+		region: "any(region) as region",
+		referrer: "any(referrer) as referrer",
+	};
+
+	builder.sb.from = "analytics.events";
+
+	builder.sb.where = {
+		client_filter: `client_id = '${websiteId}'`,
+		date_filter: `time >= parseDateTimeBestEffort('${startDate}') AND time <= parseDateTimeBestEffort('${endDate} 23:59:59')`,
+	};
+
+	builder.sb.groupBy = {
+		session_id: "session_id",
+	};
+
+	builder.sb.orderBy = {
+		first_visit: "first_visit DESC",
+	};
+
+	builder.sb.limit = limit;
+
+	return builder;
 }
 
 /**
  * Creates a builder for fetching sessions with their events data
  */
-export function createSessionsWithEventsBuilder(websiteId: string, startDate: string, endDate: string, limit = 20, offset = 0) {
-  const builder = createSqlBuilder();
-  
-  const sql = `
+export function createSessionsWithEventsBuilder(
+	websiteId: string,
+	startDate: string,
+	endDate: string,
+	limit = 20,
+	offset = 0,
+) {
+	const builder = createSqlBuilder();
+
+	const sql = `
     WITH session_list AS (
       SELECT
         session_id,
@@ -112,99 +124,110 @@ export function createSessionsWithEventsBuilder(websiteId: string, startDate: st
     LEFT JOIN session_events se ON sl.session_id = se.session_id
     ORDER BY sl.first_visit DESC
   `;
-  
-  builder.getSql = () => sql;
-  
-  return builder;
+
+	builder.getSql = () => sql;
+
+	return builder;
 }
 
 /**
  * Creates a builder for fetching session detail data
  */
-export function createSessionDetailBuilder(websiteId: string, sessionId: string) {
-  const builder = createSqlBuilder();
-  
-  builder.sb.select = {
-    session_id: 'session_id',
-    first_visit: 'MIN(time) as first_visit',
-    last_visit: 'MAX(time) as last_visit',
-    duration: 'LEAST(dateDiff(\'second\', MIN(time), MAX(time)), 28800) as duration', // Cap at 8 hours max
-    page_views: 'countIf(event_name = \'screen_view\') as page_views',
-    visitor_id: 'any(anonymous_id) as visitor_id',
-    user_agent: 'any(user_agent) as user_agent',
-    country: 'any(country) as country',
-    region: 'any(region) as region',
-    referrer: 'any(referrer) as referrer',
-    browser_name: 'any(browser_name) as browser_name',
-    browser_version: 'any(browser_version) as browser_version',
-    os_name: 'any(os_name) as os_name',
-    os_version: 'any(os_version) as os_version',
-    device_type: 'any(device_type) as device_type',
-    screen_resolution: 'any(screen_resolution) as screen_resolution',
-    utm_source: 'any(utm_source) as utm_source',
-    utm_medium: 'any(utm_medium) as utm_medium',
-    utm_campaign: 'any(utm_campaign) as utm_campaign',
-    utm_content: 'any(utm_content) as utm_content',
-    utm_term: 'any(utm_term) as utm_term'
-  };
-  
-  builder.sb.from = 'analytics.events';
-  
-  builder.sb.where = {
-    client_filter: `client_id = '${websiteId}'`,
-    session_filter: `session_id = '${sessionId}'`
-  };
-  
-  builder.sb.groupBy = {
-    session_id: 'session_id'
-  };
-  
-  return builder;
+export function createSessionDetailBuilder(
+	websiteId: string,
+	sessionId: string,
+) {
+	const builder = createSqlBuilder();
+
+	builder.sb.select = {
+		session_id: "session_id",
+		first_visit: "MIN(time) as first_visit",
+		last_visit: "MAX(time) as last_visit",
+		duration:
+			"LEAST(dateDiff('second', MIN(time), MAX(time)), 28800) as duration", // Cap at 8 hours max
+		page_views: "countIf(event_name = 'screen_view') as page_views",
+		visitor_id: "any(anonymous_id) as visitor_id",
+		user_agent: "any(user_agent) as user_agent",
+		country: "any(country) as country",
+		region: "any(region) as region",
+		referrer: "any(referrer) as referrer",
+		browser_name: "any(browser_name) as browser_name",
+		browser_version: "any(browser_version) as browser_version",
+		os_name: "any(os_name) as os_name",
+		os_version: "any(os_version) as os_version",
+		device_type: "any(device_type) as device_type",
+		screen_resolution: "any(screen_resolution) as screen_resolution",
+		utm_source: "any(utm_source) as utm_source",
+		utm_medium: "any(utm_medium) as utm_medium",
+		utm_campaign: "any(utm_campaign) as utm_campaign",
+		utm_content: "any(utm_content) as utm_content",
+		utm_term: "any(utm_term) as utm_term",
+	};
+
+	builder.sb.from = "analytics.events";
+
+	builder.sb.where = {
+		client_filter: `client_id = '${websiteId}'`,
+		session_filter: `session_id = '${sessionId}'`,
+	};
+
+	builder.sb.groupBy = {
+		session_id: "session_id",
+	};
+
+	return builder;
 }
 
 /**
  * Creates a builder for fetching session events data
  */
-export function createSessionEventsBuilder(websiteId: string, sessionId: string) {
-  const builder = createSqlBuilder();
-  
-  builder.sb.select = {
-    event_id: 'id',
-    time: 'time',
-    event_name: 'event_name',
-    path: 'path',
-    url: 'url',
-    referrer: 'referrer',
-    title: 'title',
-    time_on_page: 'time_on_page',
-    screen_resolution: 'screen_resolution',
-    user_agent: 'user_agent',
-    utm_source: 'utm_source',
-    utm_medium: 'utm_medium',
-    utm_campaign: 'utm_campaign'
-  };
-  
-  builder.sb.from = 'analytics.events';
-  
-  builder.sb.where = {
-    client_filter: `client_id = '${websiteId}'`,
-    session_filter: `session_id = '${sessionId}'`
-  };
-  
-  builder.sb.orderBy = {
-    time: 'time ASC'
-  };
-  
-  return builder;
+export function createSessionEventsBuilder(
+	websiteId: string,
+	sessionId: string,
+) {
+	const builder = createSqlBuilder();
+
+	builder.sb.select = {
+		event_id: "id",
+		time: "time",
+		event_name: "event_name",
+		path: "path",
+		url: "url",
+		referrer: "referrer",
+		title: "title",
+		time_on_page: "time_on_page",
+		screen_resolution: "screen_resolution",
+		user_agent: "user_agent",
+		utm_source: "utm_source",
+		utm_medium: "utm_medium",
+		utm_campaign: "utm_campaign",
+	};
+
+	builder.sb.from = "analytics.events";
+
+	builder.sb.where = {
+		client_filter: `client_id = '${websiteId}'`,
+		session_filter: `session_id = '${sessionId}'`,
+	};
+
+	builder.sb.orderBy = {
+		time: "time ASC",
+	};
+
+	return builder;
 }
 
 /**
  * Creates a builder for fetching session duration distribution
  */
-export function createSessionDurationDistributionBuilder(websiteId: string, startDate: string, endDate: string) {
-  const builder = createSqlBuilder();
-  
-  const sql = `
+export function createSessionDurationDistributionBuilder(
+	websiteId: string,
+	startDate: string,
+	endDate: string,
+) {
+	const builder = createSqlBuilder();
+
+	const sql = `
     WITH session_durations AS (
       SELECT
         session_id,
@@ -250,20 +273,24 @@ export function createSessionDurationDistributionBuilder(websiteId: string, star
         ELSE 9
       END ASC
   `;
-  
-  // Override the getSql method to return our custom query
-  builder.getSql = () => sql;
-  
-  return builder;
+
+	// Override the getSql method to return our custom query
+	builder.getSql = () => sql;
+
+	return builder;
 }
 
 /**
  * Creates a builder for fetching session count by hour of day
  */
-export function createSessionsByHourBuilder(websiteId: string, startDate: string, endDate: string) {
-  const builder = createSqlBuilder();
-  
-  const sql = `
+export function createSessionsByHourBuilder(
+	websiteId: string,
+	startDate: string,
+	endDate: string,
+) {
+	const builder = createSqlBuilder();
+
+	const sql = `
     WITH session_hours AS (
       SELECT
         toHour(min_time) as hour_of_day,
@@ -291,20 +318,25 @@ export function createSessionsByHourBuilder(websiteId: string, startDate: string
     LEFT JOIN session_hours sh ON hours.hour_of_day = sh.hour_of_day
     ORDER BY hours.hour_of_day ASC
   `;
-  
-  // Override the getSql method to return our custom query
-  builder.getSql = () => sql;
-  
-  return builder;
+
+	// Override the getSql method to return our custom query
+	builder.getSql = () => sql;
+
+	return builder;
 }
 
 /**
  * Creates a builder for fetching bounce rate per entry page
  */
-export function createBounceRateByEntryPageBuilder(websiteId: string, startDate: string, endDate: string, limit = 10) {
-  const builder = createSqlBuilder();
-  
-  const sql = `
+export function createBounceRateByEntryPageBuilder(
+	websiteId: string,
+	startDate: string,
+	endDate: string,
+	limit = 10,
+) {
+	const builder = createSqlBuilder();
+
+	const sql = `
     WITH entry_pages AS (
       SELECT
         entry_page.session_id,
@@ -346,9 +378,9 @@ export function createBounceRateByEntryPageBuilder(websiteId: string, startDate:
     ORDER BY sessions DESC
     LIMIT ${limit}
   `;
-  
-  // Override the getSql method to return our custom query
-  builder.getSql = () => sql;
-  
-  return builder;
-} 
+
+	// Override the getSql method to return our custom query
+	builder.getSql = () => sql;
+
+	return builder;
+}

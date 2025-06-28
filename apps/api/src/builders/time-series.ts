@@ -4,21 +4,21 @@
  * Builders for time-based analytics metrics
  */
 
-import { createSqlBuilder } from './utils';
+import { createSqlBuilder } from "./utils";
 
 // Data types
 export interface EventByDate {
-  date: string;
-  pageviews: number;
-  unique_visitors: number;
-  sessions: number;
-  bounce_rate: number;
-  avg_session_duration: number;
+	date: string;
+	pageviews: number;
+	unique_visitors: number;
+	sessions: number;
+	bounce_rate: number;
+	avg_session_duration: number;
 }
 
 export interface MiniChartDataPoint {
-  date: string;
-  value: number;
+	date: string;
+	value: number;
 }
 
 /**
@@ -26,16 +26,16 @@ export interface MiniChartDataPoint {
  * Supports hourly or daily granularity
  */
 export function createEventsByDateBuilder(
-  websiteId: string, 
-  startDate: string, 
-  endDate: string, 
-  granularity: 'hourly' | 'daily' = 'daily'
+	websiteId: string,
+	startDate: string,
+	endDate: string,
+	granularity: "hourly" | "daily" = "daily",
 ) {
-  const builder = createSqlBuilder();
-  
-  // For hourly data, we need to generate hourly intervals instead of daily
-  if (granularity === 'hourly') {
-    const sql = `
+	const builder = createSqlBuilder();
+
+	// For hourly data, we need to generate hourly intervals instead of daily
+	if (granularity === "hourly") {
+		const sql = `
       WITH hour_range AS (
         SELECT arrayJoin(arrayMap(
           h -> toDateTime('${startDate} 00:00:00') + (h * 3600),
@@ -92,15 +92,15 @@ export function createEventsByDateBuilder(
       LEFT JOIN hourly_event_metrics hem ON hr.datetime = hem.event_hour
       ORDER BY hr.datetime ASC
     `;
-    
-    // Override the getSql method to return our custom query
-    builder.getSql = () => sql;
-    
-    return builder;
-  }
-  
-  // Default daily granularity query
-  const sql = `
+
+		// Override the getSql method to return our custom query
+		builder.getSql = () => sql;
+
+		return builder;
+	}
+
+	// Default daily granularity query
+	const sql = `
     WITH date_range AS (
       SELECT arrayJoin(arrayMap(
         d -> toDate('${startDate}') + d,
@@ -157,43 +157,47 @@ export function createEventsByDateBuilder(
     LEFT JOIN daily_event_metrics dem ON dr.date = dem.event_date
     ORDER BY dr.date ASC
   `;
-  
-  // Override the getSql method to return our custom query
-  builder.getSql = () => sql;
-  
-  return builder;
+
+	// Override the getSql method to return our custom query
+	builder.getSql = () => sql;
+
+	return builder;
 }
 
 /**
  * Creates a builder for fetching error timeline data
  */
-export function createErrorTimelineBuilder(websiteId: string, startDate: string, endDate: string) {
-  const builder = createSqlBuilder();
-  builder.setTable('events');
-  
-  builder.sb.select = {
-    date: 'toDate(time) as date',
-    error_type: 'error_type',
-    count: 'COUNT(*) as count'
-  };
-  
-  builder.sb.where = {
-    client_filter: `client_id = '${websiteId}'`,
-    date_filter: `time >= parseDateTimeBestEffort('${startDate}') AND time <= parseDateTimeBestEffort('${endDate} 23:59:59')`,
-    event_filter: "event_name = 'error'"
-  };
-  
-  builder.sb.groupBy = {
-    date: 'toDate(time)',
-    error_type: 'error_type'
-  };
-  
-  builder.sb.orderBy = {
-    date: 'date ASC',
-    count: 'count DESC'
-  };
-  
-  return builder;
+export function createErrorTimelineBuilder(
+	websiteId: string,
+	startDate: string,
+	endDate: string,
+) {
+	const builder = createSqlBuilder();
+	builder.setTable("events");
+
+	builder.sb.select = {
+		date: "toDate(time) as date",
+		error_type: "error_type",
+		count: "COUNT(*) as count",
+	};
+
+	builder.sb.where = {
+		client_filter: `client_id = '${websiteId}'`,
+		date_filter: `time >= parseDateTimeBestEffort('${startDate}') AND time <= parseDateTimeBestEffort('${endDate} 23:59:59')`,
+		event_filter: "event_name = 'error'",
+	};
+
+	builder.sb.groupBy = {
+		date: "toDate(time)",
+		error_type: "error_type",
+	};
+
+	builder.sb.orderBy = {
+		date: "date ASC",
+		count: "count DESC",
+	};
+
+	return builder;
 }
 
 /**
@@ -201,9 +205,9 @@ export function createErrorTimelineBuilder(websiteId: string, startDate: string,
  * Returns last 7 days of pageviews data for simple visualization
  */
 export function createMiniChartBuilder(websiteId: string) {
-  const builder = createSqlBuilder();
-  
-  const sql = `
+	const builder = createSqlBuilder();
+
+	const sql = `
     WITH date_range AS (
       SELECT arrayJoin(arrayMap(
         d -> toDate(today()) - d,
@@ -228,9 +232,9 @@ export function createMiniChartBuilder(websiteId: string) {
     LEFT JOIN daily_pageviews dp ON date_range.date = dp.event_date
     ORDER BY date_range.date ASC
   `;
-  
-  // Override the getSql method
-  builder.getSql = () => sql;
-  
-  return builder;
-} 
+
+	// Override the getSql method
+	builder.getSql = () => sql;
+
+	return builder;
+}
