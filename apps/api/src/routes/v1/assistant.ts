@@ -6,12 +6,14 @@
 
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { chQuery } from '@databuddy/db';
+import { chQuery, db, member, eq, and } from '@databuddy/db';
 import type { AppVariables } from '../../types';
 import { authMiddleware } from '../../middleware/auth';
 import { websiteAuthHook } from '../../middleware/website';
 import { logger } from '../../lib/logger';
 import OpenAI from 'openai';
+import { Autumn as autumn } from "autumn-js";
+import { cacheable } from '@databuddy/redis';
 
 const openai = new OpenAI({
   apiKey: process.env.AI_API_KEY,
@@ -71,6 +73,87 @@ export interface StreamingUpdate {
   data?: any;
   debugInfo?: Record<string, any>;
 }
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Gets the billing customer ID for autumn tracking
+ * Uses organization owner ID if in organization context, otherwise user ID
+ */
+async function getBillingCustomerId(userId: string, organizationId?: string | null): Promise<string> {
+  if (!organizationId) return userId;
+
+  if (!userId) {
+    throw new Error('User ID is required for billing customer ID');
+  }
+
+  const orgOwnerId = await getOrganizationOwnerId(organizationId);
+  return orgOwnerId || userId;
+}
+
+/**
+ * Handles autumn limit checking and tracking
+ */
+async function handleAutumnLimits(customerId: string, action: 'check' | 'track', value: number = 1) {
+  if (!customerId) {
+    logger.warn('[Assistant API] No customer ID provided for autumn limits');
+    return action === 'check' ? { allowed: true, data: null } : { success: false };
+  }
+
+  try {
+    if (action === 'check') {
+      const { data } = await autumn.check({
+        customer_id: customerId,
+        feature_id: 'assistant_message',
+      });
+
+      if (data && !data.allowed) {
+        return { allowed: false, error: "Assistant message limit exceeded" };
+      }
+
+      return { allowed: true, data };
+    } else {
+      await autumn.track({
+        customer_id: customerId,
+        feature_id: 'assistant_message',
+        value,
+      });
+      return { success: true };
+    }
+  } catch (error) {
+    logger.error(`[Assistant API] Error with autumn ${action}:`, { error });
+    // Continue without autumn if service is unavailable
+    return action === 'check' ? { allowed: true, data: null } : { success: false };
+  }
+}
+
+async function _getOrganizationOwnerId(organizationId: string): Promise<string | null> {
+  if (!organizationId) return null;
+
+  try {
+    const orgMember = await db.query.member.findFirst({
+      where: and(
+        eq(member.organizationId, organizationId),
+        eq(member.role, 'owner'),
+      ),
+      columns: { userId: true },
+    });
+
+    return orgMember?.userId || null;
+  } catch (error) {
+    logger.error('[Assistant API] Error fetching organization owner:', { error, organizationId });
+    return null;
+  }
+}
+
+const getOrganizationOwnerId = cacheable(_getOrganizationOwnerId, {
+  expireInSec: 300,
+  prefix: 'org_owner',
+  staleWhileRevalidate: true,
+  staleTime: 60
+});
 
 function validateSQL(sql: string): boolean {
   // Only block truly dangerous operations - don't block safe keywords like CASE, WHEN, etc.
@@ -354,6 +437,22 @@ assistantRouter.post('/stream', async (c) => {
     return c.json({ error: 'User not found' }, 401);
   }
 
+  // Check assistant message limits with autumn
+  try {
+    const customerId = await getBillingCustomerId(user.id, (website as any).organizationId);
+    const limitCheck = await handleAutumnLimits(customerId, 'check');
+
+    if (!limitCheck.allowed) {
+      return c.json({
+        error: limitCheck.error || "Assistant message limit exceeded",
+        code: 'ASSISTANT_LIMIT_EXCEEDED'
+      }, 429);
+    }
+  } catch (error) {
+    logger.error('[Assistant API] Error checking autumn limits:', { error });
+    // Continue without autumn if service is unavailable
+  }
+
   // const rateLimitPassed = await checkRateLimit(user.id);
   // if (!rateLimitPassed) {
   //   return c.json({ 
@@ -446,6 +545,14 @@ assistantRouter.post('/stream', async (c) => {
         });
 
         if (parsedAiJson.response_type === 'text') {
+          // Track successful assistant message usage
+          try {
+            const customerId = await getBillingCustomerId(user.id, (website as any).organizationId);
+            await handleAutumnLimits(customerId, 'track', 1);
+          } catch (error) {
+            logger.error('[Assistant API] Error tracking autumn usage:', { error });
+          }
+
           sendUpdate({
             type: 'complete',
             content: parsedAiJson.text_response || "Here's the answer to your question.",
@@ -488,6 +595,14 @@ assistantRouter.post('/stream', async (c) => {
                 }
               }
 
+              // Track successful assistant message usage
+              try {
+                const customerId = await getBillingCustomerId(user.id, (website as any).organizationId);
+                await handleAutumnLimits(customerId, 'track', 1);
+              } catch (error) {
+                logger.error('[Assistant API] Error tracking autumn usage:', { error });
+              }
+
               sendUpdate({
                 type: 'complete',
                 content: parsedAiJson.text_response || `${parsedAiJson.metric_label || 'Result'}: ${typeof metricValue === 'number' ? metricValue.toLocaleString() : metricValue}`,
@@ -503,6 +618,14 @@ assistantRouter.post('/stream', async (c) => {
             } catch (queryError: any) {
               debugLog("❌ Metric SQL execution error", { error: queryError.message, sql });
 
+              // Track successful assistant message usage (even with SQL error, we provided a response)
+              try {
+                const customerId = await getBillingCustomerId(user.id, (website as any).organizationId);
+                await handleAutumnLimits(customerId, 'track', 1);
+              } catch (error) {
+                logger.error('[Assistant API] Error tracking autumn usage:', { error });
+              }
+
               sendUpdate({
                 type: 'complete',
                 content: parsedAiJson.text_response || `${parsedAiJson.metric_label || 'Result'}: ${typeof parsedAiJson.metric_value === 'number' ? parsedAiJson.metric_value.toLocaleString() : parsedAiJson.metric_value}`,
@@ -516,6 +639,14 @@ assistantRouter.post('/stream', async (c) => {
               });
             }
           } else {
+            // Track successful assistant message usage
+            try {
+              const customerId = await getBillingCustomerId(user.id, (website as any).organizationId);
+              await handleAutumnLimits(customerId, 'track', 1);
+            } catch (error) {
+              logger.error('[Assistant API] Error tracking autumn usage:', { error });
+            }
+
             sendUpdate({
               type: 'complete',
               content: parsedAiJson.text_response || `${parsedAiJson.metric_label || 'Result'}: ${typeof parsedAiJson.metric_value === 'number' ? parsedAiJson.metric_value.toLocaleString() : parsedAiJson.metric_value}`,
@@ -565,6 +696,14 @@ assistantRouter.post('/stream', async (c) => {
             const finalContent = queryData.length > 0
               ? `Found ${queryData.length} data points. Displaying as a ${parsedAiJson.chart_type?.replace(/_/g, ' ') || 'chart'}.`
               : "No data found for your query.";
+
+            // Track successful assistant message usage
+            try {
+              const customerId = await getBillingCustomerId(user.id, (website as any).organizationId);
+              await handleAutumnLimits(customerId, 'track', 1);
+            } catch (error) {
+              logger.error('[Assistant API] Error tracking autumn usage:', { error });
+            }
 
             sendUpdate({
               type: 'complete',

@@ -1,0 +1,48 @@
+# Use Bun base image
+FROM oven/bun:alpine as base
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies and database clients
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    curl \
+    ca-certificates \
+    gnupg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install ClickHouse client
+RUN curl -fsSL 'https://packages.clickhouse.com/rpm/lts/repodata/repomd.xml.key' | gpg --dearmor -o /usr/share/keyrings/clickhouse-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/clickhouse-keyring.gpg] https://packages.clickhouse.com/deb stable main" | tee /etc/apt/sources.list.d/clickhouse.list \
+    && apt-get update \
+    && apt-get install -y clickhouse-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy package files
+COPY package.json bun.lock* ./
+COPY apps/processor/package.json ./apps/processor/
+COPY packages/*/package.json ./packages/*/
+
+# Install dependencies
+RUN bun install --frozen-lockfile
+
+# Copy source code
+COPY . .
+
+# Create backup directory
+RUN mkdir -p /app/backups
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV BACKUP_DIR=/app/backups
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/ || exit 1
+
+# Start the processor
+CMD ["bun", "run", "apps/processor/src/index.ts"] 
