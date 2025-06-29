@@ -18,7 +18,6 @@ import {
 	VALIDATION_LIMITS,
 } from "../utils/validation";
 import { redis } from "@databuddy/redis";
-import { bots } from "@databuddy/shared";
 import crypto from "node:crypto";
 import { logger } from "../lib/logger";
 
@@ -96,15 +95,12 @@ async function validateRequest(body: any, query: any, request: Request) {
 					feature_id: "events",
 					value: 1,
 				})
-				.then(() => {
-					console.timeEnd("autumn.track");
-				})
+				.then(() => {})
 				.catch((err) => {
 					logger.error("Failed to track autumn event", {
 						error: err as Error,
 						ownerId: website.ownerId,
 					});
-					console.timeEnd("autumn.track");
 				});
 		} else {
 			await logBlockedTraffic(
@@ -211,15 +207,12 @@ async function insertError(errorData: any, clientId: string): Promise<void> {
 			values: [errorEvent],
 			format: "JSONEachRow",
 		})
-		.then(() => {
-			console.timeEnd(`clickhouse.insert:error:${eventId}`);
-		})
+		.then(() => {})
 		.catch((err) => {
 			logger.error("Failed to insert error event", {
 				error: err as Error,
 				eventId,
 			});
-			console.timeEnd(`clickhouse.insert:error:${eventId}`);
 		});
 }
 
@@ -263,15 +256,12 @@ async function insertWebVitals(
 			values: [webVitalsEvent],
 			format: "JSONEachRow",
 		})
-		.then(() => {
-			console.timeEnd(`clickhouse.insert:web_vitals:${eventId}`);
-		})
+		.then(() => {})
 		.catch((err) => {
 			logger.error("Failed to insert web vitals event", {
 				error: err as Error,
 				eventId,
 			});
-			console.timeEnd(`clickhouse.insert:web_vitals:${eventId}`);
 		});
 }
 
@@ -406,15 +396,12 @@ async function insertTrackEvent(
 			values: [trackEvent],
 			format: "JSONEachRow",
 		})
-		.then(() => {
-			console.timeEnd(`clickhouse.insert:track:${eventId}`);
-		})
+		.then(() => {})
 		.catch((err) => {
 			logger.error("Failed to insert track event", {
 				error: err as Error,
 				eventId,
 			});
-			console.timeEnd(`clickhouse.insert:track:${eventId}`);
 		});
 }
 
@@ -512,12 +499,9 @@ async function logBlockedTraffic(
 				values: [blockedEvent],
 				format: "JSONEachRow",
 			})
-			.then(() => {
-				console.timeEnd("clickhouse.insert:blocked_traffic");
-			})
+			.then(() => {})
 			.catch((err) => {
 				logger.error("Failed to log blocked traffic", { error: err as Error });
-				console.timeEnd("clickhouse.insert:blocked_traffic");
 			});
 	} catch (error) {
 		logger.error("Failed to log blocked traffic", { error: error as Error });
@@ -589,16 +573,23 @@ const app = new Elysia()
 
 			const { clientId, userAgent, ip } = validation;
 
+			console.time("anonymousId_salting_batch");
 			const salt = await getDailySalt();
 			for (const event of body) {
 				if (event.anonymous_id) {
 					event.anonymous_id = saltAnonymousId(event.anonymous_id, salt);
 				}
 			}
+			console.timeEnd("anonymousId_salting_batch");
 
 			const results = [];
 			const processingPromises = body.map(async (event: any) => {
 				const eventType = event.type || "track";
+				const eventId = event.eventId || event.payload?.eventId;
+				const timerLabel = `batch_event:${eventType}:${
+					eventId || randomUUID()
+				}`;
+				console.time(timerLabel);
 				try {
 					if (eventType === "track") {
 						insertTrackEvent(event, clientId, userAgent, ip);
@@ -636,6 +627,8 @@ const app = new Elysia()
 						eventType,
 						error: String(error),
 					};
+				} finally {
+					console.timeEnd(timerLabel);
 				}
 			});
 
