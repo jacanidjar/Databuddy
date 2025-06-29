@@ -573,23 +573,17 @@ const app = new Elysia()
 
 			const { clientId, userAgent, ip } = validation;
 
-			console.time("anonymousId_salting_batch");
 			const salt = await getDailySalt();
 			for (const event of body) {
 				if (event.anonymous_id) {
 					event.anonymous_id = saltAnonymousId(event.anonymous_id, salt);
 				}
 			}
-			console.timeEnd("anonymousId_salting_batch");
 
 			const results = [];
 			const processingPromises = body.map(async (event: any) => {
 				const eventType = event.type || "track";
-				const eventId = event.eventId || event.payload?.eventId;
-				const timerLabel = `batch_event:${eventType}:${
-					eventId || randomUUID()
-				}`;
-				console.time(timerLabel);
+
 				try {
 					if (eventType === "track") {
 						insertTrackEvent(event, clientId, userAgent, ip);
@@ -627,8 +621,6 @@ const app = new Elysia()
 						eventType,
 						error: String(error),
 					};
-				} finally {
-					console.timeEnd(timerLabel);
 				}
 			});
 
