@@ -26,9 +26,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { UserActions, RoleActions } from "./user-actions";
-import { DomainActions } from "./domain-actions";
 import { WebsiteActions } from "./website-actions";
-import { AddDomainForm } from "./add-domain-form";
 import { AddWebsiteForm } from "./add-website-form";
 import { Analytics } from "./analytics";
 
@@ -46,13 +44,7 @@ interface UserWithRelations {
   deletedAt: string | null;
   role: 'ADMIN' | 'USER' | 'EARLY_ADOPTER' | 'INVESTOR' | 'BETA_TESTER' | 'GUEST';
   twoFactorEnabled: boolean | null;
-  domains: Array<{
-    id: string;
-    name: string;
-    verificationStatus: 'PENDING' | 'VERIFIED' | 'FAILED';
-    verifiedAt: string | null;
-    createdAt: string;
-  }>;
+
   websites: Array<{
     id: string;
     name: string | null;
@@ -168,12 +160,8 @@ export default async function UserProfilePage({
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="domains" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="domains" className="flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              Domains ({userData.domains.length})
-            </TabsTrigger>
+        <Tabs defaultValue="websites" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="websites" className="flex items-center gap-2">
               <Webhook className="h-4 w-4" />
               Websites ({userData.websites.length})
@@ -191,71 +179,6 @@ export default async function UserProfilePage({
               Settings
             </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="domains">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Domains</CardTitle>
-                    <CardDescription>Manage user's domains and DNS settings</CardDescription>
-                  </div>
-                  <AddDomainForm userId={userData.id} />
-                </div>
-              </CardHeader>
-              <CardContent>
-                {userData.domains.length > 0 ? (
-                  <div className="grid gap-4">
-                    {userData.domains.map((domain) => (
-                      <div key={domain.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <Globe className="h-5 w-5 text-muted-foreground" />
-                          <div>
-                            <div className="font-medium">{domain.name}</div>
-                            <div className="text-sm text-muted-foreground">
-                              Added {format(new Date(domain.createdAt), "MMM d, yyyy")}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Badge variant={
-                            domain.verificationStatus === "VERIFIED" ? "default" :
-                              domain.verificationStatus === "PENDING" ? "secondary" : "destructive"
-                          } className="gap-1">
-                            {domain.verificationStatus === "VERIFIED" ? (
-                              <>
-                                <BadgeCheck className="h-3 w-3" />
-                                Verified
-                              </>
-                            ) : domain.verificationStatus === "PENDING" ? (
-                              <>
-                                <AlertCircle className="h-3 w-3" />
-                                Pending
-                              </>
-                            ) : (
-                              <>
-                                <AlertCircle className="h-3 w-3" />
-                                Failed
-                              </>
-                            )}
-                          </Badge>
-                          <DomainActions domain={domain} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Globe className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No Domains Found</h3>
-                    <p className="text-muted-foreground mb-4">
-                      This user hasn't added any domains yet.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="websites">
             <Card>
@@ -279,9 +202,6 @@ export default async function UserProfilePage({
                             <div className="font-medium">{website.name || website.domain}</div>
                             <div className="text-sm text-muted-foreground">
                               {website.domain} • Added {format(new Date(website.createdAt), "MMM d, yyyy")}
-                              {/* {website.domainId && (
-                                <span className="text-xs text-blue-600 ml-2">↗ Linked to domain</span>
-                              )} */}
                             </div>
                           </div>
                         </div>

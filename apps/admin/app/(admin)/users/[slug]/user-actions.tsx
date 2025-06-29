@@ -35,13 +35,7 @@ interface UserActionsProps {
     deletedAt: string | null;
     role: 'ADMIN' | 'USER' | 'EARLY_ADOPTER' | 'INVESTOR' | 'BETA_TESTER' | 'GUEST';
     twoFactorEnabled: boolean | null;
-    domains: Array<{
-      id: string;
-      name: string;
-      verificationStatus: 'PENDING' | 'VERIFIED' | 'FAILED';
-      verifiedAt: string | null;
-      createdAt: string;
-    }>;
+
     websites: Array<{
       id: string;
       name: string | null;
@@ -86,7 +80,7 @@ export function UserActions({ user }: UserActionsProps) {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {user.status === 'SUSPENDED' ? (
-            <DropdownMenuItem 
+            <DropdownMenuItem
               className="text-green-600"
               onClick={async () => {
                 const result = await updateUserStatus(user.id, 'ACTIVE');
@@ -101,7 +95,7 @@ export function UserActions({ user }: UserActionsProps) {
               Reactivate Account
             </DropdownMenuItem>
           ) : (
-            <DropdownMenuItem 
+            <DropdownMenuItem
               className="text-red-600"
               onClick={async () => {
                 const result = await updateUserStatus(user.id, 'SUSPENDED');
@@ -135,7 +129,7 @@ export function RoleActions({ user }: UserActionsProps) {
     }
   };
 
-  const roles: Array<{value: 'ADMIN' | 'USER' | 'EARLY_ADOPTER' | 'INVESTOR' | 'BETA_TESTER' | 'GUEST', label: string}> = [
+  const roles: Array<{ value: 'ADMIN' | 'USER' | 'EARLY_ADOPTER' | 'INVESTOR' | 'BETA_TESTER' | 'GUEST', label: string }> = [
     { value: 'ADMIN', label: 'Admin' },
     { value: 'USER', label: 'User' },
     { value: 'EARLY_ADOPTER', label: 'Early Adopter' },

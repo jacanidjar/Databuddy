@@ -7,7 +7,6 @@
     "---Introduction---",
     "index",
     "getting-started",
-    "domain-verification",
     "---Implementation---",
     "sdk",
     "Integrations",
@@ -21,4 +20,4 @@
     "---Important---",
     "security"
   ]
-} 
+}
