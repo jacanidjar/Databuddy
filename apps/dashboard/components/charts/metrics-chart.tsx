@@ -2,26 +2,20 @@ import {
   Eye,
   LineChart,
   MousePointer,
-  RotateCcw,
   TrendingUp,
   Users,
-  ZoomIn,
-  ZoomOut,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
-  Brush,
   CartesianGrid,
   Legend,
-  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { SkeletonChart } from "./skeleton-chart";
@@ -151,7 +145,6 @@ interface MetricsChartProps {
   title?: string;
   description?: string;
   className?: string;
-  currentTime?: string;
 }
 
 export function MetricsChart({
@@ -161,7 +154,6 @@ export function MetricsChart({
   title,
   description,
   className,
-  currentTime,
 }: MetricsChartProps) {
   const chartData = useMemo(() => data || [], [data]);
 
@@ -408,27 +400,6 @@ export function MetricsChart({
                   stroke={METRIC_COLORS.sessions.primary}
                   strokeWidth={2.5}
                   type="monotone"
-                  yAxisId="left"
-                />
-              )}
-
-              {/* Current Time Reference Line */}
-              {currentTime && (
-                <ReferenceLine
-                  label={{
-                    value: "Now",
-                    position: "top",
-                    style: {
-                      fontSize: "11px",
-                      fontWeight: 600,
-                      fill: "#ef4444",
-                      textAnchor: "middle",
-                    },
-                  }}
-                  stroke="#ef4444"
-                  strokeDasharray="5 5"
-                  strokeWidth={2}
-                  x={currentTime}
                   yAxisId="left"
                 />
               )}
