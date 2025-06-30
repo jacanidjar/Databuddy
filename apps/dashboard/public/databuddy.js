@@ -403,7 +403,7 @@
         if (success) {
           return { success: true };
         }
-      } catch (e) {}
+      } catch (e) { }
 
       return null;
     }
@@ -476,7 +476,7 @@
         if (beaconResult) {
           return beaconResult;
         }
-      } catch (e) {}
+      } catch (e) { }
 
       return this.send(payload);
     }
@@ -515,7 +515,7 @@
             if (success) {
               return { success: true };
             }
-          } catch (e) {}
+          } catch (e) { }
         }
 
         return null;
@@ -667,7 +667,7 @@
           try {
             const linkUrl = new URL(link.href);
             if (linkUrl.origin === window.location.origin) this.isInternalNavigation = true;
-          } catch (err) {}
+          } catch (err) { }
         }
       });
 
@@ -791,7 +791,7 @@
               observer.observe({ type, buffered: true });
               this.webVitalObservers.push(observer);
             }
-          } catch (e) {}
+          } catch (e) { }
         };
 
         observe("paint", (entries) => {
@@ -841,7 +841,7 @@
         window.addEventListener("pagehide", this.webVitalsPageHideHandler, { once: true });
 
         this.webVitalsReportTimeoutId = setTimeout(report, 10_000);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     getConnectionInfo() {
@@ -937,7 +937,7 @@
         if (beaconResult) {
           return beaconResult;
         }
-      } catch (e) {}
+      } catch (e) { }
 
       return this.send(errorEvent);
     }
@@ -970,7 +970,7 @@
         if (beaconResult) {
           return beaconResult;
         }
-      } catch (e) {}
+      } catch (e) { }
 
       return this.send(webVitalsEvent);
     }
@@ -1031,7 +1031,7 @@
                       r.getAttribute("title"),
                   });
                 }
-              } catch (e) {}
+              } catch (e) { }
             }
           }
         });
@@ -1150,22 +1150,22 @@
       ) {
         // Set up no-op functions for compatibility
         window.databuddy = {
-          track: () => {},
-          screenView: () => {},
-          clear: () => {},
-          flush: () => {},
-          setGlobalProperties: () => {},
-          trackCustomEvent: () => {},
+          track: () => { },
+          screenView: () => { },
+          clear: () => { },
+          flush: () => { },
+          setGlobalProperties: () => { },
+          trackCustomEvent: () => { },
           options: { disabled: true },
         };
 
         window.db = {
-          track: () => {},
-          screenView: () => {},
-          clear: () => {},
-          flush: () => {},
-          setGlobalProperties: () => {},
-          trackCustomEvent: () => {},
+          track: () => { },
+          screenView: () => { },
+          clear: () => { },
+          flush: () => { },
+          setGlobalProperties: () => { },
+          trackCustomEvent: () => { },
         };
 
         return;
@@ -1225,7 +1225,7 @@
             urlParams[key] = value;
           }
         });
-      } catch (e) {}
+      } catch (e) { }
 
       const config = {
         ...globalConfig,
@@ -1334,7 +1334,7 @@
         window.databuddy.options.disabled = true;
 
         // Override methods to no-ops
-        const noop = () => {};
+        const noop = () => { };
         window.databuddy.track = noop;
         window.databuddy.screenView = noop;
         window.databuddy.trackCustomEvent = noop;
@@ -1344,7 +1344,7 @@
       }
 
       if (window.db) {
-        const noop = () => {};
+        const noop = () => { };
         window.db.track = noop;
         window.db.screenView = noop;
         window.db.trackCustomEvent = noop;

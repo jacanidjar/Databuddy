@@ -16,17 +16,45 @@ import { Autumn as autumn } from "autumn-js";
 import { cacheable } from '@databuddy/redis';
 import { AIResponseJsonSchema, enhancedAnalysisPrompt } from '../../prompts/assistant';
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_API_KEY,
-  baseURL: 'https://openrouter.ai/api/v1',
-});
+// ============================================================================
+// TYPES
+// ============================================================================
 
 export interface StreamingUpdate {
   type: 'thinking' | 'progress' | 'complete' | 'error';
   content: string;
-  data?: any;
-  debugInfo?: Record<string, any>;
+  data?: Record<string, unknown>;
+  debugInfo?: Record<string, unknown>;
 }
+
+interface AutumnCheckResult {
+  allowed: boolean;
+  error?: string;
+  data: unknown | null;
+}
+
+interface AutumnTrackResult {
+  success: boolean;
+}
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const OPENAI_CONFIG = {
+  apiKey: process.env.AI_API_KEY,
+  baseURL: 'https://openrouter.ai/api/v1',
+} as const;
+
+const FORBIDDEN_SQL_KEYWORDS = [
+  'INSERT INTO', 'UPDATE SET', 'DELETE FROM', 'DROP TABLE', 'DROP DATABASE',
+  'CREATE TABLE', 'CREATE DATABASE', 'ALTER TABLE', 'EXEC ', 'EXECUTE ',
+  'TRUNCATE', 'MERGE', 'BULK', 'RESTORE', 'BACKUP'
+] as const;
+
+const AI_MODEL = 'google/gemini-2.0-flash-001' as const;
+
+const openai = new OpenAI(OPENAI_CONFIG);
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -50,10 +78,16 @@ async function getBillingCustomerId(userId: string, organizationId?: string | nu
 /**
  * Handles autumn limit checking and tracking
  */
-async function handleAutumnLimits(customerId: string, action: 'check' | 'track', value: number = 1) {
+async function handleAutumnLimits(
+  customerId: string,
+  action: 'check' | 'track',
+  value: number = 1
+): Promise<AutumnCheckResult | AutumnTrackResult> {
   if (!customerId) {
     logger.warn('[Assistant API] No customer ID provided for autumn limits');
-    return action === 'check' ? { allowed: true, data: null } : { success: false };
+    return action === 'check'
+      ? { allowed: true, data: null } as AutumnCheckResult
+      : { success: false } as AutumnTrackResult;
   }
 
   try {
@@ -63,23 +97,27 @@ async function handleAutumnLimits(customerId: string, action: 'check' | 'track',
         feature_id: 'assistant_message',
       });
 
-      if (data && !data.allowed) {
-        return { allowed: false, error: "Assistant message limit exceeded" };
-      }
+      const result: AutumnCheckResult = {
+        allowed: data?.allowed ?? true,
+        data,
+        ...(data?.allowed === false && { error: "Assistant message limit exceeded" })
+      };
 
-      return { allowed: true, data };
-    } else {
-      await autumn.track({
-        customer_id: customerId,
-        feature_id: 'assistant_message',
-        value,
-      });
-      return { success: true };
+      return result;
     }
+
+    await autumn.track({
+      customer_id: customerId,
+      feature_id: 'assistant_message',
+      value,
+    });
+    return { success: true } as AutumnTrackResult;
   } catch (error) {
     logger.error(`[Assistant API] Error with autumn ${action}:`, { error });
     // Continue without autumn if service is unavailable
-    return action === 'check' ? { allowed: true, data: null } : { success: false };
+    return action === 'check'
+      ? { allowed: true, data: null } as AutumnCheckResult
+      : { success: false } as AutumnTrackResult;
   }
 }
 
@@ -110,16 +148,10 @@ const getOrganizationOwnerId = cacheable(_getOrganizationOwnerId, {
 });
 
 function validateSQL(sql: string): boolean {
-  // Only block truly dangerous operations - don't block safe keywords like CASE, WHEN, etc.
-  const forbiddenKeywords = [
-    'INSERT INTO', 'UPDATE SET', 'DELETE FROM', 'DROP TABLE', 'DROP DATABASE',
-    'CREATE TABLE', 'CREATE DATABASE', 'ALTER TABLE', 'EXEC ', 'EXECUTE ',
-    'TRUNCATE', 'MERGE', 'BULK', 'RESTORE', 'BACKUP'
-  ];
   const upperSQL = sql.toUpperCase();
 
   // Check for dangerous keyword patterns
-  for (const keyword of forbiddenKeywords) {
+  for (const keyword of FORBIDDEN_SQL_KEYWORDS) {
     if (upperSQL.includes(keyword)) return false;
   }
 
@@ -133,7 +165,7 @@ function validateSQL(sql: string): boolean {
   return trimmed.startsWith('SELECT') || trimmed.startsWith('WITH');
 }
 
-function debugLog(step: string, data: any) {
+function debugLog(step: string, data: unknown): void {
   logger.info(`🔍 [AI-Assistant] ${step}`, { step, data });
 }
 
@@ -141,10 +173,37 @@ function createThinkingStep(step: string): string {
   return `🧠 ${step}`;
 }
 
+async function trackAssistantUsage(userId: string, organizationId: string | null): Promise<void> {
+  try {
+    const customerId = await getBillingCustomerId(userId, organizationId);
+    await handleAutumnLimits(customerId, 'track', 1);
+  } catch (error) {
+    logger.error('[Assistant API] Error tracking autumn usage:', { error });
+  }
+}
+
+async function executeQuery(sql: string): Promise<unknown[]> {
+  const queryStart = Date.now();
+  const result = await chQuery(sql);
+  const queryTime = Date.now() - queryStart;
+
+  debugLog("Query execution completed", { timeTaken: `${queryTime}ms`, resultCount: result.length });
+
+  return result;
+}
+
+// ============================================================================
+// ROUTER SETUP
+// ============================================================================
+
 export const assistantRouter = new Hono<{ Variables: AppVariables }>();
 
 assistantRouter.use('*', authMiddleware);
 assistantRouter.use('*', websiteAuthHook({ website: ["read"] }));
+
+// ============================================================================
+// ROUTE HANDLERS
+// ============================================================================
 
 /**
  * Process AI request with streaming updates
@@ -155,11 +214,10 @@ assistantRouter.post('/stream', async (c) => {
   const website = c.get('website');
   const user = c.get('user');
 
-  if (!website || !website.id) {
+  if (!website?.id) {
     return c.json({ error: 'Website not found' }, 404);
   }
 
-  // Check rate limit
   if (!user) {
     return c.json({ error: 'User not found' }, 401);
   }
@@ -169,7 +227,7 @@ assistantRouter.post('/stream', async (c) => {
     const customerId = await getBillingCustomerId(user.id, (website as any).organizationId);
     const limitCheck = await handleAutumnLimits(customerId, 'check');
 
-    if (!limitCheck.allowed) {
+    if ('allowed' in limitCheck && !limitCheck.allowed) {
       return c.json({
         error: limitCheck.error || "Assistant message limit exceeded",
         code: 'ASSISTANT_LIMIT_EXCEEDED'
@@ -177,20 +235,11 @@ assistantRouter.post('/stream', async (c) => {
     }
   } catch (error) {
     logger.error('[Assistant API] Error checking autumn limits:', { error });
-    // Continue without autumn if service is unavailable
   }
-
-  // const rateLimitPassed = await checkRateLimit(user.id);
-  // if (!rateLimitPassed) {
-  //   return c.json({ 
-  //     error: 'Rate limit exceeded. Please wait before making another request.',
-  //     code: 'RATE_LIMIT_EXCEEDED' 
-  //   }, 429);
-  // }
 
   const websiteHostname = website.domain;
   const startTime = Date.now();
-  const debugInfo: Record<string, any> = {};
+  const debugInfo: Record<string, unknown> = {};
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -206,17 +255,11 @@ assistantRouter.post('/stream', async (c) => {
         }
 
         const aiStart = Date.now();
-
         const fullPrompt = enhancedAnalysisPrompt(message, website_id, websiteHostname, context?.previousMessages);
 
         const completion = await openai.chat.completions.create({
-          model: 'google/gemini-2.0-flash-001',
-          messages: [
-            {
-              role: 'system',
-              content: fullPrompt
-            }
-          ],
+          model: AI_MODEL,
+          messages: [{ role: 'system', content: fullPrompt }],
           temperature: 0.1,
           response_format: { type: 'json_object' }
         });
@@ -229,12 +272,7 @@ assistantRouter.post('/stream', async (c) => {
         let parsedAiJson: z.infer<typeof AIResponseJsonSchema>;
         try {
           const cleanedResponse = aiResponseText.trim().replace(/```json\n?/g, '').replace(/```\n?/g, '');
-          debugLog("🧹 Cleaned AI response", { cleanedResponse });
-
-          const jsonParsed = JSON.parse(cleanedResponse);
-          debugLog("📋 JSON parsed successfully", { jsonParsed });
-
-          parsedAiJson = AIResponseJsonSchema.parse(jsonParsed);
+          parsedAiJson = AIResponseJsonSchema.parse(JSON.parse(cleanedResponse));
           debugLog("✅ AI JSON response parsed", parsedAiJson);
         } catch (parseError) {
           debugLog("❌ AI JSON parsing failed", {
@@ -242,6 +280,7 @@ assistantRouter.post('/stream', async (c) => {
             rawText: aiResponseText,
             errorMessage: parseError instanceof Error ? parseError.message : 'Unknown error'
           });
+
           sendUpdate({
             type: 'error',
             content: "AI response parsing failed. Please try rephrasing.",
@@ -255,223 +294,64 @@ assistantRouter.post('/stream', async (c) => {
           return;
         }
 
-        if (parsedAiJson.thinking_steps && parsedAiJson.thinking_steps.length > 0) {
+        // Process thinking steps
+        if (parsedAiJson.thinking_steps?.length) {
           for (const step of parsedAiJson.thinking_steps) {
-            sendUpdate({
-              type: 'thinking',
-              content: createThinkingStep(step),
-            });
-            // A short delay to make the steps appear sequentially
+            sendUpdate({ type: 'thinking', content: createThinkingStep(step) });
             await new Promise(resolve => setTimeout(resolve, 200));
           }
         }
 
-        if (parsedAiJson.response_type === 'text') {
-          // Track successful assistant message usage
-          try {
-            const customerId = await getBillingCustomerId(user.id, (website as any).organizationId);
-            await handleAutumnLimits(customerId, 'track', 1);
-          } catch (error) {
-            logger.error('[Assistant API] Error tracking autumn usage:', { error });
-          }
+        // Handle different response types
+        switch (parsedAiJson.response_type) {
+          case 'text':
+            await trackAssistantUsage(user.id, (website as any).organizationId);
+            sendUpdate({
+              type: 'complete',
+              content: parsedAiJson.text_response || "Here's the answer to your question.",
+              data: { hasVisualization: false, responseType: 'text' },
+              debugInfo: (user as any).role === 'ADMIN' ? debugInfo : undefined
+            });
+            break;
 
-          sendUpdate({
-            type: 'complete',
-            content: parsedAiJson.text_response || "Here's the answer to your question.",
-            data: {
-              hasVisualization: false,
-              responseType: 'text'
-            },
-            debugInfo: (user as any).role === 'ADMIN' ? debugInfo : undefined
-          });
-          controller.close();
-          return;
-        }
+          case 'metric':
+            await handleMetricResponse(parsedAiJson, user, website, sendUpdate, debugInfo);
+            break;
 
-        if (parsedAiJson.response_type === 'metric') {
-          if (parsedAiJson.sql) {
-            const sql = parsedAiJson.sql;
-            console.log('Metric SQL:', sql);
-            if (!validateSQL(sql)) {
+          case 'chart':
+            if (parsedAiJson.sql) {
+              await handleChartResponse(parsedAiJson, user, website, startTime, aiTime, sendUpdate, debugInfo);
+            } else {
               sendUpdate({
                 type: 'error',
-                content: "Generated query failed security validation.",
-                debugInfo: (user as any).role === 'ADMIN' ? debugInfo : undefined
-              });
-              controller.close();
-              return;
-            }
-
-            try {
-              const queryStart = Date.now();
-              const queryData = await chQuery(sql);
-              const queryTime = Date.now() - queryStart;
-
-              let metricValue = parsedAiJson.metric_value;
-              if (queryData.length > 0 && queryData[0]) {
-                const firstRow = queryData[0];
-                const valueKey = Object.keys(firstRow).find(key => typeof firstRow[key] === 'number') ||
-                  Object.keys(firstRow)[0];
-                if (valueKey) {
-                  metricValue = firstRow[valueKey];
-                }
-              }
-
-              // Track successful assistant message usage
-              try {
-                const customerId = await getBillingCustomerId(user.id, (website as any).organizationId);
-                await handleAutumnLimits(customerId, 'track', 1);
-              } catch (error) {
-                logger.error('[Assistant API] Error tracking autumn usage:', { error });
-              }
-
-              sendUpdate({
-                type: 'complete',
-                content: parsedAiJson.text_response || `${parsedAiJson.metric_label || 'Result'}: ${typeof metricValue === 'number' ? metricValue.toLocaleString() : metricValue}`,
-                data: {
-                  hasVisualization: false,
-                  responseType: 'metric',
-                  metricValue: metricValue,
-                  metricLabel: parsedAiJson.metric_label
-                },
-                debugInfo: (user as any).role === 'ADMIN' ? debugInfo : undefined
-              });
-
-            } catch (queryError: any) {
-              debugLog("❌ Metric SQL execution error", { error: queryError.message, sql });
-
-              // Track successful assistant message usage (even with SQL error, we provided a response)
-              try {
-                const customerId = await getBillingCustomerId(user.id, (website as any).organizationId);
-                await handleAutumnLimits(customerId, 'track', 1);
-              } catch (error) {
-                logger.error('[Assistant API] Error tracking autumn usage:', { error });
-              }
-
-              sendUpdate({
-                type: 'complete',
-                content: parsedAiJson.text_response || `${parsedAiJson.metric_label || 'Result'}: ${typeof parsedAiJson.metric_value === 'number' ? parsedAiJson.metric_value.toLocaleString() : parsedAiJson.metric_value}`,
-                data: {
-                  hasVisualization: false,
-                  responseType: 'metric',
-                  metricValue: parsedAiJson.metric_value,
-                  metricLabel: parsedAiJson.metric_label
-                },
+                content: "Invalid chart configuration.",
                 debugInfo: (user as any).role === 'ADMIN' ? debugInfo : undefined
               });
             }
-          } else {
-            // Track successful assistant message usage
-            try {
-              const customerId = await getBillingCustomerId(user.id, (website as any).organizationId);
-              await handleAutumnLimits(customerId, 'track', 1);
-            } catch (error) {
-              logger.error('[Assistant API] Error tracking autumn usage:', { error });
-            }
+            break;
 
-            sendUpdate({
-              type: 'complete',
-              content: parsedAiJson.text_response || `${parsedAiJson.metric_label || 'Result'}: ${typeof parsedAiJson.metric_value === 'number' ? parsedAiJson.metric_value.toLocaleString() : parsedAiJson.metric_value}`,
-              data: {
-                hasVisualization: false,
-                responseType: 'metric',
-                metricValue: parsedAiJson.metric_value,
-                metricLabel: parsedAiJson.metric_label
-              },
-              debugInfo: (user as any).role === 'ADMIN' ? debugInfo : undefined
-            });
-          }
-          controller.close();
-          return;
-        }
-
-        if (parsedAiJson.response_type === 'chart' && parsedAiJson.sql) {
-          const sql = parsedAiJson.sql;
-          console.log(sql);
-          if (!validateSQL(sql)) {
+          default:
             sendUpdate({
               type: 'error',
-              content: "Generated query failed security validation.",
+              content: "Invalid response format from AI.",
               debugInfo: (user as any).role === 'ADMIN' ? debugInfo : undefined
             });
-            controller.close();
-            return;
-          }
-
-          try {
-            const queryStart = Date.now();
-            const queryData = await chQuery(sql);
-            const queryTime = Date.now() - queryStart;
-            const totalTime = Date.now() - startTime;
-
-            debugLog("✅ Query executed successfully", {
-              resultCount: queryData.length,
-              timeTaken: `${queryTime}ms`,
-              totalTime: `${totalTime}ms`,
-              sampleData: queryData.slice(0, 3)
-            });
-
-            if ((user as any).role === 'ADMIN') {
-              debugInfo.processing = { aiTime, queryTime, totalTime };
-            }
-
-            const finalContent = queryData.length > 0
-              ? `Found ${queryData.length} data points. Displaying as a ${parsedAiJson.chart_type?.replace(/_/g, ' ') || 'chart'}.`
-              : "No data found for your query.";
-
-            // Track successful assistant message usage
-            try {
-              const customerId = await getBillingCustomerId(user.id, (website as any).organizationId);
-              await handleAutumnLimits(customerId, 'track', 1);
-            } catch (error) {
-              logger.error('[Assistant API] Error tracking autumn usage:', { error });
-            }
-
-            sendUpdate({
-              type: 'complete',
-              content: finalContent,
-              data: {
-                hasVisualization: queryData.length > 0,
-                chartType: parsedAiJson.chart_type,
-                data: queryData,
-                responseType: 'chart'
-              },
-              debugInfo: (user as any).role === 'ADMIN' ? debugInfo : undefined
-            });
-
-          } catch (queryError: any) {
-            debugLog("❌ SQL execution error", { error: queryError.message, sql });
-            sendUpdate({
-              type: 'error',
-              content: "Database query failed. The data might not be available.",
-              debugInfo: (user as any).role === 'ADMIN' ? debugInfo : undefined
-            });
-          }
-        } else {
-          sendUpdate({
-            type: 'error',
-            content: "Invalid response format from AI.",
-            debugInfo: (user as any).role === 'ADMIN' ? debugInfo : undefined
-          });
         }
 
         controller.close();
 
-      } catch (error: any) {
-        debugLog("💥 Processing error", { error: error.message });
-        if (error.name === 'ZodError') {
-          sendUpdate({
-            type: 'error',
-            content: `Invalid input: ${error.errors?.map((e: any) => e.message).join(', ')}`,
-            debugInfo: (user as any).role === 'ADMIN' ? debugInfo : undefined
-          });
-        } else {
-          sendUpdate({
-            type: 'error',
-            content: "An unexpected error occurred.",
-            debugInfo: (user as any).role === 'ADMIN' ? { error: error.message } : undefined
-          });
-        }
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        debugLog("💥 Processing error", { error: errorMessage });
+
+        sendUpdate({
+          type: 'error',
+          content: error instanceof z.ZodError
+            ? `Invalid input: ${error.errors?.map(e => e.message).join(', ')}`
+            : "An unexpected error occurred.",
+          debugInfo: (user as any).role === 'ADMIN' ? { error: errorMessage } : undefined
+        });
+
         controller.close();
       }
     }
@@ -485,5 +365,134 @@ assistantRouter.post('/stream', async (c) => {
     },
   });
 });
+
+// ============================================================================
+// RESPONSE HANDLERS
+// ============================================================================
+
+async function handleMetricResponse(
+  parsedAiJson: z.infer<typeof AIResponseJsonSchema>,
+  user: any,
+  website: any,
+  sendUpdate: (update: StreamingUpdate) => void,
+  debugInfo: Record<string, unknown>
+): Promise<void> {
+  if (parsedAiJson.sql) {
+    if (!validateSQL(parsedAiJson.sql)) {
+      sendUpdate({
+        type: 'error',
+        content: "Generated query failed security validation.",
+        debugInfo: user.role === 'ADMIN' ? debugInfo : undefined
+      });
+      return;
+    }
+
+    try {
+      const queryData = await executeQuery(parsedAiJson.sql);
+      const metricValue = extractMetricValue(queryData, parsedAiJson.metric_value);
+      await sendMetricResponse(parsedAiJson, metricValue, user, website, sendUpdate, debugInfo);
+    } catch (queryError: unknown) {
+      debugLog("❌ Metric SQL execution error", {
+        error: queryError instanceof Error ? queryError.message : 'Unknown error',
+        sql: parsedAiJson.sql
+      });
+      await sendMetricResponse(parsedAiJson, parsedAiJson.metric_value, user, website, sendUpdate, debugInfo);
+    }
+  } else {
+    await sendMetricResponse(parsedAiJson, parsedAiJson.metric_value, user, website, sendUpdate, debugInfo);
+  }
+}
+
+async function handleChartResponse(
+  parsedAiJson: z.infer<typeof AIResponseJsonSchema>,
+  user: any,
+  website: any,
+  startTime: number,
+  aiTime: number,
+  sendUpdate: (update: StreamingUpdate) => void,
+  debugInfo: Record<string, unknown>
+): Promise<void> {
+  if (!validateSQL(parsedAiJson.sql!)) {
+    sendUpdate({
+      type: 'error',
+      content: "Generated query failed security validation.",
+      debugInfo: user.role === 'ADMIN' ? debugInfo : undefined
+    });
+    return;
+  }
+
+  try {
+    const queryData = await executeQuery(parsedAiJson.sql!);
+    const totalTime = Date.now() - startTime;
+
+    if (user.role === 'ADMIN') {
+      debugInfo.processing = { aiTime, queryTime: Date.now() - startTime - aiTime, totalTime };
+    }
+
+    await trackAssistantUsage(user.id, website.organizationId);
+
+    sendUpdate({
+      type: 'complete',
+      content: queryData.length > 0
+        ? `Found ${queryData.length} data points. Displaying as a ${parsedAiJson.chart_type?.replace(/_/g, ' ') || 'chart'}.`
+        : "No data found for your query.",
+      data: {
+        hasVisualization: queryData.length > 0,
+        chartType: parsedAiJson.chart_type,
+        data: queryData,
+        responseType: 'chart'
+      },
+      debugInfo: user.role === 'ADMIN' ? debugInfo : undefined
+    });
+  } catch (queryError: unknown) {
+    debugLog("❌ SQL execution error", {
+      error: queryError instanceof Error ? queryError.message : 'Unknown error',
+      sql: parsedAiJson.sql
+    });
+    sendUpdate({
+      type: 'error',
+      content: "Database query failed. The data might not be available.",
+      debugInfo: user.role === 'ADMIN' ? debugInfo : undefined
+    });
+  }
+}
+
+function extractMetricValue(queryData: unknown[], defaultValue: unknown): unknown {
+  if (!queryData.length || !queryData[0]) return defaultValue;
+
+  const firstRow = queryData[0] as Record<string, unknown>;
+  const valueKey = Object.keys(firstRow).find(key => typeof firstRow[key] === 'number') ||
+    Object.keys(firstRow)[0];
+
+  return valueKey ? firstRow[valueKey] : defaultValue;
+}
+
+async function sendMetricResponse(
+  parsedAiJson: z.infer<typeof AIResponseJsonSchema>,
+  metricValue: unknown,
+  user: any,
+  website: any,
+  sendUpdate: (update: StreamingUpdate) => void,
+  debugInfo: Record<string, unknown>
+): Promise<void> {
+  await trackAssistantUsage(user.id, website.organizationId);
+
+  const formattedValue = typeof metricValue === 'number'
+    ? metricValue.toLocaleString()
+    : metricValue;
+
+  sendUpdate({
+    type: 'complete',
+    content: parsedAiJson.text_response ||
+      `${parsedAiJson.metric_label || 'Result'}: ${formattedValue}`,
+    data: {
+      hasVisualization: false,
+      responseType: 'metric',
+      metricValue: metricValue,
+      metricLabel: parsedAiJson.metric_label
+    },
+    debugInfo: user.role === 'ADMIN' ? debugInfo : undefined
+  });
+}
 
 export default assistantRouter; 

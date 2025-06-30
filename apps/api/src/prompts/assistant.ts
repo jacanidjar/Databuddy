@@ -1,51 +1,51 @@
 import { z } from 'zod';
 
 export const AIResponseJsonSchema = z.object({
-    sql: z.string().nullable().optional(),
-    chart_type: z.enum(['bar', 'line', 'pie', 'area', 'stacked_bar', 'multi_line']).nullable().optional(),
-    response_type: z.enum(['chart', 'text', 'metric']),
-    text_response: z.string().nullable().optional(),
-    metric_value: z.union([z.string(), z.number()]).nullable().optional(),
-    metric_label: z.string().nullable().optional(),
-    thinking_steps: z.array(z.string()).optional(),
+   sql: z.string().nullable().optional(),
+   chart_type: z.enum(['bar', 'line', 'pie', 'area', 'stacked_bar', 'multi_line']).nullable().optional(),
+   response_type: z.enum(['chart', 'text', 'metric']),
+   text_response: z.string().nullable().optional(),
+   metric_value: z.union([z.string(), z.number()]).nullable().optional(),
+   metric_label: z.string().nullable().optional(),
+   thinking_steps: z.array(z.string()).optional(),
 });
 
 const AnalyticsSchema = {
-    columns: [
-        { name: 'client_id', type: 'String', description: 'Website identifier' },
-        { name: 'event_name', type: 'String', description: 'Type of event (screen_view, page_exit, etc)' },
-        { name: 'time', type: 'DateTime64', description: 'Event timestamp' },
-        { name: 'path', type: 'String', description: 'URL path of the page' },
-        { name: 'title', type: 'String', description: 'Page title' },
-        { name: 'referrer', type: 'String', description: 'Referrer URL' },
-        { name: 'country', type: 'String', description: 'User country' },
-        { name: 'region', type: 'String', description: 'Geographic region or state (e.g., California)' },
-        { name: 'timezone', type: 'String', description: "User's timezone (e.g., America/New_York)" },
-        { name: 'browser_name', type: 'String', description: 'Browser name' },
-        { name: 'os_name', type: 'String', description: 'Operating system' },
-        { name: 'device_type', type: 'String', description: 'Device type (desktop, mobile, tablet)' },
-        { name: 'language', type: 'String', description: 'Browser language code (e.g., en-US, fr-FR)' },
-        { name: 'utm_source', type: 'String', description: 'UTM source parameter' },
-        { name: 'utm_medium', type: 'String', description: 'UTM medium parameter' },
-        { name: 'utm_campaign', type: 'String', description: 'UTM campaign parameter' },
-        { name: 'utm_term', type: 'String', description: 'UTM term parameter' },
-        { name: 'utm_content', type: 'String', description: 'UTM content parameter' },
-        { name: 'session_id', type: 'String', description: 'User session identifier' },
-        { name: 'anonymous_id', type: 'String', description: 'Anonymous user identifier' },
-        { name: 'time_on_page', type: 'Float32', description: 'Time spent on page in seconds' },
-        { name: 'scroll_depth', type: 'Float32', description: 'Page scroll depth percentage' },
-        { name: 'is_bounce', type: 'UInt8', description: 'Whether this was a bounce (1) or not (0)' },
-        { name: 'exit_intent', type: 'UInt8', description: 'Whether an exit intent was detected (1) or not (0)' },
-        { name: 'load_time', type: 'Int32', description: 'Page load time in milliseconds' },
-        { name: 'ttfb', type: 'Int32', description: 'Time to first byte in milliseconds' },
-        { name: 'dom_ready_time', type: 'Int32', description: 'DOM ready time in milliseconds' },
-        { name: 'render_time', type: 'Int32', description: 'Page render time in milliseconds' },
-        { name: 'fcp', type: 'Int32', description: 'First Contentful Paint time in milliseconds' },
-        { name: 'lcp', type: 'Int32', description: 'Largest Contentful Paint time in milliseconds' },
-        { name: 'cls', type: 'Float32', description: 'Cumulative Layout Shift score' },
-        { name: 'error_message', type: 'String', description: 'Error message for error events' },
-        { name: 'error_stack', type: 'String', description: 'Error stack trace for error events' }
-    ]
+   columns: [
+      { name: 'client_id', type: 'String', description: 'Website identifier' },
+      { name: 'event_name', type: 'String', description: 'Type of event (screen_view, page_exit, etc)' },
+      { name: 'time', type: 'DateTime64', description: 'Event timestamp' },
+      { name: 'path', type: 'String', description: 'URL path of the page' },
+      { name: 'title', type: 'String', description: 'Page title' },
+      { name: 'referrer', type: 'String', description: 'Referrer URL' },
+      { name: 'country', type: 'String', description: 'User country' },
+      { name: 'region', type: 'String', description: 'Geographic region or state (e.g., California)' },
+      { name: 'timezone', type: 'String', description: "User's timezone (e.g., America/New_York)" },
+      { name: 'browser_name', type: 'String', description: 'Browser name' },
+      { name: 'os_name', type: 'String', description: 'Operating system' },
+      { name: 'device_type', type: 'String', description: 'Device type (desktop, mobile, tablet)' },
+      { name: 'language', type: 'String', description: 'Browser language code (e.g., en-US, fr-FR)' },
+      { name: 'utm_source', type: 'String', description: 'UTM source parameter' },
+      { name: 'utm_medium', type: 'String', description: 'UTM medium parameter' },
+      { name: 'utm_campaign', type: 'String', description: 'UTM campaign parameter' },
+      { name: 'utm_term', type: 'String', description: 'UTM term parameter' },
+      { name: 'utm_content', type: 'String', description: 'UTM content parameter' },
+      { name: 'session_id', type: 'String', description: 'User session identifier' },
+      { name: 'anonymous_id', type: 'String', description: 'Anonymous user identifier' },
+      { name: 'time_on_page', type: 'Float32', description: 'Time spent on page in seconds' },
+      { name: 'scroll_depth', type: 'Float32', description: 'Page scroll depth percentage' },
+      { name: 'is_bounce', type: 'UInt8', description: 'Whether this was a bounce (1) or not (0)' },
+      { name: 'exit_intent', type: 'UInt8', description: 'Whether an exit intent was detected (1) or not (0)' },
+      { name: 'load_time', type: 'Int32', description: 'Page load time in milliseconds' },
+      { name: 'ttfb', type: 'Int32', description: 'Time to first byte in milliseconds' },
+      { name: 'dom_ready_time', type: 'Int32', description: 'DOM ready time in milliseconds' },
+      { name: 'render_time', type: 'Int32', description: 'Page render time in milliseconds' },
+      { name: 'fcp', type: 'Int32', description: 'First Contentful Paint time in milliseconds' },
+      { name: 'lcp', type: 'Int32', description: 'Largest Contentful Paint time in milliseconds' },
+      { name: 'cls', type: 'Float32', description: 'Cumulative Layout Shift score' },
+      { name: 'error_message', type: 'String', description: 'Error message for error events' },
+      { name: 'error_stack', type: 'String', description: 'Error stack trace for error events' }
+   ]
 };
 
 
@@ -125,6 +125,7 @@ SQL RULES:
 - Filter empty values: AND dimension != ''
 - Use proper ClickHouse functions: today(), yesterday(), toDate(), uniq()
 - For referrers, exclude internal: AND domain(referrer) != '${websiteHostname}'
+- DO NOT INCLUDE PARAMS in URLS / path column unless explicitly requested, like top pages WITH params, etc
 
 AMBIGUITY & FALLBACK RULE:
 - If the user's query is too vague, ambiguous, or asks for data not available in the schema (e.g., "user demographics", "revenue"), you MUST respond with a helpful "text" response.

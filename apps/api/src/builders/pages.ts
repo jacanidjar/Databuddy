@@ -5,99 +5,81 @@
  */
 
 import {
-	createSqlBuilder,
-	buildWhereClauses,
-	buildCommonSelect,
-	buildCommonGroupBy,
-	buildCommonOrderBy,
-} from "./utils";
+  createSqlBuilder,
+  buildWhereClauses,
+  buildCommonSelect,
+  buildCommonGroupBy,
+  buildCommonOrderBy
+} from './utils';
 
 // Data types
 export interface PageData {
-	path: string;
-	pageviews: number;
-	visitors: number;
-	avg_time_on_page: number | null;
+  path: string;
+  pageviews: number;
+  visitors: number;
+  avg_time_on_page: number | null;
 }
 
 export interface TopPage {
-	path: string;
-	pageviews: number;
-	visitors: number;
+  path: string;
+  pageviews: number;
+  visitors: number;
 }
 
 /**
  * Creates a builder for fetching top pages data
  */
-export function createTopPagesBuilder(
-	websiteId: string,
-	startDate: string,
-	endDate: string,
-	limit = 5,
-) {
-	const builder = createSqlBuilder();
-	builder.setTable("events");
+export function createTopPagesBuilder(websiteId: string, startDate: string, endDate: string, limit = 5) {
+  const builder = createSqlBuilder();
+  builder.setTable('events');
 
-	builder.sb.select = buildCommonSelect({
-		path: "path",
-		pageviews: "COUNT(*) as pageviews",
-		visitors: "COUNT(DISTINCT anonymous_id) as visitors",
-		avg_time_on_page:
-			"AVG(CASE WHEN time_on_page > 0 AND time_on_page IS NOT NULL THEN time_on_page / 1000 ELSE NULL END) as avg_time_on_page",
-	});
+  builder.sb.select = buildCommonSelect({
+    path: 'path',
+    pageviews: 'COUNT(*) as pageviews',
+    visitors: 'COUNT(DISTINCT anonymous_id) as visitors',
+    avg_time_on_page: 'AVG(CASE WHEN time_on_page > 0 AND time_on_page IS NOT NULL THEN time_on_page / 1000 ELSE NULL END) as avg_time_on_page'
+  });
 
-	builder.sb.where = buildWhereClauses(websiteId, startDate, endDate, {
-		page_filter: "event_name = 'screen_view'",
-	});
+  builder.sb.where = buildWhereClauses(websiteId, startDate, endDate, {
+    page_filter: "event_name = 'screen_view'"
+  });
 
-	builder.sb.groupBy = buildCommonGroupBy({ path: "path" });
-	builder.sb.orderBy = buildCommonOrderBy({ pageviews: "pageviews DESC" });
-	builder.sb.limit = limit;
+  builder.sb.groupBy = buildCommonGroupBy({ path: 'path' });
+  builder.sb.orderBy = buildCommonOrderBy({ pageviews: 'pageviews DESC' });
+  builder.sb.limit = limit;
 
-	return builder;
+  return builder;
 }
 
 /**
  * Creates a builder for fetching data for a specific page
  */
-export function createPageDetailBuilder(
-	websiteId: string,
-	path: string,
-	startDate: string,
-	endDate: string,
-) {
-	const builder = createSqlBuilder();
-	builder.setTable("events");
+export function createPageDetailBuilder(websiteId: string, path: string, startDate: string, endDate: string) {
+  const builder = createSqlBuilder();
+  builder.setTable('events');
 
-	builder.sb.select = buildCommonSelect({
-		pageviews: "COUNT(*) as pageviews",
-		visitors: "COUNT(DISTINCT anonymous_id) as visitors",
-		avg_time_on_page:
-			"AVG(CASE WHEN time_on_page > 0 AND time_on_page IS NOT NULL THEN time_on_page / 1000 ELSE NULL END) as avg_time_on_page",
-		bounce_rate:
-			"AVG(CASE WHEN is_bounce = 1 THEN 100 ELSE 0 END) as bounce_rate",
-	});
+  builder.sb.select = buildCommonSelect({
+    pageviews: 'COUNT(*) as pageviews',
+    visitors: 'COUNT(DISTINCT anonymous_id) as visitors',
+    avg_time_on_page: 'AVG(CASE WHEN time_on_page > 0 AND time_on_page IS NOT NULL THEN time_on_page / 1000 ELSE NULL END) as avg_time_on_page',
+    bounce_rate: 'AVG(CASE WHEN is_bounce = 1 THEN 100 ELSE 0 END) as bounce_rate'
+  });
 
-	builder.sb.where = buildWhereClauses(websiteId, startDate, endDate, {
-		page_filter: "event_name = 'screen_view'",
-		path_filter: `path = '${path}'`,
-	});
+  builder.sb.where = buildWhereClauses(websiteId, startDate, endDate, {
+    page_filter: "event_name = 'screen_view'",
+    path_filter: `path = '${path}'`
+  });
 
-	return builder;
+  return builder;
 }
 
 /**
  * Creates a builder for fetching page view time series data for a specific page
  */
-export function createPageTimeSeriesBuilder(
-	websiteId: string,
-	path: string,
-	startDate: string,
-	endDate: string,
-) {
-	const builder = createSqlBuilder();
+export function createPageTimeSeriesBuilder(websiteId: string, path: string, startDate: string, endDate: string) {
+  const builder = createSqlBuilder();
 
-	const sql = `
+  const sql = `
     WITH date_range AS (
       SELECT arrayJoin(arrayMap(
         d -> toDate('${startDate}') + d,
@@ -127,24 +109,19 @@ export function createPageTimeSeriesBuilder(
     ORDER BY date_range.date ASC
   `;
 
-	// Override the getSql method to return our custom query
-	builder.getSql = () => sql;
+  // Override the getSql method to return our custom query
+  builder.getSql = () => sql;
 
-	return builder;
+  return builder;
 }
 
 /**
  * Creates a builder for fetching entry pages data
  */
-export function createEntryPagesBuilder(
-	websiteId: string,
-	startDate: string,
-	endDate: string,
-	limit = 10,
-) {
-	const builder = createSqlBuilder();
+export function createEntryPagesBuilder(websiteId: string, startDate: string, endDate: string, limit = 10) {
+  const builder = createSqlBuilder();
 
-	const sql = `
+  const sql = `
     WITH sessions AS (
       SELECT
         session_id,
@@ -199,24 +176,19 @@ export function createEntryPagesBuilder(
     LIMIT ${limit}
   `;
 
-	// Override the getSql method to return our custom query
-	builder.getSql = () => sql;
+  // Override the getSql method to return our custom query
+  builder.getSql = () => sql;
 
-	return builder;
+  return builder;
 }
 
 /**
  * Creates a builder for fetching exit pages data
  */
-export function createExitPagesBuilder(
-	websiteId: string,
-	startDate: string,
-	endDate: string,
-	limit = 10,
-) {
-	const builder = createSqlBuilder();
+export function createExitPagesBuilder(websiteId: string, startDate: string, endDate: string, limit = 10) {
+  const builder = createSqlBuilder();
 
-	const sql = `
+  const sql = `
     WITH sessions AS (
       SELECT
         session_id,
@@ -271,8 +243,8 @@ export function createExitPagesBuilder(
     LIMIT ${limit}
   `;
 
-	// Override the getSql method to return our custom query
-	builder.getSql = () => sql;
+  // Override the getSql method to return our custom query
+  builder.getSql = () => sql;
 
-	return builder;
-}
+  return builder;
+} 
