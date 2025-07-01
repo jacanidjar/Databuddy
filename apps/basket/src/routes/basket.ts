@@ -6,7 +6,7 @@ import {
 	type BlockedTraffic,
 	clickHouse,
 } from "@databuddy/db";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { getGeo, extractIpFromRequest } from "../utils/ip-geo";
 import { parseUserAgent, detectBot } from "../utils/user-agent";
 import { getWebsiteByIdV2, isValidOrigin } from "../hooks/auth";
@@ -18,10 +18,26 @@ import {
 	VALIDATION_LIMITS,
 } from "../utils/validation";
 import { redis } from "@databuddy/redis";
+import crypto from "node:crypto";
 import { logger } from "../lib/logger";
-import { getDailySalt, saltAnonymousId } from "../lib/salt";
 
 import { Autumn as autumn } from "autumn-js";
+
+async function getDailySalt(): Promise<string> {
+	const saltKey = `salt:${Math.floor(Date.now() / (24 * 60 * 60 * 1000))}`;
+	let salt = await redis.get(saltKey);
+	if (!salt) {
+		salt = crypto.randomBytes(32).toString("hex");
+		await redis.setex(saltKey, 60 * 60 * 24, salt);
+	}
+	return salt;
+}
+
+function saltAnonymousId(anonymousId: string, salt: string): string {
+	return createHash("sha256")
+		.update(anonymousId + salt)
+		.digest("hex");
+}
 
 async function validateRequest(body: any, query: any, request: Request) {
 	if (!validatePayloadSize(body, VALIDATION_LIMITS.PAYLOAD_MAX_SIZE)) {
@@ -178,7 +194,7 @@ async function insertError(errorData: any, clientId: string): Promise<void> {
 			values: [errorEvent],
 			format: "JSONEachRow",
 		})
-		.then(() => { })
+		.then(() => {})
 		.catch((err) => {
 			logger.error("Failed to insert error event", {
 				error: err as Error,
@@ -227,7 +243,7 @@ async function insertWebVitals(
 			values: [webVitalsEvent],
 			format: "JSONEachRow",
 		})
-		.then(() => { })
+		.then(() => {})
 		.catch((err) => {
 			logger.error("Failed to insert web vitals event", {
 				error: err as Error,
@@ -367,7 +383,7 @@ async function insertTrackEvent(
 			values: [trackEvent],
 			format: "JSONEachRow",
 		})
-		.then(() => { })
+		.then(() => {})
 		.catch((err) => {
 			logger.error("Failed to insert track event", {
 				error: err as Error,
@@ -470,7 +486,7 @@ async function logBlockedTraffic(
 				values: [blockedEvent],
 				format: "JSONEachRow",
 			})
-			.then(() => { })
+			.then(() => {})
 			.catch((err) => {
 				logger.error("Failed to log blocked traffic", { error: err as Error });
 			});

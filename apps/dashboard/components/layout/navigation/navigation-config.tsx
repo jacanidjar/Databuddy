@@ -14,7 +14,6 @@ import {
   TargetIcon,
   TestTubeIcon,
   UsersIcon,
-  CubeIcon,
 } from "@phosphor-icons/react";
 import type { NavigationSection } from "./types";
 
@@ -104,7 +103,6 @@ export const sandboxNavigation: NavigationSection[] = [
     items: [
       { name: "Overview", icon: HouseIcon, href: "", highlight: true },
       { name: "UI Components", icon: TestTubeIcon, href: "/ui-components", highlight: true },
-      { name: "Prefabs", icon: CubeIcon, href: "/prefabs", highlight: true },
     ],
   },
 ];
