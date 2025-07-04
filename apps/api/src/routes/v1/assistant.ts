@@ -53,6 +53,7 @@ const FORBIDDEN_SQL_KEYWORDS = [
 ] as const;
 
 const AI_MODEL = 'google/gemini-2.0-flash-001' as const;
+// const AI_MODEL = 'cohere/command-r' as const;
 
 const openai = new OpenAI(OPENAI_CONFIG);
 
@@ -81,7 +82,7 @@ async function getBillingCustomerId(userId: string, organizationId?: string | nu
 async function handleAutumnLimits(
   customerId: string,
   action: 'check' | 'track',
-  value: number = 1
+  value = 1
 ): Promise<AutumnCheckResult | AutumnTrackResult> {
   if (!customerId) {
     logger.warn('[Assistant API] No customer ID provided for autumn limits');
@@ -149,19 +150,14 @@ const getOrganizationOwnerId = cacheable(_getOrganizationOwnerId, {
 
 function validateSQL(sql: string): boolean {
   const upperSQL = sql.toUpperCase();
+  const trimmed = upperSQL.trim();
 
   // Check for dangerous keyword patterns
   for (const keyword of FORBIDDEN_SQL_KEYWORDS) {
     if (upperSQL.includes(keyword)) return false;
   }
 
-  // Block standalone UNION that could be used for injection (but allow UNION in subqueries/CTEs)
-  if (upperSQL.match(/\bUNION\s+(ALL\s+)?SELECT/)) {
-    return false;
-  }
-
   // Must start with SELECT or WITH (for CTEs)
-  const trimmed = upperSQL.trim();
   return trimmed.startsWith('SELECT') || trimmed.startsWith('WITH');
 }
 
@@ -378,7 +374,7 @@ async function handleMetricResponse(
   debugInfo: Record<string, unknown>
 ): Promise<void> {
   if (parsedAiJson.sql) {
-    if (!validateSQL(parsedAiJson.sql)) {
+    if (!validateSQL(parsedAiJson.sql || '')) {
       sendUpdate({
         type: 'error',
         content: "Generated query failed security validation.",
@@ -412,7 +408,16 @@ async function handleChartResponse(
   sendUpdate: (update: StreamingUpdate) => void,
   debugInfo: Record<string, unknown>
 ): Promise<void> {
-  if (!validateSQL(parsedAiJson.sql!)) {
+  if (!parsedAiJson.sql) {
+    sendUpdate({
+      type: 'error',
+      content: "AI did not provide a query for the chart.",
+      debugInfo: user.role === 'ADMIN' ? debugInfo : undefined
+    });
+    return;
+  }
+
+  if (!validateSQL(parsedAiJson.sql)) {
     sendUpdate({
       type: 'error',
       content: "Generated query failed security validation.",
@@ -422,7 +427,7 @@ async function handleChartResponse(
   }
 
   try {
-    const queryData = await executeQuery(parsedAiJson.sql!);
+    const queryData = await executeQuery(parsedAiJson.sql);
     const totalTime = Date.now() - startTime;
 
     if (user.role === 'ADMIN') {

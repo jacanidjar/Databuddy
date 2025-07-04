@@ -18,13 +18,4 @@ export const DistributionChart = dynamic(
   }
 );
 
-export const VersatileAIChart = dynamic(
-  () => import("./versatile-ai-chart").then((mod) => ({ default: mod.VersatileAIChart })),
-  {
-    loading: () => <SkeletonChart className="w-full" height={260} title="Loading chart..." />,
-    ssr: false,
-  }
-);
-
-// Export skeleton chart directly (no need to lazy load)
 export { SkeletonChart } from "./skeleton-chart";

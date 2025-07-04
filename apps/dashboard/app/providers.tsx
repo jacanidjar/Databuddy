@@ -8,7 +8,7 @@ import type { session } from "@databuddy/db";
 import type { ReactNode } from "react";
 import { AutumnProvider } from "autumn-js/react";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { TRPCProvider } from "@/lib/trpc-provider";
+// import { TRPCProvider } from "@/lib/trpc-provider";
 
 type Session = typeof session.$inferSelect;
 // Default query client configuration
@@ -51,7 +51,6 @@ export const useAuthSession = () => useContext(SessionContext);
 const SessionProvider = ({ children }: { children: ReactNode }) => {
   const { data: session, isPending, error } = useSession();
 
-  // Clear React Query cache when session changes
   useEffect(() => {
     if (!(session || isPending)) {
       queryClient.clear();
@@ -75,13 +74,13 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-      <TRPCProvider>
-        <SessionProvider>
-          <AutumnProvider>
-            <NuqsAdapter>{children}</NuqsAdapter>
-          </AutumnProvider>
-        </SessionProvider>
-      </TRPCProvider>
+      {/* <TRPCProvider> */}
+      <SessionProvider>
+        <AutumnProvider backendUrl={process.env.NEXT_PUBLIC_API_URL}>
+          <NuqsAdapter>{children}</NuqsAdapter>
+        </AutumnProvider>
+      </SessionProvider>
+      {/* </TRPCProvider> */}
     </ThemeProvider>
   );
 }

@@ -1,8 +1,10 @@
 import { z } from 'zod';
 
+import { TABLE_NAMES, ErrorEvent, WebVitalsEvent, StripePaymentIntent, StripeCharge, StripeRefund, BlockedTraffic } from '@databuddy/db';
+
 export const AIResponseJsonSchema = z.object({
    sql: z.string().nullable().optional(),
-   chart_type: z.enum(['bar', 'line', 'pie', 'area', 'stacked_bar', 'multi_line']).nullable().optional(),
+   chart_type: z.enum(['bar', 'line', 'pie', 'area', 'stacked_bar', 'multi_line', 'scatter', 'radar', 'funnel', 'grouped_bar']).nullable().optional(),
    response_type: z.enum(['chart', 'text', 'metric']),
    text_response: z.string().nullable().optional(),
    metric_value: z.union([z.string(), z.number()]).nullable().optional(),
@@ -47,7 +49,6 @@ const AnalyticsSchema = {
       { name: 'error_stack', type: 'String', description: 'Error stack trace for error events' }
    ]
 };
-
 
 export const enhancedAnalysisPrompt = (userQuery: string, websiteId: string, websiteHostname: string, previousMessages?: any[]) => `
 You are Nova - a specialized AI analytics assistant for ${websiteHostname}. You ONLY analyze website analytics data and MUST NOT answer general questions outside of analytics.
@@ -111,8 +112,9 @@ CHART TYPE SELECTION:
 - "line": Single metric over time
 - "bar": Categorical comparisons (top pages, countries, etc.)
 - "pie": Part-of-whole relationships (2-5 segments)
-- "multi_line": Multiple categories over time
-- "stacked_bar": 2-4 categories over time periods
+- "multi_line": Comparing multiple metrics/categories over a continuous time series.
+- "stacked_bar": Showing parts of a whole across categories or time.
+- "grouped_bar": Comparing different categories side-by-side across a shared axis.
 
 KEY SQL PATTERNS:
 1. Top N: SELECT dimension, COUNT(*) as metric FROM analytics.events WHERE client_id = '${websiteId}' AND event_name = 'screen_view' GROUP BY dimension ORDER BY metric DESC LIMIT 10
@@ -218,6 +220,13 @@ ERROR ANALYSIS PATTERNS:
     SQL: "SELECT toDate(timestamp) as date, COUNT(*) as total_errors FROM analytics.errors WHERE client_id = '${websiteId}' AND timestamp >= today() - INTERVAL '14' DAY AND message IS NOT NULL GROUP BY date ORDER BY date";
     Chart Type: "line";
 
+21. User Segmentation Analysis (New vs. Returning):
+    Query: "new vs returning users by [DIMENSION]", e.g., "new vs returning by referrer", "new vs returning by country"
+    Description: This query categorizes users into 'New' or 'Returning' based on their session count and groups the result by a specified dimension.
+    SQL Example for "new vs returning users by referrer":
+    "WITH user_session_counts AS (SELECT anonymous_id, COUNT(DISTINCT session_id) as session_count FROM analytics.events WHERE client_id = '${websiteId}' AND event_name = 'screen_view' GROUP BY anonymous_id), user_first_referrer AS (SELECT anonymous_id, argMax(referrer, time) as first_referrer FROM analytics.events WHERE client_id = '${websiteId}' AND event_name = 'screen_view' AND referrer IS NOT NULL AND referrer != '' GROUP BY anonymous_id) SELECT ufr.first_referrer AS referrer, SUM(CASE WHEN usc.session_count = 1 THEN 1 ELSE 0 END) AS new_users, SUM(CASE WHEN usc.session_count > 1 THEN 1 ELSE 0 END) AS returning_users FROM user_session_counts usc JOIN user_first_referrer ufr ON usc.anonymous_id = ufr.anonymous_id WHERE (domain(ufr.first_referrer) != '${websiteHostname}' AND NOT domain(ufr.first_referrer) ILIKE '%.${websiteHostname}') AND domain(ufr.first_referrer) NOT IN ('localhost', '127.0.0.1') GROUP BY referrer ORDER BY (new_users + returning_users) DESC LIMIT 10"
+    Chart Type: "grouped_bar";
+
 COMPLEX ANALYTICS CHART PATTERNS:
 14. Bounce rate analysis by entry page (advanced session tracking):
    Example: "bounce rate by entry page" → "WITH entry_pages AS (SELECT session_id, path, MIN(time) as entry_time FROM analytics.events WHERE client_id = '${websiteId}' AND event_name = 'screen_view' GROUP BY session_id, path QUALIFY ROW_NUMBER() OVER (PARTITION BY session_id ORDER BY entry_time) = 1), session_metrics AS (SELECT ep.path, ep.session_id, countIf(e.event_name = 'screen_view') as page_count FROM entry_pages ep LEFT JOIN analytics.events e ON ep.session_id = e.session_id WHERE e.client_id = '${websiteId}' GROUP BY ep.path, ep.session_id) SELECT path, COUNT(*) as sessions, (countIf(page_count = 1) / count()) * 100 as bounce_rate FROM session_metrics GROUP BY path HAVING sessions >= 10 ORDER BY sessions DESC LIMIT 15" (Chart: "bar");
@@ -229,7 +238,23 @@ COMPLEX ANALYTICS CHART PATTERNS:
    Example: "bounce rate trends by day" → "WITH daily_sessions AS (SELECT toDate(time) as date, session_id, countIf(event_name = 'screen_view') as page_count FROM analytics.events WHERE client_id = '${websiteId}' AND time >= today() - INTERVAL '30' DAY GROUP BY date, session_id) SELECT date, (countIf(page_count = 1) / count()) * 100 as bounce_rate FROM daily_sessions GROUP BY date ORDER BY date" (Chart: "line");
 
 17. Performance correlation analysis:
-   Example: "bounce rate vs page load time" → "WITH page_performance AS (SELECT path, AVG(load_time) as avg_load_time FROM analytics.events WHERE client_id = '${websiteId}' AND load_time > 0 GROUP BY path), page_bounce AS (SELECT ep.path, (countIf(sm.page_count = 1) / count()) * 100 as bounce_rate FROM (SELECT session_id, path, MIN(time) as entry_time FROM analytics.events WHERE client_id = '${websiteId}' AND event_name = 'screen_view' GROUP BY session_id, path QUALIFY ROW_NUMBER() OVER (PARTITION BY session_id ORDER BY entry_time) = 1) ep LEFT JOIN (SELECT session_id, countIf(event_name = 'screen_view') as page_count FROM analytics.events WHERE client_id = '${websiteId}' GROUP BY session_id) sm ON ep.session_id = sm.session_id GROUP BY ep.path HAVING count() >= 20) SELECT pp.path, pp.avg_load_time, pb.bounce_rate FROM page_performance pp INNER JOIN page_bounce pb ON pp.path = pb.path WHERE pp.avg_load_time IS NOT NULL ORDER BY pp.avg_load_time" (Chart: "bar");
+   Example: "bounce rate vs page load time" → "WITH page_performance AS (SELECT path, AVG(load_time) as avg_load_time FROM analytics.events WHERE client_id = '${websiteId}' AND load_time > 0 GROUP BY path), page_bounce AS (SELECT ep.path, (countIf(sm.page_count = 1) / count()) * 100 as bounce_rate FROM (SELECT session_id, path, MIN(time) as entry_time FROM analytics.events WHERE client_id = '${websiteId}' AND event_name = 'screen_view' GROUP BY session_id, path QUALIFY ROW_NUMBER() OVER (PARTITION BY session_id ORDER BY entry_time) = 1) ep LEFT JOIN (SELECT session_id, countIf(event_name = 'screen_view') as page_count FROM analytics.events WHERE client_id = '${websiteId}' GROUP BY session_id) sm ON ep.session_id = sm.session_id GROUP BY ep.path HAVING count() >= 20) SELECT pp.path, pp.avg_load_time, pb.bounce_rate FROM page_performance pp INNER JOIN page_bounce pb ON pp.path = pb.path WHERE pp.avg_load_time IS NOT NULL ORDER BY pp.avg_load_time" (Chart: "scatter");
+
+18. Funnel Analysis:
+    Query: "user journey from landing to purchase", "conversion funnel for newsletter signup";
+    SQL: "WITH funnel_steps AS ( SELECT anonymous_id, MIN(CASE WHEN path = '/' THEN time END) as step1_time, MIN(CASE WHEN path = '/pricing' THEN time END) as step2_time, MIN(CASE WHEN path = '/checkout' THEN time END) as step3_time FROM analytics.events WHERE client_id = '${websiteId}' AND event_name = 'screen_view' AND path IN ('/', '/pricing', '/checkout') GROUP BY anonymous_id) SELECT '1. Landing' as step, COUNT(step1_time) as users FROM funnel_steps UNION ALL SELECT '2. Pricing' as step, COUNT(step2_time) as users FROM funnel_steps WHERE step2_time > step1_time UNION ALL SELECT '3. Checkout' as step, COUNT(step3_time) as users FROM funnel_steps WHERE step3_time > step2_time";
+    Chart Type: "funnel";
+
+19. Path Discovery Funnel (Dynamic paths from a starting point):
+    Query Examples: "where do users go from the homepage?", "top paths after /pricing", "what are the next pages users visit after the blog"
+    Description: This query finds the top 5 pages users navigate to immediately after visiting a specified page (e.g., '/', '/pricing', '/blog').
+    SQL: "WITH ordered_paths AS (SELECT session_id, path, time, row_number() OVER (PARTITION BY session_id ORDER BY time) as path_order FROM analytics.events WHERE client_id = '${websiteId}' AND event_name = 'screen_view'), path_sequences AS (SELECT s1.path as from_path, s2.path as to_path, count() as transitions FROM ordered_paths s1 JOIN ordered_paths s2 ON s1.session_id = s2.session_id AND s2.path_order = s1.path_order + 1 WHERE s1.path = '/' GROUP BY from_path, to_path ORDER BY transitions DESC LIMIT 5) SELECT concat(from_path, ' → ', to_path) as step, transitions as users FROM path_sequences"
+    Chart Type: "funnel";
+
+20. Radar Chart for Page Performance:
+    Query: "performance radar for the homepage";
+    SQL: "SELECT 'Performance' as metric, avg(ttfb) as ttfb, avg(fcp) as fcp, avg(lcp) as lcp, avg(load_time) as load_time FROM analytics.events WHERE client_id = '${websiteId}' AND path = '/' AND event_name = 'screen_view' AND load_time > 0";
+    Chart Type: "radar";
 
 METRIC RESPONSE EXAMPLES:
 - Query: "how many page views yesterday?" → response_type: "metric", metric_value: 1247, metric_label: "Page views yesterday"
@@ -300,4 +325,4 @@ ADVANCED SQL TECHNIQUES:
 FINAL CHECK: Before generating the JSON, mentally review your plan. Does the chosen 'response_type' best fit the user's core question? Does the SQL query accurately reflect their request and the specified timeframes? Does the chosen 'chart_type' match the structure of the data your SQL will produce (e.g., time-series vs. categorical)? Ensure all rules have been followed.
 
 Return only valid JSON, no markdown or extra text. Ensure SQL is a single line string if possible, otherwise properly escaped. Ensure the SQL uses correct ClickHouse syntax. Use \`ILIKE\` for case-insensitive string matching if needed on user-provided filter values.;
-`; 
+`;
