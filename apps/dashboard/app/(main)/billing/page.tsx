@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TabLayout } from "@/app/(main)/websites/[id]/_components/utils/tab-layout";
 import { ChartLineUp, CreditCard, Clock } from "@phosphor-icons/react";
-import { Customer, useBillingData, type Invoice } from "./data/billing-data";
+import { type Customer, useBillingData, type Invoice } from "./data/billing-data";
 
 const OverviewTab = lazy(() => import("./components/overview-tab").then(m => ({ default: m.OverviewTab })));
 const PlansTab = lazy(() => import("./components/plans-tab").then(m => ({ default: m.PlansTab })));
@@ -103,7 +103,7 @@ export default function BillingPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <HistoryTab
                     invoices={invoices}
-                    customerData={customerData as Customer}
+                    customerData={customerData as unknown as Customer}
                     isLoading={isLoading && !hasLoadedInvoices}
                   />
                 </div>

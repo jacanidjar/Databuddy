@@ -68,7 +68,7 @@ const PageHeaderSkeleton = () => (
 const FunnelsListSkeleton = () => (
   <div className="space-y-3">
     {[...Array(3)].map((_, i) => (
-      <Card className="animate-pulse rounded-xl" key={i}>
+      <Card className="animate-pulse rounded-xl" key={`funnel-skeleton-${i + 1}`}>
         <div className="p-6">
           <div className="mb-4 flex items-start justify-between">
             <div className="flex-1 space-y-3">
@@ -339,7 +339,7 @@ export default function FunnelsPage() {
                   steps_analytics: referrerData.steps_analytics,
                 },
               };
-            }, [selectedReferrer, analyticsData, referrerAnalyticsData]);
+            }, [selectedReferrer]);
 
             const summaryStats = useMemo(() => {
               const steps = currentAnalyticsData?.data?.steps_analytics;
@@ -374,7 +374,15 @@ export default function FunnelsPage() {
                   </div>
                 }
               >
-                <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
+                <div
+                  className="space-y-4"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                  onKeyDown={(e) => {
+                    e.stopPropagation();
+                  }}
+                >
                   <FunnelAnalytics
                     data={currentAnalyticsData}
                     error={selectedReferrer === "all" ? analyticsError : referrerAnalyticsError}

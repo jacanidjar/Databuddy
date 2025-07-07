@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAutumn, useCustomer } from 'autumn-js/react';
 import { toast } from 'sonner';
 import dayjs from 'dayjs';
-import { CustomerProduct, Customer } from '../data/billing-data';
+import type { CustomerProduct, Customer } from '../data/billing-data';
 import { useBillingData } from "../data/billing-data";
 import AttachDialog from '@/components/autumn/attach-dialog';
 
@@ -96,7 +96,7 @@ export function useBilling(refetch?: () => void) {
             id: feature.id,
             name: feature.name,
             used: feature.usage,
-            limit: feature.unlimited ? Infinity : feature.included_usage,
+            limit: feature.unlimited ? Number.POSITIVE_INFINITY : feature.included_usage,
             unlimited: feature.unlimited || false,
             nextReset: feature.next_reset_at ? dayjs(feature.next_reset_at).format('MMM D, YYYY') : null,
             interval: feature.interval || null

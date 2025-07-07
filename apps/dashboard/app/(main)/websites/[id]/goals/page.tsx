@@ -23,38 +23,10 @@ import { EditGoalDialog } from "./_components/edit-goal-dialog";
 import { GoalsList } from "./_components/goals-list";
 import { WebsitePageHeader } from "../_components/website-page-header";
 
-const PageHeaderSkeleton = () => (
-  <div className="space-y-6">
-    <div className="border-b bg-gradient-to-r from-background via-background to-muted/20 pb-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 animate-pulse rounded-xl bg-muted" />
-            <div>
-              <div className="mb-2 h-8 w-48 animate-pulse rounded bg-muted" />
-              <div className="h-4 w-64 animate-pulse rounded bg-muted" />
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-32 animate-pulse rounded-lg bg-muted" />
-          <div className="h-10 w-36 animate-pulse rounded-lg bg-muted" />
-        </div>
-      </div>
-    </div>
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="h-6 w-32 animate-pulse rounded bg-muted" />
-        <div className="h-4 w-16 animate-pulse rounded bg-muted" />
-      </div>
-    </div>
-  </div>
-);
-
 const GoalsListSkeleton = () => (
   <div className="space-y-3">
     {[...Array(3)].map((_, i) => (
-      <Card className="animate-pulse rounded-xl" key={i}>
+      <Card className="animate-pulse rounded-xl" key={`goal-skeleton-${i + 1}`}>
         <div className="p-6">
           <div className="mb-4 flex items-start justify-between">
             <div className="flex-1 space-y-3">

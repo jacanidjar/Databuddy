@@ -1,14 +1,18 @@
 "use client";
 
-import type React from "react";
-import { useEffect, useState } from "react";
-import { useAutumn } from "autumn-js/react";
+import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2 } from "lucide-react";
-import type { CheckProductPreview } from "autumn-js";
-import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
+import { type CheckProductPreview } from "autumn-js";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { getAttachContent } from "@/lib/autumn/attach-content";
+import { useCustomer } from "autumn-js/react";
 
 export interface AttachDialogProps {
   open: boolean;
@@ -18,7 +22,7 @@ export interface AttachDialogProps {
 }
 
 export default function AttachDialog(params?: AttachDialogProps) {
-  const { attach } = useAutumn();
+  const { attach } = useCustomer();
   const [loading, setLoading] = useState(false);
   const [optionsInput, setOptionsInput] = useState<FeatureOption[]>(
     params?.preview?.options || []
@@ -26,14 +30,13 @@ export default function AttachDialog(params?: AttachDialogProps) {
 
   const getTotalPrice = () => {
     let sum = due_today?.price || 0;
-    for (const option of optionsInput) {
+    optionsInput.forEach((option) => {
       if (option.price && option.quantity) {
         sum += option.price * (option.quantity / option.billing_units);
       }
-    }
+    });
     return sum;
-  }
-
+  };
 
   useEffect(() => {
     setOptionsInput(params?.preview?.options || []);
@@ -50,32 +53,40 @@ export default function AttachDialog(params?: AttachDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent
-        className={cn("p-0 pt-4 gap-0 text-foreground overflow-hidden text-sm")}
+        className={cn(
+          "p-0 pt-4 gap-0 text-foreground overflow-hidden text-sm"
+        )}
       >
-        <DialogTitle className={cn("font-bold text-xl px-6")}>
-          {title}
-        </DialogTitle>
-        <div className={cn("px-6 my-2")}>{message}</div>
-        {items?.map((item) => (
-          <PriceItem key={item.description}>
-            <span>{item.description}</span>
-            <span>{item.price}</span>
-          </PriceItem>
-        ))}
+        <DialogTitle className={cn("px-6 mb-1 ")}>{title}</DialogTitle>
+        <div className={cn("px-6 mt-1 mb-4 text-muted-foreground")}>
+          {message}
+        </div>
+        {(items || optionsInput.length > 0) && (
+          <div className="mb-6 px-6">
+            {items?.map((item) => (
+              <PriceItem key={item.description}>
+                <span className="truncate flex-1">
+                  {item.description}
+                </span>
+                <span>{item.price}</span>
+              </PriceItem>
+            ))}
 
-        {optionsInput?.map((option, index) => {
-          return (
-            <OptionsInput
-              key={option.feature_name}
-              option={option as FeatureOptionWithRequiredPrice}
-              optionsInput={optionsInput}
-              setOptionsInput={setOptionsInput}
-              index={index}
-            />
-          );
-        })}
+            {optionsInput?.map((option, index) => {
+              return (
+                <OptionsInput
+                  key={option.feature_name}
+                  option={option as FeatureOptionWithRequiredPrice}
+                  optionsInput={optionsInput}
+                  setOptionsInput={setOptionsInput}
+                  index={index}
+                />
+              );
+            })}
+          </div>
+        )}
 
-        <DialogFooter className="flex flex-col sm:flex-row justify-between gap-x-4 py-2 mt-4 pl-6 pr-3 bg-secondary border-t">
+        <DialogFooter className="flex flex-col sm:flex-row justify-between gap-x-4 py-2 pl-6 pr-3 bg-secondary border-t shadow-inner">
           {due_today && (
             <TotalPrice>
               <span>Due Today</span>
@@ -104,8 +115,15 @@ export default function AttachDialog(params?: AttachDialogProps) {
             disabled={loading}
             className="min-w-16 flex items-center gap-2"
           >
-            {loading ? <Loader2 className="animate-spin" size={10} /> : <span>Confirm</span>}
-
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <span className="whitespace-nowrap flex gap-1">
+                  Confirm
+                </span>
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -124,7 +142,7 @@ export const PriceItem = ({
   return (
     <div
       className={cn(
-        "flex flex-col text-muted-foreground pb-4 sm:pb-0 gap-1 sm:flex-row justify-between px-6 sm:h-7 sm:gap-2 sm:items-center  sm:whitespace-nowrap ",
+        "flex flex-col pb-4 sm:pb-0 gap-1 sm:flex-row justify-between sm:h-7 sm:gap-2 sm:items-center",
         className
       )}
       {...props}
@@ -169,13 +187,13 @@ export const OptionsInput = ({
       <QuantityInput
         key={feature_name}
         value={quantity ? quantity / billing_units : ""}
-        onChange={(e) => {
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           const newOptions = [...optionsInput];
-          newOptions[index].quantity = Number.parseInt((e.target as HTMLInputElement).value) * billing_units;
+          newOptions[index].quantity = parseInt(e.target.value) * billing_units;
           setOptionsInput(newOptions);
         }}
       >
-        <span className="text-muted-foreground">
+        <span className="">
           × ${price} per {billing_units === 1 ? " " : billing_units}{" "}
           {feature_name}
         </span>
@@ -222,7 +240,9 @@ export const QuantityInput = ({
         >
           -
         </Button>
-        <span className="w-8 text-center text-foreground">{currentValue}</span>
+        <span className="w-8 text-center text-foreground">
+          {currentValue}
+        </span>
         <Button
           variant="outline"
           size="icon"

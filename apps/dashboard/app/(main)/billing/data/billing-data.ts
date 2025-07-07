@@ -547,7 +547,7 @@ export const useBillingData = () => {
   const usage: Usage = {
     features: !customer ? [] : Object.values(customer.features).map(feature => {
       const used = feature.usage || 0;
-      const limit = feature.unlimited ? Infinity : (feature.included_usage || 0);
+      const limit = feature.unlimited ? Number.POSITIVE_INFINITY : (feature.included_usage || 0);
       const unlimited = feature.unlimited || false;
 
       const currentPlan = subscriptionData.list.find(p => p.scenario === 'active');

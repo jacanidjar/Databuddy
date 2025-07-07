@@ -27,7 +27,7 @@
     "@hono/zod-validator": "^0.4.3",
     "@logtail/edge": "^0.5.4",
     "@types/ua-parser-js": "^0.7.39",
-    "autumn-js": "^0.0.67",
+    "autumn-js": "^0.0.81",
     "better-auth": "^1.2.7",
     "botid": "^1.2.0",
     "dayjs": "^1.11.13",

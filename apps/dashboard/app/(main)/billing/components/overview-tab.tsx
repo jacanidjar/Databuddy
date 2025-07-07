@@ -12,14 +12,13 @@ import { NoPaymentMethodDialog } from "./no-payment-method-dialog";
 import { CancelSubscriptionDialog } from "./cancel-subscription-dialog";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { PricingTiersTooltip } from "./pricing-tiers-tooltip";
 
 function UsageCard({ feature, onUpgrade }: {
   feature: FeatureUsage,
   onUpgrade: () => void
 }) {
   const percentage = feature.limit > 0 ? Math.min((feature.used / feature.limit) * 100, 100) : 0;
-  const isUnlimited = !isFinite(feature.limit);
+  const isUnlimited = !Number.isFinite(feature.limit);
   const isNearLimit = !isUnlimited && percentage > 80;
   const isOverLimit = !isUnlimited && percentage >= 100;
 
@@ -178,9 +177,6 @@ function PlanStatusCard({ plan, statusDetails, onUpgrade, onCancelClick, onManag
             </div>
             <div className="text-sm text-muted-foreground flex items-center gap-1">
               {plan?.price.secondary_text}
-              {/* {plan?.price.display === 'tiered' && plan.price.tiers && (
-                <PricingTiersTooltip tiers={plan.price.tiers} />
-              )} */}
             </div>
           </div>
         </div>
@@ -274,7 +270,7 @@ export function OverviewTab({ onNavigateToPlans }: { onNavigateToPlans: () => vo
             <Skeleton className="h-8 w-48" />
             <div className="grid gap-4">
               {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-32 w-full" />
+                <Skeleton key={`skeleton-${i + 1}`} className="h-32 w-full" />
               ))}
             </div>
           </div>
