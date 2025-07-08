@@ -1,5 +1,3 @@
-import "./polyfills/compression";
-
 import { type Context, Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger as HonoLogger } from "hono/logger";
@@ -20,6 +18,10 @@ import revenueRouter from "./routes/v1/revenue";
 import redditRouter from "./routes/v1/reddit";
 import { uploadRouter } from "./routes/v1/upload";
 
+// Polyfills
+import "./polyfills/compression";
+
+// Types
 type AppVariables = {
 	Variables: {
 		user: User;

@@ -10,12 +10,11 @@ import { z } from "zod";
 import { websiteAuthHook } from "../../middleware/website";
 import { Autumn as autumn } from "autumn-js";
 import { auth } from "../../middleware/betterauth";
-import type { User, Session } from "@databuddy/auth";
+import type { User } from "@databuddy/auth";
 
 type WebsitesContext = {
 	Variables: AppVariables & {
 		user: User;
-		session: Session;
 	};
 };
 
@@ -62,11 +61,6 @@ const updateWebsiteSchema = z.object({
 		.regex(/^[a-zA-Z0-9\s\-_.]+$/, "Invalid website name format"),
 });
 
-// Organization context utilities
-function getOrganizationId(session: Session): string | null {
-	return session.session?.activeOrganizationId || null;
-}
-
 async function getBillingCustomerId(
 	userId: string,
 	organizationId?: string | null,
@@ -86,10 +80,7 @@ async function checkOrganizationPermissions(
 	permissions: Record<string, string[]>,
 ): Promise<boolean> {
 	try {
-		const { success } = await cacheable(auth.api.hasPermission, {
-			expireInSec: 60,
-			prefix: "has-permission",
-		})({
+		const { success } = await auth.api.hasPermission({
 			headers,
 			body: { permissions },
 		});
@@ -141,6 +132,31 @@ async function handleAutumnLimits(
 	}
 }
 
+function createErrorResponse(message: string, status = 400, details?: any) {
+	const response: any = { success: false, error: message };
+	if (details) response.details = details;
+	return { response, status };
+}
+
+function createSuccessResponse(data: any) {
+	return { success: true, data };
+}
+
+async function _getUserProjectIds(userId: string): Promise<string[]> {
+	if (!userId) return [];
+
+	try {
+		const userProjects = await db.query.projects.findMany({
+			where: eq(projects.organizationId, userId),
+			columns: { id: true },
+		});
+		return userProjects.map((project) => project.id);
+	} catch (error) {
+		logger.error("[Website API] Error fetching project IDs:", { error });
+		return [];
+	}
+}
+
 async function _getOrganizationOwnerId(
 	organizationId: string,
 ): Promise<string | null> {
@@ -172,38 +188,12 @@ const getOrganizationOwnerId = cacheable(_getOrganizationOwnerId, {
 	staleTime: 60,
 });
 
-async function checkWebsiteExists(
-	domain: string,
-	userId: string,
-	organizationId: string | null,
-): Promise<boolean> {
-	if (organizationId) {
-		const existingWebsite = await db.query.websites.findFirst({
-			where: and(
-				eq(websites.domain, domain),
-				eq(websites.organizationId, organizationId),
-			),
-		});
-		return !!existingWebsite;
-	}
-
-	const existingWebsite = await db.query.websites.findFirst({
-		where: and(
-			eq(websites.domain, domain),
-			eq(websites.userId, userId),
-			isNull(websites.organizationId),
-		),
-	});
-	return !!existingWebsite;
-}
-
 websitesRouter.use("*", authMiddleware);
 
 websitesRouter.post("/", async (c) => {
-	const user = c.get("user") as User;
-	const session = c.get("session") as Session;
+	const user = c.get("user");
 	const rawData = await c.req.json();
-	const organizationId = getOrganizationId(session);
+	const organizationId = c.req.query("organizationId");
 
 	if (!user) {
 		return c.json({ success: false, error: "Unauthorized" }, 401);
@@ -222,7 +212,6 @@ websitesRouter.post("/", async (c) => {
 			organizationId,
 		});
 
-		// Check organization permissions if creating in organization context
 		if (organizationId) {
 			const hasPermission = await checkOrganizationPermissions(
 				c.req.raw.headers,
@@ -241,7 +230,6 @@ websitesRouter.post("/", async (c) => {
 			}
 		}
 
-		// Check billing limits
 		const customerId = await getBillingCustomerId(user.id, organizationId);
 		const limitCheck = await handleAutumnLimits(customerId, "check");
 
@@ -255,25 +243,47 @@ websitesRouter.post("/", async (c) => {
 			);
 		}
 
-		// Build full domain
 		const fullDomain = data.subdomain
 			? `${data.subdomain}.${data.domain}`
 			: data.domain;
 
-		// Check if website already exists
-		const websiteExists = await checkWebsiteExists(fullDomain, user.id, organizationId);
-		if (websiteExists) {
-			const context = organizationId ? "this organization" : "your account";
-			return c.json(
-				{
-					success: false,
-					error: `A website with the domain "${fullDomain}" already exists in ${context}.`,
-				},
-				409,
-			);
+		if (organizationId) {
+			const existingWebsite = await db.query.websites.findFirst({
+				where: and(
+					eq(websites.domain, fullDomain),
+					eq(websites.organizationId, organizationId),
+				),
+			});
+
+			if (existingWebsite) {
+				return c.json(
+					{
+						success: false,
+						error: `A website with the domain "${fullDomain}" already exists in this organization.`,
+					},
+					409,
+				);
+			}
+		} else {
+			const existingWebsite = await db.query.websites.findFirst({
+				where: and(
+					eq(websites.domain, fullDomain),
+					eq(websites.userId, user.id),
+					isNull(websites.organizationId),
+				),
+			});
+
+			if (existingWebsite) {
+				return c.json(
+					{
+						success: false,
+						error: `You already have a website with the domain "${fullDomain}".`,
+					},
+					409,
+				);
+			}
 		}
 
-		// Create website
 		const [website] = await db
 			.insert(websites)
 			.values({
@@ -286,7 +296,6 @@ websitesRouter.post("/", async (c) => {
 			})
 			.returning();
 
-		// Track usage
 		if (limitCheck.data?.allowed) {
 			await handleAutumnLimits(customerId, "track", 1);
 		}
@@ -458,8 +467,7 @@ websitesRouter.post(
 
 websitesRouter.get("/", async (c) => {
 	const user = c.get("user");
-	const session = c.get("session") as Session;
-	const organizationId = getOrganizationId(session);
+	const organizationId = c.req.query("organizationId");
 
 	if (!user) {
 		return c.json({ success: false, error: "Unauthorized" }, 401);
@@ -482,6 +490,48 @@ websitesRouter.get("/", async (c) => {
 			organizationId,
 		});
 		return c.json({ success: false, error: "Failed to fetch websites" }, 500);
+	}
+});
+
+websitesRouter.get("/project/:projectId", async (c) => {
+	const user = c.get("user");
+	const projectId = c.req.param("projectId");
+
+	if (!user) {
+		return c.json({ success: false, error: "Unauthorized" }, 401);
+	}
+
+	if (!projectId) {
+		return;
+	}
+
+	try {
+		const projectAccessRecord = await db.query.projects.findFirst({
+			where: and(
+				eq(projects.id, projectId),
+				eq(projects.organizationId, user.id),
+			),
+		});
+
+		if (!projectAccessRecord) {
+			return c.json(
+				{ success: false, error: "You don't have access to this project" },
+				403,
+			);
+		}
+
+		const projectWebsites = await db.query.websites.findMany({
+			where: eq(websites.projectId, projectId),
+			orderBy: (websites, { desc }) => [desc(websites.createdAt)],
+		});
+
+		return c.json({ success: true, data: projectWebsites });
+	} catch (error) {
+		logger.error("[Website API] Error fetching project websites:", { error });
+		return c.json(
+			{ success: false, error: "Failed to fetch project websites" },
+			500,
+		);
 	}
 });
 
@@ -525,7 +575,8 @@ websitesRouter.delete(
 			}
 
 			await db.delete(websites).where(eq(websites.id, id));
-			const customerId = await getBillingCustomerId(user.id, (website as any).organizationId || null);
+
+			const customerId = await getBillingCustomerId(user.id);
 			await handleAutumnLimits(customerId, "track", -1);
 
 			await discordLogger.warning(

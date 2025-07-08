@@ -8,6 +8,7 @@ import { cacheable } from "@databuddy/redis";
 
 type RequiredRole = 'owner' | 'admin' | 'member';
 
+// Helper function to verify website access with caching
 export const verifyWebsiteAccess = cacheable(
   async (
     userId: string,
@@ -24,6 +25,7 @@ export const verifyWebsiteAccess = cacheable(
       if (role === 'ADMIN') return true;
 
       if (website.organizationId) {
+        // Organization website. Check if user is a member of that organization.
         const membership = await db.query.member.findFirst({
           where: and(
             eq(member.userId, userId),
@@ -33,25 +35,27 @@ export const verifyWebsiteAccess = cacheable(
 
         if (!membership) return false;
 
+        // If a specific role is required, check it
         if (requiredRole) {
           const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
           return roles.includes(membership.role as RequiredRole);
         }
 
-        return true;
+        return true; // Membership is enough
+      } else {
+        // Personal website. Check for direct ownership.
+        return website.userId === userId;
       }
-
-      return website.userId === userId;
     } catch (error) {
       logger.error('Error verifying website access:', { error, userId, websiteId });
       return false;
     }
   },
   {
-    expireInSec: 300,
+    expireInSec: 300, // Cache for 5 minutes
     prefix: 'website-access',
     staleWhileRevalidate: true,
-    staleTime: 60
+    staleTime: 60 // Revalidate if data is older than 1 minute
   }
 );
 
@@ -61,6 +65,7 @@ export const authMiddleware = createMiddleware(async (c, next) => {
   const method = c.req.method;
 
   try {
+    // Check rate limit
     // if (!checkRateLimit(ip)) {
     //   return c.json({
     //     success: false,
@@ -79,6 +84,8 @@ export const authMiddleware = createMiddleware(async (c, next) => {
       return next();
     }
 
+    // Get session
+
     if (!session) {
       return c.json({
         success: false,
@@ -86,7 +93,7 @@ export const authMiddleware = createMiddleware(async (c, next) => {
         code: 'AUTH_REQUIRED'
       }, 401);
     }
-
+    // Set context
     c.set('user', session.user);
     c.set('session', session);
 

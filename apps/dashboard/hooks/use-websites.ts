@@ -51,6 +51,14 @@ export const websiteApi = {
 		return result.data || null;
 	},
 
+	getByProject: async (projectId: string): Promise<Website[]> => {
+		const result = await apiRequest<Website[]>(
+			`/websites/project/${projectId}`,
+		);
+		if (result.error) throw new Error(result.error);
+		return result.data || [];
+	},
+
 	update: async (id: string, name: string): Promise<Website> => {
 		const result = await apiRequest<Website>(`/websites/${id}`, {
 			method: "PATCH",
@@ -91,19 +99,34 @@ export function useWebsite(id: string) {
 	});
 }
 
-
+// Helper hook for getting project websites
+export function useProjectWebsites(projectId: string) {
+	return useQuery({
+		queryKey: ["websites", "project", projectId],
+		queryFn: () => websiteApi.getByProject(projectId),
+		enabled: !!projectId,
+		staleTime: 30_000,
+		refetchOnWindowFocus: false,
+	});
+}
 
 export function useWebsites() {
+	const { data: activeOrganization, isPending: isLoadingOrganization } = authClient.useActiveOrganization();
 	const queryClient = useQueryClient();
-	const { data: activeOrganization } = authClient.useActiveOrganization();
+
+	const enabled = !isLoadingOrganization;
 
 	const { data, isLoading, isError, refetch } = useQuery({
 		queryKey: ["websites", activeOrganization?.id || "personal"],
 		queryFn: async () => {
-			const result = await apiRequest<Website[]>("/websites");
+			const endpoint = activeOrganization?.id
+				? `/websites?organizationId=${activeOrganization.id}`
+				: "/websites";
+			const result = await apiRequest<Website[]>(endpoint);
 			if (result.error) throw new Error(result.error);
 			return result.data || [];
 		},
+		enabled,
 		staleTime: 30_000,
 		refetchOnWindowFocus: false,
 	});
@@ -112,14 +135,14 @@ export function useWebsites() {
 		mutationFn: websiteApi.delete,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
-				queryKey: ["websites"],
+				queryKey: ["websites", activeOrganization?.id || "personal"],
 			});
 		},
 	});
 
 	return {
 		websites: data || [],
-		isLoading: isLoading,
+		isLoading: isLoading || isLoadingOrganization,
 		isError,
 		refetch,
 		deleteWebsite,

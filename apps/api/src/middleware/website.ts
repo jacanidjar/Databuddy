@@ -15,19 +15,6 @@ export const getWebsiteById = cacheable(
       if (!id) return null;
       return await db.query.websites.findFirst({
         where: eq(websites.id, id),
-        columns: {
-          id: true,
-          domain: true,
-          name: true,
-          status: true,
-          userId: true,
-          projectId: true,
-          isPublic: true,
-          createdAt: true,
-          updatedAt: true,
-          deletedAt: true,
-          organizationId: true,
-        },
       });
     } catch (error) {
       logger.error('Error fetching website by ID:', { error, id });
