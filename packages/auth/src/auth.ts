@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { customSession, multiSession, twoFactor, emailOTP, magicLink, organization } from "better-auth/plugins";
-import { db, eq, user } from "@databuddy/db";
+import { db, eq, user, websites, account, inArray } from "@databuddy/db";
 import { Resend } from "resend";
 import { getRedisCache } from "@databuddy/redis";
 import { nextCookies } from "better-auth/next-js";
@@ -8,10 +8,12 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { ac, owner, admin, member, viewer } from "./permissions";
 import { logger } from "@databuddy/shared";
 import { VerificationEmail, OtpEmail, MagicLinkEmail, InvitationEmail, ResetPasswordEmail } from "@databuddy/email";
+import { chQuery } from "@databuddy/db";
 
 function isProduction() {
     return process.env.NODE_ENV === 'production';
 }
+
 
 export const auth = betterAuth({
     database: drizzleAdapter(db, {
@@ -20,7 +22,7 @@ export const auth = betterAuth({
     databaseHooks: {
         user: {
             create: {
-                after: async (user) => {
+                after: async (user: { id: string; name: string; email: string }) => {
                     logger.info('User Created', `User ${user.id}, ${user.name}, ${user.email} created`);
                     // const resend = new Resend(process.env.RESEND_API_KEY as string);
                     // await resend.emails.send({
@@ -32,6 +34,27 @@ export const auth = betterAuth({
                 },
             },
         },
+    },
+    user: {
+        deleteUser: {
+            enabled: true,
+            beforeDelete: async (user) => {
+                logger.info('User Deletion Started', `Starting deletion process for user ${user.id}`);
+
+                const userWebsites = await db.query.websites.findMany({
+                    where: eq(websites.userId, user.id)
+                });
+
+                if (userWebsites.length > 0) {
+                    logger.info('Deleting Websites', `Deleting websites for user ${user.id}`);
+                    await db.delete(websites).where(inArray(websites.id, userWebsites.map(w => w.id)));
+                }
+                for (const website of userWebsites) {
+                    await chQuery(`DELETE FROM analytics.events WHERE client_id = ${website.id}`);
+                }
+                logger.info('User Deletion Finished', `Finished deletion process for user ${user.id}`);
+            }
+        }
     },
     appName: "databuddy.cc",
     onAPIError: {
@@ -65,6 +88,7 @@ export const auth = betterAuth({
         google: {
             clientId: process.env.GOOGLE_CLIENT_ID as string,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+            scopes: ["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/webmasters.readonly"]
         },
         github: {
             clientId: process.env.GITHUB_CLIENT_ID as string,
