@@ -42,10 +42,10 @@ const testimonials = [
 		avatar: "ahmet.jpg",
 	},
 	{
-		name: "David Park",
-		profession: "Growth Lead, ScaleUp",
-		description: "AI-powered insights helped us identify key user patterns we never saw before.",
-		avatar: "DP",
+		name: "Maze",
+		profession: "Founder, OpenCut",
+		description: "Adding analytics to my apps used to be a hassle, Databuddy changed that.",
+		avatar: "maze.jpg",
 	},
 	{
 		name: "Sarah Kim",
