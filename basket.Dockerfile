@@ -12,6 +12,7 @@ COPY packages/ ./packages/
 RUN bun install
 
 COPY apps/basket/src ./apps/basket/src
+COPY apps/basket/maxmind ./maxmind
 
 ENV NODE_ENV=production
 
