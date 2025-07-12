@@ -8,11 +8,27 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAnalyticsLocations } from "@/hooks/use-analytics";
+import { useMapLocationData } from "@/hooks/use-dynamic-query";
 import { cn } from "@/lib/utils";
 import { WebsitePageHeader } from "../_components/website-page-header";
 
-// Dynamic import for MapComponent (heavy Leaflet/D3 dependencies)
+interface CountryData {
+  country: string;
+  visitors: number;
+  pageviews: number;
+}
+
+interface RegionData {
+  country: string;
+  visitors: number;
+  pageviews: number;
+}
+
+interface LocationData {
+  countries: CountryData[];
+  regions: RegionData[];
+}
+
 const MapComponent = dynamic(
   () =>
     import("@/components/analytics/map-component").then((mod) => ({ default: mod.MapComponent })),
@@ -37,17 +53,34 @@ function WebsiteMapPage() {
     return <div>No website ID</div>;
   }
 
-  const { data: locationData, isLoading } = useAnalyticsLocations(id);
-  const topCountries =
-    locationData?.countries?.filter((c) => c.country && c.country.trim() !== "").slice(0, 8) || [];
-  const totalVisitors =
-    locationData?.countries?.reduce((sum, country) => sum + country.visitors, 0) || 0;
-  const unknownVisitors =
-    locationData?.countries?.find((c) => !c.country || c.country.trim() === "")?.visitors || 0;
+  const { results, isLoading, getDataForQuery } = useMapLocationData(id, {
+    start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    end_date: new Date().toISOString().split('T')[0],
+    granularity: 'daily'
+  });
+
+  const locationData: LocationData = {
+    countries: (getDataForQuery("map-countries", "countries") || []).map((item: { name: string; visitors: number; pageviews: number }) => ({
+      country: item.name,
+      visitors: item.visitors,
+      pageviews: item.pageviews,
+    })),
+    regions: (getDataForQuery("map-regions", "regions") || []).map((item: { name: string; visitors: number; pageviews: number }) => ({
+      country: item.name,
+      visitors: item.visitors,
+      pageviews: item.pageviews,
+    })),
+  };
+
+  const topCountries = locationData.countries
+    .filter((c) => c.country && c.country.trim() !== "")
+    .slice(0, 8);
+
+  const totalVisitors = locationData.countries.reduce((sum, country) => sum + country.visitors, 0);
+  const unknownVisitors = locationData.countries.find((c) => !c.country || c.country.trim() === "")?.visitors || 0;
 
   return (
     <div className="flex h-[calc(100vh-7rem)] flex-col space-y-4 p-3 sm:p-4 lg:p-6">
-      {/* Header with proper spacing */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <WebsitePageHeader
           title="Geographic Data"
@@ -84,9 +117,7 @@ function WebsiteMapPage() {
         />
       </div>
 
-      {/* Main Content */}
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden md:flex-row">
-        {/* Map */}
         <Card className="flex min-h-0 flex-1 flex-col overflow-hidden rounded pt-4 pb-0">
           <CardHeader className="flex-shrink-0 pb-3">
             <CardTitle className="flex items-center justify-between">
@@ -109,7 +140,6 @@ function WebsiteMapPage() {
           </CardContent>
         </Card>
 
-        {/* Countries List */}
         <Card className="flex min-h-0 flex-1 flex-col overflow-hidden rounded md:w-72 md:flex-none">
           <CardHeader className="flex-shrink-0 pb-3">
             <CardTitle className="flex items-center gap-2">
@@ -140,8 +170,7 @@ function WebsiteMapPage() {
                 {topCountries.length > 0 && (
                   <div>
                     {topCountries.map((country, index) => {
-                      const percentage =
-                        totalVisitors > 0 ? (country.visitors / totalVisitors) * 100 : 0;
+                      const percentage = totalVisitors > 0 ? (country.visitors / totalVisitors) * 100 : 0;
                       return (
                         <div
                           className={cn(
@@ -184,7 +213,6 @@ function WebsiteMapPage() {
                   </div>
                 )}
 
-                {/* Unknown Location */}
                 {unknownVisitors > 0 && (
                   <div className="border-t bg-muted/10">
                     <div className="flex items-center justify-between p-3">
@@ -198,23 +226,31 @@ function WebsiteMapPage() {
                             {totalVisitors > 0
                               ? ((unknownVisitors / totalVisitors) * 100).toFixed(1)
                               : 0}
-                            %
+                            % of total
                           </div>
                         </div>
                       </div>
                       <div className="flex-shrink-0 text-right">
-                        <div className="font-semibold text-sm">
-                          {unknownVisitors.toLocaleString()}
-                        </div>
+                        <div className="font-semibold text-sm">{unknownVisitors.toLocaleString()}</div>
+                        <div className="text-muted-foreground text-xs">visitors</div>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {topCountries.length === 0 && unknownVisitors === 0 && (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <AlertCircle className="mb-3 h-8 w-8 text-muted-foreground" />
-                    <p className="text-muted-foreground text-sm">No geographic data available</p>
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="mb-4">
+                      <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/20">
+                        <Globe className="h-7 w-7 text-muted-foreground/50" />
+                      </div>
+                    </div>
+                    <h4 className="mb-2 font-medium text-base text-foreground">
+                      No geographic data available
+                    </h4>
+                    <p className="max-w-[280px] text-muted-foreground text-sm">
+                      Location data will appear here when visitors start using your website.
+                    </p>
                   </div>
                 )}
               </div>
@@ -230,8 +266,11 @@ export default function Page() {
   return (
     <Suspense
       fallback={
-        <div className="flex h-full items-center justify-center">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+        <div className="flex h-[calc(100vh-7rem)] items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <span className="font-medium text-muted-foreground text-sm">Loading...</span>
+          </div>
         </div>
       }
     >

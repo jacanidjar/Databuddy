@@ -745,23 +745,23 @@ export function WebsiteAudienceTab({
             const gradientConfig =
               percentage >= 40
                 ? {
-                    bg: "linear-gradient(90deg, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.06) 100%)",
-                    border: "rgba(34, 197, 94, 0.2)",
-                  }
+                  bg: "linear-gradient(90deg, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.06) 100%)",
+                  border: "rgba(34, 197, 94, 0.2)",
+                }
                 : percentage >= 25
                   ? {
-                      bg: "linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%)",
-                      border: "rgba(59, 130, 246, 0.2)",
-                    }
+                    bg: "linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%)",
+                    border: "rgba(59, 130, 246, 0.2)",
+                  }
                   : percentage >= 10
                     ? {
-                        bg: "linear-gradient(90deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.06) 100%)",
-                        border: "rgba(245, 158, 11, 0.2)",
-                      }
+                      bg: "linear-gradient(90deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.06) 100%)",
+                      border: "rgba(245, 158, 11, 0.2)",
+                    }
                     : {
-                        bg: "linear-gradient(90deg, rgba(107, 114, 128, 0.08) 0%, rgba(107, 114, 128, 0.04) 100%)",
-                        border: "rgba(107, 114, 128, 0.15)",
-                      };
+                      bg: "linear-gradient(90deg, rgba(107, 114, 128, 0.08) 0%, rgba(107, 114, 128, 0.04) 100%)",
+                      border: "rgba(107, 114, 128, 0.15)",
+                    };
 
             return (
               <div

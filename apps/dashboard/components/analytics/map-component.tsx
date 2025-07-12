@@ -137,18 +137,18 @@ export function MapComponent({
       .range([0.1, 1]);
 
     return (value: number) => {
-      if (value === 0) return "rgba(229, 231, 235, 0.3)"; // Gray-200 for no data
+      if (value === 0) return "rgba(229, 231, 235, 0.6)"; // Higher opacity for no data
 
       const intensity = scale(value);
 
       // Use a gradient from light blue to dark blue based on intensity
       if (intensity < 0.3) {
-        return `rgba(${lightBlue}, ${0.2 + intensity * 0.4})`;
+        return `rgba(${lightBlue}, ${0.4 + intensity * 0.3})`;
       }
       if (intensity < 0.7) {
-        return `rgba(${baseBlue}, ${0.4 + intensity * 0.4})`;
+        return `rgba(${baseBlue}, ${0.6 + intensity * 0.3})`;
       }
-      return `rgba(${baseBlue}, ${0.7 + intensity * 0.3})`;
+      return `rgba(${baseBlue}, ${0.8 + intensity * 0.2})`;
     };
   }, [processedCountryData, mode]);
 
@@ -170,13 +170,13 @@ export function MapComponent({
     const borderColor = hasData
       ? isHovered
         ? "rgba(59, 130, 246, 0.9)"
-        : "rgba(59, 130, 246, 0.4)"
-      : "rgba(156, 163, 175, 0.3)"; // Gray-400 for no data
+        : "rgba(59, 130, 246, 0.6)"
+      : "rgba(156, 163, 175, 0.5)"; // Higher opacity for no data borders
 
-    const borderWeight = hasData ? (isHovered ? 2.5 : 1.2) : 0.8;
+    const borderWeight = hasData ? (isHovered ? 2.5 : 1.5) : 1.0;
 
     // Enhanced fill opacity with better contrast
-    const fillOpacity = hasData ? (isHovered ? 0.95 : 0.8) : 0.2;
+    const fillOpacity = hasData ? (isHovered ? 0.95 : 0.85) : 0.4;
 
     return {
       color: borderColor,
@@ -190,8 +190,8 @@ export function MapComponent({
       // Add slight shadow effect for hovered countries
       ...(isHovered &&
         hasData && {
-          filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))",
-        }),
+        filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))",
+      }),
     };
   };
 
@@ -276,7 +276,7 @@ export function MapComponent({
           preferCanvas={true}
           style={{
             height: "100%",
-            background: "none",
+            background: "rgba(248, 250, 252, 0.8)", // Light gray background for better visibility
             cursor: "default",
             outline: "none",
             zIndex: "1",

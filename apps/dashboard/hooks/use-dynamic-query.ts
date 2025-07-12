@@ -963,6 +963,30 @@ export function useComprehensiveAnalytics(
   return useBatchDynamicQuery(websiteId, dateRange, queries, options);
 }
 
+/**
+ * Convenience hook for map location data
+ */
+export function useMapLocationData(
+  websiteId: string,
+  dateRange: DateRange,
+  options?: Partial<UseQueryOptions<BatchQueryResponse>>
+) {
+  const queries: DynamicQueryRequest[] = [
+    {
+      id: "map-countries",
+      parameters: ["countries"],
+      limit: 100,
+    },
+    {
+      id: "map-regions",
+      parameters: ["regions"],
+      limit: 100,
+    },
+  ];
+
+  return useBatchDynamicQuery(websiteId, dateRange, queries, options);
+}
+
 // Journey-specific data interfaces
 export interface JourneyTransition {
   from_page: string;
