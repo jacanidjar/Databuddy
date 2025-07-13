@@ -1,12 +1,12 @@
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users, LayoutDashboard, Activity, Home, Globe } from 'lucide-react';
+import { Users, LayoutDashboard, Activity, Home, Globe, UserPlus, Zap, Globe2 } from 'lucide-react';
 import { getAnalyticsOverviewData } from './(admin)/analytics/actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-function StatCard({ icon: Icon, label, value, accent }: { icon: any, label: string, value: string | number, accent?: string }) {
+function StatCard({ icon: Icon, label, value, accent, sub }: { icon: any, label: string, value: string | number, accent?: string, sub?: string }) {
   return (
-    <Card className="flex-1 min-w-0 border rounded-md bg-card/95 shadow-sm p-5 flex flex-col gap-2">
+    <Card className="flex-1 min-w-0 border rounded-md bg-card/95 shadow-sm p-5 flex flex-col gap-1 h-full">
       <div className="flex items-center gap-3 mb-1">
         <span className={`rounded bg-muted/60 p-2 flex items-center justify-center ${accent || ''}`}><Icon className="h-6 w-6" /></span>
         <span className="text-muted-foreground text-base font-semibold tracking-wide">{label}</span>
@@ -14,6 +14,7 @@ function StatCard({ icon: Icon, label, value, accent }: { icon: any, label: stri
       <div className="flex items-end justify-between mt-1">
         <span className="text-3xl font-bold text-foreground leading-tight">{value}</span>
       </div>
+      {sub && <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>}
     </Card>
   );
 }
@@ -28,6 +29,13 @@ function formatDate(date: string) {
 
 export default async function AdminHomePage() {
   let stats = { users: 0, websites: 0, events: 0 };
+  const kpm = {
+    usersToday: 0,
+    websitesToday: 0,
+    events24h: 0,
+    topWebsite: null as null | { name: string | null, domain: string | null, value: number },
+    topCountry: null as null | { country: string, visitors: number },
+  };
   let recentWebsites: { id: string, name: string | null, domain: string | null, status: string | null, createdAt: string, user: { name: string | null, email: string | null, image?: string | null } | null }[] = [];
   try {
     const { data } = await getAnalyticsOverviewData();
@@ -36,6 +44,11 @@ export default async function AdminHomePage() {
       websites: data?.totalWebsites || 0,
       events: Array.isArray(data?.eventsOverTime) ? data.eventsOverTime.reduce((sum, d) => sum + (d.value || 0), 0) : 0,
     };
+    kpm.usersToday = data?.usersToday || 0;
+    kpm.websitesToday = data?.websitesToday || 0;
+    kpm.events24h = data?.events24h || 0;
+    kpm.topWebsite = (data?.topWebsites && data.topWebsites.length > 0) ? data.topWebsites[0] : null;
+    kpm.topCountry = (data?.topCountries && data.topCountries.length > 0) ? data.topCountries[0] : null;
     recentWebsites = data?.recentWebsitesWithUsers || [];
   } catch { }
 
@@ -57,11 +70,20 @@ export default async function AdminHomePage() {
           </div>
         </div>
 
-        {/* Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-          <StatCard icon={Users} label="Users" value={stats.users} accent="text-primary" />
-          <StatCard icon={LayoutDashboard} label="Websites" value={stats.websites} accent="text-blue-600 dark:text-blue-400" />
+        {/* Stat Cards - Primary Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+          <StatCard icon={Users} label="Total Users" value={stats.users} accent="text-primary" />
+          <StatCard icon={LayoutDashboard} label="Total Websites" value={stats.websites} accent="text-blue-600 dark:text-blue-400" />
           <StatCard icon={Activity} label="Events (30d)" value={stats.events} accent="text-orange-600 dark:text-orange-400" />
+          <StatCard icon={Zap} label="Events (24h)" value={kpm.events24h} accent="text-green-600 dark:text-green-400" />
+        </div>
+
+        {/* Stat Cards - Secondary Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+          <StatCard icon={UserPlus} label="New Users (24h)" value={kpm.usersToday} accent="text-primary" />
+          <StatCard icon={Globe2} label="New Websites (24h)" value={kpm.websitesToday} accent="text-blue-600 dark:text-blue-400" />
+          <StatCard icon={LayoutDashboard} label="Top Website" value={kpm.topWebsite ? (kpm.topWebsite.name || kpm.topWebsite.domain || '-') : '-'} sub={kpm.topWebsite ? `${kpm.topWebsite.value} events` : ''} accent="text-blue-600 dark:text-blue-400" />
+          <StatCard icon={Globe} label="Top Country" value={kpm.topCountry ? kpm.topCountry.country : '-'} sub={kpm.topCountry ? `${kpm.topCountry.visitors} visitors` : ''} accent="text-primary" />
         </div>
 
         {/* Recent Websites */}
