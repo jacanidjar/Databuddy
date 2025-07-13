@@ -326,10 +326,10 @@ export function WebsiteOverviewTab({
       visitors: createChartSeries('visitors'),
       sessions: createChartSeries('sessions'),
       pageviews: createChartSeries('pageviews'),
-      pagesPerSession: createChartSeries('pageviews', (pageviews) => {
-        const event = filteredEvents.find(e => e.pageviews === pageviews);
-        return event?.sessions > 0 ? pageviews / event.sessions : 0;
-      }),
+      pagesPerSession: filteredEvents.map((event: any) => ({
+        date: event.date,
+        value: event.sessions > 0 ? Number((event.pageviews / event.sessions).toFixed(2)) : 0,
+      })),
       bounceRate: createChartSeries('bounce_rate'),
       sessionDuration: createChartSeries('avg_session_duration'),
     };

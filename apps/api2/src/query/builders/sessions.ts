@@ -43,7 +43,7 @@ export const SessionsBuilders: Record<string, SimpleQueryConfig> = {
             'device_type as name',
             'COUNT(DISTINCT session_id) as sessions',
             'COUNT(DISTINCT anonymous_id) as visitors',
-            'AVG(CASE WHEN time_on_page > 0 THEN time_on_page / 1000 ELSE NULL END) as avg_session_duration'
+            'ROUND(AVG(CASE WHEN time_on_page > 0 THEN time_on_page / 1000 ELSE NULL END), 2) as avg_session_duration'
         ],
         where: ['event_name = \'screen_view\'', 'device_type != \'\''],
         groupBy: ['device_type'],
@@ -59,7 +59,7 @@ export const SessionsBuilders: Record<string, SimpleQueryConfig> = {
             'browser_name as name',
             'COUNT(DISTINCT session_id) as sessions',
             'COUNT(DISTINCT anonymous_id) as visitors',
-            'AVG(CASE WHEN time_on_page > 0 THEN time_on_page / 1000 ELSE NULL END) as avg_session_duration'
+            'ROUND(AVG(CASE WHEN time_on_page > 0 THEN time_on_page / 1000 ELSE NULL END), 2) as avg_session_duration'
         ],
         where: ['event_name = \'screen_view\'', 'browser_name != \'\''],
         groupBy: ['browser_name'],
@@ -76,7 +76,7 @@ export const SessionsBuilders: Record<string, SimpleQueryConfig> = {
             'toDate(time) as date',
             'COUNT(DISTINCT session_id) as sessions',
             'COUNT(DISTINCT anonymous_id) as visitors',
-            'AVG(CASE WHEN time_on_page > 0 THEN time_on_page / 1000 ELSE NULL END) as avg_session_duration'
+            'ROUND(AVG(CASE WHEN time_on_page > 0 THEN time_on_page / 1000 ELSE NULL END), 2) as avg_session_duration'
         ],
         where: ['event_name = \'screen_view\''],
         groupBy: ['toDate(time)'],

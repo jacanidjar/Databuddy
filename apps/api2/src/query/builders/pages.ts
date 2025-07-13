@@ -60,7 +60,7 @@ export const PagesBuilders: Record<string, SimpleQueryConfig> = {
         fields: [
             'path(path) as name',
             'COUNT(*) as pageviews',
-            'AVG(CASE WHEN time_on_page > 0 THEN time_on_page / 1000 ELSE NULL END) as avg_time_on_page',
+            'ROUND(AVG(CASE WHEN time_on_page > 0 THEN time_on_page / 1000 ELSE NULL END), 2) as avg_time_on_page',
             'COUNT(DISTINCT anonymous_id) as visitors'
         ],
         where: ['event_name = \'screen_view\'', 'path != \'\''],

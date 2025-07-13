@@ -49,8 +49,8 @@ export const SummaryBuilders: Record<string, SimpleQueryConfig> = {
               sum(page_count) as pageviews,
               (SELECT unique_visitors FROM unique_visitors) as unique_visitors,
               count(session_metrics.session_id) as sessions,
-              (COALESCE(countIf(page_count = 1), 0) / COALESCE(COUNT(*), 0)) * 100 as bounce_rate,
-              AVG(sd.duration) as avg_session_duration,
+              ROUND((COALESCE(countIf(page_count = 1), 0) / COALESCE(COUNT(*), 0)) * 100, 2) as bounce_rate,
+              ROUND(AVG(sd.duration), 2) as avg_session_duration,
               (SELECT total_events FROM all_events) as total_events
             FROM session_metrics
             LEFT JOIN session_durations as sd ON session_metrics.session_id = sd.session_id
@@ -66,7 +66,7 @@ export const SummaryBuilders: Record<string, SimpleQueryConfig> = {
       'COUNT(*) as pageviews',
       'COUNT(DISTINCT anonymous_id) as visitors',
       'COUNT(DISTINCT session_id) as sessions',
-      'AVG(CASE WHEN is_bounce = 1 THEN 100 ELSE 0 END) as bounce_rate'
+      'ROUND(AVG(CASE WHEN is_bounce = 1 THEN 100 ELSE 0 END), 2) as bounce_rate'
     ],
     where: [
       'event_name = \'screen_view\'',
@@ -133,12 +133,12 @@ export const SummaryBuilders: Record<string, SimpleQueryConfig> = {
                   COALESCE(tm.pageviews, 0) as pageviews,
                   COALESCE(tv.visitors, 0) as visitors,
                   COALESCE(tm.sessions, 0) as sessions,
-                  CASE 
+                  ROUND(CASE 
                     WHEN COALESCE(tm.sessions, 0) > 0 
                     THEN (COALESCE(tm.bounced_sessions, 0) / COALESCE(tm.sessions, 0)) * 100 
                     ELSE 0 
-                  END as bounce_rate,
-                  COALESCE(tm.avg_session_duration, 0) as avg_session_duration
+                  END, 2) as bounce_rate,
+                  ROUND(COALESCE(tm.avg_session_duration, 0), 2) as avg_session_duration
                 FROM date_range dr
                 LEFT JOIN time_metrics tm ON dr.date = tm.date
                 LEFT JOIN time_visitors tv ON dr.date = tv.date
