@@ -34,13 +34,15 @@ import {
     getMostFrequentSlowQueries,
     getSystemTables,
     getClickhouseDisks,
-    getMemoryIntensiveQueries
+    getMemoryIntensiveQueries,
+    getActualDatabaseTables
 } from "./actions";
 import { format } from 'date-fns';
 import { DataTableToolbar } from "@/components/admin/data-table-toolbar";
 import { formatNumber } from "@/components/website-event-metrics";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SystemTables } from "./system-tables";
+import { ActualTables } from "./actual-tables";
 import React from "react"; // Added for React.useState
 
 // Helper function to format duration
@@ -95,7 +97,8 @@ export default async function QueryPerformancePage({
         { frequentQueries, error: frequentQueriesError },
         { tables: systemTables, error: systemTablesError },
         { disks: clickhouseDisks, error: disksError },
-        { queries: memoryIntensive, error: memoryIntensiveError }
+        { queries: memoryIntensive, error: memoryIntensiveError },
+        { tables: actualTables, error: actualTablesError }
     ] = await Promise.all([
         getQueryPerformanceSummary(timeRangeHours, durationThreshold),
         getSlowQueries({
@@ -106,7 +109,8 @@ export default async function QueryPerformancePage({
         getMostFrequentSlowQueries(timeRangeHours, durationThreshold),
         getSystemTables(),
         getClickhouseDisks(),
-        getMemoryIntensiveQueries(timeRangeHours)
+        getMemoryIntensiveQueries(timeRangeHours),
+        getActualDatabaseTables()
     ]);
 
     // Filter slow queries based on search
@@ -120,7 +124,7 @@ export default async function QueryPerformancePage({
         );
     });
 
-    if (summaryError || slowQueriesError || databasesError || frequentQueriesError) {
+    if (summaryError || slowQueriesError || databasesError || frequentQueriesError || actualTablesError) {
         return (
             <Card>
                 <CardHeader>
@@ -135,6 +139,7 @@ export default async function QueryPerformancePage({
                         {slowQueriesError && <p>Slow Queries: {slowQueriesError}</p>}
                         {databasesError && <p>Database Performance: {databasesError}</p>}
                         {frequentQueriesError && <p>Frequent Queries: {frequentQueriesError}</p>}
+                        {actualTablesError && <p>Actual Tables: {actualTablesError}</p>}
                     </div>
                 </CardContent>
             </Card>
@@ -264,6 +269,7 @@ export default async function QueryPerformancePage({
                     <TabsTrigger value="frequent-queries">Frequent Slow Queries</TabsTrigger>
                     <TabsTrigger value="database-performance">Database Performance</TabsTrigger>
                     <TabsTrigger value="memory-intensive">Memory Intensive</TabsTrigger>
+                    <TabsTrigger value="actual-tables">Actual Tables</TabsTrigger>
                     <TabsTrigger value="system-tables">System Tables</TabsTrigger>
                 </TabsList>
 
@@ -513,6 +519,10 @@ export default async function QueryPerformancePage({
                             ))}
                         </div>
                     )}
+                </TabsContent>
+
+                <TabsContent value="actual-tables" className="space-y-4">
+                    <ActualTables tables={actualTables || []} />
                 </TabsContent>
 
                 <TabsContent value="system-tables" className="space-y-4">

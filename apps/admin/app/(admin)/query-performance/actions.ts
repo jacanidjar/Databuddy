@@ -6,7 +6,7 @@ import type { QueryPerformanceMetrics, QueryPerformanceSummary, QueryPerformance
 /**
  * Get query performance summary statistics
  */
-export async function getQueryPerformanceSummary(timeRangeHours: number = 24, durationThresholdMs: number = 1000) {
+export async function getQueryPerformanceSummary(timeRangeHours = 24, durationThresholdMs = 1000) {
   try {
     const query = `
       SELECT 
@@ -123,7 +123,7 @@ export async function getSlowQueries(filters: QueryPerformanceFilters = {}) {
 /**
  * Get query performance breakdown by database
  */
-export async function getQueryPerformanceByDatabase(timeRangeHours: number = 24) {
+export async function getQueryPerformanceByDatabase(timeRangeHours = 24) {
   try {
     const query = `
       SELECT 
@@ -178,7 +178,7 @@ export async function getQueryPerformanceByDatabase(timeRangeHours: number = 24)
 /**
  * Get most frequent slow queries (grouped by normalized query hash)
  */
-export async function getMostFrequentSlowQueries(timeRangeHours: number = 24, durationThresholdMs: number = 1000) {
+export async function getMostFrequentSlowQueries(timeRangeHours = 24, durationThresholdMs = 1000) {
   try {
     const query = `
       SELECT 
@@ -425,9 +425,54 @@ export async function getClickhouseDisks() {
 }
 
 /**
+ * Get actual database tables (non-system tables)
+ */
+export async function getActualDatabaseTables() {
+  try {
+    const query = `
+      SELECT 
+        database,
+        table,
+        engine,
+        total_rows,
+        total_bytes,
+        formatReadableSize(total_bytes) as readable_size,
+        partition_key,
+        sorting_key,
+        primary_key,
+        comment
+      FROM system.tables 
+      WHERE database != 'system'
+      ORDER BY total_bytes DESC
+    `;
+
+    const results = await chQuery<{
+      database: string;
+      table: string;
+      engine: string;
+      total_rows: number;
+      total_bytes: number;
+      readable_size: string;
+      partition_key: string;
+      sorting_key: string;
+      primary_key: string;
+      comment: string;
+    }>(query);
+
+    return { tables: results, error: null };
+  } catch (error) {
+    console.error('Error fetching actual database tables:', error);
+    return {
+      tables: [],
+      error: `Failed to fetch actual database tables. ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+}
+
+/**
  * Get memory-intensive queries
  */
-export async function getMemoryIntensiveQueries(timeRangeHours: number = 24) {
+export async function getMemoryIntensiveQueries(timeRangeHours = 24) {
   try {
     const query = `
       SELECT 
