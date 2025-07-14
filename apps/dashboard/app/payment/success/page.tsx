@@ -31,7 +31,7 @@ export default function PaymentSuccess() {
                     You now have access to all premium features.
                 </p>
                 <Button asChild className="w-full bg-primary hover:bg-primary/90" size="lg">
-                    <Link href="/dashboard">Go to Dashboard</Link>
+                    <Link href="/websites">Go to Dashboard</Link>
                 </Button>
             </div>
 
