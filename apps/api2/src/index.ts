@@ -4,14 +4,13 @@ import { appRouter, createTRPCContext } from '@databuddy/rpc';
 import { query } from "./routes/query";
 import cors from "@elysiajs/cors";
 
-const app = new Elysia();
-
-app.get('/', () => {
-  return 'Hello World';
-})
+const app = new Elysia()
   .use(cors({
     credentials: true,
-    origin: process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://staging.databuddy.cc'
+    origin: process.env.NODE_ENV === 'development'
+      ? 'http://localhost:3000'
+      : 'https://staging.databuddy.cc',
+    // origin: (origin) => ['http://localhost:3000', 'https://staging.databuddy.cc'].includes(origin ?? '') ? origin : false
   }))
   .use(query)
   .all('/trpc/*', async ({ request }) => {
@@ -21,17 +20,13 @@ app.get('/', () => {
       req: request,
       createContext: () => createTRPCContext({ headers: request.headers }),
     });
-  });
+  })
+  .onError(({ error, code }) => {
+    console.error(error);
+    return { success: false, code };
+  })
 
-app.listen(4000)
-  .onStart(() => {
-    console.log('Server is running on port 4000');
-  });
-
-app.onError(({ error, code }) => {
-  console.error(error);
-  return {
-    success: false,
-    code: code
-  };
-});
+export default {
+  fetch: app.fetch,
+  port: 3001
+}

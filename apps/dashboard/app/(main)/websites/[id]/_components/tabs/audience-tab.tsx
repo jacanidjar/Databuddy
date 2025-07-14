@@ -29,6 +29,8 @@ interface GeographicEntry {
   visitors: number;
   pageviews: number;
   percentage: number;
+  country_code?: string;
+  country_name?: string;
 }
 
 interface ConnectionEntry extends TechnologyTableEntry {
@@ -108,10 +110,12 @@ const getConnectionIcon = (connection: string): React.ReactNode => {
 // Normalize data like performance tab
 const normalizeData = (data: any[]): GeographicEntry[] =>
   data?.map((item: any) => ({
-    name: item.name || "Unknown",
+    name: item.country_name || item.name || "Unknown",
     visitors: item.visitors || 0,
     pageviews: item.pageviews || 0,
     percentage: item.percentage || 0,
+    country_code: item.country_code,
+    country_name: item.country_name,
   })) || [];
 
 const createNameColumn = (header: string, renderIcon?: (name: string) => React.ReactNode) => ({
@@ -499,43 +503,47 @@ export function WebsiteAudienceTab({
   const countryColumns = useMemo(
     (): ColumnDef<GeographicEntry>[] => [
       {
-        id: "name",
-        accessorKey: "name",
-        header: "Country",
+        id: "country_code",
+        accessorKey: "country_code",
+        header: "Flag",
         cell: (info: CellContext<GeographicEntry, any>) => {
-          const countryCode = info.getValue() as string;
-          return (
-            <div className="flex items-center gap-2">
-              {countryCode && countryCode !== "Unknown" ? (
-                <div className="relative h-4 w-5 overflow-hidden rounded-sm bg-muted">
-                  <img
-                    alt={countryCode}
-                    className="absolute inset-0 h-full w-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                      const parent = (e.target as HTMLImageElement).parentElement;
-                      if (parent) {
-                        const helpCircle = parent.querySelector(".fallback-icon");
-                        if (helpCircle) (helpCircle as HTMLElement).style.display = "flex";
-                      }
-                    }}
-                    src={`https://purecatamphetamine.github.io/country-flag-icons/3x2/${countryCode.toUpperCase()}.svg`}
-                  />
-                  <div
-                    className="fallback-icon h-4 w-5 items-center justify-center rounded-sm bg-muted"
-                    style={{ display: "none" }}
-                  >
-                    <Globe className="h-3 w-3 text-muted-foreground" />
-                  </div>
-                </div>
-              ) : (
-                <div className="flex h-4 w-5 items-center justify-center rounded-sm bg-muted">
-                  <Globe className="h-3 w-3 text-muted-foreground" />
-                </div>
-              )}
-              <span className="font-medium">{countryCode || "Unknown"}</span>
+          const code = info.getValue() as string;
+          return code && code !== "Unknown" ? (
+            <div className="relative h-4 w-5 overflow-hidden rounded-sm bg-muted">
+              <img
+                alt={code}
+                className="absolute inset-0 h-full w-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                  const parent = (e.target as HTMLImageElement).parentElement;
+                  if (parent) {
+                    const helpCircle = parent.querySelector(".fallback-icon");
+                    if (helpCircle) (helpCircle as HTMLElement).style.display = "flex";
+                  }
+                }}
+                src={`https://purecatamphetamine.github.io/country-flag-icons/3x2/${code.toUpperCase()}.svg`}
+              />
+              <div
+                className="fallback-icon h-4 w-5 items-center justify-center rounded-sm bg-muted"
+                style={{ display: "none" }}
+              >
+                <Globe className="h-3 w-3 text-muted-foreground" />
+              </div>
+            </div>
+          ) : (
+            <div className="flex h-4 w-5 items-center justify-center rounded-sm bg-muted">
+              <Globe className="h-3 w-3 text-muted-foreground" />
             </div>
           );
+        },
+      },
+      {
+        id: "country_name",
+        accessorKey: "country_name",
+        header: "Country",
+        cell: (info: CellContext<GeographicEntry, any>) => {
+          const name = info.getValue() as string;
+          return <span className="font-medium">{name || "Unknown"}</span>;
         },
       },
       {
@@ -661,7 +669,7 @@ export function WebsiteAudienceTab({
         label: "Countries",
         data: processedData.geographic.countries.map((item, index) => ({
           ...item,
-          _uniqueKey: `country-${item.name}-${index}`, // Ensure unique row keys
+          _uniqueKey: `country-${item.country_code || item.name}-${index}`, // Ensure unique row keys
         })),
         columns: countryColumns,
       },

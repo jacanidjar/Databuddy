@@ -1,4 +1,5 @@
 import { referrers } from "@databuddy/shared";
+import { getCountryCode, getCountryName } from "@databuddy/shared";
 
 export interface ParsedReferrer {
     type: string;
@@ -63,7 +64,42 @@ export function applyPlugins(data: Record<string, any>[], config: any, websiteDo
         result = applyUrlNormalization(result);
     }
 
+    if (config.plugins?.normalizeGeo) {
+        result = applyGeoNormalization(result);
+    }
+
+    if (config.plugins?.deduplicateGeo) {
+        result = deduplicateGeoRows(result);
+    }
+
     return result;
+}
+
+export function deduplicateGeoRows(rows: Record<string, any>[]): Record<string, any>[] {
+    const map = new Map<string, Record<string, any>>();
+    let totalVisitors = 0;
+    for (const row of rows) {
+        const code = row.country_code || row.name;
+        if (!code) continue;
+        if (!map.has(code)) {
+            map.set(code, { ...row });
+        } else {
+            const existing = map.get(code);
+            if (existing) {
+                existing.pageviews += row.pageviews || 0;
+                existing.visitors += row.visitors || 0;
+            }
+            // Optionally, merge other fields as needed
+        }
+    }
+    // Recalculate total visitors for percentage
+    for (const row of map.values()) {
+        totalVisitors += row.visitors || 0;
+    }
+    for (const row of map.values()) {
+        row.percentage = totalVisitors > 0 ? Math.round((row.visitors / totalVisitors) * 100) : 0;
+    }
+    return Array.from(map.values());
 }
 
 function shouldApplyReferrerParsing(config: any): boolean {
@@ -97,6 +133,20 @@ function applyUrlNormalization(data: Record<string, any>[]): Record<string, any>
             }
         }
         return row;
+    });
+}
+
+function applyGeoNormalization(data: Record<string, any>[]): Record<string, any>[] {
+    return data.map(row => {
+        // Only normalize if row has a 'name' field (country/region/etc)
+        if (!row.name) return row;
+        const code = getCountryCode(row.name);
+        const name = getCountryName(code);
+        return {
+            ...row,
+            country_code: code,
+            country_name: name,
+        };
     });
 }
 
