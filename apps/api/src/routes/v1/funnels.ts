@@ -425,12 +425,7 @@ funnelRouter.post(
         })
         .returning()
 
-      logger.info('Goal created', {
-        goal_id: goalId,
-        name,
-        website_id: website.id,
-        user_id: user.id
-      })
+
 
       return c.json({
         success: true,

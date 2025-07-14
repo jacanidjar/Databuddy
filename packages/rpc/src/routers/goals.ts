@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
-import { and, eq, isNull, desc, sql } from 'drizzle-orm';
+import { and, eq, isNull, desc, sql, inArray } from 'drizzle-orm';
 import { escape as sqlEscape } from 'sqlstring';
 import { TRPCError } from '@trpc/server';
 import { goals, chQuery } from '@databuddy/db';
@@ -159,11 +159,7 @@ export const goalsRouter = createTRPCRouter({
                     createdBy: ctx.user.id,
                 } as any)
                 .returning();
-            logger.success('Goal created', `Created goal "${input.name}"`, {
-                goalId,
-                websiteId: input.websiteId,
-                userId: ctx.user.id,
-            });
+
             return newGoal;
         }),
     // Update a goal
@@ -253,11 +249,13 @@ export const goalsRouter = createTRPCRouter({
             };
             let goalWhereCondition = '';
             if (goalData.type === 'PAGE_VIEW') {
-                params.targetPath = goalData.target;
-                goalWhereCondition = `event_name = 'screen_view' AND (path = {targetPath:String} OR path LIKE concat('%', {targetPath:String}, '%'))`;
+                // Direct interpolation for path
+                const targetPath = (goalData.target || '').replace(/'/g, "''");
+                goalWhereCondition = `event_name = 'screen_view' AND (path = '${targetPath}' OR path LIKE '%${targetPath}%')`;
             } else if (goalData.type === 'EVENT') {
-                params.eventName = goalData.target;
-                goalWhereCondition = "event_name = {eventName:String}";
+                // Direct interpolation for event name
+                const eventName = (goalData.target || '').replace(/'/g, "''");
+                goalWhereCondition = `event_name = '${eventName}'`;
             }
             const filterConditions = buildFilterConditions(filters, 'f', params);
             const analyticsQuery = `
@@ -331,10 +329,11 @@ export const goalsRouter = createTRPCRouter({
                 .where(and(
                     eq(goals.websiteId, input.websiteId),
                     isNull(goals.deletedAt),
-                    input.goalIds.length > 0 ? sql`id IN (${input.goalIds.map(() => '?').join(', ')})` : sql`1=0`
+                    input.goalIds.length > 0 ? inArray(goals.id, input.goalIds) : sql`1=0`
                 ))
                 .orderBy(desc(goals.createdAt));
             const analyticsResults: Record<string, any> = {};
+
             for (const [idx, goalData] of goalsList.entries()) {
                 const filters = goalData.filters as Array<{ field: string; operator: string; value: string | string[] }> || [];
                 const params: Record<string, unknown> = {
@@ -344,12 +343,37 @@ export const goalsRouter = createTRPCRouter({
                 };
                 let goalWhereCondition = '';
                 if (goalData.type === 'PAGE_VIEW') {
-                    params.targetPath = goalData.target;
-                    goalWhereCondition = `event_name = 'screen_view' AND (path = {targetPath:String} OR path LIKE concat('%', {targetPath:String}, '%'))`;
+                    // Direct interpolation for path
+                    const targetPath = (goalData.target || '').replace(/'/g, "''");
+                    goalWhereCondition = `event_name = 'screen_view' AND (path = '${targetPath}' OR path LIKE '%${targetPath}%')`;
                 } else if (goalData.type === 'EVENT') {
-                    params.eventName = goalData.target;
-                    goalWhereCondition = "event_name = {eventName:String}";
+                    // Direct interpolation for event name
+                    const eventName = (goalData.target || '').replace(/'/g, "''");
+                    goalWhereCondition = `event_name = '${eventName}'`;
                 }
+
+                // If no goal condition, skip this goal
+                if (!goalWhereCondition) {
+                    analyticsResults[goalData.id] = {
+                        overall_conversion_rate: 0,
+                        total_users_entered: 0,
+                        total_users_completed: 0,
+                        avg_completion_time: 0,
+                        avg_completion_time_formatted: '0s',
+                        steps_analytics: [{
+                            step_number: 1,
+                            step_name: goalData.name,
+                            users: 0,
+                            total_users: 0,
+                            conversion_rate: 0,
+                            dropoffs: 0,
+                            dropoff_rate: 0,
+                            avg_time_to_complete: 0
+                        }]
+                    };
+                    continue;
+                }
+
                 const filterConditions = buildFilterConditions(filters, `f${idx}`, params);
                 const analyticsQuery = `
                     WITH 
