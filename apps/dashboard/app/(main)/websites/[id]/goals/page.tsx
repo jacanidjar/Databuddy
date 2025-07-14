@@ -6,13 +6,13 @@ import { useParams } from "next/navigation";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  type CreateFunnelData,
-  type Funnel,
-  useAutocompleteData,
+  type CreateGoalData,
+  type Goal,
   useBulkGoalAnalytics,
   useGoals,
-} from "@/hooks/use-funnels";
+} from "@/hooks/use-goals";
 import { useWebsite } from "@/hooks/use-websites";
+import { useAutocompleteData } from "@/hooks/use-funnels";
 import {
   dateRangeAtom,
   formattedDateRangeAtom,
@@ -63,7 +63,7 @@ export default function GoalsPage() {
   const websiteId = id as string;
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingGoal, setEditingGoal] = useState<Funnel | null>(null);
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [deletingGoalId, setDeletingGoalId] = useState<string | null>(null);
 
   // Intersection observer for lazy loading
@@ -120,7 +120,7 @@ export default function GoalsPage() {
 
   // Fetch analytics for all goals
   const {
-    goalAnalytics,
+    data: goalAnalytics,
     isLoading: analyticsLoading,
     error: analyticsError,
     refetch: refetchAnalytics,
@@ -141,26 +141,27 @@ export default function GoalsPage() {
     } finally {
       setIsRefreshing(false);
     }
-  }, [refetchGoals, refetchAnalytics, autocompleteQuery.refetch, goalIds.length]);
+  }, [refetchGoals, refetchAnalytics, goalIds.length, autocompleteQuery.refetch]);
 
-  const handleSaveGoal = async (data: CreateFunnelData | Funnel) => {
+  const handleSaveGoal = async (data: Goal | Omit<CreateGoalData, 'websiteId'>) => {
     try {
       if ('id' in data) {
         // Updating existing goal
-        const goalData = { ...data, steps: data.steps.slice(0, 1) };
         await updateGoal({
-          goalId: goalData.id,
+          goalId: data.id,
           updates: {
-            name: goalData.name,
-            description: goalData.description,
-            steps: goalData.steps,
-            filters: goalData.filters,
+            name: data.name,
+            description: data.description || undefined,
+            type: data.type,
+            target: data.target,
+            filters: data.filters,
           },
         });
       } else {
-        // Creating new goal
-        const goalData = { ...data, steps: data.steps.slice(0, 1) };
-        await createGoal(goalData);
+        await createGoal({
+          ...data,
+          websiteId,
+        });
       }
       setIsDialogOpen(false);
       setEditingGoal(null);

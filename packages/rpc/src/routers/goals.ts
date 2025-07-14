@@ -66,24 +66,31 @@ const ALLOWED_OPERATORS = new Set([
     'equals', 'contains', 'not_equals', 'in', 'not_in',
 ]);
 
-const buildFilterConditions = (filters: Array<{ field: string; operator: string; value: string | string[] }>) => {
+// Refactored buildFilterConditions to use parameterized values
+const buildFilterConditions = (filters: Array<{ field: string; operator: string; value: string | string[] }>, paramPrefix: string, params: Record<string, unknown>) => {
     if (!filters || filters.length === 0) return '';
-    const filterConditions = filters.map((filter) => {
+    const filterConditions = filters.map((filter, i) => {
         if (!ALLOWED_FIELDS.has(filter.field)) return '';
         if (!ALLOWED_OPERATORS.has(filter.operator)) return '';
         const field = filter.field;
         const value = Array.isArray(filter.value) ? filter.value : [filter.value];
+        const key = `${paramPrefix}_${i}`;
         switch (filter.operator) {
             case 'equals':
-                return `${field} = ${sqlEscape(value[0])}`;
+                params[key] = value[0];
+                return `${field} = {${key}:String}`;
             case 'contains':
-                return `${field} LIKE '%${value[0].replace(/'/g, "''")}%'`;
+                params[key] = `%${value[0]}%`;
+                return `${field} LIKE {${key}:String}`;
             case 'not_equals':
-                return `${field} != ${sqlEscape(value[0])}`;
+                params[key] = value[0];
+                return `${field} != {${key}:String}`;
             case 'in':
-                return `${field} IN (${value.map(v => sqlEscape(v)).join(', ')})`;
+                params[key] = value;
+                return `${field} IN {${key}:Array(String)}`;
             case 'not_in':
-                return `${field} NOT IN (${value.map(v => sqlEscape(v)).join(', ')})`;
+                params[key] = value;
+                return `${field} NOT IN {${key}:Array(String)}`;
             default:
                 return '';
         }
@@ -239,13 +246,12 @@ export const goalsRouter = createTRPCRouter({
             }
             const goalData = goal[0];
             const filters = goalData.filters as Array<{ field: string; operator: string; value: string | string[] }> || [];
-            const filterConditions = buildFilterConditions(filters);
-            let goalWhereCondition = '';
             const params: Record<string, unknown> = {
                 websiteId: input.websiteId,
                 startDate,
                 endDate,
             };
+            let goalWhereCondition = '';
             if (goalData.type === 'PAGE_VIEW') {
                 params.targetPath = goalData.target;
                 goalWhereCondition = `event_name = 'screen_view' AND (path = {targetPath:String} OR path LIKE concat('%', {targetPath:String}, '%'))`;
@@ -253,6 +259,7 @@ export const goalsRouter = createTRPCRouter({
                 params.eventName = goalData.target;
                 goalWhereCondition = "event_name = {eventName:String}";
             }
+            const filterConditions = buildFilterConditions(filters, 'f', params);
             const analyticsQuery = `
                 WITH 
                 total_sessions AS (
@@ -304,5 +311,98 @@ export const goalsRouter = createTRPCRouter({
                     avg_time_to_complete: 0
                 }]
             };
+        }),
+    // Bulk analytics for multiple goals
+    bulkAnalytics: protectedProcedure
+        .input(z.object({
+            websiteId: z.string(),
+            goalIds: z.array(z.string()),
+            startDate: z.string().optional(),
+            endDate: z.string().optional(),
+        }))
+        .query(async ({ ctx, input }) => {
+            await authorizeWebsiteAccess(ctx, input.websiteId, 'read');
+            const { startDate, endDate } = input.startDate && input.endDate
+                ? { startDate: input.startDate, endDate: input.endDate }
+                : getDefaultDateRange();
+            const goalsList = await ctx.db
+                .select()
+                .from(goals)
+                .where(and(
+                    eq(goals.websiteId, input.websiteId),
+                    isNull(goals.deletedAt),
+                    input.goalIds.length > 0 ? sql`id IN (${input.goalIds.map(() => '?').join(', ')})` : sql`1=0`
+                ))
+                .orderBy(desc(goals.createdAt));
+            const analyticsResults: Record<string, any> = {};
+            for (const [idx, goalData] of goalsList.entries()) {
+                const filters = goalData.filters as Array<{ field: string; operator: string; value: string | string[] }> || [];
+                const params: Record<string, unknown> = {
+                    websiteId: input.websiteId,
+                    startDate,
+                    endDate,
+                };
+                let goalWhereCondition = '';
+                if (goalData.type === 'PAGE_VIEW') {
+                    params.targetPath = goalData.target;
+                    goalWhereCondition = `event_name = 'screen_view' AND (path = {targetPath:String} OR path LIKE concat('%', {targetPath:String}, '%'))`;
+                } else if (goalData.type === 'EVENT') {
+                    params.eventName = goalData.target;
+                    goalWhereCondition = "event_name = {eventName:String}";
+                }
+                const filterConditions = buildFilterConditions(filters, `f${idx}`, params);
+                const analyticsQuery = `
+                    WITH 
+                    total_sessions AS (
+                        SELECT COUNT(DISTINCT session_id) as total_users
+                        FROM analytics.events
+                        WHERE client_id = {websiteId:String}
+                            AND time >= parseDateTimeBestEffort({startDate:String})
+                            AND time <= parseDateTimeBestEffort(concat({endDate:String}, ' 23:59:59'))${filterConditions}
+                    ),
+                    goal_sessions AS (
+                        SELECT COUNT(DISTINCT session_id) as goal_users
+                        FROM analytics.events
+                        WHERE client_id = {websiteId:String}
+                            AND time >= parseDateTimeBestEffort({startDate:String})
+                            AND time <= parseDateTimeBestEffort(concat({endDate:String}, ' 23:59:59'))
+                            AND ${goalWhereCondition}${filterConditions}
+                    )
+                    SELECT 
+                        total_sessions.total_users,
+                        goal_sessions.goal_users,
+                        CASE 
+                            WHEN total_sessions.total_users > 0 
+                            THEN ROUND((goal_sessions.goal_users * 100.0) / total_sessions.total_users, 2)
+                            ELSE 0.0 
+                        END as conversion_rate
+                    FROM total_sessions, goal_sessions
+                `;
+                const results = await chQuery<{
+                    total_users: number;
+                    goal_users: number;
+                    conversion_rate: number;
+                }>(analyticsQuery, params);
+                const result = results[0] || { total_users: 0, goal_users: 0, conversion_rate: 0 };
+                analyticsResults[goalData.id] = {
+                    overall_conversion_rate: result.conversion_rate,
+                    total_users_entered: result.total_users,
+                    total_users_completed: result.goal_users,
+                    avg_completion_time: 0,
+                    avg_completion_time_formatted: '0s',
+                    steps_analytics: [{
+                        step_number: 1,
+                        step_name: goalData.name,
+                        users: result.goal_users,
+                        total_users: result.total_users,
+                        conversion_rate: result.conversion_rate,
+                        dropoffs: result.total_users - result.goal_users,
+                        dropoff_rate: result.total_users > 0 ?
+                            Math.round(((result.total_users - result.goal_users) / result.total_users) * 100 * 100) / 100 : 0,
+                        avg_time_to_complete: 0
+                    }]
+                };
+            }
+            return analyticsResults;
         }),
 }); 

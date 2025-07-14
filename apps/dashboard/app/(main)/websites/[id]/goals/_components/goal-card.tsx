@@ -9,10 +9,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Funnel } from "@/hooks/use-funnels";
+import type { Goal } from "@/hooks/use-goals";
 
 interface GoalCardProps {
-  goal: Funnel;
+  goal: Goal;
   onEdit: () => void;
   onDelete: () => void;
   conversionRate?: number;
@@ -30,8 +30,6 @@ export function GoalCard({
   completions = 0,
   isLoading = false,
 }: GoalCardProps) {
-  const step = goal.steps[0]; // Only one step for goals
-
   const getStepIcon = (type: string) => {
     switch (type) {
       case "PAGE_VIEW":
@@ -44,8 +42,8 @@ export function GoalCard({
   };
 
   const formatNumber = (num: number) => {
-    if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
-    if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+    if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
     return num.toString();
   };
 
@@ -66,8 +64,8 @@ export function GoalCard({
 
             {/* Goal target */}
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
-              {getStepIcon(step.type)}
-              <span className="truncate">{step?.target || "No target"}</span>
+              {getStepIcon(goal.type)}
+              <span className="truncate">{goal.target || "No target"}</span>
             </div>
           </div>
 

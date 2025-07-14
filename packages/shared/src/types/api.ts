@@ -48,6 +48,12 @@ export interface DynamicQueryResponse {
     date_range?: any;
 }
 
+export interface GoalFilter {
+    field: string;
+    operator: "equals" | "contains" | "not_equals" | "in" | "not_in";
+    value: string | string[];
+}
+
 export interface BatchQueryResponse {
     success: boolean;
     batch: true;

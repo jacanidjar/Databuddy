@@ -19,14 +19,15 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import type { AutocompleteData, CreateFunnelData, Funnel, FunnelStep, FunnelFilter } from "@/hooks/use-funnels";
+import type { AutocompleteData } from "@/hooks/use-funnels";
+import type { Goal, CreateGoalData } from "@/hooks/use-goals";
 import { AutocompleteInput } from "../../funnels/_components/funnel-components";
 
 interface EditGoalDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: Funnel | CreateFunnelData) => Promise<void>;
-  goal: Funnel | null;
+  onSave: (data: Goal | Omit<CreateGoalData, 'websiteId'>) => Promise<void>;
+  goal: Goal | null;
   isSaving: boolean;
   autocompleteData?: AutocompleteData;
 }
@@ -39,7 +40,7 @@ export function EditGoalDialog({
   isSaving,
   autocompleteData,
 }: EditGoalDialogProps) {
-  const [formData, setFormData] = useState<Funnel | CreateFunnelData | null>(null);
+  const [formData, setFormData] = useState<Goal | Omit<CreateGoalData, 'websiteId'> | null>(null);
   const isCreateMode = !goal;
 
   useEffect(() => {
@@ -49,11 +50,12 @@ export function EditGoalDialog({
         filters: goal.filters || [],
       });
     } else {
-      // Initialize for create mode with a single step
+      // Initialize for create mode
       setFormData({
         name: "",
         description: "",
-        steps: [{ type: "PAGE_VIEW" as const, target: "", name: "" }],
+        type: "PAGE_VIEW" as const,
+        target: "",
         filters: [],
       });
     }
@@ -69,26 +71,22 @@ export function EditGoalDialog({
       setFormData({
         name: "",
         description: "",
-        steps: [{ type: "PAGE_VIEW" as const, target: "", name: "" }],
+        type: "PAGE_VIEW" as const,
+        target: "",
         filters: [],
       });
     }
   }, [isCreateMode]);
 
-  const updateStep = useCallback(
-    (field: keyof FunnelStep, value: string) => {
+  const updateGoal = useCallback(
+    (field: keyof Goal | keyof CreateGoalData, value: string) => {
       if (!formData) return;
       setFormData((prev) =>
         prev
           ? {
-              ...prev,
-              steps: [
-                {
-                  ...prev.steps[0],
-                  [field]: value,
-                },
-              ],
-            }
+            ...prev,
+            [field]: value,
+          }
           : prev
       );
     },
@@ -100,12 +98,12 @@ export function EditGoalDialog({
     setFormData((prev) =>
       prev
         ? {
-            ...prev,
-            filters: [
-              ...(prev.filters || []),
-              { field: "browser_name", operator: "equals" as const, value: "" },
-            ],
-          }
+          ...prev,
+          filters: [
+            ...(prev.filters || []),
+            { field: "browser_name", operator: "equals" as const, value: "" },
+          ],
+        }
         : prev
     );
   }, [formData]);
@@ -116,9 +114,9 @@ export function EditGoalDialog({
       setFormData((prev) =>
         prev
           ? {
-              ...prev,
-              filters: (prev.filters || []).filter((_, i) => i !== index),
-            }
+            ...prev,
+            filters: (prev.filters || []).filter((_, i) => i !== index),
+          }
           : prev
       );
     },
@@ -126,16 +124,16 @@ export function EditGoalDialog({
   );
 
   const updateFilter = useCallback(
-    (index: number, field: keyof FunnelFilter, value: string) => {
+    (index: number, field: keyof any, value: string) => {
       if (!formData) return;
       setFormData((prev) =>
         prev
           ? {
-              ...prev,
-              filters: (prev.filters || []).map((filter, i) =>
-                i === index ? { ...filter, [field]: value } : filter
-              ),
-            }
+            ...prev,
+            filters: (prev.filters || []).map((filter, i) =>
+              i === index ? { ...filter, [field]: value } : filter
+            ),
+          }
           : prev
       );
     },
@@ -218,13 +216,12 @@ export function EditGoalDialog({
     if (!formData) return false;
     return (
       formData.name &&
-      formData.steps[0]?.target &&
-      formData.steps[0]?.name &&
+      formData.target &&
       !(formData.filters || []).some((f) => !f.value || f.value === "")
     );
   }, [formData]);
 
-  const getStepIcon = (type: string) => {
+  const getGoalIcon = (type: string) => {
     switch (type) {
       case "PAGE_VIEW":
         return <Eye className="text-blue-600" size={16} weight="duotone" />;
@@ -234,8 +231,6 @@ export function EditGoalDialog({
         return <Target className="text-muted-foreground" size={16} weight="duotone" />;
     }
   };
-
-  const step = formData?.steps[0];
 
   if (!formData) return null;
 
@@ -314,12 +309,12 @@ export function EditGoalDialog({
 
               {/* Goal Icon */}
               <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-muted/50 transition-all duration-200 group-hover:bg-muted/70">
-                {getStepIcon(step?.type || "PAGE_VIEW")}
+                {getGoalIcon(formData?.type || "PAGE_VIEW")}
               </div>
 
               {/* Goal Fields */}
               <div className="grid flex-1 grid-cols-1 gap-3 md:grid-cols-3">
-                <Select onValueChange={(value) => updateStep("type", value)} value={step?.type}>
+                <Select onValueChange={(value) => updateGoal("type", value)} value={formData?.type}>
                   <SelectTrigger className="rounded-lg border-border/50 transition-all duration-200 focus:border-primary/50 hover:border-border">
                     <SelectValue />
                   </SelectTrigger>
@@ -340,16 +335,16 @@ export function EditGoalDialog({
                 </Select>
                 <AutocompleteInput
                   className="rounded-lg border-border/50 transition-all duration-200 focus:border-primary/50 focus:ring-primary/20 hover:border-border"
-                  onValueChange={(value) => updateStep("target", value)}
-                  placeholder={step?.type === "PAGE_VIEW" ? "/path" : "event_name"}
-                  suggestions={getStepSuggestions(step?.type || "PAGE_VIEW")}
-                  value={step?.target || ""}
+                  onValueChange={(value) => updateGoal("target", value)}
+                  placeholder={formData?.type === "PAGE_VIEW" ? "/path" : "event_name"}
+                  suggestions={getStepSuggestions(formData?.type || "PAGE_VIEW")}
+                  value={formData?.target || ""}
                 />
                 <Input
                   className="rounded-lg border-border/50 transition-all duration-200 focus:border-primary/50 focus:ring-primary/20 hover:border-border"
-                  onChange={(e) => updateStep("name", e.target.value)}
+                  onChange={(e) => updateGoal("name", e.target.value)}
                   placeholder="Goal name"
-                  value={step?.name || ""}
+                  value={formData?.name || ""}
                 />
               </div>
             </div>
@@ -367,7 +362,7 @@ export function EditGoalDialog({
                 {formData.filters.map((filter, index) => (
                   <div
                     className="group flex items-center gap-3 rounded-lg border bg-muted/30 p-3 transition-all duration-200 hover:bg-muted/40 hover:shadow-sm"
-                    key={index}
+                    key={`filter-${index}-${filter.field}-${filter.operator}`}
                   >
                     <Select
                       onValueChange={(value) => updateFilter(index, "field", value)}

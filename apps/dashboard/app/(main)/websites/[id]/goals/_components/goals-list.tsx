@@ -1,6 +1,6 @@
 "use client";
 
-import type { Funnel } from "@/hooks/use-funnels";
+import type { Goal } from "@/hooks/use-goals";
 import { EmptyState } from "./empty-state";
 import { GoalCard } from "./goal-card";
 
@@ -12,9 +12,9 @@ interface GoalAnalytics {
 }
 
 interface GoalsListProps {
-  goals: Funnel[];
+  goals: Goal[];
   isLoading: boolean;
-  onEditGoal: (goal: Funnel) => void;
+  onEditGoal: (goal: Goal) => void;
   onDeleteGoal: (goalId: string) => void;
   onCreateGoal: () => void;
   goalAnalytics?: Record<string, any>;
