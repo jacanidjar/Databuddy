@@ -7,7 +7,6 @@ import {
   MapPin,
   Monitor,
   Smartphone,
-  TrendingDown,
   TrendingUp,
   Zap,
 } from "lucide-react";
@@ -142,12 +141,12 @@ function PerformanceSummaryCard({
         </div>
       </div>
 
-      <div
-        className={`cursor-pointer rounded-lg border bg-background p-4 transition-all hover:shadow-md ${
-          activeFilter === "fast"
-            ? "bg-green-50 ring-2 ring-green-500 dark:bg-green-950/20"
-            : "hover:bg-muted/50"
-        }`}
+      <button
+        type="button"
+        className={`w-full text-left cursor-pointer rounded-lg border bg-background p-4 transition-all hover:shadow-md ${activeFilter === "fast"
+          ? "bg-green-50 ring-2 ring-green-500 dark:bg-green-950/20"
+          : "hover:bg-muted/50"
+          }`}
         onClick={handleFastPagesClick}
       >
         <div className="mb-2 flex items-center gap-2">
@@ -165,14 +164,14 @@ function PerformanceSummaryCard({
             ({Math.round((summary.fastPages / summary.totalPages) * 100)}%)
           </span>
         </div>
-      </div>
+      </button>
 
-      <div
-        className={`cursor-pointer rounded-lg border bg-background p-4 transition-all hover:shadow-md ${
-          activeFilter === "slow"
-            ? "bg-red-50 ring-2 ring-red-500 dark:bg-red-950/20"
-            : "hover:bg-muted/50"
-        }`}
+      <button
+        type="button"
+        className={`w-full text-left cursor-pointer rounded-lg border bg-background p-4 transition-all hover:shadow-md ${activeFilter === "slow"
+          ? "bg-red-50 ring-2 ring-red-500 dark:bg-red-950/20"
+          : "hover:bg-muted/50"
+          }`}
         onClick={handleSlowPagesClick}
       >
         <div className="mb-2 flex items-center gap-2">
@@ -190,7 +189,7 @@ function PerformanceSummaryCard({
             ({Math.round((summary.slowPages / summary.totalPages) * 100)}%)
           </span>
         </div>
-      </div>
+      </button>
     </div>
   );
 }
@@ -241,31 +240,16 @@ const createNameColumn = (
     const displayName = nameFormatter ? nameFormatter(name) : name;
     return (
       <div className="flex items-center gap-2">
-        {iconRenderer && iconRenderer(name)}
+        {iconRenderer?.(name)}
         <span className="truncate">{displayName}</span>
       </div>
     );
   },
 });
 
-// Optimized data normalization with single pass
-const normalizeAndSortData = (data: any[]): PerformanceEntry[] => {
-  if (!data?.length) return [];
 
-  return data
-    .map((item) => ({
-      name: item.name || "Unknown",
-      visitors: item.visitors || 0,
-      avg_load_time: item.avg_load_time || 0,
-      avg_ttfb: item.avg_ttfb,
-      avg_dom_ready_time: item.avg_dom_ready_time,
-      avg_render_time: item.avg_render_time,
-      avg_fcp: item.avg_fcp,
-      avg_lcp: item.avg_lcp,
-      avg_cls: item.avg_cls,
-    }))
-    .sort((a, b) => a.avg_load_time - b.avg_load_time);
-};
+
+
 
 export function WebsitePerformanceTab({
   websiteId,
@@ -312,7 +296,6 @@ export function WebsitePerformanceTab({
     []
   );
 
-  // Optimized data processing with reduced operations
   const processedData = useMemo(() => {
     if (!performanceResults?.length) {
       return {
@@ -325,18 +308,18 @@ export function WebsitePerformanceTab({
       };
     }
 
-    // Single pass through results to extract and process all data
+    // Extract data directly from results
     const dataMap = new Map();
 
-    performanceResults.forEach((result) => {
+    for (const result of performanceResults) {
       if (result.success && result.data) {
-        Object.entries(result.data).forEach(([key, value]) => {
+        for (const [key, value] of Object.entries(result.data)) {
           if (Array.isArray(value)) {
-            dataMap.set(key, normalizeAndSortData(value));
+            dataMap.set(key, value);
           }
-        });
+        }
       }
-    });
+    }
 
     const allPages = dataMap.get("slow_pages") || [];
     const filteredPages = filterPagesByPerformance(allPages, activeFilter);
@@ -352,12 +335,10 @@ export function WebsitePerformanceTab({
     };
   }, [performanceResults, activeFilter, filterPagesByPerformance]);
 
-  // Optimized performance summary calculation
   const performanceSummary = useMemo((): PerformanceSummary => {
     return calculatePerformanceSummary(processedData.allPages || []);
   }, [processedData.allPages]);
 
-  // Optimized tabs generation with stable references
   const tabs = useMemo(() => {
     const tabConfigs = [
       {
@@ -377,7 +358,10 @@ export function WebsitePerformanceTab({
         id: "countries",
         label: "Countries",
         data: processedData.countries,
-        iconRenderer: (name: string) => <CountryFlag country={name} size={16} />,
+        iconRenderer: (name: string) => {
+          const item = processedData.countries.find((item: any) => item.country_name === name);
+          return <CountryFlag country={item?.country_code || name} size={16} />;
+        },
         nameFormatter: undefined,
       },
       {
@@ -422,8 +406,17 @@ export function WebsitePerformanceTab({
     return tabConfigs.map((config) => ({
       id: config.id,
       label: config.label,
-      data: config.data.map((item: PerformanceEntry, i: number) => ({
-        ...item,
+      data: config.data.map((item: any, i: number) => ({
+        name: item.country_name || item.name || "Unknown",
+        visitors: item.visitors || 0,
+        avg_load_time: item.avg_load_time || 0,
+        avg_ttfb: item.avg_ttfb,
+        avg_dom_ready_time: item.avg_dom_ready_time,
+        avg_render_time: item.avg_render_time,
+        avg_fcp: item.avg_fcp,
+        avg_lcp: item.avg_lcp,
+        avg_cls: item.avg_cls,
+        country_code: item.country_code,
         _uniqueKey: `${config.id}-${i}`,
       })),
       columns: [

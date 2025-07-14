@@ -114,7 +114,8 @@ export const PerformanceBuilders: Record<string, SimpleQueryConfig> = {
         limit: 100,
         timeField: 'time',
         allowedFilters: ['path', 'device_type', 'browser_name'],
-        customizable: true
+        customizable: true,
+        plugins: { normalizeGeo: true, deduplicateGeo: true }
     },
 
     performance_by_os: {

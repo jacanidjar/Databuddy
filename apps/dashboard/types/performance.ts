@@ -8,6 +8,8 @@ export interface PerformanceEntry {
   avg_fcp?: number;
   avg_lcp?: number;
   avg_cls?: number;
+  country_code?: string;
+  country_name?: string;
   _uniqueKey?: string;
 }
 
