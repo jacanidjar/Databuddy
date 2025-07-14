@@ -12,26 +12,25 @@ export interface ChartHandlerContext {
     aiTime: number;
 }
 
-export async function handleChartResponse(
+export async function* handleChartResponse(
     parsedAiJson: z.infer<typeof AIResponseJsonSchema>,
-    context: ChartHandlerContext,
-    sendUpdate: (update: StreamingUpdate) => void
-): Promise<void> {
+    context: ChartHandlerContext
+): AsyncGenerator<StreamingUpdate> {
     if (!parsedAiJson.sql) {
-        sendUpdate({
+        yield {
             type: 'error',
             content: "AI did not provide a query for the chart.",
             debugInfo: context.user.role === 'ADMIN' ? context.debugInfo : undefined
-        });
+        };
         return;
     }
 
     if (!validateSQL(parsedAiJson.sql)) {
-        sendUpdate({
+        yield {
             type: 'error',
             content: "Generated query failed security validation.",
             debugInfo: context.user.role === 'ADMIN' ? context.debugInfo : undefined
-        });
+        };
         return;
     }
 
@@ -47,7 +46,7 @@ export async function handleChartResponse(
             };
         }
 
-        sendUpdate({
+        yield {
             type: 'complete',
             content: queryResult.data.length > 0
                 ? `Found ${queryResult.data.length} data points. Displaying as a ${parsedAiJson.chart_type?.replace(/_/g, ' ') || 'chart'}.`
@@ -59,16 +58,16 @@ export async function handleChartResponse(
                 responseType: 'chart'
             },
             debugInfo: context.user.role === 'ADMIN' ? context.debugInfo : undefined
-        });
+        };
     } catch (queryError: unknown) {
         console.error('❌ SQL execution error', {
             error: queryError instanceof Error ? queryError.message : 'Unknown error',
             sql: parsedAiJson.sql
         });
-        sendUpdate({
+        yield {
             type: 'error',
             content: "Database query failed. The data might not be available.",
             debugInfo: context.user.role === 'ADMIN' ? context.debugInfo : undefined
-        });
+        };
     }
 } 

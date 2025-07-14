@@ -3,8 +3,9 @@ import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import { appRouter, createTRPCContext } from '@databuddy/rpc';
 import { query } from "./routes/query";
 import { assistant } from "./routes/assistant";
+import { autumnHandler } from "autumn-js/elysia";
 import cors from "@elysiajs/cors";
-
+import { auth } from "@databuddy/auth";
 const app = new Elysia()
   .use(cors({
     credentials: true,
@@ -12,6 +13,33 @@ const app = new Elysia()
       ? 'http://localhost:3000'
       : 'https://staging.databuddy.cc',
     // origin: (origin) => ['http://localhost:3000', 'https://staging.databuddy.cc'].includes(origin ?? '') ? origin : false
+  }))
+  .use(autumnHandler({
+    identify: async ({ request }) => {
+      try {
+        const session = await auth.api.getSession({
+          headers: request.headers,
+        });
+
+        if (!session?.user?.id) {
+          return {
+            customerId: undefined,
+            customerData: {},
+          };
+        }
+
+        return {
+          customerId: session.user.id,
+          customerData: {
+            name: session.user.name,
+            email: session.user.email,
+          },
+        };
+      } catch (error) {
+        console.error("[Autumn] Error in identify function:", error);
+        throw error;
+      }
+    },
   }))
   .use(query)
   .use(assistant)

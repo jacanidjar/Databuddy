@@ -3,7 +3,17 @@ import { customSession, multiSession, twoFactor, emailOTP, magicLink, organizati
 import { db, eq, user, websites, account, inArray } from "@databuddy/db";
 import { Resend } from "resend";
 import { getRedisCache } from "@databuddy/redis";
-import { nextCookies } from "better-auth/next-js";
+
+const nextCookies = process.env.ENABLE_NEXT_COOKIES !== 'false'
+    ? (() => {
+        try {
+            return require("better-auth/next-js").nextCookies;
+        } catch (error) {
+            console.warn('nextCookies import failed:', error);
+            return null;
+        }
+    })()
+    : null;
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { ac, owner, admin, member, viewer } from "./permissions";
 import { logger } from "@databuddy/shared";
@@ -143,7 +153,7 @@ export const auth = betterAuth({
         updateAge: 60 * 60 * 24, // 1 day
         freshAge: 0, // Disabled
         cookieCache: {
-            enabled: true,
+            enabled: process.env.ENABLE_NEXT_COOKIES !== 'false',
             maxAge: 5 * 60 // 5 minutes
         }
     },
@@ -234,7 +244,7 @@ export const auth = betterAuth({
                 });
             }
         }),
-        ...(process.env.ENABLE_NEXT_COOKIES !== 'false' ? [nextCookies()] : [])
+        ...(nextCookies ? [nextCookies()] : [])
     ]
 })
 

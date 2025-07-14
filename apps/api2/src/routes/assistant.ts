@@ -19,7 +19,7 @@ const AssistantRequestSchema = t.Object({
     website_id: t.String(),
     context: t.Optional(t.Object({
         previousMessages: t.Optional(t.Array(t.Object({
-            role: t.String(),
+            role: t.Optional(t.String()),
             content: t.String()
         })))
     }))
@@ -44,16 +44,15 @@ export const assistant = new Elysia({ prefix: '/v1/assistant' })
     .post('/stream', async ({ body, user }) => {
         const { message, website_id, context } = body;
 
-        // Get website info
+        // Get website info from the website_id in the body
         const website = await db.query.websites.findFirst({
             where: eq(websites.id, website_id),
         });
 
-        if (!website?.id) {
-            return new Response(JSON.stringify({ error: 'Website not found' }), {
-                status: 404,
-                headers: { 'Content-Type': 'application/json' }
-            });
+        if (!website) {
+            return createStreamingResponse((async function* () {
+                yield { type: 'error', content: 'Website not found' };
+            })());
         }
 
         const assistantRequest: AssistantRequest = {

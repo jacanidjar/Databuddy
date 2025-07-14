@@ -12,7 +12,7 @@ export interface AssistantRequest {
     website_hostname: string;
     context?: {
         previousMessages?: Array<{
-            role: string;
+            role?: string;
             content: string;
         }>;
     };
@@ -109,21 +109,15 @@ export async function* processAssistantRequest(
                 break;
 
             case 'metric':
-                await handleMetricResponse(aiJson, context, (update) => {
-                    // This is a bit awkward with the generator pattern, but we'll yield the update
-                    // In a real implementation, you might want to restructure this
-                    return update;
-                });
+                yield* handleMetricResponse(aiJson, context);
                 break;
 
             case 'chart':
                 if (aiJson.sql) {
-                    await handleChartResponse(aiJson, {
+                    yield* handleChartResponse(aiJson, {
                         ...context,
                         startTime,
                         aiTime
-                    }, (update) => {
-                        return update;
                     });
                 } else {
                     yield {

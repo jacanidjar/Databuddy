@@ -10,34 +10,33 @@ export interface MetricHandlerContext {
     debugInfo: Record<string, unknown>;
 }
 
-export async function handleMetricResponse(
+export async function* handleMetricResponse(
     parsedAiJson: z.infer<typeof AIResponseJsonSchema>,
-    context: MetricHandlerContext,
-    sendUpdate: (update: StreamingUpdate) => void
-): Promise<void> {
+    context: MetricHandlerContext
+): AsyncGenerator<StreamingUpdate> {
     if (parsedAiJson.sql) {
         if (!validateSQL(parsedAiJson.sql)) {
-            sendUpdate({
+            yield {
                 type: 'error',
                 content: "Generated query failed security validation.",
                 debugInfo: context.user.role === 'ADMIN' ? context.debugInfo : undefined
-            });
+            };
             return;
         }
 
         try {
             const queryResult = await executeQuery(parsedAiJson.sql);
             const metricValue = extractMetricValue(queryResult.data, parsedAiJson.metric_value);
-            await sendMetricResponse(parsedAiJson, metricValue, context, sendUpdate);
+            yield* sendMetricResponse(parsedAiJson, metricValue, context);
         } catch (queryError: unknown) {
             console.error('❌ Metric SQL execution error', {
                 error: queryError instanceof Error ? queryError.message : 'Unknown error',
                 sql: parsedAiJson.sql
             });
-            await sendMetricResponse(parsedAiJson, parsedAiJson.metric_value, context, sendUpdate);
+            yield* sendMetricResponse(parsedAiJson, parsedAiJson.metric_value, context);
         }
     } else {
-        await sendMetricResponse(parsedAiJson, parsedAiJson.metric_value, context, sendUpdate);
+        yield* sendMetricResponse(parsedAiJson, parsedAiJson.metric_value, context);
     }
 }
 
@@ -51,17 +50,16 @@ function extractMetricValue(queryData: unknown[], defaultValue: unknown): unknow
     return valueKey ? firstRow[valueKey] : defaultValue;
 }
 
-async function sendMetricResponse(
+async function* sendMetricResponse(
     parsedAiJson: z.infer<typeof AIResponseJsonSchema>,
     metricValue: unknown,
-    context: MetricHandlerContext,
-    sendUpdate: (update: StreamingUpdate) => void
-): Promise<void> {
+    context: MetricHandlerContext
+): AsyncGenerator<StreamingUpdate> {
     const formattedValue = typeof metricValue === 'number'
         ? metricValue.toLocaleString()
         : metricValue;
 
-    sendUpdate({
+    yield {
         type: 'complete',
         content: parsedAiJson.text_response ||
             `${parsedAiJson.metric_label || 'Result'}: ${formattedValue}`,
@@ -72,5 +70,5 @@ async function sendMetricResponse(
             metricLabel: parsedAiJson.metric_label
         },
         debugInfo: context.user.role === 'ADMIN' ? context.debugInfo : undefined
-    });
+    };
 } 
