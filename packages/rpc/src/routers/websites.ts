@@ -205,7 +205,7 @@ export const websitesRouter = createTRPCRouter({
 
             const [updatedWebsite] = await ctx.db
                 .update(websites)
-                .set({ organizationId: input.organizationId } as any)
+                .set({ organizationId: input.organizationId ?? null } as any)
                 .where(eq(websites.id, input.websiteId))
                 .returning();
 

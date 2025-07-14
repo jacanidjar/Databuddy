@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useProfilesData } from "@/hooks/use-dynamic-query";
-import type { ProfileData as AnalyticsProfileData } from "@/hooks/use-analytics";
 
 // Type adapter for the new profile data structure
 type ProfileData = {

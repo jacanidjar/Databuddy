@@ -1,4 +1,4 @@
-import type { DateRange as BaseDateRange } from "@/hooks/use-analytics";
+import type { DateRange as BaseDateRange } from "@databuddy/shared";
 
 // Extended date range with granularity
 export interface DateRange extends BaseDateRange {

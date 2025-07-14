@@ -12,7 +12,7 @@ import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "rec
 import { FaviconImage } from "@/components/analytics/favicon-image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { MiniChartDataPoint } from "@/hooks/use-analytics";
+import type { MiniChartDataPoint } from "@databuddy/shared";
 
 interface WebsiteCardProps {
   website: Website;

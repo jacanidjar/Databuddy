@@ -70,8 +70,8 @@ export const websiteNavigation: NavigationSection[] = [
     items: [
       { name: "Profiles", icon: UsersIcon, href: "/profiles", highlight: true },
       { name: "Funnels", icon: FunnelIcon, href: "/funnels", highlight: true },
-      { name: "Goals", icon: TargetIcon, href: "/goals", highlight: true },
-      { name: "Journeys", icon: GitBranchIcon, href: "/journeys", highlight: true },
+      { name: "Goals (WIP)", icon: TargetIcon, href: "/goals", highlight: true },
+      // { name: "Journeys", icon: GitBranchIcon, href: "/journeys", highlight: true },
       // { name: "Revenue", icon: CurrencyDollarIcon, href: "/revenue", highlight: true, alpha: true },
     ],
   },

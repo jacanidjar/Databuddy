@@ -6,16 +6,31 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useWebsiteTransfer } from "@/hooks/use-website-transfer";
+import type { Website } from "@databuddy/shared";
 import { WebsiteSelector } from "./website-selector";
 
 export function TransferAssets({ organizationId }: { organizationId: string }) {
-  const { personalWebsites, organizationWebsites, transferWebsite, isTransferring, isLoading } =
-    useWebsiteTransfer(organizationId);
+  const {
+    personalWebsites,
+    organizationWebsites,
+    transferWebsite,
+    isTransferring,
+    isLoading,
+  } = useWebsiteTransfer(organizationId) as {
+    personalWebsites: Website[];
+    organizationWebsites: Website[];
+    transferWebsite: (
+      args: { websiteId: string; destination: { organizationId?: string | null } },
+      opts?: { onSuccess?: () => void }
+    ) => void;
+    isTransferring: boolean;
+    isLoading: boolean;
+  };
   const [selectedWebsite, setSelectedWebsite] = useState<string | null>(null);
 
-  const selectedSide = personalWebsites.some((w) => w.id === selectedWebsite)
+  const selectedSide = personalWebsites.some((w: Website) => w.id === selectedWebsite)
     ? "personal"
-    : organizationWebsites.some((w) => w.id === selectedWebsite)
+    : organizationWebsites.some((w: Website) => w.id === selectedWebsite)
       ? "organization"
       : null;
 

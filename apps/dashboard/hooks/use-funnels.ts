@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient, useQueries } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
-import type { DateRange } from "./use-analytics";
+import type { DateRange } from "@databuddy/shared";
 
 // Types
 export interface FunnelStep {
@@ -273,7 +273,7 @@ export function useFunnelComparison(
         { websiteId, funnelId, dateRange },
       ],
       queryFn: () =>
-        trpc.funnels.getAnalytics.query({
+        trpc.funnels.getAnalytics.useQuery({
           websiteId,
           funnelId,
           startDate: dateRange?.start_date,
@@ -317,7 +317,7 @@ export function useFunnelPerformance(
         { websiteId, funnelId: funnel.id, dateRange },
       ],
       queryFn: () =>
-        trpc.funnels.getAnalytics.query({
+        trpc.funnels.getAnalytics.useQuery({
           websiteId,
           funnelId: funnel.id,
           startDate: dateRange?.start_date,

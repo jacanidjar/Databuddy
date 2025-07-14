@@ -1,6 +1,6 @@
 import { type UseQueryOptions, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import type { DateRange } from "@/hooks/use-analytics";
+import type { DateRange } from "@databuddy/shared";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 

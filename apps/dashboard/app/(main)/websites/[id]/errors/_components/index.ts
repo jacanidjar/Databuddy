@@ -9,7 +9,7 @@ export { ErrorSummaryStats } from "./error-summary-stats";
 export * from "./error-table-columns";
 export { ErrorTrendsChart } from "./error-trends-chart";
 export { ErrorsPageContent } from "./errors-page-content";
-export { RecentErrorsList } from "./recent-errors-list";
+// export { RecentErrorsList } from "./recent-errors-list";
 export { TopErrorCard } from "./top-error-card";
 export * from "./types";
 // Utilities

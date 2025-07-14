@@ -12,6 +12,11 @@ export interface Website {
 	deletedAt?: string | null;
 }
 
+export interface MiniChartDataPoint {
+	date: string;
+	value: number;
+}
+
 export interface CreateWebsiteData {
 	name: string;
 	domain: string;

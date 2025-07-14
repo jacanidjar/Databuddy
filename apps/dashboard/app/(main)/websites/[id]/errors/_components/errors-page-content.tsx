@@ -6,17 +6,15 @@ import { toast } from "sonner";
 import { AnimatedLoading } from "@/components/analytics/animated-loading";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { DateRange } from "@/hooks/use-analytics";
-import type { DynamicQueryFilter } from "@/hooks/use-dynamic-query";
+import type { DateRange, DynamicQueryFilter } from "@databuddy/shared";
 import { useEnhancedErrorData } from "@/hooks/use-dynamic-query";
-import { EmptyState } from "../../_components/utils/ui-components";
 import { WebsitePageHeader } from "../../_components/website-page-header";
 import { ErrorDataTable } from "./error-data-table";
 // Import our separated components
 import { ErrorSummaryStats } from "./error-summary-stats";
 import { ErrorTrendsChart } from "./error-trends-chart";
 import { TopErrorCard } from "./top-error-card";
-import type { ErrorDetail, ErrorSummary } from "./types";
+import type { ErrorSummary } from "./types";
 import { normalizeData, safeFormatDate } from "./utils";
 
 interface ErrorsPageContentProps {

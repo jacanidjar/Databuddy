@@ -83,7 +83,7 @@ export function EditFunnelDialog({
     if (isCreateMode && onCreate) {
       const createData: CreateFunnelData = {
         name: formData.name,
-        description: formData.description,
+        description: formData.description || undefined,
         steps: formData.steps,
         filters: formData.filters || [],
       };
@@ -117,9 +117,9 @@ export function EditFunnelDialog({
     setFormData((prev) =>
       prev
         ? {
-            ...prev,
-            steps: [...prev.steps, { type: "PAGE_VIEW" as const, target: "", name: "" }],
-          }
+          ...prev,
+          steps: [...prev.steps, { type: "PAGE_VIEW" as const, target: "", name: "" }],
+        }
         : prev
     );
   }, [formData]);
@@ -130,9 +130,9 @@ export function EditFunnelDialog({
       setFormData((prev) =>
         prev
           ? {
-              ...prev,
-              steps: prev.steps.filter((_, i) => i !== index),
-            }
+            ...prev,
+            steps: prev.steps.filter((_, i) => i !== index),
+          }
           : prev
       );
     },
@@ -145,11 +145,11 @@ export function EditFunnelDialog({
       setFormData((prev) =>
         prev
           ? {
-              ...prev,
-              steps: prev.steps.map((step, i) =>
-                i === index ? { ...step, [field]: value } : step
-              ),
-            }
+            ...prev,
+            steps: prev.steps.map((step, i) =>
+              i === index ? { ...step, [field]: value } : step
+            ),
+          }
           : prev
       );
     },
@@ -173,9 +173,9 @@ export function EditFunnelDialog({
       setFormData((prev) =>
         prev
           ? {
-              ...prev,
-              steps: items,
-            }
+            ...prev,
+            steps: items,
+          }
           : prev
       );
     },
@@ -187,12 +187,12 @@ export function EditFunnelDialog({
     setFormData((prev) =>
       prev
         ? {
-            ...prev,
-            filters: [
-              ...(prev.filters || []),
-              { field: "browser_name", operator: "equals" as const, value: "" },
-            ],
-          }
+          ...prev,
+          filters: [
+            ...(prev.filters || []),
+            { field: "browser_name", operator: "equals" as const, value: "" },
+          ],
+        }
         : prev
     );
   }, [formData]);
@@ -203,9 +203,9 @@ export function EditFunnelDialog({
       setFormData((prev) =>
         prev
           ? {
-              ...prev,
-              filters: (prev.filters || []).filter((_, i) => i !== index),
-            }
+            ...prev,
+            filters: (prev.filters || []).filter((_, i) => i !== index),
+          }
           : prev
       );
     },
@@ -218,11 +218,11 @@ export function EditFunnelDialog({
       setFormData((prev) =>
         prev
           ? {
-              ...prev,
-              filters: (prev.filters || []).map((filter, i) =>
-                i === index ? { ...filter, [field]: value } : filter
-              ),
-            }
+            ...prev,
+            filters: (prev.filters || []).map((filter, i) =>
+              i === index ? { ...filter, [field]: value } : filter
+            ),
+          }
           : prev
       );
     },
@@ -384,13 +384,12 @@ export function EditFunnelDialog({
                 {(provided: any, snapshot: any) => (
                   <div
                     {...provided.droppableProps}
-                    className={`space-y-4 transition-colors duration-150 ${
-                      snapshot.isDraggingOver ? "rounded-lg bg-accent/10 p-1" : ""
-                    }`}
+                    className={`space-y-4 transition-colors duration-150 ${snapshot.isDraggingOver ? "rounded-lg bg-accent/10 p-1" : ""
+                      }`}
                     ref={provided.innerRef}
                   >
                     {formData.steps.map((step, index) => (
-                      <Draggable draggableId={`step-${index}`} index={index} key={`step-${index}`}>
+                      <Draggable draggableId={`step-${index}`} index={index} key={`step-${index}-${step.type}-${step.target}-${step.name}`}>
                         {(provided: any, snapshot: any) => (
                           <div
                             ref={provided.innerRef}
@@ -443,7 +442,7 @@ export function EditFunnelDialog({
                 {formData.filters.map((filter, index) => (
                   <div
                     className="flex items-center gap-3 rounded border bg-muted/30 p-3"
-                    key={index}
+                    key={`filter-${index}-${filter.field}-${filter.operator}-${filter.value}`}
                   >
                     <Select
                       onValueChange={(value) => updateFilter(index, "field", value)}
