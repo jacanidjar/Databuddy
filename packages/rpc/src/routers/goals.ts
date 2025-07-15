@@ -247,36 +247,43 @@ export const goalsRouter = createTRPCRouter({
                 name: goalData.name,
             }];
             const filters = goalData.filters as Array<{ field: string; operator: string; value: string | string[] }> || [];
-            const filterConditions = buildFilterConditions(filters, 'f', {});
-
+            const params: Record<string, unknown> = {
+                websiteId: input.websiteId,
+                startDate,
+                endDate: endDate + ' 23:59:59',
+            };
+            const filterConditions = buildFilterConditions(filters, 'f', params);
             const totalWebsiteUsersQuery = `
                 SELECT COUNT(DISTINCT session_id) as total_users
                 FROM analytics.events
-                WHERE client_id = '${input.websiteId}'
-                    AND time >= parseDateTimeBestEffort('${startDate}')
-                    AND time <= parseDateTimeBestEffort('${endDate} 23:59:59')
+                WHERE client_id = {websiteId:String}
+                    AND time >= parseDateTimeBestEffort({startDate:String})
+                    AND time <= parseDateTimeBestEffort({endDate:String})
             `;
-            const totalWebsiteUsersResult = await chQuery<{ total_users: number }>(totalWebsiteUsersQuery);
+            const totalWebsiteUsersResult = await chQuery<{ total_users: number }>(totalWebsiteUsersQuery, params);
             const totalWebsiteUsers = totalWebsiteUsersResult[0]?.total_users || 0;
-
             let whereCondition = '';
+            const stepNameKey = `step_name_0`;
+            const targetKey = `target_0`;
+            params[stepNameKey] = steps[0].name;
             if (steps[0].type === 'PAGE_VIEW') {
-                const targetPath = steps[0].target.replace(/'/g, "''");
-                whereCondition = `event_name = 'screen_view' AND (path = '${targetPath}' OR path LIKE '%${targetPath}%')`;
+                params[targetKey] = steps[0].target;
+                whereCondition = `event_name = 'screen_view' AND (path = {${targetKey}:String} OR path LIKE {${targetKey}_like:String})`;
+                params[`${targetKey}_like`] = `%${steps[0].target}%`;
             } else if (steps[0].type === 'EVENT') {
-                const eventName = steps[0].target.replace(/'/g, "''");
-                whereCondition = `event_name = '${eventName}'`;
+                params[targetKey] = steps[0].target;
+                whereCondition = `event_name = {${targetKey}:String}`;
             }
             const stepQuery = `
                 SELECT 
                     1 as step_number,
-                    '${steps[0].name.replace(/'/g, "''")}' as step_name,
+                    {${stepNameKey}:String} as step_name,
                     session_id,
                     MIN(time) as first_occurrence
                 FROM analytics.events
-                WHERE client_id = '${input.websiteId}'
-                    AND time >= parseDateTimeBestEffort('${startDate}')
-                    AND time <= parseDateTimeBestEffort('${endDate} 23:59:59')
+                WHERE client_id = {websiteId:String}
+                    AND time >= parseDateTimeBestEffort({startDate:String})
+                    AND time <= parseDateTimeBestEffort({endDate:String})
                     AND ${whereCondition}${filterConditions}
                 GROUP BY session_id`;
             const analysisQuery = `
@@ -296,7 +303,7 @@ export const goalsRouter = createTRPCRouter({
                 step_name: string;
                 session_id: string;
                 first_occurrence: number;
-            }>(analysisQuery);
+            }>(analysisQuery, params);
 
             // Process the results to calculate analytics
             const sessionEvents = new Map<string, Array<{ step_number: number, step_name: string, first_occurrence: number }>>();
@@ -371,16 +378,20 @@ export const goalsRouter = createTRPCRouter({
                     input.goalIds.length > 0 ? inArray(goals.id, input.goalIds) : sql`1=0`
                 ))
                 .orderBy(desc(goals.createdAt));
-
+            const params: Record<string, unknown> = {
+                websiteId: input.websiteId,
+                startDate,
+                endDate: endDate + ' 23:59:59',
+            };
             // Get total unique users for the website in the date range
             const totalWebsiteUsersQuery = `
                 SELECT COUNT(DISTINCT session_id) as total_users
                 FROM analytics.events
-                WHERE client_id = '${input.websiteId}'
-                    AND time >= parseDateTimeBestEffort('${startDate}')
-                    AND time <= parseDateTimeBestEffort('${endDate} 23:59:59')
+                WHERE client_id = {websiteId:String}
+                    AND time >= parseDateTimeBestEffort({startDate:String})
+                    AND time <= parseDateTimeBestEffort({endDate:String})
             `;
-            const totalWebsiteUsersResult = await chQuery<{ total_users: number }>(totalWebsiteUsersQuery);
+            const totalWebsiteUsersResult = await chQuery<{ total_users: number }>(totalWebsiteUsersQuery, params);
             const totalWebsiteUsers = totalWebsiteUsersResult[0]?.total_users || 0;
 
             const analyticsResults: Record<string, any> = {};
@@ -390,26 +401,31 @@ export const goalsRouter = createTRPCRouter({
                     target: goalData.target,
                     name: goalData.name,
                 }];
+                const localParams = { ...params };
                 const filters = goalData.filters as Array<{ field: string; operator: string; value: string | string[] }> || [];
-                const filterConditions = buildFilterConditions(filters, 'f', {});
+                const filterConditions = buildFilterConditions(filters, 'f', localParams);
                 let whereCondition = '';
+                const stepNameKey = `step_name_0`;
+                const targetKey = `target_0`;
+                localParams[stepNameKey] = steps[0].name;
                 if (steps[0].type === 'PAGE_VIEW') {
-                    const targetPath = steps[0].target.replace(/'/g, "''");
-                    whereCondition = `event_name = 'screen_view' AND (path = '${targetPath}' OR path LIKE '%${targetPath}%')`;
+                    localParams[targetKey] = steps[0].target;
+                    whereCondition = `event_name = 'screen_view' AND (path = {${targetKey}:String} OR path LIKE {${targetKey}_like:String})`;
+                    localParams[`${targetKey}_like`] = `%${steps[0].target}%`;
                 } else if (steps[0].type === 'EVENT') {
-                    const eventName = steps[0].target.replace(/'/g, "''");
-                    whereCondition = `event_name = '${eventName}'`;
+                    localParams[targetKey] = steps[0].target;
+                    whereCondition = `event_name = {${targetKey}:String}`;
                 }
                 const stepQuery = `
                     SELECT 
                         1 as step_number,
-                        '${steps[0].name.replace(/'/g, "''")}' as step_name,
+                        {${stepNameKey}:String} as step_name,
                         session_id,
                         MIN(time) as first_occurrence
                     FROM analytics.events
-                    WHERE client_id = '${input.websiteId}'
-                        AND time >= parseDateTimeBestEffort('${startDate}')
-                        AND time <= parseDateTimeBestEffort('${endDate} 23:59:59')
+                    WHERE client_id = {websiteId:String}
+                        AND time >= parseDateTimeBestEffort({startDate:String})
+                        AND time <= parseDateTimeBestEffort({endDate:String})
                         AND ${whereCondition}${filterConditions}
                     GROUP BY session_id`;
                 const analysisQuery = `
@@ -429,7 +445,7 @@ export const goalsRouter = createTRPCRouter({
                     step_name: string;
                     session_id: string;
                     first_occurrence: number;
-                }>(analysisQuery);
+                }>(analysisQuery, localParams);
                 const sessionEvents = new Map<string, Array<{ step_number: number, step_name: string, first_occurrence: number }>>();
                 for (const event of rawResults) {
                     if (!sessionEvents.has(event.session_id)) {
