@@ -1,16 +1,16 @@
 "use client";
 
-import { Suspense, useCallback } from "react";
+import React, { Suspense } from "react";
 import { cn } from "@/lib/utils";
 import { useAtom } from 'jotai';
 import {
-  modelAtom,
   websiteIdAtom,
   websiteDataAtom,
   dateRangeAtom,
   messagesAtom,
   isLoadingAtom,
   isInitializedAtom,
+  currentMessageAtom,
 } from '@/stores/jotai/assistantAtoms';
 import ChatSection, { ChatSkeleton } from "./chat-section";
 import VisualizationSection, { VisualizationSkeleton } from "./visualization-section";
@@ -23,6 +23,7 @@ export default function AIAssistantMain() {
   const [messages] = useAtom(messagesAtom);
   const [isLoading] = useAtom(isLoadingAtom);
   const [isInitialized] = useAtom(isInitializedAtom);
+  const [, setCurrentMessage] = useAtom(currentMessageAtom);
 
   // Find latest visualization message and query message
   const latestVisualizationMessage = messages
@@ -45,17 +46,16 @@ export default function AIAssistantMain() {
     }
   }
 
+  // Update current message atom
+  React.useEffect(() => {
+    setCurrentMessage(currentQueryMessage);
+  }, [currentQueryMessage, setCurrentMessage]);
+
   const shouldShowVisualization = !!(
     latestVisualizationMessage?.data &&
     latestVisualizationMessage?.chartType &&
     latestVisualizationMessage?.responseType === "chart"
   );
-
-  // Only local: handle switching chats
-  const handleSelectChat = useCallback((id: string, name?: string) => {
-    setWebsiteId(id);
-    setWebsiteData((prev) => prev ? { ...prev, name } : prev);
-  }, [setWebsiteId, setWebsiteData]);
 
   return (
     <div className="fixed inset-0 flex flex-col bg-gradient-to-br from-background to-muted/20 pt-16 md:pl-72">
@@ -71,22 +71,14 @@ export default function AIAssistantMain() {
               <ChatSkeleton />
             ) : (
               <Suspense fallback={<ChatSkeleton />}>
-                <ChatSection onSelectChat={handleSelectChat} />
+                <ChatSection />
               </Suspense>
             )}
           </div>
           {shouldShowVisualization && (
             <div className="flex flex-[0.4] flex-col overflow-hidden">
               <Suspense fallback={<VisualizationSkeleton />}>
-                <VisualizationSection
-                  currentMessage={currentQueryMessage}
-                  hasVisualization={shouldShowVisualization}
-                  latestVisualization={latestVisualizationMessage}
-                  websiteData={websiteData}
-                  websiteId={websiteId}
-                  dateRange={dateRange}
-                // onQuickInsight={...} // If needed, can use atom for this too
-                />
+                <VisualizationSection />
               </Suspense>
             </div>
           )}

@@ -2,9 +2,11 @@
 
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWebsite } from "@/hooks/use-websites";
+import { useAtom } from 'jotai';
+import { websiteIdAtom, websiteDataAtom, dateRangeAtom } from '@/stores/jotai/assistantAtoms';
 
 const AIAssistantMain = dynamic(() => import("./components/ai-assistant-main"), {
   loading: () => <AIAssistantLoadingSkeleton />,
@@ -50,8 +52,32 @@ function AIAssistantLoadingSkeleton() {
 
 export default function AssistantPage() {
   const { id } = useParams();
-
   const { data: websiteData, isLoading } = useWebsite(id as string);
+
+  const [, setWebsiteId] = useAtom(websiteIdAtom);
+  const [, setWebsiteData] = useAtom(websiteDataAtom);
+  const [, setDateRange] = useAtom(dateRangeAtom);
+
+  // Initialize atoms with data
+  useEffect(() => {
+    if (id) {
+      setWebsiteId(id as string);
+    }
+  }, [id, setWebsiteId]);
+
+  useEffect(() => {
+    if (websiteData) {
+      setWebsiteData(websiteData);
+    }
+  }, [websiteData, setWebsiteData]);
+
+  useEffect(() => {
+    setDateRange({
+      start_date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+      end_date: new Date().toISOString(),
+      granularity: "daily",
+    });
+  }, [setDateRange]);
 
   // This div structure is crucial for correct layout and scrolling
   return (
@@ -62,15 +88,7 @@ export default function AssistantPage() {
           <AIAssistantLoadingSkeleton />
         ) : (
           <Suspense fallback={<AIAssistantLoadingSkeleton />}>
-            <AIAssistantMain
-              dateRange={{
-                start_date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-                end_date: new Date().toISOString(),
-                granularity: "daily",
-              }}
-              websiteData={websiteData}
-              websiteId={id as string}
-            />
+            <AIAssistantMain />
           </Suspense>
         )}
       </div>

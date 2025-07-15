@@ -43,6 +43,8 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { getChatDB } from "../lib/chat-db";
+import { useAtom } from 'jotai';
+import { websiteIdAtom, websiteDataAtom } from '@/stores/jotai/assistantAtoms';
 
 interface ChatHistoryItem {
     websiteId: string;
@@ -53,11 +55,8 @@ interface ChatHistoryItem {
 }
 
 interface ChatHistorySheetProps {
-    currentWebsiteId: string;
-    currentWebsiteName?: string;
     isOpen: boolean;
     onClose: () => void;
-    onSelectChat: (websiteId: string, websiteName?: string) => void;
 }
 
 function formatRelativeTime(timestamp: number): string {
@@ -76,17 +75,17 @@ function formatRelativeTime(timestamp: number): string {
 }
 
 export function ChatHistorySheet({
-    currentWebsiteId,
-    currentWebsiteName,
     isOpen,
     onClose,
-    onSelectChat,
 }: ChatHistorySheetProps) {
     const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const chatDB = getChatDB();
+    const [websiteId] = useAtom(websiteIdAtom);
+    const [, setWebsiteId] = useAtom(websiteIdAtom);
+    const [, setWebsiteData] = useAtom(websiteDataAtom);
 
     useEffect(() => {
         const loadChatHistory = async () => {
@@ -95,10 +94,10 @@ export function ChatHistorySheet({
                 const chats = await chatDB.getAllChats();
 
                 const chatsWithPreview = await Promise.all(
-                    chats.map(async (chat) => {
+                    chats.map(async (chat: any) => {
                         try {
                             const messages = await chatDB.getMessages(chat.websiteId);
-                            const lastUserMessage = messages.filter((m) => m.type === "user").pop();
+                            const lastUserMessage = messages.filter((m: any) => m.type === "user").pop();
 
                             return {
                                 ...chat,
@@ -156,8 +155,14 @@ export function ChatHistorySheet({
         }
     };
 
+    const handleSelectChat = (websiteId: string, websiteName?: string) => {
+        setWebsiteId(websiteId);
+        setWebsiteData((prev: any) => prev ? { ...prev, name: websiteName } : prev);
+        onClose();
+    };
+
     const filteredChats = chatHistory.filter(
-        (chat) =>
+        (chat: ChatHistoryItem) =>
             chat.websiteName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             chat.lastMessage?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             chat.websiteId.toLowerCase().includes(searchQuery.toLowerCase())
@@ -224,31 +229,28 @@ export function ChatHistorySheet({
                             ) : (
                                 <div className="space-y-2">
                                     {filteredChats.map((chat) => (
-                                        <div
+                                        <button
                                             className={cn(
                                                 "group cursor-pointer rounded border p-3 transition-all duration-200",
                                                 "hover:border-primary/20 hover:bg-muted/50",
-                                                chat.websiteId === currentWebsiteId && "border-primary/30 bg-primary/5"
+                                                chat.websiteId === websiteId && "border-primary/30 bg-primary/5"
                                             )}
                                             key={chat.websiteId}
-                                            onClick={(e) => {
+                                            onClick={(e: React.MouseEvent) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
                                                 console.log('Chat clicked:', chat.websiteId, chat.websiteName);
-                                                onSelectChat(chat.websiteId, chat.websiteName);
-                                                onClose();
+                                                handleSelectChat(chat.websiteId, chat.websiteName);
                                             }}
-                                            onKeyDown={(e) => {
+                                            onKeyDown={(e: React.KeyboardEvent) => {
                                                 if (e.key === "Enter" || e.key === " ") {
                                                     e.preventDefault();
                                                     e.stopPropagation();
                                                     console.log('Chat selected via keyboard:', chat.websiteId, chat.websiteName);
-                                                    onSelectChat(chat.websiteId, chat.websiteName);
-                                                    onClose();
+                                                    handleSelectChat(chat.websiteId, chat.websiteName);
                                                 }
                                             }}
-                                            role="button"
-                                            tabIndex={0}
+                                            type="button"
                                         >
                                             <div className="flex items-start gap-3">
                                                 <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-primary/10">
@@ -265,14 +267,14 @@ export function ChatHistorySheet({
                                                                     className="h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
                                                                     size="icon"
                                                                     variant="ghost"
-                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
                                                                 >
                                                                     <MoreVertical className="h-4 w-4" />
                                                                 </Button>
                                                             </DropdownMenuTrigger>
                                                             <DropdownMenuContent align="end" className="w-48">
                                                                 <DropdownMenuItem
-                                                                    onClick={(e) => {
+                                                                    onClick={(e: React.MouseEvent) => {
                                                                         e.stopPropagation();
                                                                         handleExportChat(chat.websiteId, chat.websiteName);
                                                                     }}
@@ -283,7 +285,7 @@ export function ChatHistorySheet({
                                                                 <DropdownMenuSeparator />
                                                                 <DropdownMenuItem
                                                                     className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                                                                    onClick={(e) => {
+                                                                    onClick={(e: React.MouseEvent) => {
                                                                         e.stopPropagation();
                                                                         setDeleteConfirm(chat.websiteId);
                                                                     }}
@@ -306,7 +308,7 @@ export function ChatHistorySheet({
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </button>
                                     ))}
                                 </div>
                             )}

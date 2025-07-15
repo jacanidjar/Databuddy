@@ -12,7 +12,7 @@ import {
   ScatterChart as ScatterChartIcon,
   TrendingUp,
 } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { DataTable } from "@/components/analytics/data-table";
 import {
   Area,
@@ -48,10 +48,8 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { WebsiteDataTabProps } from "../../_components/utils/types";
 import type { Message } from "../types/message";
 import { useAtom } from 'jotai';
 import {
@@ -59,15 +57,9 @@ import {
   websiteIdAtom,
   dateRangeAtom,
   messagesAtom,
+  currentMessageAtom,
 } from '@/stores/jotai/assistantAtoms';
 import { cn } from '@/lib/utils';
-
-interface VisualizationSectionProps extends WebsiteDataTabProps {
-  latestVisualization?: Message;
-  onQuickInsight?: (prompt: string) => void;
-  currentMessage: Message | undefined;
-  hasVisualization?: boolean;
-}
 
 const CHART_COLORS = [
   "#2563eb",
@@ -140,6 +132,7 @@ export default function VisualizationSection() {
   const [websiteId] = useAtom(websiteIdAtom);
   const [dateRange] = useAtom(dateRangeAtom);
   const [messages] = useAtom(messagesAtom);
+  const [currentMessage] = useAtom(currentMessageAtom);
 
   // Find the latest assistant message with a chartType
   const latestAssistantMsg = useMemo(() => {

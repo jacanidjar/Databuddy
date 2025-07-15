@@ -13,4 +13,5 @@ export const inputValueAtom = atom<string>('');
 export const isLoadingAtom = atom<boolean>(false);
 export const isRateLimitedAtom = atom<boolean>(false);
 export const isInitializedAtom = atom<boolean>(false);
-export const scrollAreaRefAtom = atom<RefObject<HTMLDivElement> | null>(null); 
+export const scrollAreaRefAtom = atom<RefObject<HTMLDivElement> | null>(null);
+export const currentMessageAtom = atom<Message | undefined>(undefined); 

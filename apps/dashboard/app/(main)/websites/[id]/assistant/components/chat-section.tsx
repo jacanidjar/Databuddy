@@ -77,7 +77,7 @@ export function ChatSkeleton() {
   );
 }
 
-export default function ChatSection({ onSelectChat }: { onSelectChat?: (websiteId: string, websiteName?: string) => void }) {
+export default function ChatSection() {
   const [messages] = useAtom(messagesAtom);
   const [inputValue, setInputValue] = useAtom(inputValueAtom);
   const [isLoading] = useAtom(isLoadingAtom);
@@ -332,7 +332,7 @@ export default function ChatSection({ onSelectChat }: { onSelectChat?: (websiteI
         onClose={() => setShowChatHistory(false)}
         onSelectChat={(websiteId, websiteName) => {
           setShowChatHistory(false);
-          onSelectChat?.(websiteId, websiteName);
+          // onSelectChat?.(websiteId, websiteName); // This function is no longer passed as a prop
         }}
       />
     </div>

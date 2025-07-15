@@ -4,16 +4,7 @@ import { db, eq, user, websites, account, inArray } from "@databuddy/db";
 import { Resend } from "resend";
 import { getRedisCache } from "@databuddy/redis";
 
-const nextCookies = process.env.ENABLE_NEXT_COOKIES !== 'false'
-    ? (() => {
-        try {
-            return require("better-auth/next-js").nextCookies;
-        } catch (error) {
-            console.warn('nextCookies import failed:', error);
-            return null;
-        }
-    })()
-    : null;
+
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { ac, owner, admin, member, viewer } from "./permissions";
 import { logger } from "@databuddy/shared";
@@ -25,12 +16,6 @@ function isProduction() {
     return process.env.NODE_ENV === 'production';
 }
 
-async function deleteWebsiteData(websiteId: string) {
-    for (const table of Object.values(TABLE_NAMES)) {
-        await chCommand(`DELETE FROM ${table} WHERE client_id = {websiteId:String}`, { websiteId });
-        logger.info(`Deleted data from ${table}`, `for website ${websiteId}`);
-    }
-}
 
 export const auth = betterAuth({
     database: drizzleAdapter(db, {
@@ -66,9 +51,6 @@ export const auth = betterAuth({
                     if (userWebsites.length > 0) {
                         logger.info('Deleting Websites', `Deleting websites for user ${user.id}`);
                         await db.delete(websites).where(inArray(websites.id, userWebsites.map(w => w.id)));
-                    }
-                    for (const website of userWebsites) {
-                        await deleteWebsiteData(website.id);
                     }
                     logger.info('User Deletion Finished', `Finished deletion process for user ${user.id}`);
                 } catch (error) {
@@ -243,8 +225,7 @@ export const auth = betterAuth({
                     react: InvitationEmail({ inviterName: inviter.user.name, organizationName: organization.name, invitationLink: invitationLink })
                 });
             }
-        }),
-        ...(nextCookies ? [nextCookies()] : [])
+        })
     ]
 })
 
