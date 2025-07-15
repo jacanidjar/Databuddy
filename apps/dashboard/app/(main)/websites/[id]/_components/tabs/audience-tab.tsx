@@ -661,7 +661,7 @@ export function WebsiteAudienceTab({
         label: "Regions",
         data: processedData.geographic.regions.map((item, index) => ({
           ...item,
-          _uniqueKey: `region-${item.name}-${index}`, // Ensure unique row keys
+          _uniqueKey: `region-${item.name}-${index}`,
         })),
         columns: geographicColumns,
       },
@@ -670,7 +670,7 @@ export function WebsiteAudienceTab({
         label: "Timezones",
         data: processedData.geographic.timezones.map((item, index) => ({
           ...item,
-          _uniqueKey: `timezone-${item.name}-${index}`, // Ensure unique row keys
+          _uniqueKey: `timezone-${item.name}-${index}`,
         })),
         columns: timezoneColumns,
       },
@@ -679,7 +679,7 @@ export function WebsiteAudienceTab({
         label: "Languages",
         data: processedData.geographic.languages.map((item, index) => ({
           ...item,
-          _uniqueKey: `language-${item.name}-${index}`, // Ensure unique row keys
+          _uniqueKey: `language-${item.name}-${index}`,
         })),
         columns: languageColumns,
       },
