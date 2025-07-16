@@ -4,7 +4,6 @@ import {
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
-  type RowData,
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
@@ -13,14 +12,12 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
-  ArrowUpIcon,
   DatabaseIcon,
   Search,
   X,
 } from "lucide-react";
 import React, { Fragment, useCallback, useMemo, useRef, useState, useEffect } from "react";
 import ReactDOM from "react-dom";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -152,6 +149,13 @@ function FullScreenTable<TData extends { name: string | number }, TValue>({
   expandable = false,
   getSubRows,
   renderSubRow,
+  tabs,
+  activeTab,
+  onTabChange,
+  title,
+  description,
+  isTransitioning = false,
+  showSearch = true,
 }: {
   data: TData[];
   columns: any[];
@@ -161,11 +165,19 @@ function FullScreenTable<TData extends { name: string | number }, TValue>({
   expandable?: boolean;
   getSubRows?: (row: TData) => TData[] | undefined;
   renderSubRow?: (subRow: TData, parentRow: TData, index: number) => React.ReactNode;
+  tabs?: TabConfig<TData>[];
+  activeTab?: string;
+  onTabChange?: (tabId: string) => void;
+  title?: string;
+  description?: string;
+  isTransitioning?: boolean;
+  showSearch?: boolean;
 }) {
   const [globalFilter, setGlobalFilter] = useState(search);
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [selectedRow, setSelectedRow] = useState<string | null>(null);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [tabFocusIndex, setTabFocusIndex] = useState<number>(-1);
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const table = useReactTable({
     data,
     columns,
@@ -189,108 +201,244 @@ function FullScreenTable<TData extends { name: string | number }, TValue>({
   const toggleRowExpansion = (rowId: string) => {
     setExpandedRow(prev => (prev === rowId ? null : rowId));
   };
+
+  // Keyboard navigation for tabs
+  useEffect(() => {
+    if (!tabs || tabs.length < 2) return;
+    if (tabFocusIndex >= 0 && tabRefs.current[tabFocusIndex]) {
+      tabRefs.current[tabFocusIndex]?.focus();
+    }
+  }, [tabFocusIndex, tabs]);
+
+  const handleTabKeyDown = (e: React.KeyboardEvent, idx: number) => {
+    if (!tabs) return;
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      setTabFocusIndex((idx + 1) % tabs.length);
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      setTabFocusIndex((idx - 1 + tabs.length) % tabs.length);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setTabFocusIndex(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      setTabFocusIndex(tabs.length - 1);
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      if (onTabChange) onTabChange(tabs[idx].id);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full w-full bg-background relative">
-      {/* Floating close button */}
-      <button
-        type="button"
-        aria-label="Close full screen"
-        title="Close"
-        className="absolute top-4 right-4 z-30 flex items-center justify-center rounded bg-muted/30 p-2 text-muted-foreground hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition shadow"
-        onClick={onClose}
-        tabIndex={0}
-      >
-        <XIcon size={20} />
-      </button>
-      <div className="flex items-center justify-between px-6 py-4 border-b bg-background sticky top-0 z-10">
-        <input
-          aria-label="Search table"
-          className="h-9 w-80 border rounded px-4 text-base focus:ring focus:ring-primary/20 bg-muted/20"
-          placeholder="Filter data..."
-          value={globalFilter}
-          onChange={e => setGlobalFilter(e.target.value)}
-        />
+      {/* CardHeader style header */}
+      <div className="flex items-start justify-between px-3 pt-3 pb-2 border-b bg-background">
+        <div className="min-w-0 flex-1">
+          {title && (
+            <h3 className="truncate font-semibold text-foreground text-sm">{title}</h3>
+          )}
+          {description && (
+            <p className="mt-0.5 line-clamp-2 text-muted-foreground text-xs">{description}</p>
+          )}
+        </div>
+        <button
+          type="button"
+          aria-label="Close full screen"
+          title="Close"
+          className="ml-2 flex items-center justify-center rounded bg-muted/30 p-2 text-muted-foreground hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition border"
+          onClick={onClose}
+          tabIndex={0}
+          style={{ minWidth: 40, minHeight: 40 }}
+        >
+          <XIcon size={20} />
+        </button>
       </div>
-      <div className="flex-1 overflow-auto">
-        <table className="min-w-full border-separate border-spacing-0 text-sm">
-          <thead className="sticky top-0 bg-background z-10">
+      {/* Tab bar, consistent with main DataTable */}
+      {tabs && tabs.length > 1 && (
+        <div className="mt-2 px-3">
+          <nav
+            aria-label="Data view options"
+            className="inline-flex gap-0.5 rounded bg-muted/20 p-0.5"
+            role="tablist"
+          >
+            {tabs.map((tab, idx) => {
+              const isActive = activeTab === tab.id;
+              const itemCount = tab?.data?.length || 0;
+              return (
+                <button
+                  ref={el => { tabRefs.current[idx] = el; }}
+                  aria-controls={`tabpanel-${tab.id}`}
+                  aria-selected={isActive}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "flex items-center gap-1 rounded-md px-2.5 py-1.5 font-medium text-xs transition-all duration-200",
+                    "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-1",
+                    "disabled:opacity-60",
+                    isActive
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-background/60 hover:text-foreground"
+                  )}
+                  disabled={isTransitioning}
+                  key={tab.id}
+                  onClick={() => onTabChange?.(tab.id)}
+                  onKeyDown={e => handleTabKeyDown(e, idx)}
+                  role="tab"
+                  tabIndex={isActive ? 0 : -1}
+                  type="button"
+                >
+                  <span>{tab.label}</span>
+                  {itemCount > 0 && (
+                    <span
+                      className={cn(
+                        "inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 font-semibold text-[10px]",
+                        isActive
+                          ? "bg-primary/15 text-primary"
+                          : "bg-muted-foreground/20 text-muted-foreground/70"
+                      )}
+                    >
+                      {itemCount > 99 ? "99+" : itemCount}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      )}
+      {/* Search bar, consistent with main DataTable */}
+      {showSearch && (
+        <div className="flex items-center px-3 py-2">
+          <div className="relative w-full max-w-xs">
+            <Input
+              aria-label="Search table"
+              className="h-7 w-full border-0 bg-muted/30 pr-2 pl-7 text-xs focus:bg-background focus:ring-1 focus:ring-primary/20"
+              onChange={event => setGlobalFilter(event.target.value)}
+              placeholder="Filter data..."
+              value={globalFilter ?? ""}
+            />
+            <Search className="-translate-y-1/2 absolute top-1/2 left-2 h-3 w-3 transform text-muted-foreground/50" />
+            {globalFilter && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 hover:bg-muted/30 focus:outline-none"
+                onClick={() => setGlobalFilter("")}
+              >
+                <X className="h-3 w-3 text-muted-foreground/60" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      {/* Table content, consistent with main DataTable */}
+      <div className="flex-1 overflow-auto px-3 pb-3">
+        <Table className="w-full table-fixed">
+          <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header, cellIndex) => (
-                  <th
+              <TableRow key={headerGroup.id} className="sticky top-0 z-10 border-border/30 bg-muted/20">
+                {headerGroup.headers.map(header => (
+                  <TableHead
+                    aria-sort={
+                      header.column.getIsSorted() === "asc"
+                        ? "ascending"
+                        : header.column.getIsSorted() === "desc"
+                          ? "descending"
+                          : header.column.getCanSort()
+                            ? "none"
+                            : undefined
+                    }
+                    className={cn(
+                      "h-11 bg-muted/20 px-2 font-semibold text-muted-foreground text-xs uppercase tracking-wide backdrop-blur-sm sm:px-4",
+                      (header.column.columnDef.meta as any)?.className,
+                      header.column.getCanSort()
+                        ? "group cursor-pointer select-none transition-all duration-200 hover:bg-muted/30 hover:text-foreground"
+                        : "select-none"
+                    )}
                     key={header.id}
-                    className="px-4 py-3 border-b border-border font-semibold text-left bg-background select-none cursor-pointer"
-                    style={{ position: 'sticky', top: 0, background: 'inherit', zIndex: 2 }}
                     onClick={header.column.getToggleSortingHandler()}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        header.column.getToggleSortingHandler()?.(e as any);
-                      }
+                    role={header.column.getCanSort() ? "button" : undefined}
+                    style={{
+                      width:
+                        header.getSize() !== 150
+                          ? `${Math.min(header.getSize(), 300)}px`
+                          : undefined,
+                      maxWidth: "300px",
+                      minWidth: "80px",
                     }}
+                    tabIndex={header.column.getCanSort() ? 0 : -1}
                   >
-                    {expandable && cellIndex === 0 && <span className="inline-block w-5" />}
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                    {header.column.getIsSorted() === 'asc' ? ' ▲' : header.column.getIsSorted() === 'desc' ? ' ▼' : ''}
-                  </th>
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate">
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
+                      </span>
+                      {header.column.getCanSort() && (
+                        <div className="flex h-3 w-3 flex-col items-center justify-center">
+                          {!header.column.getIsSorted() && (
+                            <ArrowUpDown className="h-3 w-3 text-muted-foreground/40 transition-colors group-hover:text-muted-foreground/70" />
+                          )}
+                          {header.column.getIsSorted() === "asc" && (
+                            <ArrowUp className="h-3 w-3 text-primary" />
+                          )}
+                          {header.column.getIsSorted() === "desc" && (
+                            <ArrowDown className="h-3 w-3 text-primary" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </TableHead>
                 ))}
-              </tr>
+              </TableRow>
             ))}
-          </thead>
-          <tbody>
+          </TableHeader>
+          <TableBody className="overflow-hidden">
             {table.getRowModel().rows.slice(0, initialPageSize).map((row, rowIndex) => {
-              const rowId = row.id;
               const subRows = expandable && getSubRows ? getSubRows(row.original) : undefined;
               const hasSubRows = subRows && subRows.length > 0;
-              const isExpanded = expandedRow === rowId;
+              const isExpanded = expandedRow === row.id;
               return (
-                <React.Fragment key={rowId}>
-                  <tr
-                    className={`transition hover:bg-primary/5 cursor-pointer${selectedRow === rowId ? " bg-primary/10" : ""}`}
-                    onClick={e => {
-                      setSelectedRow(rowId);
+                <Fragment key={row.id}>
+                  <TableRow
+                    className={cn(
+                      "relative h-12 border-border/20 transition-all duration-300 ease-in-out",
+                      hasSubRows ? "cursor-pointer" : "",
+                      rowIndex % 2 === 0 ? "bg-background/50" : "bg-muted/10"
+                    )}
+                    onClick={() => {
                       if (hasSubRows) {
-                        // Don't toggle if the click is on a button (icon)
-                        if (!(e.target as HTMLElement).closest('button')) {
-                          toggleRowExpansion(rowId);
-                        }
-                      }
-                    }}
-                    tabIndex={0}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setSelectedRow(rowId);
-                        if (hasSubRows) {
-                          toggleRowExpansion(rowId);
-                        }
+                        toggleRowExpansion(row.id);
                       }
                     }}
                   >
                     {row.getVisibleCells().map((cell, cellIndex) => (
-                      <td
+                      <TableCell
+                        className={cn(
+                          "px-2 py-3 font-medium text-sm transition-colors duration-150 sm:px-4",
+                          cellIndex === 0 && "font-semibold text-foreground",
+                          (cell.column.columnDef.meta as any)?.className
+                        )}
                         key={cell.id}
-                        className="px-4 py-2 border-b border-border truncate max-w-xs relative group"
-                        onMouseEnter={e => handleCellMouseEnter(e, String(cell.getValue() ?? ""))}
-                        onMouseLeave={handleCellMouseLeave}
+                        style={{
+                          width:
+                            cell.column.getSize() !== 150
+                              ? `${Math.min(cell.column.getSize(), 300)}px`
+                              : undefined,
+                          maxWidth: "300px",
+                          minWidth: "80px",
+                        }}
                       >
-                        <span className="flex items-center gap-1">
-                          {expandable && cellIndex === 0 && hasSubRows && (
+                        <div className="flex items-center gap-2">
+                          {cellIndex === 0 && hasSubRows && (
                             <button
-                              type="button"
                               aria-label={isExpanded ? "Collapse row" : "Expand row"}
-                              className="mr-1 flex-shrink-0 rounded p-0.5 transition-colors hover:bg-muted"
+                              className="flex-shrink-0 rounded p-0.5 transition-colors hover:bg-muted"
                               onClick={e => {
                                 e.stopPropagation();
-                                toggleRowExpansion(rowId);
+                                toggleRowExpansion(row.id);
                               }}
-                              tabIndex={0}
-                              onKeyDown={e => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                  e.preventDefault();
-                                  toggleRowExpansion(rowId);
-                                }
-                              }}
+                              type="button"
                             >
                               {isExpanded ? (
                                 <ArrowDown className="h-3.5 w-3.5 text-muted-foreground" />
@@ -299,34 +447,60 @@ function FullScreenTable<TData extends { name: string | number }, TValue>({
                               )}
                             </button>
                           )}
-                          <span className="block truncate">
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </span>
-                        </span>
-                      </td>
+                          <div className="flex-1 overflow-hidden truncate">
+                            <div className="truncate">
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
                     ))}
-                  </tr>
-                  {hasSubRows && isExpanded && subRows.filter(Boolean).map((subRow, subIndex) => {
-                    const subKey = (subRow as any)._uniqueKey || `${rowId}-sub-${subIndex}`;
-                    return (
-                      <tr key={subKey} className="bg-muted/5">
-                        <td colSpan={row.getVisibleCells().length} className="p-0">
-                          {renderSubRow
-                            ? renderSubRow(subRow, row.original, subIndex)
-                            : (
-                              <div className="px-6 py-2 text-sm">
-                                {JSON.stringify(subRow)}
-                              </div>
+                  </TableRow>
+                  {hasSubRows && isExpanded && subRows.map((subRow, subIndex) => (
+                    <TableRow
+                      className="border-border/10 bg-muted/5 transition-colors hover:bg-muted/10"
+                      key={`${row.id}-sub-${subIndex}`}
+                    >
+                      {renderSubRow ? (
+                        <TableCell className="p-0" colSpan={row.getVisibleCells().length}>
+                          {renderSubRow(subRow, row.original, subIndex)}
+                        </TableCell>
+                      ) : (
+                        row.getVisibleCells().map((cell, cellIndex) => (
+                          <TableCell
+                            className={cn(
+                              "py-2 text-muted-foreground text-sm",
+                              cellIndex === 0 ? "pl-8" : "px-3"
                             )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </React.Fragment>
+                            key={`sub-${cell.id}`}
+                            style={{
+                              width:
+                                cell.column.getSize() !== 150
+                                  ? `${Math.min(cell.column.getSize(), 300)}px`
+                                  : undefined,
+                              maxWidth: "300px",
+                              minWidth: "80px",
+                            }}
+                          >
+                            <div className="truncate">
+                              {cellIndex === 0 ? (
+                                <span className="text-xs">
+                                  ↳ {(subRow as any)[cell.column.id] || ""}
+                                </span>
+                              ) : (
+                                (subRow as any)[cell.column.id] || ""
+                              )}
+                            </div>
+                          </TableCell>
+                        ))
+                      )}
+                    </TableRow>
+                  ))}
+                </Fragment>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
         {/* Tooltip for truncated cell */}
         {tooltip && (
           <div
@@ -935,6 +1109,13 @@ export function DataTable<TData extends { name: string | number }, TValue>({
               expandable={expandable}
               getSubRows={getSubRows}
               renderSubRow={renderSubRow}
+              tabs={tabs}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              title={title}
+              description={description}
+              isTransitioning={isTransitioning}
+              showSearch={showSearch}
             />
           </div>
         </div>,
