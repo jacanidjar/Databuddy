@@ -227,12 +227,12 @@ export const websitesRouter = createTRPCRouter({
         .query(async ({ ctx, input }) => {
             const website = await ctx.db.query.websites.findFirst({
                 where: eq(websites.id, input.websiteId),
-                columns: { isPublic: true, userId: true, organizationId: true },
             });
             if (!website) {
                 throw new TRPCError({ code: 'NOT_FOUND', message: 'Website not found.' });
             }
-            if (!website.isPublic) {
+            const isPublic = Boolean(website.isPublic);
+            if (!isPublic) {
                 if (!ctx.user) {
                     throw new TRPCError({ code: 'UNAUTHORIZED' });
                 }
