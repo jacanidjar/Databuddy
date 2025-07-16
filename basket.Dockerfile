@@ -12,7 +12,6 @@ COPY packages/ ./packages/
 RUN bun install
 
 COPY apps/basket/src ./apps/basket/src
-COPY apps/basket/maxmind ./maxmind
 
 ENV NODE_ENV=production
 
@@ -31,7 +30,6 @@ FROM gcr.io/distroless/base
 WORKDIR /app
 
 COPY --from=build /app/server server
-COPY --from=build /app/maxmind ./maxmind
 
 ENV NODE_ENV=production
 
