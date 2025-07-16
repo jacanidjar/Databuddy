@@ -13,6 +13,8 @@ import {
 } from "@phosphor-icons/react";
 import { differenceInDays } from "date-fns";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DataTable } from "@/components/analytics/data-table";
@@ -727,6 +729,21 @@ export function WebsiteOverviewTab({
     [createMetricCell, createPercentageCell]
   );
 
+  // Get user's timezone
+  const userTimezone = getUserTimezone();
+  dayjs.extend(utc);
+  dayjs.extend(timezone);
+  const todayDate = dayjs().tz(userTimezone).format("YYYY-MM-DD");
+  const todayEvent = useMemo(() =>
+    analytics.events_by_date.find(
+      (event: any) => dayjs(event.date).tz(userTimezone).format("YYYY-MM-DD") === todayDate
+    ),
+    [analytics.events_by_date, userTimezone, todayDate]
+  );
+  const todayVisitors = todayEvent?.visitors ?? 0;
+  const todaySessions = todayEvent?.sessions ?? 0;
+  const todayPageviews = todayEvent?.pageviews ?? 0;
+
   return (
     <div className="space-y-6">
       {/* Metrics */}
@@ -736,7 +753,7 @@ export function WebsiteOverviewTab({
             id: "visitors-chart",
             title: "UNIQUE VISITORS",
             value: analytics.summary?.unique_visitors || 0,
-            description: `${analytics.today?.visitors || 0} today`,
+            description: `${todayVisitors} today`,
             icon: UsersIcon,
             chartData: miniChartData.visitors,
             trend: calculateTrends.visitors,
@@ -745,7 +762,7 @@ export function WebsiteOverviewTab({
             id: "sessions-chart",
             title: "SESSIONS",
             value: analytics.summary?.sessions || 0,
-            description: `${analytics.today?.sessions || 0} today`,
+            description: `${todaySessions} today`,
             icon: ChartLineIcon,
             chartData: miniChartData.sessions,
             trend: calculateTrends.sessions,
@@ -754,7 +771,7 @@ export function WebsiteOverviewTab({
             id: "pageviews-chart",
             title: "PAGEVIEWS",
             value: analytics.summary?.pageviews || 0,
-            description: `${analytics.today?.pageviews || 0} today`,
+            description: `${todayPageviews} today`,
             icon: GlobeIcon,
             chartData: miniChartData.pageviews,
             trend: calculateTrends.pageviews,
