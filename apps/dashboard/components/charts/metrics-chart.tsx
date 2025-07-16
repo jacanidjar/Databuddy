@@ -190,7 +190,7 @@ const METRICS: MetricConfig[] = [
     label: "Bounce Rate",
     color: METRIC_COLORS.bounce_rate.primary,
     gradient: "bounce_rate",
-    yAxisId: "right",
+    yAxisId: "left",
     icon: MousePointer,
     formatValue: (value) => `${value.toFixed(1)}%`,
   },
@@ -199,7 +199,7 @@ const METRICS: MetricConfig[] = [
     label: "Session Duration",
     color: METRIC_COLORS.session_duration.primary,
     gradient: "session_duration",
-    yAxisId: "duration",
+    yAxisId: "left",
     icon: TrendingUp,
     formatValue: (value, row) =>
       typeof row.avg_session_duration_formatted === "string"
@@ -219,12 +219,6 @@ export function MetricsChart({
   const chartData = useMemo(() => data || [], [data]);
   const [hoveredMetric, setHoveredMetric] = useState<string | null>(null);
 
-  const presentMetrics = useMemo(() =>
-    METRICS.filter((metric) =>
-      chartData.some((item) => metric.key in item && item[metric.key] !== undefined)
-    ), [chartData]
-  );
-
   const valueFormatter = useCallback((value: number): string => {
     if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
     if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
@@ -237,54 +231,21 @@ export function MetricsChart({
     return `${Math.floor(seconds / 3600)}h`;
   }, []);
 
-  const yAxes = useMemo(() => {
-    const axes: Array<{
-      yAxisId: string;
-      props: Record<string, unknown>;
-    }> = [
-        {
-          yAxisId: "left",
-          props: {
-            axisLine: false,
-            tick: { fontSize: 11, fill: "var(--muted-foreground)", fontWeight: 500 },
-            tickFormatter: valueFormatter,
-            tickLine: false,
-            width: 45,
-            yAxisId: "left",
-          },
-        },
-      ];
-    if (presentMetrics.some((m) => m.key === "bounce_rate")) {
-      axes.push({
-        yAxisId: "right",
-        props: {
-          axisLine: false,
-          domain: [0, 100],
-          orientation: "right",
-          tick: { fontSize: 11, fill: "var(--muted-foreground)", fontWeight: 500 },
-          tickFormatter: (value: number) => `${value}%`,
-          tickLine: false,
-          width: 45,
-          yAxisId: "right",
-        },
-      });
-    }
-    if (presentMetrics.some((m) => m.key === "avg_session_duration")) {
-      axes.push({
-        yAxisId: "duration",
-        props: {
-          axisLine: false,
-          orientation: "right",
-          tick: { fontSize: 11, fill: "var(--muted-foreground)", fontWeight: 500 },
-          tickFormatter: durationFormatter,
-          tickLine: false,
-          width: 50,
-          yAxisId: "duration",
-        },
-      });
-    }
-    return axes;
-  }, [presentMetrics, valueFormatter, durationFormatter]);
+  // --- Only render the left Y axis ---
+  const allYAxisConfigs = [
+    {
+      yAxisId: "left",
+      props: {
+        axisLine: false,
+        tick: { fontSize: 11, fill: "var(--muted-foreground)", fontWeight: 500 },
+        tickFormatter: valueFormatter,
+        tickLine: false,
+        width: 45,
+        yAxisId: "left" as const,
+        hide: false,
+      },
+    },
+  ];
 
   if (isLoading) {
     return <SkeletonChart className="w-full" height={height} title={title} />;
@@ -369,8 +330,8 @@ export function MetricsChart({
                 tick={{ fontSize: 11, fill: "var(--muted-foreground)", fontWeight: 500 }}
                 tickLine={false}
               />
-              {/* Y Axes */}
-              {yAxes.map((axis) => (
+              {/* Y Axes: always render all possible axes */}
+              {allYAxisConfigs.map(axis => (
                 <YAxis key={axis.yAxisId} {...axis.props} />
               ))}
               <Tooltip
@@ -406,29 +367,42 @@ export function MetricsChart({
                   bottom: chartData.length > 5 ? 35 : 5,
                   fontWeight: 500,
                 }}
+                // Only show legend items for present metrics
+                payload={METRICS.filter(metric =>
+                  chartData.some(item => metric.key in item && item[metric.key] !== undefined)
+                ).map(metric => ({
+                  value: metric.label,
+                  type: "circle",
+                  color: metric.color,
+                  id: metric.key,
+                }))}
               />
-              {/* --- Render all present metrics as Area --- */}
-              {presentMetrics.map((metric) => (
-                <Area
-                  key={metric.key}
-                  activeDot={{
-                    r: 6,
-                    strokeWidth: 3,
-                    stroke: metric.color,
-                    fill: "var(--background)",
-                    filter: `url(#glow-${metric.gradient})`,
-                  }}
-                  dataKey={metric.key}
-                  dot={{ r: 0 }}
-                  fill={`url(#gradient-${metric.gradient})`}
-                  fillOpacity={1}
-                  name={metric.label}
-                  stroke={metric.color}
-                  strokeWidth={2.5}
-                  type="monotone"
-                  yAxisId={metric.yAxisId}
-                />
-              ))}
+              {/* --- Render all metrics as Area, hide if not present --- */}
+              {METRICS.map((metric) => {
+                const present = chartData.some(item => metric.key in item && item[metric.key] !== undefined);
+                return (
+                  <Area
+                    key={metric.key}
+                    hide={!present}
+                    activeDot={{
+                      r: 6,
+                      strokeWidth: 3,
+                      stroke: metric.color,
+                      fill: "var(--background)",
+                      filter: `url(#glow-${metric.gradient})`,
+                    }}
+                    dataKey={metric.key}
+                    dot={{ r: 0 }}
+                    fill={`url(#gradient-${metric.gradient})`}
+                    fillOpacity={1}
+                    name={metric.label}
+                    stroke={metric.color}
+                    strokeWidth={2.5}
+                    type="monotone"
+                    yAxisId={metric.yAxisId}
+                  />
+                );
+              })}
             </AreaChart>
           </ResponsiveContainer>
         </div>
