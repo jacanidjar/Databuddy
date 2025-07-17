@@ -6,20 +6,11 @@
 		"useIgnoreFile": false
 	},
 	"files": {
-		"ignoreUnknown": true,
-		"ignore": [
-			"node_modules/**",
-			"dist/**",
-			"build/**",
-			"public/**"
-		]
+		"ignoreUnknown": true
 	},
 	"formatter": {
 		"enabled": true,
 		"indentStyle": "tab"
-	},
-	"organizeImports": {
-		"enabled": true
 	},
 	"linter": {
 		"enabled": true,

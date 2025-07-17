@@ -236,7 +236,7 @@ export const TechnologyIcon = ({
         onError={(e) => {
           (e.target as HTMLImageElement).style.display = "none";
         }}
-        src={`https://cdn.databuddy.cc${entry.icon}`}
+        src={`${entry.icon}`}
       />
     );
   }

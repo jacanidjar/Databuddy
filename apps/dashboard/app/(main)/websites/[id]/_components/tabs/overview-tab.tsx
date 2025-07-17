@@ -45,6 +45,17 @@ import { MetricToggles } from "../utils/ui-components";
 import { useTableTabs } from "@/lib/table-tabs";
 import { getUserTimezone } from "@/lib/timezone";
 
+import {
+  DeviceMobileIcon,
+  DeviceTabletIcon,
+  LaptopIcon,
+  DesktopIcon,
+  MonitorIcon,
+  TelevisionIcon,
+  WatchIcon,
+  QuestionIcon,
+} from "@phosphor-icons/react";
+
 interface ChartDataPoint {
   date: string;
   pageviews?: number;
@@ -146,6 +157,28 @@ function UnauthorizedAccessError() {
         </Button>
       </CardContent>
     </Card>
+  );
+}
+
+// Device type to icon mapping utility
+const deviceTypeIconMap: Record<string, React.ElementType> = {
+  mobile: DeviceMobileIcon,
+  tablet: DeviceTabletIcon,
+  laptop: LaptopIcon,
+  desktop: DesktopIcon,
+  ultrawide: MonitorIcon,
+  watch: WatchIcon,
+  unknown: QuestionIcon,
+};
+
+function DeviceTypeCell({ device_type, name }: { device_type: string; name: string }) {
+  const Icon = deviceTypeIconMap[device_type] || QuestionIcon;
+  return (
+    <div className="flex items-center gap-3">
+      <Icon size={20} weight="duotone" />
+      <span className="font-medium">{device_type.charAt(0).toUpperCase() + device_type.slice(1)}</span>
+      <span className="text-muted-foreground text-xs ml-2">{name}</span>
+    </div>
   );
 }
 
@@ -544,18 +577,16 @@ export function WebsiteOverviewTab({
 
   const processedDeviceData = useMemo(() => {
     const deviceData = analytics.device_types || [];
-    // Transform data to match expected structure
-    const transformedData = deviceData.map((item: any) => ({
-      device_type: item.name,
+    return deviceData.map((item: any) => ({
+      device_type: item.device_type || item.name || 'unknown',
+      name: item.name,
       visitors: item.visitors,
       pageviews: item.pageviews,
     }));
-    return processDeviceData(transformedData);
   }, [analytics.device_types]);
 
   const processedBrowserData = useMemo(() => {
     const browserData = analytics.browser_versions || [];
-    // Transform data to match expected structure
     const transformedData = browserData.map((item: any) => ({
       browser: item.name,
       visitors: item.visitors,
@@ -567,7 +598,6 @@ export function WebsiteOverviewTab({
   const processedOSData = useMemo(() => {
     const deviceData = analytics.device_types || [];
     const browserData = analytics.browser_versions || [];
-    // Transform data to match expected structure
     const transformedDeviceData = deviceData.map((item: any) => ({
       device_type: item.name,
       visitors: item.visitors,
@@ -655,14 +685,17 @@ export function WebsiteOverviewTab({
   const deviceColumns = useMemo(
     () => [
       {
-        id: "name",
-        accessorKey: "name",
+        id: "device_type",
+        accessorKey: "device_type",
         header: "Device Type",
-        cell: createTechnologyCell("Device Type"),
+        cell: (info: any) => {
+          const row = info.row.original;
+          return <DeviceTypeCell device_type={row.device_type} name={row.name} />;
+        },
       },
       ...baseTechnologyColumns,
     ],
-    [createTechnologyCell, baseTechnologyColumns]
+    [baseTechnologyColumns]
   );
 
   const browserColumns = useMemo(
