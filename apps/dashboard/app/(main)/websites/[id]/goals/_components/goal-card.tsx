@@ -96,6 +96,32 @@ export function GoalCard({
           </DropdownMenu>
         </div>
 
+        {/* Conversion Bar */}
+        <div className="mb-4">
+          <div className="relative h-3 w-full bg-muted overflow-hidden">
+            {/* Striped overlay for conversion */}
+            <div
+              className="absolute left-0 top-0 h-full"
+              style={{
+                width: `${conversionRate}%`,
+                backgroundImage:
+                  'repeating-linear-gradient(135deg, var(--color-success) 0 4px, transparent 4px 8px)',
+                opacity: 0.18,
+                pointerEvents: 'none',
+              }}
+            />
+            {/* Main bar */}
+            <div
+              className="absolute left-0 top-0 h-full bg-primary"
+              style={{ width: `${conversionRate}%` }}
+            />
+            {/* Conversion label */}
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-foreground">
+              {isLoading ? <span className="inline-block h-3 w-8 animate-pulse rounded bg-muted" /> : `${conversionRate.toFixed(1)}%`}
+            </div>
+          </div>
+        </div>
+
         {/* Stats section */}
         <div className="grid grid-cols-3 gap-4 border-t pt-4">
           {/* Conversion Rate */}
