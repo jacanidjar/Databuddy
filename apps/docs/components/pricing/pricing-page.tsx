@@ -15,13 +15,12 @@ const DATABUDDY_PLANS = [
 ];
 
 const PLAUSIBLE_TIERS = [
-    { max: 10_000, price: 9, features: "1 website, core features" },
-    { max: 100_000, price: 19, features: "3 websites, custom events, goal tracking" },
-    { max: 1_000_000, price: 69, features: "10 websites, team support" },
-    { max: 2_000_000, price: 99, features: "20 websites, full features" },
-    { max: 5_000_000, price: 129, features: "Starter: 1 site, 3yr retention, GA import, events, segments, email/slack reports" },
-    { max: 10_000_000, price: 194, features: "Growth: 3 sites, 3 users, shared links, team mgmt, embedded dashboards" },
-    { max: 20_000_000, price: 259, features: "Business: More sites/users, priority support" },
+    { max: 10_000, price: 14, features: "1 website, core features" },
+    { max: 100_000, price: 29, features: "3 websites, custom events, goal tracking" },
+    { max: 1_000_000, price: 104, features: "10 websites, team support" },
+    { max: 2_000_000, price: 134, features: "20 websites, full features" },
+    { max: 5_000_000, price: 194, features: "Starter: 1 site, 3yr retention, GA import, events, segments, email/slack reports" },
+    { max: 10_000_000, price: 254, features: "Growth: 3 sites, 3 users, shared links, team mgmt, embedded dashboards" },
     { max: Number.POSITIVE_INFINITY, price: 'Custom', features: "Contact for Enterprise pricing" },
 ];
 
