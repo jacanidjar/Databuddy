@@ -2,6 +2,7 @@ import { initTRPC, TRPCError } from '@trpc/server';
 import { db } from '@databuddy/db';
 import { auth, type User } from '@databuddy/auth';
 import superjson from 'superjson';
+import { rateLimiters, getRateLimitIdentifier, type RateLimiter } from './utils/rate-limit';
 
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const session = await auth.api.getSession({
@@ -32,6 +33,23 @@ export const createTRPCRouter = t.router;
 
 export const publicProcedure = t.procedure;
 
+const createRateLimitMiddleware = (rateLimiter: RateLimiter) => {
+  return t.middleware(async ({ ctx, next }) => {
+    const identifier = getRateLimitIdentifier(ctx.user?.id, ctx.headers);
+
+    const { success } = await rateLimiter.checkLimit(identifier);
+
+    if (!success) {
+      throw new TRPCError({
+        code: 'TOO_MANY_REQUESTS',
+        message: 'Rate limit exceeded. Please try again later.'
+      });
+    }
+
+    return next({ ctx });
+  });
+};
+
 export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   if (!ctx.user || !ctx.session) {
     throw new TRPCError({ code: 'UNAUTHORIZED' });
@@ -46,7 +64,11 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   });
 });
 
-export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+export const rateLimitedProtectedProcedure = protectedProcedure.use(
+  createRateLimitMiddleware(rateLimiters.api)
+);
+
+export const rateLimitedAdminProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (ctx.user.role !== 'ADMIN') {
     throw new TRPCError({
       code: 'FORBIDDEN',
@@ -61,4 +83,4 @@ export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
       user: ctx.user,
     },
   });
-});
+}).use(createRateLimitMiddleware(rateLimiters.admin));

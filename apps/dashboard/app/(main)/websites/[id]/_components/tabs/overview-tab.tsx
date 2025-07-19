@@ -17,6 +17,7 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAtom } from "jotai";
 import { DataTable } from "@/components/analytics/data-table";
 import { StatCard } from "@/components/analytics/stat-card";
 import {
@@ -44,6 +45,7 @@ import { MetricToggles } from "../utils/ui-components";
 
 import { useTableTabs } from "@/lib/table-tabs";
 import { getUserTimezone } from "@/lib/timezone";
+import { metricVisibilityAtom, toggleMetricAtom } from "@/stores/jotai/chartAtoms";
 
 import {
   DeviceMobileIcon,
@@ -61,6 +63,8 @@ interface ChartDataPoint {
   pageviews?: number;
   visitors?: number;
   sessions?: number;
+  bounce_rate?: number;
+  avg_session_duration?: number;
   [key: string]: unknown;
 }
 
@@ -282,15 +286,24 @@ export function WebsiteOverviewTab({
 
   const error = batchError;
 
-  const [visibleMetrics, setVisibleMetrics] = useState<Record<string, boolean>>({
-    pageviews: true,
-    visitors: true,
-    sessions: false,
-  });
+  const [visibleMetrics] = useAtom(metricVisibilityAtom);
+  const [, toggleMetricAction] = useAtom(toggleMetricAtom);
 
+  // Wrapper function to handle type conversion for MetricToggles
   const toggleMetric = useCallback((metric: string) => {
-    setVisibleMetrics((prev) => ({ ...prev, [metric]: !prev[metric] }));
-  }, []);
+    if (metric in visibleMetrics) {
+      toggleMetricAction(metric as keyof typeof visibleMetrics);
+    }
+  }, [visibleMetrics, toggleMetricAction]);
+
+  // Convert MetricVisibilityState to Record<string, boolean> for MetricToggles compatibility
+  const metricsForToggles: Record<string, boolean> = {
+    pageviews: visibleMetrics.pageviews,
+    visitors: visibleMetrics.visitors,
+    sessions: visibleMetrics.sessions,
+    bounce_rate: visibleMetrics.bounce_rate,
+    avg_session_duration: visibleMetrics.avg_session_duration,
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -364,6 +377,14 @@ export function WebsiteOverviewTab({
 
       if (visibleMetrics.sessions) {
         filtered.sessions = event.sessions;
+      }
+
+      if (visibleMetrics.bounce_rate) {
+        filtered.bounce_rate = event.bounce_rate;
+      }
+
+      if (visibleMetrics.avg_session_duration) {
+        filtered.avg_session_duration = event.avg_session_duration;
       }
 
       return filtered;
@@ -475,6 +496,8 @@ export function WebsiteOverviewTab({
     pageviews: "blue-500",
     visitors: "green-500",
     sessions: "purple-500",
+    bounce_rate: "amber-500",
+    avg_session_duration: "red-500",
   };
 
   const calculateTrends = useMemo(() => {
@@ -805,7 +828,7 @@ export function WebsiteOverviewTab({
   return (
     <div className="space-y-6">
       {/* Metrics */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6">
         {[
           {
             id: "visitors-chart",
@@ -921,7 +944,18 @@ export function WebsiteOverviewTab({
 
           <div className="flex flex-col items-end gap-3 sm:flex-row sm:items-center">
             <LiveUserIndicator websiteId={websiteId} />
-            <MetricToggles colors={metricColors} metrics={visibleMetrics} onToggle={toggleMetric} />
+            <MetricToggles
+              colors={metricColors}
+              metrics={metricsForToggles}
+              onToggle={toggleMetric}
+              labels={{
+                pageviews: "Views",
+                visitors: "Visitors",
+                sessions: "Sessions",
+                bounce_rate: "Bounce",
+                avg_session_duration: "Duration"
+              }}
+            />
           </div>
         </div>
         <div>

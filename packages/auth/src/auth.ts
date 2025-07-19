@@ -14,7 +14,6 @@ function isProduction() {
     return process.env.NODE_ENV === 'production';
 }
 
-
 export const auth = betterAuth({
     database: drizzleAdapter(db, {
         provider: "pg",

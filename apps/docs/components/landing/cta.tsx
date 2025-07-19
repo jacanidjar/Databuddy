@@ -129,28 +129,6 @@ export default function CTA() {
                     </div>
                 </div>
 
-                {/* Benefits footer */}
-                <div className="border-l-[1.2px] border-t-[1.2px] border-border p-10 bg-muted/20 backdrop-blur-sm">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-2">
-                                <Check className="h-4 w-4 text-primary" />
-                                No cookies, no consent banners
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Check className="h-4 w-4 text-primary" />
-                                Real-time dashboard
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Check className="h-4 w-4 text-primary" />
-                                GDPR compliant by default
-                            </div>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                            Privacy-first analytics
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     )
