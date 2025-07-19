@@ -1,6 +1,6 @@
 (() => {
   function generateUUIDv4() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
       const r = (Math.random() * 16) | 0;
       const v = c === 'x' ? r : (r & 0x3) | 0x8;
       return v.toString(16);
@@ -640,7 +640,7 @@
     setupBotDetection() {
       if (typeof window === "undefined") return;
 
-      ["mousemove", "scroll", "keydown"].forEach((event) =>
+      for (const event of ["mousemove", "scroll", "keydown"]) {
         window.addEventListener(
           event,
           () => {
@@ -648,7 +648,7 @@
           },
           { once: true, passive: true }
         )
-      );
+      }
     }
 
     setupExitTracking() {

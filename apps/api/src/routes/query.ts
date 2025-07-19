@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { websites } from "@databuddy/db";
 import { cacheable } from "@databuddy/redis";
 import { auth } from "@databuddy/auth";
+import { createRateLimitMiddleware } from "../middleware/rate-limit";
 
 // Schema definitions
 const FilterSchema = t.Object({
@@ -57,6 +58,7 @@ const CompileRequestSchema = t.Object({
 });
 
 export const query = new Elysia({ prefix: '/v1/query' })
+    .use(createRateLimitMiddleware({ type: 'api' }))
     .derive(async ({ request }) => {
         const session = await auth.api.getSession({
             headers: request.headers

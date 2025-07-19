@@ -3,7 +3,6 @@ import type { SimpleQueryConfig, Filter, TimeUnit } from "../types";
 export const SummaryBuilders: Record<string, SimpleQueryConfig> = {
   summary_metrics: {
     customSql: (websiteId: string, startDate: string, endDate: string) => {
-      console.log('[summary_metrics] websiteId:', websiteId, 'startDate:', startDate, 'endDate:', endDate);
       return {
         sql: `
             WITH session_metrics AS (

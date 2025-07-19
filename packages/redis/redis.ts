@@ -29,7 +29,7 @@ const createRedisClient = (
   url: string,
   overrides: RedisOptions = {},
 ): ExtendedRedis => {
-  
+
   const client = new Redis(url, {
     ...options,
     ...overrides,
@@ -54,16 +54,16 @@ const createRedisClient = (
   client.getJson = async <T = any>(key: string): Promise<T | null> => {
     const value = await client.get(key);
     if (!value) return null;
-    
+
     try {
       const res = SuperJSON.parse(value) as T;
-      
+
       // Check for empty collections
-      if ((Array.isArray(res) && res.length === 0) || 
-          (res && typeof res === 'object' && Object.keys(res).length === 0)) {
+      if ((Array.isArray(res) && res.length === 0) ||
+        (res && typeof res === 'object' && Object.keys(res).length === 0)) {
         return null;
       }
-      
+
       return res;
     } catch (err) {
       logger.error(`Error parsing JSON for key ${key}:`, err);
@@ -93,15 +93,15 @@ export function getRedisCache(): ExtendedRedis {
       logger.error('REDIS_URL environment variable is not set');
       throw new Error('REDIS_URL environment variable is required');
     }
-    
+
     redisInstance = createRedisClient(redisUrl, options);
-    
+
     // Handle graceful shutdown - but allow reconnection
     process.on('SIGINT', () => {
       // Don't disconnect Redis on SIGINT as it may be used for hot reloads
       // Only disconnect on actual process termination
     });
-    
+
     process.on('SIGTERM', () => {
       if (redisInstance) {
         redisInstance.disconnect();
@@ -109,12 +109,18 @@ export function getRedisCache(): ExtendedRedis {
       }
     });
   }
-  
+
   return redisInstance;
 }
 
-// Export the singleton instance directly
 export const redis = getRedisCache();
+let rawRedis: Redis | null = null;
+export const getRawRedis = () => {
+  if (!rawRedis) {
+    rawRedis = new Redis(process.env.REDIS_URL as string);
+  }
+  return rawRedis;
+}
 
 // Helper for distributed locks
 export async function getLock(key: string, value: string, timeout: number): Promise<boolean> {

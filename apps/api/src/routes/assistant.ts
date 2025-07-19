@@ -3,6 +3,7 @@ import { db } from "@databuddy/db";
 import { eq } from "drizzle-orm";
 import { websites } from "@databuddy/db";
 import { auth } from "@databuddy/auth";
+import { createRateLimitMiddleware } from "../middleware/rate-limit";
 import {
     processAssistantRequest,
     createStreamingResponse,
@@ -35,6 +36,7 @@ const AssistantRequestSchema = t.Object({
 // ============================================================================
 
 export const assistant = new Elysia({ prefix: '/v1/assistant' })
+    .use(createRateLimitMiddleware({ type: 'expensive' }))
     .derive(async ({ request }) => {
         const session = await auth.api.getSession({
             headers: request.headers
