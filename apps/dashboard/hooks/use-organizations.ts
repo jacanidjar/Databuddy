@@ -1,7 +1,6 @@
 import { authClient } from "@databuddy/auth/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { trpc } from "@/lib/trpc";
 
 type SessionData = {
   session: {
@@ -452,18 +451,5 @@ export function useUserInvitations() {
 
     isAcceptingInvitation: acceptInvitationMutation.isPending,
     isRejectingInvitation: rejectInvitationMutation.isPending,
-  };
-}
-
-/**
- * Hook to fetch user's organizations using tRPC
- */
-export function useUserOrganizations() {
-  const { data, isLoading, error } = trpc.organizations.getUserOrganizations.useQuery();
-
-  return {
-    organizations: data || [],
-    isLoading,
-    error,
   };
 }

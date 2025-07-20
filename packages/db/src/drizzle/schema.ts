@@ -329,18 +329,6 @@ export const invitation = pgTable(
 		inviterId: text("inviter_id").notNull(),
 	},
 	(table) => [
-		index("invitation_organizationId_idx").using(
-			"btree",
-			table.organizationId.asc().nullsLast().op("text_ops"),
-		),
-		index("invitation_status_idx").using(
-			"btree",
-			table.status.asc().nullsLast().op("text_ops"),
-		),
-		index("invitation_inviterId_idx").using(
-			"btree",
-			table.inviterId.asc().nullsLast().op("text_ops"),
-		),
 		foreignKey({
 			columns: [table.organizationId],
 			foreignColumns: [organization.id],
@@ -365,14 +353,6 @@ export const member = pgTable(
 		createdAt: timestamp("created_at", { mode: "string" }).notNull(),
 	},
 	(table) => [
-		index("member_userId_idx").using(
-			"btree",
-			table.userId.asc().nullsLast().op("text_ops"),
-		),
-		index("member_organizationId_idx").using(
-			"btree",
-			table.organizationId.asc().nullsLast().op("text_ops"),
-		),
 		foreignKey({
 			columns: [table.organizationId],
 			foreignColumns: [organization.id],
@@ -690,10 +670,6 @@ export const team = pgTable(
 		updatedAt: timestamp("updated_at", { mode: "string" }),
 	},
 	(table) => [
-		index("team_organizationId_idx").using(
-			"btree",
-			table.organizationId.asc().nullsLast().op("text_ops"),
-		),
 		foreignKey({
 			columns: [table.organizationId],
 			foreignColumns: [organization.id],

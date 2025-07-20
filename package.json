@@ -7,7 +7,6 @@
     "start": "turbo run start",
     "lint": "turbo run",
     "check-types": "turbo run check-types",
-    "db:studio": "turbo run db:studio --filter=@databuddy/db",
     "generate-db": "turbo run generate --filter=@databuddy/db"
   },
   "devDependencies": {

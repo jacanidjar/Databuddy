@@ -1,12 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Invoice, Customer } from "../data/billing-data";
+import { type Invoice, type Customer } from "../data/billing-data";
 import { useBilling } from "@/app/(main)/billing/hooks/use-billing";
-import { CheckIcon, FileTextIcon, CreditCardIcon, CalendarIcon, ArrowSquareOutIcon } from "@phosphor-icons/react";
+import { CheckIcon, ClockIcon, XIcon, FileTextIcon, CreditCardIcon, CalendarIcon, ArrowSquareOutIcon } from "@phosphor-icons/react";
 import dayjs from "dayjs";
 
 function InvoiceCard({ invoice }: { invoice: Invoice }) {
@@ -151,8 +152,8 @@ export function HistoryTab({ invoices, customerData, isLoading }: HistoryTabProp
                     <Skeleton className="h-4 w-96" />
                 </div>
                 <div className="grid gap-6">
-                    {Array.from({ length: 3 }).map((_, index) => (
-                        <Skeleton key={index.toString()} className="h-48 w-full" />
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <Skeleton key={i} className="h-48 w-full" />
                     ))}
                 </div>
             </div>
@@ -179,6 +180,8 @@ export function HistoryTab({ invoices, customerData, isLoading }: HistoryTabProp
             <div className="grid lg:grid-cols-4 gap-6">
                 <div className="lg:col-span-3 space-y-4">
                     <div>
+                        <h3 className="text-lg font-semibold mb-3">Recent Invoices</h3>
+
                         {!invoices.length ? (
                             <Card>
                                 <CardContent className="flex flex-col items-center justify-center py-12">
