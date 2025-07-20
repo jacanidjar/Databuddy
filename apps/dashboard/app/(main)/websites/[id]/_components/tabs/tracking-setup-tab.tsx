@@ -10,8 +10,10 @@ import {
   ExternalLink,
   FileCode,
   Info,
+  RefreshCw,
 } from "lucide-react";
 import { useState } from "react";
+import { trpc } from "@/lib/trpc";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { toast } from "sonner";
@@ -30,7 +32,7 @@ import { RECOMMENDED_DEFAULTS } from "../utils/tracking-defaults";
 import { toggleTrackingOption } from "../utils/tracking-helpers";
 import type { TrackingOptions, WebsiteDataTabProps } from "../utils/types";
 
-export function WebsiteTrackingSetupTab({ websiteId, websiteData }: WebsiteDataTabProps) {
+export function WebsiteTrackingSetupTab({ websiteId, websiteData, onWebsiteUpdated }: WebsiteDataTabProps) {
   const [copied, setCopied] = useState(false);
   const [installMethod, setInstallMethod] = useState<"script" | "npm">("script");
   const [trackingOptions, setTrackingOptions] = useState<TrackingOptions>(RECOMMENDED_DEFAULTS);
@@ -47,6 +49,13 @@ export function WebsiteTrackingSetupTab({ websiteId, websiteData }: WebsiteDataT
 
   const handleToggleOption = (option: keyof TrackingOptions) => {
     setTrackingOptions((prev) => toggleTrackingOption(prev, option));
+  };
+
+  const utils = trpc.useUtils();
+
+  const handleRefresh = () => {
+    utils.websites.isTrackingSetup.invalidate({ websiteId });
+    toast.success("Checking tracking status...");
   };
 
   // Determine language based on code content
@@ -111,10 +120,21 @@ export function WebsiteTrackingSetupTab({ websiteId, websiteData }: WebsiteDataT
       {/* Quick Setup Alert */}
       <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/20">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <AlertCircle className="h-5 w-5" />
-            Tracking Not Setup
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <AlertCircle className="h-5 w-5" />
+              Tracking Not Setup
+            </CardTitle>
+            <Button
+              aria-label="Refresh tracking status"
+              className="h-8 w-8"
+              onClick={handleRefresh}
+              size="icon"
+              variant="outline"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
           <CardDescription>
             Install the tracking script to start collecting analytics data for your website.
           </CardDescription>
