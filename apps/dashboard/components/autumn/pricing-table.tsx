@@ -1,6 +1,6 @@
 import React from "react";
 import { useCustomer, usePricingTable } from "autumn-js/react";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import AttachDialog from "@/components/autumn/attach-dialog";
 import { getPricingTableContent } from "@/lib/autumn/pricing-table-content";
 import type { Product, ProductItem } from "autumn-js";
 import { PricingTiersTooltip } from "@/app/(main)/billing/components/pricing-tiers-tooltip";
+import { Star } from "@phosphor-icons/react";
 
 export default function PricingTable({
   productDetails,
@@ -17,18 +18,55 @@ export default function PricingTable({
 }) {
   const { attach } = useCustomer();
   const [isAnnual, setIsAnnual] = useState(false);
-  const { products, isLoading, error } = usePricingTable({ productDetails });
+  const { products, isLoading, error, refetch } = usePricingTable({ productDetails });
+
+  const [hobbyPro, setHobbyPro] = useState<'hobby' | 'pro'>('pro');
+  const [scaleBuddy, setScaleBuddy] = useState<'scale' | 'buddy'>('buddy');
+
+  const summary =
+    "All plans include unlimited team members, full analytics, and priority support.";
+
+  const PricingTableSkeleton = () => (
+    <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" aria-live="polite">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="animate-pulse bg-secondary/40 border rounded-lg h-64 max-w-xl w-full mx-auto flex flex-col p-6">
+          <div className="h-6 bg-zinc-300/60 rounded w-1/2 mb-4" />
+          <div className="h-4 bg-zinc-200/60 rounded w-1/3 mb-2" />
+          <div className="h-4 bg-zinc-200/60 rounded w-2/3 mb-6" />
+          <div className="flex-1" />
+          <div className="h-10 bg-zinc-300/60 rounded w-full mt-4" />
+        </div>
+      ))}
+    </div>
+  );
+
+  const handleRetry = useCallback(() => {
+    if (typeof refetch === "function") refetch();
+  }, [refetch]);
 
   if (isLoading) {
     return (
-      <div className="w-full h-full flex justify-center items-center min-h-[300px]">
-        <Loader2 className="w-6 h-6 text-zinc-400 animate-spin" />
+      <div className="w-full h-full flex flex-col justify-center items-center min-h-[300px]" aria-live="polite">
+        <PricingTableSkeleton />
+        <span className="mt-4 text-muted-foreground text-sm">Loading pricing plans…</span>
       </div>
     );
   }
 
   if (error) {
-    return <div> Something went wrong...</div>;
+    return (
+      <div className="w-full h-full flex flex-col justify-center items-center min-h-[300px]" aria-live="polite">
+        <span className="text-destructive font-medium mb-2">Something went wrong loading pricing plans.</span>
+        <button
+          type="button"
+          className="mt-2 px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition"
+          onClick={handleRetry}
+          aria-label="Retry loading pricing plans"
+        >
+          Retry
+        </button>
+      </div>
+    );
   }
 
   const intervals = Array.from(
@@ -54,8 +92,55 @@ export default function PricingTable({
     return true;
   };
 
+  const freePlan = products?.find(p => p.id === 'free' && intervalFilter(p));
+  const hobbyPlan = products?.find(p => p.id === 'hobby' && intervalFilter(p));
+  const proPlan = products?.find(p => p.id === 'pro' && intervalFilter(p));
+  const scalePlan = products?.find(p => p.id === 'scale' && intervalFilter(p));
+  const buddyPlan = products?.find(p => p.id === 'buddy' && intervalFilter(p));
+
+  const showHobbyProToggle = !!hobbyPlan && !!proPlan;
+  const showScaleBuddyToggle = !!scalePlan && !!buddyPlan;
+
   return (
-    <div className={cn("root")}>
+    <section className={cn("root")}
+      aria-labelledby="pricing-table-title"
+    >
+      <div className="w-full max-w-2xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+        <div
+          className="flex-1 p-4 rounded bg-secondary/60 border text-base font-medium text-foreground shadow-sm text-center sm:text-left"
+          id="pricing-table-title"
+        >
+          {summary}
+        </div>
+        {multiInterval && (
+          <div className="flex items-center justify-center mt-2 sm:mt-0">
+            <div className="flex rounded-full bg-muted border p-1">
+              <button
+                type="button"
+                className={cn(
+                  "px-4 py-1 rounded-full text-sm font-medium transition focus:outline-none",
+                  !isAnnual ? 'bg-primary text-primary-foreground shadow' : 'bg-transparent text-foreground'
+                )}
+                onClick={() => setIsAnnual(false)}
+                aria-pressed={!isAnnual}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  "px-4 py-1 rounded-full text-sm font-medium transition focus:outline-none",
+                  isAnnual ? 'bg-primary text-primary-foreground shadow' : 'bg-transparent text-foreground'
+                )}
+                onClick={() => setIsAnnual(true)}
+                aria-pressed={isAnnual}
+              >
+                Annual
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
       {products && (
         <PricingTableContainer
           products={products as any}
@@ -63,31 +148,235 @@ export default function PricingTable({
           setIsAnnualToggle={setIsAnnual}
           multiInterval={multiInterval}
         >
-          {products.filter(intervalFilter).map((product, index) => (
-            <PricingCard
-              key={product.id}
-              productId={product.id}
-              buttonProps={{
-                disabled:
-                  product.scenario === "active" ||
-                  product.scenario === "scheduled",
-
-                onClick: async () => {
-                  if (product.id) {
+          {freePlan && (
+            <div className="mb-6 pt-[46px]">
+              <PricingCard
+                key={freePlan.id}
+                productId={freePlan.id}
+                buttonProps={{
+                  disabled:
+                    freePlan.scenario === "active" ||
+                    freePlan.scenario === "scheduled",
+                  onClick: async () => {
                     await attach({
-                      productId: product.id,
+                      productId: freePlan.id,
                       dialog: AttachDialog,
                     });
-                  } else if (product.display?.button_url) {
-                    window.open(product.display?.button_url, "_blank");
-                  }
-                },
-              }}
-            />
-          ))}
+                  },
+                  "aria-label": freePlan.display?.recommend_text ? `Select recommended plan: ${freePlan.display?.name}` : `Select plan: ${freePlan.display?.name}`
+                }}
+              />
+            </div>
+          )}
+
+          {(hobbyPlan || proPlan) && (
+            <div className="mb-6">
+              {showHobbyProToggle && (
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <button
+                    type="button"
+                    className={cn(
+                      "px-4 py-1 rounded-full border text-sm font-medium transition",
+                      hobbyPro === 'hobby' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground'
+                    )}
+                    onClick={() => setHobbyPro('hobby')}
+                    aria-pressed={hobbyPro === 'hobby'}
+                  >
+                    Hobby
+                  </button>
+                  <button
+                    type="button"
+                    className={cn(
+                      "px-4 py-1 rounded-full border text-sm font-medium transition",
+                      hobbyPro === 'pro' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground'
+                    )}
+                    onClick={() => setHobbyPro('pro')}
+                    aria-pressed={hobbyPro === 'pro'}
+                  >
+                    Pro
+                  </button>
+                </div>
+              )}
+              {(!showHobbyProToggle && hobbyPlan) && (
+                <PricingCard
+                  key={hobbyPlan.id}
+                  productId={hobbyPlan.id}
+                  buttonProps={{
+                    disabled:
+                      hobbyPlan.scenario === "active" ||
+                      hobbyPlan.scenario === "scheduled",
+                    onClick: async () => {
+                      await attach({
+                        productId: hobbyPlan.id,
+                        dialog: AttachDialog,
+                      });
+                    },
+                    "aria-label": hobbyPlan.display?.recommend_text ? `Select recommended plan: ${hobbyPlan.display?.name}` : `Select plan: ${hobbyPlan.display?.name}`
+                  }}
+                />
+              )}
+              {(!showHobbyProToggle && proPlan) && (
+                <PricingCard
+                  key={proPlan.id}
+                  productId={proPlan.id}
+                  buttonProps={{
+                    disabled:
+                      proPlan.scenario === "active" ||
+                      proPlan.scenario === "scheduled",
+                    onClick: async () => {
+                      await attach({
+                        productId: proPlan.id,
+                        dialog: AttachDialog,
+                      });
+                    },
+                    "aria-label": proPlan.display?.recommend_text ? `Select recommended plan: ${proPlan.display?.name}` : `Select plan: ${proPlan.display?.name}`
+                  }}
+                />
+              )}
+              {showHobbyProToggle && hobbyPro === 'hobby' && hobbyPlan && (
+                <PricingCard
+                  key={hobbyPlan.id}
+                  productId={hobbyPlan.id}
+                  buttonProps={{
+                    disabled:
+                      hobbyPlan.scenario === "active" ||
+                      hobbyPlan.scenario === "scheduled",
+                    onClick: async () => {
+                      await attach({
+                        productId: hobbyPlan.id,
+                        dialog: AttachDialog,
+                      });
+                    },
+                    "aria-label": hobbyPlan.display?.recommend_text ? `Select recommended plan: ${hobbyPlan.display?.name}` : `Select plan: ${hobbyPlan.display?.name}`
+                  }}
+                />
+              )}
+              {showHobbyProToggle && hobbyPro === 'pro' && proPlan && (
+                <PricingCard
+                  key={proPlan.id}
+                  productId={proPlan.id}
+                  buttonProps={{
+                    disabled:
+                      proPlan.scenario === "active" ||
+                      proPlan.scenario === "scheduled",
+                    onClick: async () => {
+                      await attach({
+                        productId: proPlan.id,
+                        dialog: AttachDialog,
+                      });
+                    },
+                    "aria-label": proPlan.display?.recommend_text ? `Select recommended plan: ${proPlan.display?.name}` : `Select plan: ${proPlan.display?.name}`
+                  }}
+                />
+              )}
+            </div>
+          )}
+
+          {(scalePlan || buddyPlan) && (
+            <div>
+              {showScaleBuddyToggle && (
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <button
+                    type="button"
+                    className={cn(
+                      "px-4 py-1 rounded-full border text-sm font-medium transition",
+                      scaleBuddy === 'scale' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground'
+                    )}
+                    onClick={() => setScaleBuddy('scale')}
+                    aria-pressed={scaleBuddy === 'scale'}
+                  >
+                    Scale
+                  </button>
+                  <button
+                    type="button"
+                    className={cn(
+                      "px-4 py-1 rounded-full border text-sm font-medium transition",
+                      scaleBuddy === 'buddy' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground'
+                    )}
+                    onClick={() => setScaleBuddy('buddy')}
+                    aria-pressed={scaleBuddy === 'buddy'}
+                  >
+                    Buddy
+                  </button>
+                </div>
+              )}
+              {(!showScaleBuddyToggle && scalePlan) && (
+                <PricingCard
+                  key={scalePlan.id}
+                  productId={scalePlan.id}
+                  buttonProps={{
+                    disabled:
+                      scalePlan.scenario === "active" ||
+                      scalePlan.scenario === "scheduled",
+                    onClick: async () => {
+                      await attach({
+                        productId: scalePlan.id,
+                        dialog: AttachDialog,
+                      });
+                    },
+                    "aria-label": scalePlan.display?.recommend_text ? `Select recommended plan: ${scalePlan.display?.name}` : `Select plan: ${scalePlan.display?.name}`
+                  }}
+                />
+              )}
+              {(!showScaleBuddyToggle && buddyPlan) && (
+                <PricingCard
+                  key={buddyPlan.id}
+                  productId={buddyPlan.id}
+                  buttonProps={{
+                    disabled:
+                      buddyPlan.scenario === "active" ||
+                      buddyPlan.scenario === "scheduled",
+                    onClick: async () => {
+                      await attach({
+                        productId: buddyPlan.id,
+                        dialog: AttachDialog,
+                      });
+                    },
+                    "aria-label": buddyPlan.display?.recommend_text ? `Select recommended plan: ${buddyPlan.display?.name}` : `Select plan: ${buddyPlan.display?.name}`
+                  }}
+                />
+              )}
+              {showScaleBuddyToggle && scaleBuddy === 'scale' && scalePlan && (
+                <PricingCard
+                  key={scalePlan.id}
+                  productId={scalePlan.id}
+                  buttonProps={{
+                    disabled:
+                      scalePlan.scenario === "active" ||
+                      scalePlan.scenario === "scheduled",
+                    onClick: async () => {
+                      await attach({
+                        productId: scalePlan.id,
+                        dialog: AttachDialog,
+                      });
+                    },
+                    "aria-label": scalePlan.display?.recommend_text ? `Select recommended plan: ${scalePlan.display?.name}` : `Select plan: ${scalePlan.display?.name}`
+                  }}
+                />
+              )}
+              {showScaleBuddyToggle && scaleBuddy === 'buddy' && buddyPlan && (
+                <PricingCard
+                  key={buddyPlan.id}
+                  productId={buddyPlan.id}
+                  buttonProps={{
+                    disabled:
+                      buddyPlan.scenario === "active" ||
+                      buddyPlan.scenario === "scheduled",
+                    onClick: async () => {
+                      await attach({
+                        productId: buddyPlan.id,
+                        dialog: AttachDialog,
+                      });
+                    },
+                    "aria-label": buddyPlan.display?.recommend_text ? `Select recommended plan: ${buddyPlan.display?.name}` : `Select plan: ${buddyPlan.display?.name}`
+                  }}
+                />
+              )}
+            </div>
+          )}
         </PricingTableContainer>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -212,14 +501,15 @@ export const PricingCard = ({
   return (
     <div
       className={cn(
-        " w-full h-full py-6 text-foreground border rounded-lg shadow-sm max-w-xl",
+        "w-full h-full py-6 text-foreground border rounded-lg shadow-sm max-w-xl relative transition-all duration-300",
         isRecommended &&
-        "lg:-translate-y-6 lg:shadow-lg dark:shadow-zinc-800/80 lg:h-[calc(100%+48px)] bg-secondary/40",
+        "lg:-translate-y-6 lg:shadow-lg dark:shadow-zinc-800/80 lg:h-[calc(100%+48px)] bg-secondary/40 border-primary animate-recommended-glow",
         className
       )}
+      aria-label={isRecommended ? "Recommended plan" : undefined}
     >
-      {productDisplay?.recommend_text && (
-        <RecommendedBadge recommended={productDisplay?.recommend_text} />
+      {isRecommended && (
+        <RecommendedBadge recommended={productDisplay?.recommend_text ?? ""} />
       )}
       <div
         className={cn(
@@ -406,22 +696,52 @@ export const AnnualSwitch = ({
   setIsAnnualToggle: (isAnnual: boolean) => void;
 }) => {
   return (
-    <div className="flex items-center space-x-2 mb-4">
-      <span className="text-sm text-muted-foreground">Monthly</span>
-      <Switch
-        id="annual-billing"
-        checked={isAnnualToggle}
-        onCheckedChange={setIsAnnualToggle}
-      />
-      <span className="text-sm text-muted-foreground">Annual</span>
+    <div className="flex flex-col items-center space-y-1 mb-4">
+      <span className="text-sm font-medium text-foreground" id="billing-interval-label">
+        Choose billing interval
+      </span>
+      <div className="flex items-center space-x-2" aria-labelledby="billing-interval-label">
+        <span className="text-sm text-muted-foreground">Monthly</span>
+        <Switch
+          id="annual-billing"
+          checked={isAnnualToggle}
+          onCheckedChange={setIsAnnualToggle}
+          aria-label="Toggle annual billing"
+        >
+          <span className="sr-only">Toggle annual billing</span>
+        </Switch>
+        <span className="text-sm text-muted-foreground">Annual</span>
+      </div>
     </div>
   );
 };
 
 export const RecommendedBadge = ({ recommended }: { recommended: string }) => {
   return (
-    <div className="bg-secondary absolute border text-muted-foreground text-sm font-medium lg:rounded-full px-3 lg:py-0.5 lg:top-4 lg:right-4 top-[-1px] right-[-1px] rounded-bl-lg">
-      {recommended}
+    <div className="bg-primary/90 border border-primary text-primary-foreground text-sm font-medium lg:rounded-full px-3 lg:py-0.5 lg:top-4 lg:right-4 top-[-1px] right-[-1px] rounded-bl-lg absolute flex items-center gap-1 shadow-md animate-bounce-in">
+      <Star weight="duotone" className="w-4 h-4" aria-hidden="true" />
+      <span>{recommended}</span>
     </div>
   );
 };
+
+<style jsx global>{`
+  @keyframes recommended-glow {
+    0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+    70% { box-shadow: 0 0 16px 8px rgba(99, 102, 241, 0.15); }
+    100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+  }
+  .animate-recommended-glow {
+    animation: recommended-glow 2.5s infinite;
+  }
+  @keyframes bounce-in {
+    0% { transform: scale(0.8); opacity: 0; }
+    60% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); }
+  }
+  .animate-bounce-in {
+    animation: bounce-in 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  }
+`}</style>
+
+
