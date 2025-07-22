@@ -1,4 +1,0 @@
-tls:
-  certificates:
-    - certFile: /run/secrets/databuddy_cc_star_cert
-      keyFile: /run/secrets/databuddy_cc_star_key
