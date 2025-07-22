@@ -13,6 +13,7 @@ import {
   Zap,
   TrendingUp,
   X,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -24,9 +25,9 @@ const navLinks = [
   { href: "/events/realtime", label: "Real-Time Events", icon: TrendingUp },
   { href: "/users", label: "Users", icon: Users },
   { href: "/websites", label: "Websites", icon: Globe },
-  { href: "/domains", label: "Domains", icon: Network },
+  { href: "/income", label: "Income", icon: TrendingUp },
+  { href: "/blocked-traffic", label: "Blocked Traffic", icon: AlertTriangle },
   { href: "/query-performance", label: "Query Performance", icon: Zap },
-  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 interface SidebarProps {
