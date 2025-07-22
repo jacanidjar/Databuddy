@@ -14,14 +14,21 @@ const resolutionSchema = z
 
 const languageSchema = z
     .string()
-    .regex(/^[a-zA-Z-]{2,16}$/, "Invalid language code");
+    .regex(/^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8})*$/, "Invalid language tag");
 
 const connectionTypeSchema = z.enum([
-    "wifi",
+    "bluetooth",
     "cellular",
     "ethernet",
     "none",
+    "wifi",
+    "wimax",
+    "other",
     "unknown",
+    "slow-2g",
+    "2g",
+    "3g",
+    "4g",
 ]).nullable().optional();
 
 const MAX_FUTURE_MS = 60 * 60 * 1000; // 1 hour
@@ -31,7 +38,7 @@ export const analyticsEventSchema = z.object({
     eventId: z.uuid(),
     name: z.string().min(1).max(128),
     anonymousId: z.templateLiteral([z.literal("anon_"), z.uuid()]).nullable().optional(),
-    sessionId: z.templateLiteral([z.literal("sess_"), z.uuid()]).nullable().optional(),
+    sessionId: z.templateLiteral([z.literal("sess_"), z.string()]).nullable().optional(),
     timestamp: z.number().int().gte(MIN_TIMESTAMP).nullable().optional()
         .refine(val => val == null || val <= Date.now() + MAX_FUTURE_MS, {
             message: 'Timestamp too far in the future (max 1 hour ahead)'
@@ -40,8 +47,14 @@ export const analyticsEventSchema = z.object({
         .refine(val => val == null || val <= Date.now() + MAX_FUTURE_MS, {
             message: 'Session start time too far in the future (max 1 hour ahead)'
         }),
-    referrer: z.url({ protocol: /^https?$/, hostname: z.regexes.domain }),
-    path: z.url({ protocol: /^https?$/, hostname: z.regexes.domain }),
+    referrer: z.union([
+        z.url({ protocol: /^https?$/, hostname: z.regexes.domain }),
+        z.literal('direct')
+    ]).nullable().optional(),
+    path: z.union([
+        z.url({ protocol: /^https?$/, hostname: z.regexes.domain }),
+        z.string().regex(/^https?:\/\/localhost(:\d+)?\//) // Temporary, probably should remove tho.
+    ]),
     title: z.string().max(512).nullable().optional(),
     screen_resolution: resolutionSchema.nullable().optional(),
     viewport_size: resolutionSchema.nullable().optional(),

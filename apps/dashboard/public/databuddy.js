@@ -883,7 +883,6 @@
         finalProperties = { value: properties };
       }
 
-      // Use the standard track method with new schema
       this.track(eventName, finalProperties);
     }
 
