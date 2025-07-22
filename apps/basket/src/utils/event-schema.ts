@@ -24,23 +24,24 @@ const connectionTypeSchema = z.enum([
     "unknown",
 ]).nullable().optional();
 
-// TODO: isn't this cooked?
-const now = Date.now();
 const MAX_FUTURE_MS = 60 * 60 * 1000; // 1 hour
+const MIN_TIMESTAMP = 946684800000; // year 2000
 
 export const analyticsEventSchema = z.object({
     eventId: z.uuid(),
     name: z.string().min(1).max(128),
     anonymousId: z.templateLiteral([z.literal("anon_"), z.uuid()]).nullable().optional(),
     sessionId: z.templateLiteral([z.literal("sess_"), z.uuid()]).nullable().optional(),
-    timestamp: z.number().int().gte(946684800000).lte(now + MAX_FUTURE_MS).nullable().optional(), // year 2000 to 1 year in future
-    sessionStartTime: z.number().int().gte(946684800000).lte(now + MAX_FUTURE_MS).nullable().optional(),
-    referrer: z.url({protocol: /^https?$/, hostname: z.regexes.domain}),
-    // TODO: could additionally restrict this to certain paths
-    // OR maybe drop the domain from the client altogether if it's appropriate
-    // to infer from client-id anyway, for example:
-    // http://admin.example.com:5173/ -> /
-    path: z.url({protocol: /^https?$/, hostname: z.regexes.domain}),
+    timestamp: z.number().int().gte(MIN_TIMESTAMP).nullable().optional()
+        .refine(val => val == null || val <= Date.now() + MAX_FUTURE_MS, {
+            message: 'Timestamp too far in the future (max 1 hour ahead)'
+        }),
+    sessionStartTime: z.number().int().gte(MIN_TIMESTAMP).nullable().optional()
+        .refine(val => val == null || val <= Date.now() + MAX_FUTURE_MS, {
+            message: 'Session start time too far in the future (max 1 hour ahead)'
+        }),
+    referrer: z.url({ protocol: /^https?$/, hostname: z.regexes.domain }),
+    path: z.url({ protocol: /^https?$/, hostname: z.regexes.domain }),
     title: z.string().max(512).nullable().optional(),
     screen_resolution: resolutionSchema.nullable().optional(),
     viewport_size: resolutionSchema.nullable().optional(),
@@ -86,7 +87,10 @@ export const errorEventSchema = z.object({
         eventId: z.string().min(1).max(128).nullable().optional(),
         anonymousId: z.string().min(1).max(128).nullable().optional(),
         sessionId: z.string().min(1).max(128).nullable().optional(),
-        timestamp: z.number().int().gte(946684800000).lte(now + MAX_FUTURE_MS).nullable().optional(),
+        timestamp: z.number().int().gte(MIN_TIMESTAMP).nullable().optional()
+            .refine(val => val == null || val <= Date.now() + MAX_FUTURE_MS, {
+                message: 'Timestamp too far in the future (max 1 hour ahead)'
+            }),
         path: z.string().max(2048),
         message: z.string().max(2048),
         filename: z.string().max(512).nullable().optional(),
@@ -102,7 +106,10 @@ export const webVitalsEventSchema = z.object({
         eventId: z.string().min(1).max(128).nullable().optional(),
         anonymousId: z.string().min(1).max(128).nullable().optional(),
         sessionId: z.string().min(1).max(128).nullable().optional(),
-        timestamp: z.number().int().gte(946684800000).lte(now + MAX_FUTURE_MS).nullable().optional(),
+        timestamp: z.number().int().gte(MIN_TIMESTAMP).nullable().optional()
+            .refine(val => val == null || val <= Date.now() + MAX_FUTURE_MS, {
+                message: 'Timestamp too far in the future (max 1 hour ahead)'
+            }),
         path: z.string().max(2048),
         fcp: z.number().min(0).max(60000).nullable().optional(),
         lcp: z.number().min(0).max(60000).nullable().optional(),
