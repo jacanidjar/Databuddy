@@ -1,7 +1,5 @@
-import type { City } from "@maxmind/geoip2-node";
 import { Reader, AddressNotFoundError, BadMethodCallError } from "@maxmind/geoip2-node";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
+import type { City } from "@maxmind/geoip2-node";
 import { createHash } from 'node:crypto';
 
 interface GeoIPReader extends Reader {
@@ -92,7 +90,7 @@ function isValidIp(ip: string): boolean {
 
 export async function getGeoLocation(ip: string) {
   if (!ip || ignore.includes(ip) || !isValidIp(ip)) {
-    return { country: undefined, region: undefined };
+    return { country: undefined, region: undefined, city: undefined };
   }
 
   // Lazy load database on first use
@@ -101,39 +99,41 @@ export async function getGeoLocation(ip: string) {
       await loadDatabase();
     } catch (error) {
       console.error("Failed to load database for IP lookup:", error);
-      return { country: undefined, region: undefined };
+      return { country: undefined, region: undefined, city: undefined };
     }
   }
 
   if (!reader) {
-    return { country: undefined, region: undefined };
+    return { country: undefined, region: undefined, city: undefined };
   }
 
   try {
     const response = reader.city(ip);
 
-    // Extract region data
+    // Extract region and city data
     const region = response.subdivisions?.[0]?.names?.en;
+    const city = response.city?.names?.en;
 
     return {
       country: response.country?.names?.en,
       region: region,
+      city: city,
     };
   } catch (error) {
     // Handle AddressNotFoundError specifically (IP not in database)
     if (error instanceof AddressNotFoundError) {
-      return { country: undefined, region: undefined };
+      return { country: undefined, region: undefined, city: undefined };
     }
 
     // Handle BadMethodCallError (wrong database type)
     if (error instanceof BadMethodCallError) {
       console.error("Database type mismatch - using city() method with ipinfo database");
-      return { country: undefined, region: undefined };
+      return { country: undefined, region: undefined, city: undefined };
     }
 
     // Handle other errors
     console.error("Error looking up IP:", ip, error);
-    return { country: undefined, region: undefined };
+    return { country: undefined, region: undefined, city: undefined };
   }
 }
 
@@ -173,6 +173,7 @@ export async function getGeo(ip: string) {
     anonymizedIP: anonymizeIp(ip),
     country: geo.country,
     region: geo.region,
+    city: geo.city,
   };
 }
 

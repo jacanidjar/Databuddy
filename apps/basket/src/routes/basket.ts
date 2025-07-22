@@ -268,7 +268,7 @@ async function insertTrackEvent(
 		return;
 	}
 
-	const { anonymizedIP, country, region } = await getGeo(ip);
+	const { anonymizedIP, country, region, city } = await getGeo(ip);
 	const {
 		browserName,
 		browserVersion,
@@ -322,7 +322,7 @@ async function insertTrackEvent(
 		device_model: deviceModel || "",
 		country: country || "",
 		region: region || "",
-		city: "",
+		city: city || "",
 
 		screen_resolution: trackData.screen_resolution,
 		viewport_size: trackData.viewport_size,
@@ -425,7 +425,7 @@ async function logBlockedTraffic(
 				VALIDATION_LIMITS.STRING_MAX_LENGTH,
 			) || "";
 
-		const { anonymizedIP, country, region } = await getGeo(ip);
+		const { anonymizedIP, country, region, city } = await getGeo(ip);
 		const { browserName, browserVersion, osName, osVersion, deviceType } =
 			parseUserAgent(userAgent);
 
@@ -468,6 +468,7 @@ async function logBlockedTraffic(
 
 			country: country || "",
 			region: region || "",
+			city: city || "",
 			browser_name: browserName || "",
 			browser_version: browserVersion || "",
 			os_name: osName || "",

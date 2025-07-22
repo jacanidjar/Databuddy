@@ -431,6 +431,7 @@ export interface BlockedTraffic {
   bot_name?: string;
   country?: string;
   region?: string;
+  city?: string;
   browser_name?: string;
   browser_version?: string;
   os_name?: string;
@@ -449,19 +450,19 @@ export interface AnalyticsEvent {
   anonymous_id: string;
   time: number;
   session_id: string;
-  
+
   // New fields
   event_type?: 'track' | 'error' | 'web_vitals';
   event_id?: string;
   session_start_time?: number;
   timestamp?: number;
-  
+
   // Page context
   referrer?: string;
   url: string;
   path: string;
   title?: string;
-  
+
   // Server enrichment
   ip: string;
   user_agent: string;
@@ -475,18 +476,18 @@ export interface AnalyticsEvent {
   country?: string;
   region?: string;
   city?: string;
-  
+
   // User context
   screen_resolution?: string;
   viewport_size?: string;
   language?: string;
   timezone?: string;
-  
+
   // Connection info
   connection_type?: string;
   rtt?: number;
   downlink?: number;
-  
+
   // Engagement metrics
   time_on_page?: number;
   scroll_depth?: number;
@@ -496,14 +497,14 @@ export interface AnalyticsEvent {
   is_bounce: number;
   has_exit_intent?: number;
   page_size?: number;
-  
+
   // UTM parameters
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;
   utm_term?: string;
   utm_content?: string;
-  
+
   // Performance metrics
   load_time?: number;
   dom_ready_time?: number;
@@ -514,21 +515,21 @@ export interface AnalyticsEvent {
   render_time?: number;
   redirect_time?: number;
   domain_lookup_time?: number;
-  
+
   // Web Vitals
   fcp?: number;
   lcp?: number;
   cls?: number;
   fid?: number;
   inp?: number;
-  
+
   // Link tracking
   href?: string;
   text?: string;
-  
+
   // Custom event value
   value?: string;
-  
+
   // Error tracking
   error_message?: string;
   error_filename?: string;
@@ -536,10 +537,10 @@ export interface AnalyticsEvent {
   error_colno?: number;
   error_stack?: string;
   error_type?: string;
-  
+
   // Legacy properties
   properties: string;
-  
+
   // Metadata
   created_at: number;
 }
@@ -550,13 +551,13 @@ export interface AnalyticsEvent {
 export async function initClickHouseSchema() {
   try {
     console.info('Initializing ClickHouse schema...');
-    
+
     // Create the analytics database
     await clickHouse.command({
       query: CREATE_DATABASE,
     });
     console.info(`Created database: ${ANALYTICS_DATABASE}`);
-    
+
     // Create tables
     const tables = [
       { name: 'events', query: CREATE_EVENTS_TABLE },
@@ -567,14 +568,14 @@ export async function initClickHouseSchema() {
       { name: 'stripe_refunds', query: CREATE_STRIPE_REFUNDS_TABLE },
       { name: 'blocked_traffic', query: CREATE_BLOCKED_TRAFFIC_TABLE },
     ];
-    
+
     for (const table of tables) {
       await clickHouse.command({
         query: table.query,
       });
       console.info(`Created table: ${ANALYTICS_DATABASE}.${table.name}`);
     }
-    
+
     console.info('ClickHouse schema initialization completed successfully');
     return {
       success: true,
