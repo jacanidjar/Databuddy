@@ -4,10 +4,33 @@ on:
   push:
     branches: [main, staging]
   pull_request:
+    branches: [main, staging]
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      basket: ${{ steps.filter.outputs.basket }}
+      dashboard: ${{ steps.filter.outputs.dashboard }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'apps/api/**'
+            basket:
+              - 'apps/basket/**'
+            dashboard:
+              - 'apps/dashboard/**'
+
   check-api:
     name: API - Type Check & Lint
+    needs: changes
+    if: ${{ needs.changes.outputs.api == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -21,6 +44,8 @@ jobs:
 
   check-basket:
     name: Basket - Type Check & Lint
+    needs: changes
+    if: ${{ needs.changes.outputs.basket == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -28,12 +53,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
-      - run: bun install    
+      - run: bun install
       - run: bun run tsc --noEmit
       - run: bun run biome check .
 
   check-dashboard:
     name: Dashboard - Type Check & Lint
+    needs: changes
+    if: ${{ needs.changes.outputs.dashboard == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
