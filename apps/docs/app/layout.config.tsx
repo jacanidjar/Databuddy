@@ -1,5 +1,6 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
-import { Github, Home, Twitter } from 'lucide-react';
+import { MdSpaceDashboard } from "react-icons/md";
+import { FaGithub, FaXTwitter, FaDiscord } from "react-icons/fa6";
 import { LogoContent } from '@/components/logo';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -15,26 +16,26 @@ export const baseOptions: BaseLayoutProps = {
       text: 'Dashboard',
       url: 'https://app.databuddy.cc',
       external: true,
-      icon: <Home />,
+      icon: <MdSpaceDashboard />,
     },
     {
       text: 'GitHub',
       url: 'https://github.com/databuddy-analytics',
       external: true,
-      icon: <Github />,
+      icon: <FaGithub />,
       secondary: true,
     },
     {
       text: 'Discord',
       url: 'https://discord.gg/JTk7a38tCZ',
       external: true,
-      // icon: <Discord />,
+      icon: <FaDiscord />,
     },
     {
-      text: 'Twitter',
-      url: 'https://x.com/databuddyps',
+      text: 'X (Twitter)',
+      url: 'https://x.com/trydatabuddy',
       external: true,
-      icon: <Twitter />,
+      icon: <FaXTwitter />,
     }
   ],
 };
