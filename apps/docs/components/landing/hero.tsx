@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Maximize2 } from "lucide-react";
+import { ArrowRight, MonitorIcon, ArrowsOutSimpleIcon, InfoIcon } from "@phosphor-icons/react";
 import { useState, useRef } from "react";
 
 export default function Hero() {
@@ -66,35 +66,51 @@ export default function Hero() {
 					{/* Demo Section */}
 					<div className="w-full max-w-[90vw] mx-auto">
 						<div className="relative">
-							<div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-xl blur-xl opacity-30" />
-							<div
-								className="relative bg-background/80 backdrop-blur-sm border border-border rounded-lg p-2 shadow-2xl group cursor-pointer"
+              <div className="absolute top-3 left-3 z-20 flex items-center gap-2 bg-primary/90 text-primary-foreground rounded px-3 py-1 text-xs font-semibold shadow-lg">
+                <MonitorIcon className="h-4" weight="duotone" />
+                Demo
+              </div>
+
+							<div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded blur-xl opacity-30" />
+							<button
+								type="button"
+								className="relative bg-background/80 backdrop-blur-sm border border-border rounded p-2 shadow-2xl group cursor-pointer w-full text-left"
 								onMouseEnter={() => setIsHovered(true)}
 								onMouseLeave={() => setIsHovered(false)}
 								onClick={handleFullscreen}
-								onKeyDown={(e) => {
-									if (e.key === 'Enter' || e.key === ' ') {
-										handleFullscreen();
-									}
-								}}
 								aria-label="View demo dashboard fullscreen"
+								style={{ padding: 0 }}
 							>
 								<iframe
 									ref={iframeRef}
 									src="https://app.databuddy.cc/demo/OXmNQsViBT-FOS_wZCTHc"
-									className="w-full h-[500px] sm:h-[600px] lg:h-[700px] rounded border-0"
+									className="w-full h-[500px] sm:h-[600px] lg:h-[700px] rounded border-0 pointer-events-none"
 									title="Databuddy Demo Dashboard"
 									loading="lazy"
 									allowFullScreen
 								/>
 
-								{/* Fullscreen Button & Overlay */}
-								<div className={`absolute inset-2 bg-background/20 dark:bg-background/40 rounded transition-opacity duration-300 flex items-center justify-center ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
-									<div className="bg-card/90 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2 text-sm font-medium shadow-lg border border-border hover:bg-card transition-colors">
-										<Maximize2 className="h-4 w-4 text-foreground" />
-										<span className="text-foreground">Click to view fullscreen</span>
+								<div
+									className={`absolute inset-2 bg-background/60 dark:bg-background/70 rounded flex items-center justify-center transition-opacity duration-300 z-10 ${isHovered ? 'opacity-100' : 'opacity-80'}`}
+									style={{ pointerEvents: 'none' }}
+								>
+									<div className="flex flex-col items-center gap-2">
+										<div className="bg-card/90 backdrop-blur-sm rounded px-4 py-2 flex items-center gap-2 text-base font-semibold shadow-lg border border-border">
+											<ArrowsOutSimpleIcon className="h-6 text-foreground" />
+											<span className="text-foreground">Click to view fullscreen</span>
+										</div>
+										<div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+											<InfoIcon className="h-3" weight="duotone" />
+											Live interactive demo
+										</div>
 									</div>
 								</div>
+							</button>
+						</div>
+						<div className="flex justify-center mt-2">
+							<div className="inline-flex items-center gap-2 bg-muted/70 rounded px-3 py-1 text-xs text-muted-foreground">
+								<MonitorIcon className="h-3" weight="duotone" />
+								This is a live demo. Click above to interact or go fullscreen.
 							</div>
 						</div>
 					</div>
