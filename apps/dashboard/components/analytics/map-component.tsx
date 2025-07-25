@@ -230,6 +230,14 @@ export function MapComponent({
   return (
     <div
       className="relative"
+      onMouseMove={(e) => {
+        if (tooltipContent) {
+          setTooltipPosition({
+            x: e.clientX,
+            y: e.clientY,
+          });
+        }
+      }}
       ref={containerRef}
       style={{ height }}
     >
@@ -272,19 +280,12 @@ export function MapComponent({
 
       {tooltipContent && (
         <div
-          role="tooltip"
           className="pointer-events-none fixed z-50 rounded-lg border border-gray-200 bg-white p-3 text-gray-900 text-sm shadow-xl backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
           style={{
             left: tooltipPosition.x,
             top: tooltipPosition.y - 10,
             transform: "translate(-50%, -100%)",
             boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-          }}
-          onMouseMove={(e) => {
-            setTooltipPosition({
-              x: e.clientX,
-              y: e.clientY,
-            });
           }}
         >
           <div className="mb-1 flex items-center gap-2 font-medium">
