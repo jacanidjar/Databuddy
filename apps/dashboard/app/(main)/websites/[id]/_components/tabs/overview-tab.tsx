@@ -588,7 +588,7 @@ export function WebsiteOverviewTab({
 			header: 'Device Type',
 			cell: (info: any) => {
 				const row = info.row.original;
-				return <DeviceTypeCell device_type={row.name} name={row.name} />;
+				return <DeviceTypeCell device_type={row.name} />;
 			},
 		},
 		{
