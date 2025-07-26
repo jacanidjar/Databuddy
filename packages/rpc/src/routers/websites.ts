@@ -118,7 +118,7 @@ export const websitesRouter = createTRPCRouter({
 					userId: ctx.user.id,
 					organizationId: input.organizationId,
 					status: 'ACTIVE',
-				})
+				} as never)
 				.returning();
 
 			logger.success(
@@ -148,7 +148,7 @@ export const websitesRouter = createTRPCRouter({
 
 			const [updatedWebsite] = await ctx.db
 				.update(websites)
-				.set({ name: input.name })
+				.set({ name: input.name } as never)
 				.where(eq(websites.id, input.id))
 				.returning();
 
@@ -218,7 +218,7 @@ export const websitesRouter = createTRPCRouter({
 
 			const [updatedWebsite] = await ctx.db
 				.update(websites)
-				.set({ organizationId: input.organizationId ?? null })
+				.set({ organizationId: input.organizationId ?? null } as never)
 				.where(eq(websites.id, input.websiteId))
 				.returning();
 

@@ -452,7 +452,7 @@ export const funnelsRouter = createTRPCRouter({
 						steps: input.steps,
 						filters: input.filters,
 						createdBy: ctx.user.id,
-					})
+					} as never)
 					.returning();
 
 				logger.success('Funnel created', `Created funnel "${input.name}"`, {
@@ -509,7 +509,7 @@ export const funnelsRouter = createTRPCRouter({
 					.set({
 						...updates,
 						updatedAt: new Date().toISOString(),
-					})
+					} as never)
 					.where(
 						and(
 							eq(funnelDefinitions.id, id),
@@ -564,7 +564,7 @@ export const funnelsRouter = createTRPCRouter({
 					.set({
 						deletedAt: new Date().toISOString(),
 						isActive: false,
-					})
+					} as never)
 					.where(
 						and(
 							eq(funnelDefinitions.id, input.id),
@@ -871,17 +871,17 @@ export const funnelsRouter = createTRPCRouter({
 					params[stepNameKey] = step.name;
 					return `
                     SELECT 
-                      ${index + 1} as step_number,
-                      {${stepNameKey}:String} as step_name,
-                      session_id,
-                      MIN(time) as first_occurrence,
-                      any(referrer) as session_referrer
+                        ${index + 1} as step_number,
+                        {${stepNameKey}:String} as step_name,
+                        session_id,
+                        MIN(time) as first_occurrence,
+                        any(referrer) as referrer
                     FROM analytics.events
                     WHERE client_id = {websiteId:String}
-                      AND time >= parseDateTimeBestEffort({startDate:String})
-                      AND time <= parseDateTimeBestEffort({endDate:String})
-                      AND ${whereCondition}${filterClause}
-                    GROUP BY session_id`;
+                        AND time >= parseDateTimeBestEffort({startDate:String})
+                        AND time <= parseDateTimeBestEffort({endDate:String})
+                        AND ${whereCondition}${filterClause}
+                    GROUP BY session_id, referrer`;
 				});
 				const sessionReferrerQuery = `
                   WITH all_step_events AS (
