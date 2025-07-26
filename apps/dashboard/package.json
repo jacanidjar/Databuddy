@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@databuddy/sdk": "workspace:*",
+    "@databuddy/validation": "workspace:*",
     "@hello-pangea/dnd": "^18.0.1",
     "@mantine/dates": "^8.1.1",
     "@nivo/sankey": "^0.99.0",

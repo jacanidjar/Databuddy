@@ -1,6 +1,12 @@
 import { websitesApi } from '@databuddy/auth';
 import { and, chQuery, eq, isNull, websites } from '@databuddy/db';
 import { createDrizzleCache, redis } from '@databuddy/redis';
+import { discordLogger } from '@databuddy/shared';
+import {
+	createWebsiteSchema,
+	transferWebsiteSchema,
+	updateWebsiteSchema,
+} from '@databuddy/validation';
 import { TRPCError } from '@trpc/server';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
@@ -11,61 +17,6 @@ import {
 	getBillingCustomerId,
 	trackWebsiteUsage,
 } from '../utils/billing';
-import { logger as discordLogger } from '../utils/discord-webhook';
-
-const websiteNameSchema = z
-	.string()
-	.min(1)
-	.max(100)
-	.regex(/^[a-zA-Z0-9\s\-_.]+$/, 'Invalid website name format');
-
-const domainSchema = z.preprocess(
-	(val) => {
-		if (typeof val !== 'string') {
-			return val;
-		}
-		let domain = val.trim();
-		if (domain.startsWith('http://') || domain.startsWith('https://')) {
-			try {
-				domain = new URL(domain).hostname;
-			} catch {
-				// Do nothing
-			}
-		}
-		return domain;
-	},
-	z
-		.string()
-		.min(1)
-		.max(253)
-		.regex(
-			/^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/,
-			'Invalid domain format'
-		)
-);
-
-const subdomainSchema = z
-	.string()
-	.max(63)
-	.regex(/^[a-zA-Z0-9-]*$/, 'Invalid subdomain format')
-	.optional();
-
-const createWebsiteSchema = z.object({
-	name: websiteNameSchema,
-	domain: domainSchema,
-	subdomain: subdomainSchema,
-	organizationId: z.string().optional(),
-});
-
-const updateWebsiteSchema = z.object({
-	id: z.string(),
-	name: websiteNameSchema,
-});
-
-const transferWebsiteSchema = z.object({
-	websiteId: z.string(),
-	organizationId: z.string().optional(),
-});
 
 const drizzleCache = createDrizzleCache({ redis, namespace: 'websites' });
 

@@ -1,4 +1,6 @@
 import { redis } from '@databuddy/redis';
+import { logger } from '@databuddy/shared';
+import { parseDurationToSeconds } from '@databuddy/validation';
 
 export interface RateLimitConfig {
 	namespace: string;
@@ -47,7 +49,7 @@ export class RateLimiter {
 			}
 
 			const prevWindowCount = results[0]?.[1]
-				? Number.parseInt(results[0][1] as string)
+				? Number.parseInt(results[0][1] as string, 10)
 				: 0;
 			const newCurrentWindowCount = results[2]?.[1] as number;
 
@@ -76,7 +78,7 @@ export class RateLimiter {
 				reset: resetTime,
 			};
 		} catch (error) {
-			console.error('[Rate Limiter] Redis error:', error);
+			logger.error('[Rate Limiter] Redis error:', error);
 			return {
 				success: true,
 				limit: this.config.limit,
@@ -111,10 +113,10 @@ export class RateLimiter {
 			}
 
 			const prevWindowCount = results[0]?.[1]
-				? Number.parseInt(results[0][1] as string)
+				? Number.parseInt(results[0][1] as string, 10)
 				: 0;
 			const currentWindowCount = results[1]?.[1]
-				? Number.parseInt(results[1][1] as string)
+				? Number.parseInt(results[1][1] as string, 10)
 				: 0;
 
 			const weightedPrevCount = Math.floor(prevWindowCount * prevWindowWeight);
@@ -127,7 +129,7 @@ export class RateLimiter {
 				reset: currentWindowStart + windowSeconds * 1000,
 			};
 		} catch (error) {
-			console.error('[Rate Limiter] Redis error:', error);
+			logger.error('[Rate Limiter] Redis error:', error);
 			return {
 				success: true,
 				limit: this.config.limit,
@@ -152,30 +154,9 @@ export class RateLimiter {
 			pipeline.del(`${key}:${currentWindowStart}`);
 			await pipeline.exec();
 		} catch (error) {
-			console.error('[Rate Limiter] Reset error:', error);
+			logger.error('[Rate Limiter] Reset error:', error);
 		}
 	}
-}
-
-function parseDurationToSeconds(duration: string): number {
-	const match = duration.match(/^(\d+)([smhd])$/);
-	if (!match) throw new Error(`Invalid duration format: ${duration}`);
-
-	const num = Number.parseInt(match[1]);
-	const unit = match[2];
-
-	const multiplier = {
-		s: 1,
-		m: 60,
-		h: 3600,
-		d: 86_400,
-	}[unit];
-
-	if (multiplier === undefined) {
-		throw new Error(`Invalid duration format: ${duration}`);
-	}
-
-	return num * multiplier;
 }
 
 export const rateLimiters = {
@@ -210,16 +191,24 @@ export function getRateLimitIdentifier(
 	userId?: string,
 	headers?: Headers
 ): string {
-	if (userId) return userId;
+	if (userId) {
+		return userId;
+	}
 
 	const cfConnectingIp = headers?.get('cf-connecting-ip');
-	if (cfConnectingIp) return cfConnectingIp;
+	if (cfConnectingIp) {
+		return cfConnectingIp;
+	}
 
 	const realIp = headers?.get('x-real-ip');
-	if (realIp) return realIp;
+	if (realIp) {
+		return realIp;
+	}
 
 	const forwardedFor = headers?.get('x-forwarded-for');
-	if (forwardedFor) return forwardedFor.split(',')[0].trim();
+	if (forwardedFor) {
+		return forwardedFor.split(',')[0].trim();
+	}
 
 	return 'anonymous';
 }

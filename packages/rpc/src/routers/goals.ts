@@ -138,11 +138,17 @@ const buildFilterConditions = (
 	paramPrefix: string,
 	params: Record<string, unknown>
 ) => {
-	if (!filters || filters.length === 0) return '';
+	if (!filters || filters.length === 0) {
+		return '';
+	}
 	const filterConditions = filters
 		.map((filter, i) => {
-			if (!ALLOWED_FIELDS.has(filter.field)) return '';
-			if (!ALLOWED_OPERATORS.has(filter.operator)) return '';
+			if (!ALLOWED_FIELDS.has(filter.field)) {
+				return '';
+			}
+			if (!ALLOWED_OPERATORS.has(filter.operator)) {
+				return '';
+			}
 			const field = filter.field;
 			const value = Array.isArray(filter.value) ? filter.value : [filter.value];
 			const key = `${paramPrefix}_${i}`;
@@ -319,7 +325,7 @@ export const goalsRouter = createTRPCRouter({
 			const params: Record<string, unknown> = {
 				websiteId: input.websiteId,
 				startDate,
-				endDate: endDate + ' 23:59:59',
+				endDate: `${endDate} 23:59:59`,
 			};
 			const filterConditions = buildFilterConditions(filters, 'f', params);
 			const totalWebsiteUsersQuery = `
@@ -481,7 +487,7 @@ export const goalsRouter = createTRPCRouter({
 			);
 			const totalWebsiteUsers = totalWebsiteUsersResult[0]?.total_users || 0;
 
-			const analyticsResults: Record<string, any> = {};
+			const analyticsResults: Record<string, unknown> = {};
 			for (const goalData of goalsList) {
 				const steps = [
 					{

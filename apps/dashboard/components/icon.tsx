@@ -81,6 +81,69 @@ const sizeMap = {
 	lg: 24,
 };
 
+function getIconSize(size: 'sm' | 'md' | 'lg' | number): number {
+	return typeof size === 'number' ? size : sizeMap[size];
+}
+
+function normalizeIconName(name: string): string {
+	return name.replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '');
+}
+
+function findIconMatch(
+	normalizedName: string,
+	availableIcons: readonly string[]
+): string | undefined {
+	const exactMatch = availableIcons.find(
+		(icon) => icon.toLowerCase() === normalizedName.toLowerCase()
+	);
+	if (exactMatch) {
+		return exactMatch;
+	}
+
+	const partialMatch = availableIcons.find(
+		(icon) =>
+			icon.toLowerCase().includes(normalizedName.toLowerCase()) ||
+			normalizedName.toLowerCase().includes(icon.toLowerCase())
+	);
+	return partialMatch;
+}
+
+function getOSMappedName(normalizedName: string): string {
+	const osMap: Record<string, string> = {
+		linux: 'Ubuntu',
+		ios: 'Apple',
+		darwin: 'macOS',
+		mac: 'macOS',
+	};
+	const lowerName = normalizedName.toLowerCase();
+	return osMap[lowerName] || normalizedName;
+}
+
+function getIconSrc(iconName: string, folder: string): string {
+	if (iconName === 'Brave' && folder === 'browsers') {
+		return `/${folder}/${iconName}.webp`;
+	}
+	return `/${folder}/${iconName}.svg`;
+}
+
+function createFallbackIcon(
+	normalizedName: string,
+	iconSize: number,
+	className?: string
+) {
+	return (
+		<div
+			className={cn(
+				'flex items-center justify-center rounded bg-muted font-medium text-muted-foreground text-xs',
+				className
+			)}
+			style={{ width: iconSize, height: iconSize }}
+		>
+			{normalizedName.charAt(0).toUpperCase()}
+		</div>
+	);
+}
+
 export function PublicIcon({
 	type,
 	name,
@@ -88,89 +151,28 @@ export function PublicIcon({
 	className,
 	fallback,
 }: PublicIconProps) {
-	const iconSize = typeof size === 'number' ? size : sizeMap[size];
+	const iconSize = getIconSize(size);
 
-	// Handle null/undefined name
 	if (!name) {
-		return fallback ? (
-			<>{fallback}</>
-		) : (
-			<div
-				className={cn(
-					'flex items-center justify-center rounded bg-muted font-medium text-muted-foreground text-xs',
-					className
-				)}
-				style={{ width: iconSize, height: iconSize }}
-			>
-				?
-			</div>
-		);
+		return fallback || createFallbackIcon('?', iconSize, className);
 	}
 
-	const normalizedName = name.replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '');
-
+	const normalizedName = normalizeIconName(name);
 	const folder = type === 'browser' ? 'browsers' : 'operating-systems';
 	const availableIcons = type === 'browser' ? BROWSER_ICONS : OS_ICONS;
 
-	// Check if we have this icon (case-insensitive)
-	const exactMatch = availableIcons.find(
-		(icon) => icon.toLowerCase() === normalizedName.toLowerCase()
-	);
-
-	// Special mapping for OS icons
-	let mappedName = normalizedName;
+	let searchName = normalizedName;
 	if (type === 'os') {
-		const osMap: Record<string, string> = {
-			linux: 'Ubuntu',
-			ios: 'Apple',
-			darwin: 'macOS',
-			mac: 'macOS',
-		};
-		const lowerName = normalizedName.toLowerCase();
-		if (osMap[lowerName]) {
-			mappedName = osMap[lowerName];
-		}
+		searchName = getOSMappedName(normalizedName);
 	}
 
-	// Check with mapped name
-	const mappedMatch = availableIcons.find(
-		(icon) => icon.toLowerCase() === mappedName.toLowerCase()
-	);
+	const iconName = findIconMatch(searchName, availableIcons);
 
-	// If no exact match, try partial matching
-	const partialMatch = availableIcons.find(
-		(icon) =>
-			icon.toLowerCase().includes(normalizedName.toLowerCase()) ||
-			normalizedName.toLowerCase().includes(icon.toLowerCase())
-	);
-
-	const iconName = exactMatch || mappedMatch || partialMatch;
-
-	// Try to find the icon file with supported extensions
-	let iconSrc: string | null = null;
-	if (iconName) {
-		if (iconName === 'Brave' && folder === 'browsers') {
-			iconSrc = `/${folder}/${iconName}.webp`;
-		} else {
-			iconSrc = `/${folder}/${iconName}.svg`;
-		}
+	if (!iconName) {
+		return fallback || createFallbackIcon(normalizedName, iconSize, className);
 	}
 
-	if (!(iconName && iconSrc)) {
-		return fallback ? (
-			<>{fallback}</>
-		) : (
-			<div
-				className={cn(
-					'flex items-center justify-center rounded bg-muted font-medium text-muted-foreground text-xs',
-					className
-				)}
-				style={{ width: iconSize, height: iconSize }}
-			>
-				{normalizedName.charAt(0).toUpperCase()}
-			</div>
-		);
-	}
+	const iconSrc = getIconSrc(iconName, folder);
 
 	return (
 		<div

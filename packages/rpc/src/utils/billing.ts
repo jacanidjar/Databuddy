@@ -1,5 +1,6 @@
 import { and, db, eq, member } from '@databuddy/db';
 import { cacheable } from '@databuddy/redis';
+import { logger } from '@databuddy/shared';
 import { Autumn } from 'autumn-js';
 
 const autumn = new Autumn();
@@ -20,7 +21,7 @@ export async function checkAndTrackWebsiteCreation(customerId: string) {
 		}
 		return { allowed: true };
 	} catch (error) {
-		console.error('[Billing Util] Error with autumn checkAndTrack:', { error });
+		logger.error('[Billing Util] Error with autumn checkAndTrack:', { error });
 		return { allowed: true };
 	}
 }
@@ -37,7 +38,7 @@ export async function trackWebsiteUsage(customerId: string, value: number) {
 		});
 		return { success: true };
 	} catch (error) {
-		console.error('[Billing Util] Error with autumn track:', { error });
+		logger.error('[Billing Util] Error with autumn track:', { error });
 		return { success: false };
 	}
 }
@@ -45,7 +46,9 @@ export async function trackWebsiteUsage(customerId: string, value: number) {
 async function _getOrganizationOwnerId(
 	organizationId: string
 ): Promise<string | null> {
-	if (!organizationId) return null;
+	if (!organizationId) {
+		return null;
+	}
 	try {
 		const orgMember = await db.query.member.findFirst({
 			where: and(
@@ -56,7 +59,7 @@ async function _getOrganizationOwnerId(
 		});
 		return orgMember?.userId || null;
 	} catch (error) {
-		console.error('[Billing Util] Error with _getOrganizationOwnerId:', {
+		logger.error('[Billing Util] Error with _getOrganizationOwnerId:', {
 			error,
 		});
 		return null;

@@ -1,10 +1,10 @@
 import { chQuery, funnelDefinitions } from '@databuddy/db';
+import { discordLogger as logger } from '@databuddy/shared';
 import { TRPCError } from '@trpc/server';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod/v4';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 import { authorizeWebsiteAccess } from '../utils/auth';
-import { logger } from '../utils/discord-webhook';
 import { parseReferrer } from '../utils/referrer';
 
 const funnelStepSchema = z.object({
@@ -732,7 +732,7 @@ export const funnelsRouter = createTRPCRouter({
 
 				// Calculate overall metrics
 				const firstStep = analyticsResults[0];
-				const lastStep = analyticsResults[analyticsResults.length - 1];
+				const lastStep = analyticsResults.at(-1);
 				const biggestDropoff = analyticsResults.reduce(
 					(max, step) => (step.dropoff_rate > max.dropoff_rate ? step : max),
 					analyticsResults[1] || analyticsResults[0]

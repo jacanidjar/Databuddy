@@ -8,6 +8,7 @@
     "@databuddy/auth": "workspace:*",
     "@databuddy/db": "workspace:*",
     "@databuddy/redis": "workspace:*",
+    "@databuddy/validation": "workspace:*",
     "@trpc/react-query": "^11.4.3",
     "autumn-js": "^0.0.111",
     "superjson": "^2.2.2",

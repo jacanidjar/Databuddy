@@ -80,7 +80,7 @@ export function parseReferrer(
 			url: referrerUrl,
 			domain: hostname,
 		};
-	} catch (error) {
+	} catch {
 		// If URL is invalid, treat as direct traffic
 		return {
 			type: 'direct',
@@ -155,7 +155,7 @@ export function isInternalReferrer(
 		}
 
 		return false;
-	} catch (e) {
+	} catch {
 		// If URL parsing fails, it's not an internal referrer
 		return false;
 	}

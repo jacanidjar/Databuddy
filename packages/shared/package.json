@@ -6,5 +6,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@logtail/edge": "^0.5.5"
   }
 }

@@ -5,6 +5,7 @@ import { Elysia } from 'elysia';
 import { assistant } from './routes/assistant';
 import { health } from './routes/health';
 import { query } from './routes/query';
+import { logger } from '@databuddy/shared';
 
 const app = new Elysia()
 	.use(

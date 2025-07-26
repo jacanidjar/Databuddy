@@ -1,6 +1,7 @@
 import { websitesApi } from '@databuddy/auth';
 import { db, eq, websites } from '@databuddy/db';
 import { cacheable } from '@databuddy/redis';
+import { logger } from '@databuddy/shared';
 import { TRPCError } from '@trpc/server';
 import type { Context } from '../trpc';
 
@@ -16,7 +17,7 @@ const getWebsiteById = cacheable(
 				where: eq(websites.id, id),
 			});
 		} catch (error) {
-			console.error('Error fetching website by ID:', { error, id });
+			logger.error('Error fetching website by ID:', { error, id });
 			return null;
 		}
 	},

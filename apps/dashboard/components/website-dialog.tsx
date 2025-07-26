@@ -2,11 +2,12 @@
 
 import { authClient } from '@databuddy/auth/client';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { TRPCError } from '@trpc/server';
 import { LoaderCircle } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import * as z from 'zod';
+import z from 'zod/v4';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -52,7 +53,9 @@ export function WebsiteDialog({
 	open,
 	onOpenChange,
 	website,
-	onSave = () => {},
+	onSave = () => {
+		// Do nothing
+	},
 }: WebsiteDialogProps) {
 	const isEditing = !!website;
 	const { data: activeOrganization } = authClient.useActiveOrganization();
@@ -77,7 +80,7 @@ export function WebsiteDialog({
 		}
 	}, [website, form]);
 
-	const handleSubmit = form.handleSubmit(async (formData) => {
+	const handleSubmit = form.handleSubmit((formData) => {
 		const submissionData: CreateWebsiteData = {
 			name: formData.name,
 			domain: formData.domain,
@@ -96,9 +99,9 @@ export function WebsiteDialog({
 				onOpenChange(false);
 				return `Website ${isEditing ? 'updated' : 'created'} successfully!`;
 			},
-			error: (err: any) => {
+			error: (err: TRPCError) => {
 				const message =
-					err.data?.code === 'CONFLICT'
+					err.code === 'CONFLICT'
 						? 'A website with this domain already exists.'
 						: `Failed to ${isEditing ? 'update' : 'create'} website.`;
 				return message;
@@ -164,7 +167,9 @@ export function WebsiteDialog({
 														) {
 															try {
 																domain = new URL(domain).hostname;
-															} catch {}
+															} catch {
+																// Do nothing
+															}
 														}
 														field.onChange(domain.replace(/^www\./, ''));
 													}}
