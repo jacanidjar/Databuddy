@@ -18,7 +18,6 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -31,15 +30,6 @@ import {
 	FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-
-const setupFormSchema = z.object({
-	password: z.string().min(1, 'Password is required'),
-});
-
-const verifyFormSchema = z.object({
-	code: z.string().min(6, 'Code is required').max(6, 'Code should be 6 digits'),
-	trustDevice: z.boolean(),
-});
 
 export function TwoFactorForm() {
 	const { data: session } = useSession();

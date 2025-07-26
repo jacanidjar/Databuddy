@@ -10,7 +10,6 @@ import { createAuthClient } from 'better-auth/react';
 import type { auth } from '../auth';
 import { ac, admin, member, owner } from '../permissions';
 
-// Define a type for the auth client configuration
 export type AuthClientConfig = {
 	baseURL?: string;
 	debug?: boolean;
