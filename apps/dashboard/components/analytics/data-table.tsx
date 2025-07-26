@@ -230,7 +230,9 @@ function FullScreenTable<TData extends { name: string | number }, TValue>({
 	}, [tabFocusIndex, tabs]);
 
 	const handleTabKeyDown = (e: React.KeyboardEvent, idx: number) => {
-		if (!tabs) return;
+		if (!tabs) {
+			return;
+		}
 		if (e.key === 'ArrowRight') {
 			e.preventDefault();
 			setTabFocusIndex((idx + 1) % tabs.length);
@@ -245,7 +247,9 @@ function FullScreenTable<TData extends { name: string | number }, TValue>({
 			setTabFocusIndex(tabs.length - 1);
 		} else if (e.key === 'Enter' || e.key === ' ') {
 			e.preventDefault();
-			if (onTabChange) onTabChange(tabs[idx].id);
+			if (onTabChange) {
+				onTabChange(tabs[idx].id);
+			}
 		}
 	};
 
@@ -573,7 +577,6 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 	title,
 	description,
 	isLoading = false,
-	initialPageSize,
 	emptyMessage = 'No data available',
 	className,
 	onRowClick,
@@ -605,14 +608,20 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 
 	// Focus trap and restore
 	useEffect(() => {
-		if (!fullScreen) return;
+		if (!fullScreen) {
+			return;
+		}
 		lastFocusedElement.current = document.activeElement as HTMLElement;
 		const focusable = modalRef.current?.querySelectorAll<HTMLElement>(
 			'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 		);
-		if (focusable?.length) focusable[0].focus();
+		if (focusable?.length) {
+			focusable[0].focus();
+		}
 		const handleKeyDown = (e: KeyboardEvent) => {
-			if (e.key === 'Escape') setFullScreen(false);
+			if (e.key === 'Escape') {
+				setFullScreen(false);
+			}
 			if (e.key === 'Tab' && focusable && focusable.length) {
 				const first = focusable[0];
 				const last = focusable[focusable.length - 1];
@@ -699,7 +708,9 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 
 	const handleRowMouseEnter = useCallback(
 		(row: TData, rowId: string) => {
-			if (!renderTooltipContent) return;
+			if (!renderTooltipContent) {
+				return;
+			}
 			const content = renderTooltipContent(row);
 			setTooltipState({ visible: true, content });
 			setHoveredRow(rowId);
@@ -708,14 +719,18 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 	);
 
 	const handleMouseLeave = useCallback(() => {
-		if (!renderTooltipContent) return;
+		if (!renderTooltipContent) {
+			return;
+		}
 		setTooltipState({ visible: false, content: null });
 		setHoveredRow(null);
 	}, [renderTooltipContent]);
 
 	const handleTabChange = React.useCallback(
 		(tabId: string) => {
-			if (tabId === activeTab) return;
+			if (tabId === activeTab) {
+				return;
+			}
 
 			setIsTransitioning(true);
 			setTimeout(() => {
@@ -816,7 +831,6 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 							<nav
 								aria-label="Data view options"
 								className="inline-flex gap-0.5 rounded bg-muted/40 p-0.5"
-								role="tablist"
 							>
 								{tabs.map((tab) => {
 									const isActive = activeTab === tab.id;
@@ -872,6 +886,7 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 					onMouseLeave={handleMouseLeave}
 					onMouseMove={handleMouseMove}
 					ref={tableContainerRef}
+					role="tablist"
 				>
 					<AnimatePresence>
 						{renderTooltipContent && tooltipState.visible && (

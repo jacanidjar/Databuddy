@@ -41,7 +41,9 @@ export function MapComponent({
 	const locationsData = locationData;
 
 	const countryData = useMemo(() => {
-		if (!locationsData?.countries) return null;
+		if (!locationsData?.countries) {
+			return null;
+		}
 
 		const validCountries = locationsData.countries.filter(
 			(country: any) => country.country && country.country.trim() !== ''
@@ -79,7 +81,9 @@ export function MapComponent({
 	const [hoveredId, setHoveredId] = useState<string | null>(null);
 
 	const processedCountryData = useMemo(() => {
-		if (!countryData?.data) return null;
+		if (!countryData?.data) {
+			return null;
+		}
 
 		return countryData.data.map((item: any) => {
 			const population = getCountryPopulation(item.value);
@@ -92,7 +96,9 @@ export function MapComponent({
 	}, [countryData?.data]);
 
 	const colorScale = useMemo(() => {
-		if (!processedCountryData) return () => '#e5e7eb';
+		if (!processedCountryData) {
+			return () => '#e5e7eb';
+		}
 
 		const metricToUse = mode === 'perCapita' ? 'perCapita' : 'count';
 		const values = processedCountryData?.map((d: any) => d[metricToUse]) || [0];
@@ -108,7 +114,9 @@ export function MapComponent({
 			.range([0.1, 1]);
 
 		return (value: number) => {
-			if (value === 0) return 'rgba(229, 231, 235, 0.6)';
+			if (value === 0) {
+				return 'rgba(229, 231, 235, 0.6)';
+			}
 
 			const intensity = scale(value);
 
@@ -222,6 +230,7 @@ export function MapComponent({
 				}
 			}}
 			ref={containerRef}
+			role="tablist"
 			style={{ height }}
 		>
 			{passedIsLoading && (

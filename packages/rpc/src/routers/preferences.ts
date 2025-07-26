@@ -32,7 +32,7 @@ export const preferencesRouter = createTRPCRouter({
 					dateFormat: 'MMM D, YYYY',
 					timeFormat: 'h:mm a',
 					updatedAt: new Date().toISOString(),
-				} as never)
+				})
 				.returning();
 			preferences = inserted[0];
 		}
@@ -59,7 +59,7 @@ export const preferencesRouter = createTRPCRouter({
 						dateFormat: input.dateFormat || preferences.dateFormat,
 						timeFormat: input.timeFormat || preferences.timeFormat,
 						updatedAt: new Date().toISOString(),
-					} as never)
+					})
 					.where(eq(userPreferences.userId, user.id))
 					.returning();
 				preferences = updated[0];
@@ -73,7 +73,7 @@ export const preferencesRouter = createTRPCRouter({
 						dateFormat: input.dateFormat || 'MMM D, YYYY',
 						timeFormat: input.timeFormat || 'h:mm a',
 						updatedAt: new Date().toISOString(),
-					} as never)
+					})
 					.returning();
 				preferences = inserted[0];
 			}

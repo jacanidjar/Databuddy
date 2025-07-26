@@ -237,7 +237,7 @@ export const goalsRouter = createTRPCRouter({
 					filters: input.filters,
 					isActive: true,
 					createdBy: ctx.user.id,
-				} as never)
+				})
 				.returning();
 
 			return newGoal;
@@ -260,7 +260,7 @@ export const goalsRouter = createTRPCRouter({
 				.set({
 					...updates,
 					updatedAt: new Date().toISOString(),
-				} as never)
+				})
 				.where(and(eq(goals.id, id), isNull(goals.deletedAt)))
 				.returning();
 			return updatedGoal;
@@ -282,7 +282,7 @@ export const goalsRouter = createTRPCRouter({
 				.set({
 					deletedAt: new Date().toISOString(),
 					isActive: false,
-				} as never)
+				})
 				.where(and(eq(goals.id, input.id), isNull(goals.deletedAt)));
 			return { success: true };
 		}),
