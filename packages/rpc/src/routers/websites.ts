@@ -132,7 +132,6 @@ export const websitesRouter = createTRPCRouter({
 				}
 			);
 
-			// Invalidate cache for this user's websites
 			await drizzleCache.invalidateByTables(['websites']);
 
 			return website;
@@ -164,9 +163,7 @@ export const websitesRouter = createTRPCRouter({
 				}
 			);
 
-			// Invalidate cache for this user's websites
 			await drizzleCache.invalidateByTables(['websites']);
-			// Invalidate getById cache for this website
 			await drizzleCache.invalidateByKey(`getById:${input.id}`);
 
 			return updatedWebsite;
@@ -195,9 +192,7 @@ export const websitesRouter = createTRPCRouter({
 				}
 			);
 
-			// Invalidate cache for this user's websites
 			await drizzleCache.invalidateByTables(['websites']);
-			// Invalidate getById cache for this website
 			await drizzleCache.invalidateByKey(`getById:${input.id}`);
 
 			return { success: true };
