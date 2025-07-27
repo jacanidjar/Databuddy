@@ -52,6 +52,7 @@ export interface ReferrerAnalytics {
 		name: string;
 		type: string;
 		domain: string;
+		url: string;
 	};
 	total_users: number;
 	completed_users: number;
@@ -484,14 +485,19 @@ export const buildFilterConditions = (
 
 const parseReferrer = (referrer: string) => {
 	if (!referrer || referrer === 'Direct') {
-		return { name: 'Direct', type: 'direct', domain: '' };
+		return { name: 'Direct', type: 'direct', domain: '', url: '' };
 	}
 
 	try {
 		const url = new URL(referrer);
-		return { name: url.hostname, type: 'referrer', domain: url.hostname };
+		return {
+			name: url.hostname,
+			type: 'referrer',
+			domain: url.hostname,
+			url: referrer,
+		};
 	} catch {
-		return { name: referrer, type: 'referrer', domain: '' };
+		return { name: referrer, type: 'referrer', domain: '', url: referrer };
 	}
 };
 
@@ -598,7 +604,7 @@ export const processFunnelAnalytics = async (
 
 const calculateReferrerStepCounts = (
 	group: {
-		parsed: { name: string; type: string; domain: string };
+		parsed: { name: string; type: string; domain: string; url: string };
 		sessionIds: Set<string>;
 	},
 	sessionEvents: Map<
@@ -652,7 +658,7 @@ const calculateReferrerConversionRate = (
 const processReferrerGroup = (
 	groupKey: string,
 	group: {
-		parsed: { name: string; type: string; domain: string };
+		parsed: { name: string; type: string; domain: string; url: string };
 		sessionIds: Set<string>;
 	},
 	sessionEvents: Map<
@@ -694,7 +700,7 @@ const aggregateReferrerAnalytics = (
 	const aggregated = new Map<
 		string,
 		{
-			parsed: { name: string; type: string; domain: string };
+			parsed: { name: string; type: string; domain: string; url: string };
 			total_users: number;
 			completed_users: number;
 			conversion_rate_sum: number;
@@ -797,7 +803,7 @@ export const processFunnelAnalyticsByReferrer = async (
 	const referrerGroups = new Map<
 		string,
 		{
-			parsed: { name: string; type: string; domain: string };
+			parsed: { name: string; type: string; domain: string; url: string };
 			sessionIds: Set<string>;
 		}
 	>();
