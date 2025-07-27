@@ -3,16 +3,7 @@
 import { ChartBarIcon, TrendDownIcon } from '@phosphor-icons/react';
 import { useAtom } from 'jotai';
 import { useParams } from 'next/navigation';
-import {
-	lazy,
-	Suspense,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { Button } from '@/components/ui/button';
+import { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import {
 	type CreateFunnelData,
@@ -22,9 +13,7 @@ import {
 	useFunnelAnalyticsByReferrer,
 	useFunnels,
 } from '@/hooks/use-funnels';
-import { useWebsite } from '@/hooks/use-websites';
 import {
-	dateRangeAtom,
 	formattedDateRangeAtom,
 	timeGranularityAtom,
 } from '@/stores/jotai/filterAtoms';
@@ -53,37 +42,9 @@ const DeleteFunnelDialog = lazy(() =>
 	}))
 );
 
-const PageHeaderSkeleton = () => (
-	<div className="space-y-6">
-		<div className="border-b bg-gradient-to-r from-background via-background to-muted/20 pb-6">
-			<div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-				<div className="space-y-2">
-					<div className="flex items-center gap-3">
-						<div className="h-12 w-12 animate-pulse rounded-xl bg-muted" />
-						<div>
-							<div className="mb-2 h-8 w-48 animate-pulse rounded bg-muted" />
-							<div className="h-4 w-64 animate-pulse rounded bg-muted" />
-						</div>
-					</div>
-				</div>
-				<div className="flex items-center gap-3">
-					<div className="h-10 w-32 animate-pulse rounded-lg bg-muted" />
-					<div className="h-10 w-36 animate-pulse rounded-lg bg-muted" />
-				</div>
-			</div>
-		</div>
-		<div className="space-y-4">
-			<div className="flex items-center justify-between">
-				<div className="h-6 w-32 animate-pulse rounded bg-muted" />
-				<div className="h-4 w-16 animate-pulse rounded bg-muted" />
-			</div>
-		</div>
-	</div>
-);
-
 const FunnelsListSkeleton = () => (
 	<div className="space-y-3">
-		{[...Array(3)].map((_, i) => (
+		{[...new Array(3)].map((_, i) => (
 			<Card
 				className="animate-pulse rounded-xl"
 				key={`funnel-skeleton-${i + 1}`}
@@ -130,26 +91,7 @@ export default function FunnelsPage() {
 	const [deletingFunnelId, setDeletingFunnelId] = useState<string | null>(null);
 
 	// Intersection observer for lazy loading
-	const [isVisible, setIsVisible] = useState(false);
 	const pageRef = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		const observer = new IntersectionObserver(
-			([entry]) => {
-				if (entry.isIntersecting) {
-					setIsVisible(true);
-					observer.disconnect();
-				}
-			},
-			{ threshold: 0.1 }
-		);
-
-		if (pageRef.current) {
-			observer.observe(pageRef.current);
-		}
-
-		return () => observer.disconnect();
-	}, []);
 
 	const [currentGranularity] = useAtom(timeGranularityAtom);
 	const [formattedDateRangeState] = useAtom(formattedDateRangeAtom);
@@ -162,8 +104,6 @@ export default function FunnelsPage() {
 		}),
 		[formattedDateRangeState, currentGranularity]
 	);
-
-	const { data: websiteData } = useWebsite(websiteId);
 
 	const {
 		data: funnels,
@@ -206,13 +146,12 @@ export default function FunnelsPage() {
 		{ enabled: !!expandedFunnelId }
 	);
 
-	// Preload autocomplete data for instant suggestions in dialogs
 	const autocompleteQuery = useAutocompleteData(websiteId);
 
 	const handleRefresh = useCallback(async () => {
 		setIsRefreshing(true);
 		try {
-			const promises: Promise<any>[] = [
+			const promises: Promise<unknown>[] = [
 				refetchFunnels(),
 				autocompleteQuery.refetch(),
 			];
@@ -283,15 +222,13 @@ export default function FunnelsPage() {
 	};
 
 	const formatCompletionTime = (seconds: number) => {
-		if (seconds < 60) return `${Math.round(seconds)}s`;
-		if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
-		return `${Math.round(seconds / 3600)}h`;
-	};
-
-	const handleRetry = () => {
-		if (expandedFunnelId) {
-			refetchAnalytics();
+		if (seconds < 60) {
+			return `${Math.round(seconds)}s`;
 		}
+		if (seconds < 3600) {
+			return `${Math.round(seconds / 60)}m`;
+		}
+		return `${Math.round(seconds / 3600)}h`;
 	};
 
 	if (funnelsError) {
@@ -348,7 +285,6 @@ export default function FunnelsPage() {
 				}
 				title="Conversion Funnels"
 				websiteId={websiteId}
-				websiteName={websiteData?.name ?? undefined}
 			/>
 
 			<Suspense fallback={<FunnelsListSkeleton />}>
@@ -368,7 +304,9 @@ export default function FunnelsPage() {
 					onToggleFunnel={handleToggleFunnel}
 				>
 					{(funnel) => {
-						if (expandedFunnelId !== funnel.id) return null;
+						if (expandedFunnelId !== funnel.id) {
+							return null;
+						}
 
 						return (
 							<Suspense
@@ -392,6 +330,7 @@ export default function FunnelsPage() {
 									onKeyDown={(e) => {
 										e.stopPropagation();
 									}}
+									role="tablist"
 								>
 									<FunnelAnalytics
 										data={analyticsData}
@@ -399,6 +338,10 @@ export default function FunnelsPage() {
 										formatCompletionTime={formatCompletionTime}
 										isLoading={analyticsLoading}
 										onRetry={refetchAnalytics}
+										referrerAnalytics={
+											referrerAnalyticsData?.referrer_analytics
+										}
+										selectedReferrer={selectedReferrer}
 									/>
 
 									<div className="border-border/50 border-t pt-4">
@@ -408,7 +351,7 @@ export default function FunnelsPage() {
 												start_date: formattedDateRangeState.startDate,
 												end_date: formattedDateRangeState.endDate,
 											}}
-											error={referrerAnalyticsError as any}
+											error={referrerAnalyticsError}
 											funnelId={funnel.id}
 											isLoading={referrerAnalyticsLoading}
 											onReferrerChange={handleReferrerChange}

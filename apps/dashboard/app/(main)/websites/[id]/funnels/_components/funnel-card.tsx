@@ -30,6 +30,44 @@ interface FunnelCardProps {
 	children?: React.ReactNode;
 }
 
+const getStepIcon = (stepType: string) => {
+	if (stepType === 'PAGE_VIEW') {
+		return (
+			<FileTextIcon
+				className="mr-1 h-3 w-3"
+				style={{ color: 'var(--color-primary)' }}
+				weight="duotone"
+			/>
+		);
+	}
+	if (stepType === 'EVENT') {
+		return (
+			<MouseRightClickIcon
+				className="mr-1 h-3 w-3"
+				style={{ color: 'var(--color-warning)' }}
+				weight="duotone"
+			/>
+		);
+	}
+	return (
+		<DotsThreeIcon
+			className="mr-1 h-3 w-3"
+			style={{ color: 'var(--color-muted-foreground)' }}
+			weight="duotone"
+		/>
+	);
+};
+
+const getStepTooltipText = (stepType: string, target: string) => {
+	if (stepType === 'PAGE_VIEW') {
+		return `Page: ${target}`;
+	}
+	if (stepType === 'EVENT') {
+		return `Event: ${target}`;
+	}
+	return target;
+};
+
 export function FunnelCard({
 	funnel,
 	isExpanded,
@@ -38,11 +76,11 @@ export function FunnelCard({
 	onDelete,
 	children,
 }: FunnelCardProps) {
-	// Make the entire card clickable
 	const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
-		// Prevent toggling if clicking on a button inside the card
 		const target = e.target as HTMLElement;
-		if (target.closest('button')) return;
+		if (target.closest('button')) {
+			return;
+		}
 		onToggle(funnel.id);
 	};
 
@@ -90,36 +128,14 @@ export function FunnelCard({
 													borderColor: 'var(--color-border)',
 												}}
 											>
-												{step.type === 'PAGE_VIEW' ? (
-													<FileTextIcon
-														className="mr-1 h-3 w-3"
-														style={{ color: 'var(--color-primary)' }}
-														weight="duotone"
-													/>
-												) : step.type === 'EVENT' ? (
-													<MouseRightClickIcon
-														className="mr-1 h-3 w-3"
-														style={{ color: 'var(--color-warning)' }}
-														weight="duotone"
-													/>
-												) : (
-													<DotsThreeIcon
-														className="mr-1 h-3 w-3"
-														style={{ color: 'var(--color-muted-foreground)' }}
-														weight="duotone"
-													/>
-												)}
+												{getStepIcon(step.type)}
 												<span className="inline-block max-w-[120px] overflow-hidden text-ellipsis">
 													{step.name || step.target}
 												</span>
 											</span>
 										</TooltipTrigger>
 										<TooltipContent className="px-2 py-1 text-xs" side="bottom">
-											{step.type === 'PAGE_VIEW'
-												? `Page: ${step.target}`
-												: step.type === 'EVENT'
-													? `Event: ${step.target}`
-													: step.target}
+											{getStepTooltipText(step.type, step.target)}
 										</TooltipContent>
 									</Tooltip>
 								</TooltipProvider>

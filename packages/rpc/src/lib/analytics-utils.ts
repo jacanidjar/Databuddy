@@ -48,7 +48,11 @@ export interface FunnelAnalytics {
 
 export interface ReferrerAnalytics {
 	referrer: string;
-	referrer_parsed: ReturnType<typeof parseReferrer>;
+	referrer_parsed: {
+		name: string;
+		type: string;
+		domain: string;
+	};
 	total_users: number;
 	completed_users: number;
 	conversion_rate: number;
@@ -480,14 +484,14 @@ export const buildFilterConditions = (
 
 const parseReferrer = (referrer: string) => {
 	if (!referrer || referrer === 'Direct') {
-		return { domain: null, url: null };
+		return { name: 'Direct', type: 'direct', domain: '' };
 	}
 
 	try {
 		const url = new URL(referrer);
-		return { domain: url.hostname, url: referrer };
+		return { name: url.hostname, type: 'referrer', domain: url.hostname };
 	} catch {
-		return { domain: null, url: referrer };
+		return { name: referrer, type: 'referrer', domain: '' };
 	}
 };
 
@@ -592,9 +596,11 @@ export const processFunnelAnalytics = async (
 	};
 };
 
-const processReferrerGroup = (
-	groupKey: string,
-	group: { parsed: ReturnType<typeof parseReferrer>; sessionIds: Set<string> },
+const calculateReferrerStepCounts = (
+	group: {
+		parsed: { name: string; type: string; domain: string };
+		sessionIds: Set<string>;
+	},
 	sessionEvents: Map<
 		string,
 		Array<{
@@ -603,9 +609,8 @@ const processReferrerGroup = (
 			first_occurrence: number;
 			referrer?: string;
 		}>
-	>,
-	steps: AnalyticsStep[]
-): ReferrerAnalytics | null => {
+	>
+): Map<number, Set<string>> => {
 	const stepCounts = new Map<number, Set<string>>();
 
 	for (const sessionId of group.sessionIds) {
@@ -631,17 +636,48 @@ const processReferrerGroup = (
 		}
 	}
 
+	return stepCounts;
+};
+
+const calculateReferrerConversionRate = (
+	total_users: number,
+	completed_users: number
+): number => {
+	if (total_users === 0) {
+		return 0;
+	}
+	return Math.round((completed_users / total_users) * 100 * 100) / 100;
+};
+
+const processReferrerGroup = (
+	groupKey: string,
+	group: {
+		parsed: { name: string; type: string; domain: string };
+		sessionIds: Set<string>;
+	},
+	sessionEvents: Map<
+		string,
+		Array<{
+			step_number: number;
+			step_name: string;
+			first_occurrence: number;
+			referrer?: string;
+		}>
+	>,
+	steps: AnalyticsStep[]
+): ReferrerAnalytics | null => {
+	const stepCounts = calculateReferrerStepCounts(group, sessionEvents);
+
 	const total_users = stepCounts.get(1)?.size || 0;
 	if (total_users === 0) {
 		return null;
 	}
 
 	const completed_users = stepCounts.get(steps.length)?.size || 0;
-	let conversion_rate = 0;
-	if (total_users > 0) {
-		conversion_rate =
-			Math.round((completed_users / total_users) * 100 * 100) / 100;
-	}
+	const conversion_rate = calculateReferrerConversionRate(
+		total_users,
+		completed_users
+	);
 
 	return {
 		referrer: groupKey,
@@ -658,7 +694,7 @@ const aggregateReferrerAnalytics = (
 	const aggregated = new Map<
 		string,
 		{
-			parsed: ReturnType<typeof parseReferrer>;
+			parsed: { name: string; type: string; domain: string };
 			total_users: number;
 			completed_users: number;
 			conversion_rate_sum: number;
@@ -760,7 +796,10 @@ export const processFunnelAnalyticsByReferrer = async (
 
 	const referrerGroups = new Map<
 		string,
-		{ parsed: ReturnType<typeof parseReferrer>; sessionIds: Set<string> }
+		{
+			parsed: { name: string; type: string; domain: string };
+			sessionIds: Set<string>;
+		}
 	>();
 
 	for (const [sessionId, events] of sessionEvents) {

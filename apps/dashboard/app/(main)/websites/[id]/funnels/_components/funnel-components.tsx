@@ -96,14 +96,20 @@ export const AutocompleteInput = memo(
 				/>
 				{isOpen && filteredSuggestions.length > 0 && (
 					<div className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border bg-popover shadow-lg">
-						{filteredSuggestions.map((suggestion, index) => (
-							<div
-								className="cursor-pointer border-b px-3 py-2 text-sm last:border-b-0 hover:bg-accent hover:text-accent-foreground"
-								key={index}
+						{filteredSuggestions.map((suggestion) => (
+							<button
+								className="w-full cursor-pointer border-b px-3 py-2 text-left text-sm last:border-b-0 hover:bg-accent hover:text-accent-foreground"
+								key={suggestion}
 								onClick={() => handleSelect(suggestion)}
+								onKeyDown={(e) => {
+									if (e.key === 'Enter' || e.key === ' ') {
+										handleSelect(suggestion);
+									}
+								}}
+								type="button"
 							>
 								{suggestion}
-							</div>
+							</button>
 						))}
 					</div>
 				)}

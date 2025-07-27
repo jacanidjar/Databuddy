@@ -8,16 +8,29 @@ import {
 	TrendDownIcon,
 	UsersIcon,
 } from '@phosphor-icons/react';
+import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import type { FunnelAnalyticsData } from '@/types/funnels';
 import { FunnelFlow } from './funnel-flow';
+
+interface ReferrerAnalytics {
+	referrer: string;
+	referrer_parsed: {
+		domain: string;
+		url: string;
+	};
+	total_users: number;
+	completed_users: number;
+	conversion_rate: number;
+}
 
 interface FunnelAnalyticsProps {
 	isLoading: boolean;
 	error: Error | null;
 	data: FunnelAnalyticsData | undefined;
 	onRetry: () => void;
-	formatCompletionTime: (seconds: number) => string;
+	selectedReferrer?: string;
+	referrerAnalytics?: ReferrerAnalytics[];
 }
 
 export function FunnelAnalytics({
@@ -25,8 +38,62 @@ export function FunnelAnalytics({
 	error,
 	data,
 	onRetry,
-	formatCompletionTime,
+	selectedReferrer,
+	referrerAnalytics,
 }: FunnelAnalyticsProps) {
+	// Derive selected referrer's metrics from referrer_analytics data
+	const selectedReferrerData = useMemo(() => {
+		if (!selectedReferrer || selectedReferrer === 'all' || !referrerAnalytics) {
+			return null;
+		}
+
+		const referrer = referrerAnalytics.find(
+			(r) =>
+				r.referrer === selectedReferrer ||
+				(selectedReferrer === 'direct' &&
+					(r.referrer === 'direct' || r.referrer === ''))
+		);
+
+		return referrer || null;
+	}, [selectedReferrer, referrerAnalytics]);
+
+	// Use selected referrer data if available, otherwise use main analytics data
+	const displayData = selectedReferrerData
+		? {
+				total_users_entered: selectedReferrerData.total_users,
+				total_users_completed: selectedReferrerData.completed_users,
+				overall_conversion_rate: selectedReferrerData.conversion_rate,
+				avg_completion_time: 0, // Not available in referrer analytics
+				avg_completion_time_formatted: '0s',
+				biggest_dropoff_step: 1,
+				biggest_dropoff_rate: 100 - selectedReferrerData.conversion_rate,
+				steps_analytics: [
+					{
+						step_number: 1,
+						step_name: 'Landing Page',
+						users: selectedReferrerData.total_users,
+						total_users: selectedReferrerData.total_users,
+						conversion_rate: 100,
+						dropoffs: 0,
+						dropoff_rate: 0,
+						avg_time_to_complete: 0,
+					},
+					{
+						step_number: 2,
+						step_name: 'Completed',
+						users: selectedReferrerData.completed_users,
+						total_users: selectedReferrerData.total_users,
+						conversion_rate: selectedReferrerData.conversion_rate,
+						dropoffs:
+							selectedReferrerData.total_users -
+							selectedReferrerData.completed_users,
+						dropoff_rate: 100 - selectedReferrerData.conversion_rate,
+						avg_time_to_complete: 0,
+					},
+				],
+			}
+		: data;
+
 	if (isLoading) {
 		return (
 			<div className="fade-in-50 animate-in space-y-4 duration-500">
@@ -37,7 +104,7 @@ export function FunnelAnalytics({
 						<div className="h-4 w-24 animate-pulse rounded bg-muted" />
 					</div>
 					<div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-						{[...Array(4)].map((_, i) => (
+						{[...new Array(4)].map((_, i) => (
 							<div
 								className="animate-pulse rounded border bg-card p-3"
 								key={`summary-stat-skeleton-${i + 1}`}
@@ -59,7 +126,7 @@ export function FunnelAnalytics({
 						<div className="h-4 w-20 animate-pulse rounded bg-muted" />
 					</div>
 					<div className="space-y-2">
-						{[...Array(3)].map((_, i) => (
+						{[...new Array(3)].map((_, i) => (
 							<div
 								className="animate-pulse space-y-1"
 								key={`funnel-step-skeleton-${i + 1}`}
@@ -113,7 +180,7 @@ export function FunnelAnalytics({
 		);
 	}
 
-	if (!data) {
+	if (!displayData) {
 		return null;
 	}
 
@@ -127,7 +194,11 @@ export function FunnelAnalytics({
 						size={14}
 						weight="duotone"
 					/>
-					<h3 className="font-semibold text-foreground text-sm">Performance</h3>
+					<h3 className="font-semibold text-foreground text-sm">
+						{selectedReferrerData
+							? `Performance - ${selectedReferrerData.referrer_parsed?.domain || selectedReferrerData.referrer}`
+							: 'Performance'}
+					</h3>
 				</div>
 				<div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
 					<div className="rounded border bg-card p-3">
@@ -136,7 +207,7 @@ export function FunnelAnalytics({
 							<span className="text-muted-foreground text-xs">Users</span>
 						</div>
 						<div className="font-semibold text-sm">
-							{data.total_users_entered.toLocaleString()}
+							{displayData.total_users_entered.toLocaleString()}
 						</div>
 					</div>
 					<div className="rounded border bg-card p-3">
@@ -145,7 +216,7 @@ export function FunnelAnalytics({
 							<span className="text-muted-foreground text-xs">Conversion</span>
 						</div>
 						<div className="font-semibold text-primary text-sm">
-							{data.overall_conversion_rate.toFixed(1)}%
+							{displayData.overall_conversion_rate.toFixed(1)}%
 						</div>
 					</div>
 					<div className="rounded border bg-card p-3">
@@ -154,7 +225,7 @@ export function FunnelAnalytics({
 							<span className="text-muted-foreground text-xs">Avg Time</span>
 						</div>
 						<div className="font-semibold text-sm">
-							{formatCompletionTime(data.avg_completion_time)}
+							{displayData.avg_completion_time}
 						</div>
 					</div>
 					<div className="rounded border bg-card p-3">
@@ -163,7 +234,7 @@ export function FunnelAnalytics({
 							<span className="text-muted-foreground text-xs">Drop-off</span>
 						</div>
 						<div className="font-semibold text-destructive text-sm">
-							{data.biggest_dropoff_rate.toFixed(1)}%
+							{displayData.biggest_dropoff_rate.toFixed(1)}%
 						</div>
 					</div>
 				</div>
@@ -171,9 +242,8 @@ export function FunnelAnalytics({
 
 			{/* Funnel Flow */}
 			<FunnelFlow
-				formatCompletionTime={formatCompletionTime}
-				steps={data.steps_analytics}
-				totalUsers={data.total_users_entered}
+				steps={displayData.steps_analytics}
+				totalUsers={displayData.total_users_entered}
 			/>
 		</div>
 	);

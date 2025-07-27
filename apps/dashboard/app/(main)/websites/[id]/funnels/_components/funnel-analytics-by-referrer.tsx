@@ -23,15 +23,15 @@ interface Props {
 	funnelId: string;
 	dateRange: { start_date: string; end_date: string };
 	onReferrerChange?: (referrer: string) => void;
-	data: UseTRPCQueryResult<any, any>['data'];
+	data: UseTRPCQueryResult<
+		{ referrer_analytics: FunnelAnalyticsByReferrerResult[] },
+		TRPCClientErrorLike<AppRouter>
+	>['data'];
 	isLoading: boolean;
 	error: TRPCClientErrorLike<AppRouter> | null;
 }
 
 export default function FunnelAnalyticsByReferrer({
-	websiteId,
-	funnelId,
-	dateRange,
 	onReferrerChange,
 	data,
 	isLoading,
@@ -46,10 +46,16 @@ export default function FunnelAnalyticsByReferrer({
 
 	// Group referrers strictly by domain (lowercased, fallback to 'direct')
 	const referrers = useMemo(() => {
-		if (!data?.referrer_analytics) return [];
+		if (!data?.referrer_analytics) {
+			return [];
+		}
 		const grouped = new Map<
 			string,
-			{ label: string; parsed: any; users: number }
+			{
+				label: string;
+				parsed: FunnelAnalyticsByReferrerResult['referrer_parsed'];
+				users: number;
+			}
 		>();
 		for (const r of data.referrer_analytics) {
 			const domain = r.referrer_parsed?.domain?.toLowerCase() || 'direct';
@@ -154,7 +160,7 @@ export default function FunnelAnalyticsByReferrer({
 							</Badge>
 						</div>
 					</SelectItem>
-					{referrers.map((option: any) => (
+					{referrers.map((option) => (
 						<SelectItem key={option.value} value={option.value}>
 							<div className="flex w-full items-center gap-2">
 								<ReferrerSourceCell

@@ -1,7 +1,6 @@
 'use client';
 
-import { CaretDownIcon, TargetIcon } from '@phosphor-icons/react';
-import { Badge } from '@/components/ui/badge';
+import { TargetIcon } from '@phosphor-icons/react';
 
 interface FunnelStep {
 	step_number: number;
@@ -16,14 +15,9 @@ interface FunnelStep {
 interface FunnelFlowProps {
 	steps: FunnelStep[];
 	totalUsers: number;
-	formatCompletionTime: (seconds: number) => string;
 }
 
-export function FunnelFlow({
-	steps,
-	totalUsers,
-	formatCompletionTime,
-}: FunnelFlowProps) {
+export function FunnelFlow({ steps, totalUsers }: FunnelFlowProps) {
 	if (!steps.length) {
 		return (
 			<div className="flex h-[300px] items-center justify-center text-muted-foreground text-sm">
@@ -33,8 +27,8 @@ export function FunnelFlow({
 	}
 
 	const maxUsers = Math.max(...steps.map((s) => s.users));
-	const firstStep = steps[0];
-	const lastStep = steps[steps.length - 1];
+	const firstStep = steps.at(0);
+	const lastStep = steps.at(-1);
 	const overallConversion =
 		totalUsers > 0 ? ((lastStep?.users || 0) / totalUsers) * 100 : 0;
 
@@ -53,7 +47,6 @@ export function FunnelFlow({
 
 			<div className="space-y-0">
 				{steps.map((step, index) => {
-					const isFirstStep = index === 0;
 					const prevStep = index > 0 ? steps[index - 1] : null;
 					const droppedUsers = prevStep ? prevStep.users - step.users : 0;
 					const relConversion =

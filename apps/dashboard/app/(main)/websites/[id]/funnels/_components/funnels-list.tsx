@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Funnel } from '@/hooks/use-funnels';
 import { EmptyState } from './empty-state';
@@ -30,8 +30,8 @@ export function FunnelsList({
 	if (isLoading) {
 		return (
 			<div className="space-y-4">
-				{[...Array(3)].map((_, i) => (
-					<Card className="rounded" key={i}>
+				{new Array(3).fill(null).map((_, index) => (
+					<Card className="rounded" key={index.toString()}>
 						<CardHeader className="pb-4">
 							<div className="flex items-center justify-between">
 								<div className="flex-1">

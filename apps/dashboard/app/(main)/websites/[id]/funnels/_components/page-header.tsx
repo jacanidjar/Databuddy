@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface PageHeaderProps {
-	websiteName?: string;
 	funnelsCount: number;
 	isRefreshing: boolean;
 	isLoading: boolean;
@@ -20,7 +19,6 @@ interface PageHeaderProps {
 }
 
 export function PageHeader({
-	websiteName,
 	funnelsCount,
 	isRefreshing,
 	isLoading,
