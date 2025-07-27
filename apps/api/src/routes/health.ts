@@ -1,13 +1,14 @@
 import { chQuery, db } from '@databuddy/db';
-import { redis } from '@databuddy/redis';
+import { redis as redisClient } from '@databuddy/redis';
 import { Elysia } from 'elysia';
+import { logger } from '../lib/logger';
 
 const checkClickhouse = async () => {
 	try {
 		const result = await chQuery('SELECT 1 FROM analytics.events LIMIT 1');
 		return result.length > 0;
 	} catch (error) {
-		console.error('ClickHouse health check failed:', error);
+		logger.error('ClickHouse health check failed:', { error });
 		return false;
 	}
 };
@@ -19,17 +20,17 @@ const checkDatabase = async () => {
 		});
 		return result.length > 0;
 	} catch (error) {
-		console.error('Database health check failed:', error);
+		logger.error('Database health check failed:', { error });
 		return false;
 	}
 };
 
 const checkRedis = async () => {
 	try {
-		const result = await redis.ping();
+		const result = await redisClient.ping();
 		return result === 'PONG';
 	} catch (error) {
-		console.error('Redis health check failed:', error);
+		logger.error('Redis health check failed:', { error });
 		return false;
 	}
 };
