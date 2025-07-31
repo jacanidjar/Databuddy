@@ -32,15 +32,19 @@ interface ChartDataPoint {
 }
 
 const calculateAverage = (values: { value: number }[]) =>
-	values.length > 0 ? values.reduce((sum, item) => sum + item.value, 0) / values.length : 0;
+	values.length > 0
+		? values.reduce((sum, item) => sum + item.value, 0) / values.length
+		: 0;
 
 const calculateTrend = (dataPoints: { date: string; value: number }[]) => {
-	if (!dataPoints?.length) return null;
+	if (!dataPoints?.length) {
+		return null;
+	}
 
 	const midPoint = Math.floor(dataPoints.length / 2);
 	const firstHalf = dataPoints.slice(0, midPoint);
 	const secondHalf = dataPoints.slice(midPoint);
-	
+
 	const previousAverage = calculateAverage(firstHalf);
 	const currentAverage = calculateAverage(secondHalf);
 
@@ -50,15 +54,24 @@ const calculateTrend = (dataPoints: { date: string; value: number }[]) => {
 			: { type: 'neutral' as const, value: 0 };
 	}
 
-	const percentageChange = ((currentAverage - previousAverage) / previousAverage) * 100;
-	
-	if (percentageChange > TREND_THRESHOLD) return { type: 'up' as const, value: Math.abs(percentageChange) };
-	if (percentageChange < -TREND_THRESHOLD) return { type: 'down' as const, value: Math.abs(percentageChange) };
+	const percentageChange =
+		((currentAverage - previousAverage) / previousAverage) * 100;
+
+	if (percentageChange > TREND_THRESHOLD) {
+		return { type: 'up' as const, value: Math.abs(percentageChange) };
+	}
+	if (percentageChange < -TREND_THRESHOLD) {
+		return { type: 'down' as const, value: Math.abs(percentageChange) };
+	}
 	return { type: 'neutral' as const, value: Math.abs(percentageChange) };
 };
 
-const fetchChartData = async (websiteIds: string[]): Promise<Record<string, ProcessedMiniChartData>> => {
-	if (!websiteIds.length) return {};
+const fetchChartData = async (
+	websiteIds: string[]
+): Promise<Record<string, ProcessedMiniChartData>> => {
+	if (!websiteIds.length) {
+		return {};
+	}
 
 	const chartQuery = `
     WITH
@@ -91,12 +104,17 @@ const fetchChartData = async (websiteIds: string[]): Promise<Record<string, Proc
       date ASC
   `;
 
-	const queryResults = await chQuery<ChartDataPoint>(chartQuery, { websiteIds });
+	const queryResults = await chQuery<ChartDataPoint>(chartQuery, {
+		websiteIds,
+	});
 
-	const groupedData = websiteIds.reduce((acc, id) => {
-		acc[id] = [];
-		return acc;
-	}, {} as Record<string, { date: string; value: number }[]>);
+	const groupedData = websiteIds.reduce(
+		(acc, id) => {
+			acc[id] = [];
+			return acc;
+		},
+		{} as Record<string, { date: string; value: number }[]>
+	);
 
 	for (const row of queryResults) {
 		groupedData[row.websiteId]?.push({
@@ -106,12 +124,12 @@ const fetchChartData = async (websiteIds: string[]): Promise<Record<string, Proc
 	}
 
 	const processedData: Record<string, ProcessedMiniChartData> = {};
-	
+
 	for (const websiteId of websiteIds) {
 		const dataPoints = groupedData[websiteId] || [];
 		const totalViews = dataPoints.reduce((sum, point) => sum + point.value, 0);
 		const trend = calculateTrend(dataPoints);
-		
+
 		processedData[websiteId] = {
 			data: dataPoints,
 			totalViews,
@@ -137,7 +155,10 @@ export const websitesRouter = createTRPCRouter({
 				ttl: CACHE_DURATION,
 				tables: ['websites'],
 				queryFn: () => {
-					const whereClause = buildWebsiteFilter(ctx.user.id, input.organizationId);
+					const whereClause = buildWebsiteFilter(
+						ctx.user.id,
+						input.organizationId
+					);
 					return ctx.db.query.websites.findMany({
 						where: whereClause,
 						orderBy: (table, { desc }) => [desc(table.createdAt)],
@@ -148,22 +169,25 @@ export const websitesRouter = createTRPCRouter({
 
 	listWithCharts: protectedProcedure
 		.input(z.object({ organizationId: z.string().optional() }).default({}))
-		.query(async ({ ctx, input }) => {
+		.query(({ ctx, input }) => {
 			const chartsListCacheKey = `listWithCharts:${ctx.user.id}:${input.organizationId || ''}`;
-			
+
 			return websiteCache.withCache({
 				key: chartsListCacheKey,
 				ttl: CACHE_DURATION,
 				tables: ['websites', 'member'],
 				queryFn: async () => {
-					const whereClause = buildWebsiteFilter(ctx.user.id, input.organizationId);
-					
+					const whereClause = buildWebsiteFilter(
+						ctx.user.id,
+						input.organizationId
+					);
+
 					const websitesList = await ctx.db.query.websites.findMany({
 						where: whereClause,
 						orderBy: (table, { desc }) => [desc(table.createdAt)],
 					});
 
-					const websiteIds = websitesList.map(site => site.id);
+					const websiteIds = websitesList.map((site) => site.id);
 					const chartData = await fetchChartData(websiteIds);
 
 					return {
@@ -202,10 +226,17 @@ export const websitesRouter = createTRPCRouter({
 				}
 			}
 
-			const billingCustomerId = await getBillingCustomerId(ctx.user.id, input.organizationId);
-			const creationLimitCheck = await checkAndTrackWebsiteCreation(billingCustomerId);
+			const billingCustomerId = await getBillingCustomerId(
+				ctx.user.id,
+				input.organizationId
+			);
+			const creationLimitCheck =
+				await checkAndTrackWebsiteCreation(billingCustomerId);
 			if (!creationLimitCheck.allowed) {
-				throw new TRPCError({ code: 'BAD_REQUEST', message: creationLimitCheck.error });
+				throw new TRPCError({
+					code: 'BAD_REQUEST',
+					message: creationLimitCheck.error,
+				});
 			}
 
 			const domainToCreate = buildFullDomain(input.domain, input.subdomain);
@@ -219,7 +250,9 @@ export const websitesRouter = createTRPCRouter({
 			});
 
 			if (duplicateWebsite) {
-				const scopeDescription = input.organizationId ? 'in this organization' : 'for your account';
+				const scopeDescription = input.organizationId
+					? 'in this organization'
+					: 'for your account';
 				throw new TRPCError({
 					code: 'CONFLICT',
 					message: `A website with the domain "${domainToCreate}" already exists ${scopeDescription}.`,
@@ -257,7 +290,11 @@ export const websitesRouter = createTRPCRouter({
 	update: protectedProcedure
 		.input(updateWebsiteSchema)
 		.mutation(async ({ ctx, input }) => {
-			const websiteToUpdate = await authorizeWebsiteAccess(ctx, input.id, 'update');
+			const websiteToUpdate = await authorizeWebsiteAccess(
+				ctx,
+				input.id,
+				'update'
+			);
 
 			const [updatedWebsite] = await ctx.db
 				.update(websites)
@@ -287,8 +324,15 @@ export const websitesRouter = createTRPCRouter({
 	delete: protectedProcedure
 		.input(z.object({ id: z.string() }))
 		.mutation(async ({ ctx, input }) => {
-			const websiteToDelete = await authorizeWebsiteAccess(ctx, input.id, 'delete');
-			const billingCustomerId = await getBillingCustomerId(ctx.user.id, websiteToDelete.organizationId);
+			const websiteToDelete = await authorizeWebsiteAccess(
+				ctx,
+				input.id,
+				'delete'
+			);
+			const billingCustomerId = await getBillingCustomerId(
+				ctx.user.id,
+				websiteToDelete.organizationId
+			);
 
 			await Promise.all([
 				ctx.db.delete(websites).where(eq(websites.id, input.id)),
