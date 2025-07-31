@@ -16,13 +16,14 @@ export function useWebsites() {
 	const { data: activeOrganization, isPending: isLoadingOrganization } =
 		authClient.useActiveOrganization();
 
-	const { data, isLoading, isError, refetch } = trpc.websites.list.useQuery(
+	const { data, isLoading, isError, refetch } = trpc.websites.listWithCharts.useQuery(
 		{ organizationId: activeOrganization?.id },
 		{ enabled: !isLoadingOrganization }
 	);
 
 	return {
-		websites: data || [],
+		websites: data?.websites || [],
+		chartData: data?.chartData,
 		isLoading: isLoading || isLoadingOrganization,
 		isError,
 		refetch,
@@ -41,10 +42,15 @@ export function useCreateWebsite() {
 				organizationId: variables.organizationId ?? undefined,
 			};
 			
-			utils.websites.list.setData(queryKey, (old) => {
-				if (!old) return [newWebsite];
-				const exists = old.some(w => w.id === newWebsite.id);
-				return exists ? old : [...old, newWebsite];
+			utils.websites.listWithCharts.setData(queryKey, (old) => {
+				if (!old) return { websites: [newWebsite], chartData: {} };
+				const exists = old.websites.some(w => w.id === newWebsite.id);
+				return exists 
+					? old 
+					: { 
+						websites: [...old.websites, newWebsite], 
+						chartData: { ...old.chartData, [newWebsite.id]: { data: [], totalViews: 0, trend: null } }
+					};
 			});
 		},
 		onError: (error) => {
@@ -62,11 +68,15 @@ export function useUpdateWebsite() {
 				organizationId: updatedWebsite.organizationId ?? undefined,
 			};
 
-			utils.websites.list.setData(listKey, (old) =>
-				old?.map((website) =>
-					website.id === updatedWebsite.id ? updatedWebsite : website
-				) ?? []
-			);
+			utils.websites.listWithCharts.setData(listKey, (old) => {
+				if (!old) return old;
+				return {
+					...old,
+					websites: old.websites.map((website) =>
+						website.id === updatedWebsite.id ? updatedWebsite : website
+					)
+				};
+			});
 			
 			utils.websites.getById.setData(getByIdKey, updatedWebsite);
 		},
@@ -87,19 +97,25 @@ export function useDeleteWebsite() {
 				organizationId: previousWebsite?.organizationId ?? undefined,
 			};
 
-			await utils.websites.list.cancel(listKey);
-			const previousWebsites = utils.websites.list.getData(listKey);
+			await utils.websites.listWithCharts.cancel(listKey);
+			const previousData = utils.websites.listWithCharts.getData(listKey);
 
-			utils.websites.list.setData(
-				listKey,
-				(old) => old?.filter((w) => w.id !== id) ?? []
-			);
+			utils.websites.listWithCharts.setData(listKey, (old) => {
+				if (!old) return old;
+				return {
+					...old,
+					websites: old.websites.filter((w) => w.id !== id),
+					chartData: Object.fromEntries(
+						Object.entries(old.chartData).filter(([key]) => key !== id)
+					)
+				};
+			});
 
-			return { previousWebsites, listKey };
+			return { previousData, listKey };
 		},
 		onError: (_, __, context) => {
-			if (context?.previousWebsites && context.listKey) {
-				utils.websites.list.setData(context.listKey, context.previousWebsites);
+			if (context?.previousData && context.listKey) {
+				utils.websites.listWithCharts.setData(context.listKey, context.previousData);
 			}
 		},
 		onSuccess: (_, { id }) => {
