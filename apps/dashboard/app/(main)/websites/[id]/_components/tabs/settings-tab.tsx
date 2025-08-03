@@ -132,8 +132,8 @@ export function WebsiteSettingsTab({
 					trackingOptions={trackingOptions}
 				/>
 
-				<div className="col-span-12 lg:col-span-9">
-					<Card className="rounded-lg border bg-background shadow-sm">
+				<div className="col-span-12 lg:col-span-7 xl:col-span-9">
+					<Card className="rounded border bg-background py-0 shadow-sm">
 						<CardContent className="p-6">
 							{activeTab === 'tracking' && (
 								<TrackingCodeTab
@@ -234,12 +234,12 @@ function WebsiteHeader({
 	onEditClick: () => void;
 }) {
 	return (
-		<Card className="rounded-lg border bg-background shadow-sm">
+		<Card className="rounded border bg-background py-0 shadow-sm">
 			<CardContent className="p-6">
 				<div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
 					<div className="flex flex-col gap-3">
 						<div className="flex items-center gap-3">
-							<div className="rounded-lg bg-primary/10 p-2">
+							<div className="rounded bg-primary/10 p-2">
 								<GlobeIcon className="h-5 w-5 text-primary" />
 							</div>
 							<div>
@@ -358,8 +358,8 @@ function SettingsNavigation({
 		!trackingOptions.enableRetries;
 
 	return (
-		<div className="col-span-12 lg:col-span-3">
-			<Card className="rounded-lg border bg-background shadow-sm">
+		<div className="col-span-12 lg:col-span-5 xl:col-span-3">
+			<Card className="rounded border bg-background py-0 shadow-sm">
 				<CardContent className="p-4">
 					<div className="sticky top-4 space-y-2">
 						<Button
@@ -686,7 +686,7 @@ function WebsiteInfoSection({
 	websiteId: string;
 }) {
 	return (
-		<div className="mt-6 grid grid-cols-2 gap-4">
+		<div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-1 xl:grid-cols-2">
 			<div className="space-y-3 rounded-md bg-muted/50 p-4">
 				<h4 className="flex items-center gap-2 font-medium text-sm">
 					<InfoIcon className="h-4 w-4 text-muted-foreground" />
@@ -984,7 +984,7 @@ function TrackingOptionCard({
 	const isEnabled = inverted ? !enabled : enabled;
 
 	return (
-		<div className="space-y-4 rounded-lg border p-4">
+		<div className="space-y-4 rounded border p-4">
 			<div className="flex items-start justify-between border-b pb-2">
 				<div className="space-y-0.5">
 					<div className="font-medium">{title}</div>
@@ -1062,7 +1062,7 @@ function SamplingRateSection({
 	onSamplingRateChange: (rate: number) => void;
 }) {
 	return (
-		<div className="rounded-lg border p-4">
+		<div className="rounded border p-4">
 			<h4 className="mb-3 font-medium">Sampling Rate</h4>
 			<div className="space-y-4">
 				<div className="grid grid-cols-2 gap-8">
@@ -1119,7 +1119,7 @@ function BatchingSection({
 	) => void;
 }) {
 	return (
-		<div className="rounded-lg border p-4">
+		<div className="rounded border p-4">
 			<h4 className="mb-3 font-medium">Batching</h4>
 			<div className="space-y-4">
 				<div className="flex items-center space-x-2">
@@ -1219,7 +1219,7 @@ function NetworkResilienceSection({
 	) => void;
 }) {
 	return (
-		<div className="rounded-lg border p-4">
+		<div className="rounded border p-4">
 			<h4 className="mb-3 font-medium">Network Resilience</h4>
 			<div className="space-y-4">
 				<div className="flex items-center space-x-2">
