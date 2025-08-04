@@ -155,7 +155,7 @@ export default function ChatSection() {
 					</div>
 					<div className="min-w-0 flex-1">
 						<div className="flex items-center gap-2">
-							<h2 className="truncate font-semibold text-lg">Nova</h2>
+							<h2 className="truncate font-semibold text-lg">Databunny</h2>
 							{hasMessages && (
 								<span className="px-2 py-0.5 text-muted-foreground text-xs">
 									{messageStats.total}{' '}
@@ -165,8 +165,8 @@ export default function ChatSection() {
 						</div>
 						<p className="truncate text-muted-foreground text-sm">
 							{isLoading
-								? 'Nova is analyzing your data...'
-								: `Your AI analytics partner for ${websiteData?.name || 'your website'}`}
+								? 'Databunny is analyzing your data...'
+								: `Your data analyst for ${websiteData?.name || 'your website'}`}
 						</p>
 					</div>
 				</div>
@@ -299,10 +299,10 @@ export default function ChatSection() {
 							}}
 							placeholder={
 								isLoading
-									? 'Nova is thinking...'
+									? 'Databunny is thinking...'
 									: isRateLimited
 										? 'Rate limited - please wait...'
-										: 'Ask Nova about your analytics data...'
+										: 'Ask Databunny about your analytics data...'
 							}
 							ref={inputRef}
 							value={inputValue}
