@@ -17,20 +17,21 @@ import {
 	getBillingCustomerId,
 	trackWebsiteUsage,
 } from '../utils/billing';
+import {
+	invalidateBasicWebsiteCaches,
+	invalidateWebsiteCaches,
+} from '../utils/cache-invalidation';
 
-// Cache configuration
 const websiteCache = createDrizzleCache({ redis, namespace: 'websites' });
 const CACHE_DURATION = 60; // seconds
 const TREND_THRESHOLD = 5; // percentage
 
-// Types
 interface ChartDataPoint {
 	websiteId: string;
 	date: string;
 	value: number;
 }
 
-// Helper functions
 const buildFullDomain = (domain: string, subdomain?: string) =>
 	subdomain ? `${subdomain}.${domain}` : domain;
 
@@ -148,7 +149,6 @@ const fetchChartData = async (
 	return processedData;
 };
 
-// Router definition
 export const websitesRouter = createTRPCRouter({
 	list: protectedProcedure
 		.input(z.object({ organizationId: z.string().optional() }).default({}))
@@ -217,7 +217,6 @@ export const websitesRouter = createTRPCRouter({
 	create: protectedProcedure
 		.input(createWebsiteSchema)
 		.mutation(async ({ ctx, input }) => {
-			// Validate organization permissions upfront
 			if (input.organizationId) {
 				const { success } = await websitesApi.hasPermission({
 					headers: ctx.headers,
@@ -236,7 +235,6 @@ export const websitesRouter = createTRPCRouter({
 				input.organizationId
 			);
 
-			// Check billing limits before starting transaction
 			const creationLimitCheck =
 				await checkAndTrackWebsiteCreation(billingCustomerId);
 			if (!creationLimitCheck.allowed) {
@@ -252,9 +250,7 @@ export const websitesRouter = createTRPCRouter({
 				buildWebsiteFilter(ctx.user.id, input.organizationId)
 			);
 
-			// Execute database operations in transaction
 			const createdWebsite = await ctx.db.transaction(async (tx) => {
-				// Check for duplicate websites within transaction
 				const duplicateWebsite = await tx.query.websites.findFirst({
 					where: websiteFilter,
 				});
@@ -285,7 +281,6 @@ export const websitesRouter = createTRPCRouter({
 				return website;
 			});
 
-			// Log success after transaction completes
 			logger.success(
 				'Website Created',
 				`New website "${createdWebsite.name}" was created with domain "${createdWebsite.domain}"`,
@@ -297,8 +292,7 @@ export const websitesRouter = createTRPCRouter({
 				}
 			);
 
-			// Invalidate cache after successful creation
-			await websiteCache.invalidateByTables(['websites']);
+			await invalidateBasicWebsiteCaches(createdWebsite.id, websiteCache);
 
 			return createdWebsite;
 		}),
@@ -306,14 +300,12 @@ export const websitesRouter = createTRPCRouter({
 	update: protectedProcedure
 		.input(updateWebsiteSchema)
 		.mutation(async ({ ctx, input }) => {
-			// Authorize access and get billing info before transaction
 			const websiteToUpdate = await authorizeWebsiteAccess(
 				ctx,
 				input.id,
 				'update'
 			);
 
-			// Execute update in transaction
 			const updatedWebsite = await ctx.db.transaction(async (tx) => {
 				const [website] = await tx
 					.update(websites)
@@ -331,7 +323,6 @@ export const websitesRouter = createTRPCRouter({
 				return website;
 			});
 
-			// Log success after transaction
 			logger.info(
 				'Website Updated',
 				`Website "${websiteToUpdate.name}" was renamed to "${updatedWebsite.name}"`,
@@ -343,71 +334,17 @@ export const websitesRouter = createTRPCRouter({
 				}
 			);
 
-			// Invalidate cache after successful update
-			await Promise.all([
-				websiteCache.invalidateByTables(['websites']),
-				websiteCache.invalidateByKey(`getById:${input.id}`),
-			]);
+			await invalidateBasicWebsiteCaches(input.id, websiteCache);
 
-			// If isPublic status changed, invalidate all related caches
 			if (
 				input.isPublic !== undefined &&
 				input.isPublic !== websiteToUpdate.isPublic
 			) {
-				// Call the invalidateCaches procedure logic directly
-				await Promise.all([
-					// Website caches
-					websiteCache.invalidateByTables(['websites']),
-					websiteCache.invalidateByKey(`getById:${input.id}`),
-
-					createDrizzleCache({
-						redis,
-						namespace: 'website_by_id',
-					}).invalidateByKey(`website_by_id:${input.id}`),
-					createDrizzleCache({ redis, namespace: 'auth' }).invalidateByKey(
-						`auth:${ctx.user.id}:${input.id}`
-					),
-
-					// Funnel caches
-					createDrizzleCache({
-						redis,
-						namespace: 'funnels',
-					}).invalidateByTables(['funnelDefinitions']),
-					createDrizzleCache({ redis, namespace: 'funnels' }).invalidateByKey(
-						`funnels:list:${input.id}`
-					),
-					createDrizzleCache({ redis, namespace: 'funnels' }).invalidateByKey(
-						`funnels:listPublic:${input.id}`
-					),
-
-					// Goals caches
-					createDrizzleCache({ redis, namespace: 'goals' }).invalidateByTables([
-						'goals',
-					]),
-					createDrizzleCache({ redis, namespace: 'goals' }).invalidateByKey(
-						`goals:list:${input.id}`
-					),
-
-					// Autocomplete caches
-					createDrizzleCache({
-						redis,
-						namespace: 'autocomplete',
-					}).invalidateByTables(['websites']),
-
-					// Mini-charts caches
-					createDrizzleCache({
-						redis,
-						namespace: 'mini-charts',
-					}).invalidateByTables(['websites']),
-					createDrizzleCache({
-						redis,
-						namespace: 'mini-charts',
-					}).invalidateByKey(`mini-charts:${ctx.user.id}:${input.id}`),
-					createDrizzleCache({
-						redis,
-						namespace: 'mini-charts',
-					}).invalidateByKey(`mini-charts:public:${input.id}`),
-				]);
+				await invalidateWebsiteCaches(
+					input.id,
+					ctx.user.id,
+					`public status changed to ${input.isPublic}`
+				);
 
 				logger.info(
 					'Public status changed - caches invalidated',
@@ -427,7 +364,6 @@ export const websitesRouter = createTRPCRouter({
 	delete: protectedProcedure
 		.input(z.object({ id: z.string() }))
 		.mutation(async ({ ctx, input }) => {
-			// Authorize access and get billing info before transaction
 			const websiteToDelete = await authorizeWebsiteAccess(
 				ctx,
 				input.id,
@@ -438,16 +374,13 @@ export const websitesRouter = createTRPCRouter({
 				websiteToDelete.organizationId
 			);
 
-			// Execute deletion and billing update in transaction
 			await ctx.db.transaction(async (tx) => {
-				// Delete website
 				await tx.delete(websites).where(eq(websites.id, input.id));
 
 				// Track billing usage (decrement)
 				await trackWebsiteUsage(billingCustomerId, -1);
 			});
 
-			// Log after successful deletion
 			logger.warning(
 				'Website Deleted',
 				`Website "${websiteToDelete.name}" with domain "${websiteToDelete.domain}" was deleted`,
@@ -459,11 +392,7 @@ export const websitesRouter = createTRPCRouter({
 				}
 			);
 
-			// Invalidate cache after successful deletion
-			await Promise.all([
-				websiteCache.invalidateByTables(['websites']),
-				websiteCache.invalidateByKey(`getById:${input.id}`),
-			]);
+			await invalidateBasicWebsiteCaches(input.id, websiteCache);
 
 			return { success: true };
 		}),
@@ -471,10 +400,8 @@ export const websitesRouter = createTRPCRouter({
 	transfer: protectedProcedure
 		.input(transferWebsiteSchema)
 		.mutation(async ({ ctx, input }) => {
-			// Authorize access before transaction
 			await authorizeWebsiteAccess(ctx, input.websiteId, 'update');
 
-			// Validate organization permissions upfront
 			if (input.organizationId) {
 				const { success } = await websitesApi.hasPermission({
 					headers: ctx.headers,
@@ -488,7 +415,6 @@ export const websitesRouter = createTRPCRouter({
 				}
 			}
 
-			// Execute transfer in transaction
 			const transferredWebsite = await ctx.db.transaction(async (tx) => {
 				const [website] = await tx
 					.update(websites)
@@ -502,7 +428,6 @@ export const websitesRouter = createTRPCRouter({
 				return website;
 			});
 
-			// Log success after transaction
 			logger.info(
 				'Website Transferred',
 				`Website "${transferredWebsite.name}" was transferred to organization "${input.organizationId}"`,
@@ -513,11 +438,7 @@ export const websitesRouter = createTRPCRouter({
 				}
 			);
 
-			// Invalidate cache after successful transfer
-			await Promise.all([
-				websiteCache.invalidateByTables(['websites']),
-				websiteCache.invalidateByKey(`getById:${input.websiteId}`),
-			]);
+			await invalidateBasicWebsiteCaches(input.websiteId, websiteCache);
 
 			return transferredWebsite;
 		}),
@@ -525,72 +446,13 @@ export const websitesRouter = createTRPCRouter({
 	invalidateCaches: protectedProcedure
 		.input(z.object({ websiteId: z.string() }))
 		.mutation(async ({ ctx, input }) => {
-			// Authorize access
 			await authorizeWebsiteAccess(ctx, input.websiteId, 'update');
 
 			try {
-				// Invalidate all caches related to this website
-				await Promise.all([
-					// Website caches
-					websiteCache.invalidateByTables(['websites']),
-					websiteCache.invalidateByKey(`getById:${input.websiteId}`),
-
-					createDrizzleCache({
-						redis,
-						namespace: 'website_by_id',
-					}).invalidateByKey(`website_by_id:${input.websiteId}`),
-					createDrizzleCache({ redis, namespace: 'auth' }).invalidateByKey(
-						`auth:${ctx.user.id}:${input.websiteId}`
-					),
-
-					// Funnel caches
-					createDrizzleCache({
-						redis,
-						namespace: 'funnels',
-					}).invalidateByTables(['funnelDefinitions']),
-					createDrizzleCache({ redis, namespace: 'funnels' }).invalidateByKey(
-						`funnels:list:${input.websiteId}`
-					),
-					createDrizzleCache({ redis, namespace: 'funnels' }).invalidateByKey(
-						`funnels:listPublic:${input.websiteId}`
-					),
-
-					// Goals caches
-					createDrizzleCache({ redis, namespace: 'goals' }).invalidateByTables([
-						'goals',
-					]),
-					createDrizzleCache({ redis, namespace: 'goals' }).invalidateByKey(
-						`goals:list:${input.websiteId}`
-					),
-
-					// Autocomplete caches
-					createDrizzleCache({
-						redis,
-						namespace: 'autocomplete',
-					}).invalidateByTables(['websites']),
-
-					// Mini-charts caches
-					createDrizzleCache({
-						redis,
-						namespace: 'mini-charts',
-					}).invalidateByTables(['websites']),
-					createDrizzleCache({
-						redis,
-						namespace: 'mini-charts',
-					}).invalidateByKey(`mini-charts:${ctx.user.id}:${input.websiteId}`),
-					createDrizzleCache({
-						redis,
-						namespace: 'mini-charts',
-					}).invalidateByKey(`mini-charts:public:${input.websiteId}`),
-				]);
-
-				logger.info(
-					'Caches invalidated',
-					`All caches invalidated for website ${input.websiteId}`,
-					{
-						websiteId: input.websiteId,
-						userId: ctx.user.id,
-					}
+				await invalidateWebsiteCaches(
+					input.websiteId,
+					ctx.user.id,
+					'manual cache invalidation'
 				);
 
 				return { success: true };
