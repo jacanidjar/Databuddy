@@ -306,7 +306,7 @@ export const websitesRouter = createTRPCRouter({
 	update: protectedProcedure
 		.input(updateWebsiteSchema)
 		.mutation(async ({ ctx, input }) => {
-			// Authorize access before transaction
+			// Authorize access and get billing info before transaction
 			const websiteToUpdate = await authorizeWebsiteAccess(
 				ctx,
 				input.id,
@@ -348,6 +348,78 @@ export const websitesRouter = createTRPCRouter({
 				websiteCache.invalidateByTables(['websites']),
 				websiteCache.invalidateByKey(`getById:${input.id}`),
 			]);
+
+			// If isPublic status changed, invalidate all related caches
+			if (
+				input.isPublic !== undefined &&
+				input.isPublic !== websiteToUpdate.isPublic
+			) {
+				// Call the invalidateCaches procedure logic directly
+				await Promise.all([
+					// Website caches
+					websiteCache.invalidateByTables(['websites']),
+					websiteCache.invalidateByKey(`getById:${input.id}`),
+
+					createDrizzleCache({
+						redis,
+						namespace: 'website_by_id',
+					}).invalidateByKey(`website_by_id:${input.id}`),
+					createDrizzleCache({ redis, namespace: 'auth' }).invalidateByKey(
+						`auth:${ctx.user.id}:${input.id}`
+					),
+
+					// Funnel caches
+					createDrizzleCache({
+						redis,
+						namespace: 'funnels',
+					}).invalidateByTables(['funnelDefinitions']),
+					createDrizzleCache({ redis, namespace: 'funnels' }).invalidateByKey(
+						`funnels:list:${input.id}`
+					),
+					createDrizzleCache({ redis, namespace: 'funnels' }).invalidateByKey(
+						`funnels:listPublic:${input.id}`
+					),
+
+					// Goals caches
+					createDrizzleCache({ redis, namespace: 'goals' }).invalidateByTables([
+						'goals',
+					]),
+					createDrizzleCache({ redis, namespace: 'goals' }).invalidateByKey(
+						`goals:list:${input.id}`
+					),
+
+					// Autocomplete caches
+					createDrizzleCache({
+						redis,
+						namespace: 'autocomplete',
+					}).invalidateByTables(['websites']),
+
+					// Mini-charts caches
+					createDrizzleCache({
+						redis,
+						namespace: 'mini-charts',
+					}).invalidateByTables(['websites']),
+					createDrizzleCache({
+						redis,
+						namespace: 'mini-charts',
+					}).invalidateByKey(`mini-charts:${ctx.user.id}:${input.id}`),
+					createDrizzleCache({
+						redis,
+						namespace: 'mini-charts',
+					}).invalidateByKey(`mini-charts:public:${input.id}`),
+				]);
+
+				logger.info(
+					'Public status changed - caches invalidated',
+					`Website ${input.id} public status changed to ${input.isPublic}`,
+					{
+						websiteId: input.id,
+						oldIsPublic: websiteToUpdate.isPublic,
+						newIsPublic: input.isPublic,
+						userId: ctx.user.id,
+					}
+				);
+			}
 
 			return updatedWebsite;
 		}),
@@ -420,22 +492,18 @@ export const websitesRouter = createTRPCRouter({
 			const transferredWebsite = await ctx.db.transaction(async (tx) => {
 				const [website] = await tx
 					.update(websites)
-					.set({ organizationId: input.organizationId ?? null })
+					.set({
+						organizationId: input.organizationId ?? null,
+						updatedAt: new Date().toISOString(),
+					})
 					.where(eq(websites.id, input.websiteId))
 					.returning();
-
-				if (!website) {
-					throw new TRPCError({
-						code: 'NOT_FOUND',
-						message: 'Website not found',
-					});
-				}
 
 				return website;
 			});
 
 			// Log success after transaction
-			logger.success(
+			logger.info(
 				'Website Transferred',
 				`Website "${transferredWebsite.name}" was transferred to organization "${input.organizationId}"`,
 				{
@@ -452,6 +520,94 @@ export const websitesRouter = createTRPCRouter({
 			]);
 
 			return transferredWebsite;
+		}),
+
+	invalidateCaches: protectedProcedure
+		.input(z.object({ websiteId: z.string() }))
+		.mutation(async ({ ctx, input }) => {
+			// Authorize access
+			await authorizeWebsiteAccess(ctx, input.websiteId, 'update');
+
+			try {
+				// Invalidate all caches related to this website
+				await Promise.all([
+					// Website caches
+					websiteCache.invalidateByTables(['websites']),
+					websiteCache.invalidateByKey(`getById:${input.websiteId}`),
+
+					createDrizzleCache({
+						redis,
+						namespace: 'website_by_id',
+					}).invalidateByKey(`website_by_id:${input.websiteId}`),
+					createDrizzleCache({ redis, namespace: 'auth' }).invalidateByKey(
+						`auth:${ctx.user.id}:${input.websiteId}`
+					),
+
+					// Funnel caches
+					createDrizzleCache({
+						redis,
+						namespace: 'funnels',
+					}).invalidateByTables(['funnelDefinitions']),
+					createDrizzleCache({ redis, namespace: 'funnels' }).invalidateByKey(
+						`funnels:list:${input.websiteId}`
+					),
+					createDrizzleCache({ redis, namespace: 'funnels' }).invalidateByKey(
+						`funnels:listPublic:${input.websiteId}`
+					),
+
+					// Goals caches
+					createDrizzleCache({ redis, namespace: 'goals' }).invalidateByTables([
+						'goals',
+					]),
+					createDrizzleCache({ redis, namespace: 'goals' }).invalidateByKey(
+						`goals:list:${input.websiteId}`
+					),
+
+					// Autocomplete caches
+					createDrizzleCache({
+						redis,
+						namespace: 'autocomplete',
+					}).invalidateByTables(['websites']),
+
+					// Mini-charts caches
+					createDrizzleCache({
+						redis,
+						namespace: 'mini-charts',
+					}).invalidateByTables(['websites']),
+					createDrizzleCache({
+						redis,
+						namespace: 'mini-charts',
+					}).invalidateByKey(`mini-charts:${ctx.user.id}:${input.websiteId}`),
+					createDrizzleCache({
+						redis,
+						namespace: 'mini-charts',
+					}).invalidateByKey(`mini-charts:public:${input.websiteId}`),
+				]);
+
+				logger.info(
+					'Caches invalidated',
+					`All caches invalidated for website ${input.websiteId}`,
+					{
+						websiteId: input.websiteId,
+						userId: ctx.user.id,
+					}
+				);
+
+				return { success: true };
+			} catch (error) {
+				logger.error(
+					'Failed to invalidate caches',
+					error instanceof Error ? error.message : String(error),
+					{
+						websiteId: input.websiteId,
+						userId: ctx.user.id,
+					}
+				);
+				throw new TRPCError({
+					code: 'INTERNAL_SERVER_ERROR',
+					message: 'Failed to invalidate caches',
+				});
+			}
 		}),
 
 	isTrackingSetup: publicProcedure

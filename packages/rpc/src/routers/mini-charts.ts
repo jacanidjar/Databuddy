@@ -68,7 +68,9 @@ const getAuthorizedWebsiteIds = (
 };
 
 const calculateTrend = (data: { date: string; value: number }[]) => {
-	if (!data || data.length === 0) return null;
+	if (!data || data.length === 0) {
+		return null;
+	}
 
 	const mid = Math.floor(data.length / 2);
 	const [first, second] = [data.slice(0, mid), data.slice(mid)];
@@ -77,15 +79,19 @@ const calculateTrend = (data: { date: string; value: number }[]) => {
 		arr.length > 0 ? arr.reduce((sum, p) => sum + p.value, 0) / arr.length : 0;
 	const [prevAvg, currAvg] = [avg(first), avg(second)];
 
-	if (prevAvg === 0)
+	if (prevAvg === 0) {
 		return currAvg > 0
 			? { type: 'up' as const, value: 100 }
 			: { type: 'neutral' as const, value: 0 };
+	}
 
 	const change = ((currAvg - prevAvg) / prevAvg) * 100;
 	let type: 'up' | 'down' | 'neutral' = 'neutral';
-	if (change > 5) type = 'up';
-	else if (change < -5) type = 'down';
+	if (change > 5) {
+		type = 'up';
+	} else if (change < -5) {
+		type = 'down';
+	}
 	return { type, value: Math.abs(change) };
 };
 
