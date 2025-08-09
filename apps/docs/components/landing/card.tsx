@@ -1,11 +1,12 @@
 import type { IconProps } from '@phosphor-icons/react';
+import type React from 'react';
 import { cn } from '@/lib/utils';
 import { GridPatternBg } from './grid-pattern';
 
 interface GridCard {
 	title: string;
 	description: string;
-	icon: (props: IconProps) => JSX.Element;
+	icon: (props: IconProps) => React.ReactElement;
 }
 
 interface SciFiGridCardProps extends GridCard {
