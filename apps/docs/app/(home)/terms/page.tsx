@@ -1,13 +1,15 @@
 import {
-	AlertTriangle,
-	CreditCard,
-	FileText,
-	HelpCircle,
-	Scale,
-	Shield,
-} from 'lucide-react';
+	CreditCardIcon,
+	FileTextIcon,
+	QuestionIcon,
+	ScalesIcon,
+	ShieldIcon,
+	WarningIcon,
+} from '@phosphor-icons/react/ssr';
+import type { Metadata } from 'next';
+import { Footer } from '@/components/footer';
 
-export const metadata = {
+export const metadata: Metadata = {
 	title: 'Terms of Service | Databuddy',
 	description:
 		"Databuddy's terms of service governing the use of our privacy-first analytics platform. Clear, fair terms that protect both our users and service.",
@@ -17,29 +19,37 @@ export default function TermsPage() {
 	const lastUpdated = 'June 23rd, 2025';
 
 	return (
-		<div className="container mx-auto max-w-4xl px-4 py-12">
+		<div className="mx-auto w-full max-w-7xl px-4 pt-16 sm:px-6 lg:px-8 lg:pt-24">
 			{/* Header */}
 			<div className="mb-12 text-center">
-				<div className="mb-5 inline-flex items-center justify-center rounded-full border border-primary/20 bg-primary/10 p-3">
-					<Scale className="h-7 w-7 text-primary" />
+				<div className="mb-5 inline-flex items-center justify-center rounded border border-primary/20 bg-primary/10 p-3">
+					<ScalesIcon className="h-7 w-7 text-primary" weight="duotone" />
 				</div>
 				<h1 className="mb-4 font-bold text-4xl md:text-5xl">
 					Terms of Service
 				</h1>
 				<p className="mb-4 text-muted-foreground">
-					Last Updated:{' '}
+					Last Updated{' '}
 					<span className="font-medium text-foreground">{lastUpdated}</span>
 				</p>
+				{/* TL;DR */}
+				<div className="mx-auto mb-6 max-w-2xl rounded border border-primary/20 bg-primary/10 p-4 text-left">
+					<p className="text-foreground text-sm">
+						<strong>TL;DR</strong> — Be fair and lawful, keep your account
+						secure, don’t abuse the service, and you can cancel anytime. We’ll
+						notify you about material changes.
+					</p>
+				</div>
 				<p className="mx-auto max-w-2xl text-muted-foreground">
-					Clear and fair terms that govern your use of Databuddy's analytics
+					Clear and fair terms that govern your use of Databuddy’s analytics
 					platform. We believe in transparency and straightforward language.
 				</p>
 			</div>
 
 			{/* Fair terms highlight */}
-			<div className="mb-8 rounded-xl border border-primary/20 bg-primary/10 p-6">
+			<div className="mb-8 rounded border border-primary/20 bg-primary/10 p-6">
 				<h2 className="mb-3 flex items-center font-bold text-primary text-xl">
-					<Shield className="mr-2 h-5 w-5" />
+					<ShieldIcon className="mr-2 h-5 w-5" weight="duotone" />
 					Fair & Transparent Terms
 				</h2>
 				<p className="mb-4 text-muted-foreground">
@@ -49,15 +59,15 @@ export default function TermsPage() {
 				</p>
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
 					<div className="flex items-center text-primary">
-						<FileText className="mr-2 h-4 w-4" />
+						<FileTextIcon className="mr-2 h-4 w-4" weight="duotone" />
 						<span className="text-sm">Plain Language</span>
 					</div>
 					<div className="flex items-center text-primary">
-						<Scale className="mr-2 h-4 w-4" />
+						<ScalesIcon className="mr-2 h-4 w-4" weight="duotone" />
 						<span className="text-sm">Fair Terms</span>
 					</div>
 					<div className="flex items-center text-primary">
-						<Shield className="mr-2 h-4 w-4" />
+						<ShieldIcon className="mr-2 h-4 w-4" weight="duotone" />
 						<span className="text-sm">User Protection</span>
 					</div>
 				</div>
@@ -83,7 +93,7 @@ export default function TermsPage() {
 						Terms. If you disagree with any part of these terms, then you may
 						not access the Service.
 					</p>
-					<div className="my-4 rounded-lg border border-primary/20 bg-primary/10 p-4">
+					<div className="my-4 rounded border border-primary/20 bg-primary/10 p-4">
 						<p className="text-sm">
 							<strong className="text-primary">Quick Summary:</strong> These
 							terms cover how you can use our service, your responsibilities,
@@ -167,9 +177,12 @@ export default function TermsPage() {
 						<li>Overload our servers or interfere with other users</li>
 						<li>Violate any applicable laws or regulations</li>
 					</ul>
-					<div className="my-4 rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
+					<div className="my-4 rounded border border-amber-500/20 bg-amber-500/10 p-4">
 						<p className="flex items-start text-sm">
-							<AlertTriangle className="mt-0.5 mr-2 h-4 w-4 flex-shrink-0 text-amber-400" />
+							<WarningIcon
+								className="mt-0.5 mr-2 h-4 w-4 flex-shrink-0 text-amber-400"
+								weight="duotone"
+							/>
 							<span>
 								<strong className="text-amber-400">Important:</strong> We may
 								suspend or terminate accounts that violate these terms.
@@ -207,7 +220,7 @@ export default function TermsPage() {
 					<h2 className="mb-4 font-bold text-2xl">6. Billing and Payments</h2>
 
 					<h3 className="mb-3 flex items-center font-semibold text-xl">
-						<CreditCard className="mr-2 h-5 w-5 text-primary" />
+						<CreditCardIcon className="mr-2 h-5 w-5 text-primary" />
 						Subscription Plans
 					</h3>
 					<p className="mb-4">
@@ -345,7 +358,10 @@ export default function TermsPage() {
 
 				<section className="mb-8">
 					<h2 className="mb-4 flex items-center font-bold text-2xl">
-						<HelpCircle className="mr-2 h-6 w-6 text-primary" />
+						<QuestionIcon
+							className="mr-2 h-6 w-6 text-primary"
+							weight="duotone"
+						/>
 						13. Contact Information
 					</h2>
 					<p className="mb-4">
@@ -384,18 +400,8 @@ export default function TermsPage() {
 				</section>
 
 				{/* Footer */}
-				<div className="mt-12 border-border border-t pt-8">
-					<div className="rounded-lg border border-primary/20 bg-primary/10 p-6">
-						<h3 className="mb-2 font-semibold text-lg text-primary">
-							Thank You
-						</h3>
-						<p className="mb-0 text-muted-foreground text-sm">
-							Thank you for using Databuddy. We're committed to providing a
-							fair, transparent, and privacy-first analytics service. If you
-							have any questions about these terms, please don't hesitate to
-							contact us.
-						</p>
-					</div>
+				<div className="mt-12">
+					<Footer />
 				</div>
 			</div>
 		</div>

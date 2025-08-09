@@ -1,6 +1,14 @@
-import { Cookie, Mail, Shield, ShieldCheck, UserX } from 'lucide-react';
+import {
+	CookieIcon,
+	EnvelopeIcon,
+	ShieldCheckIcon,
+	ShieldIcon,
+	UserIcon,
+} from '@phosphor-icons/react/ssr';
+import type { Metadata } from 'next';
+import { Footer } from '@/components/footer';
 
-export const metadata = {
+export const metadata: Metadata = {
 	title: 'Privacy Policy | Databuddy',
 	description:
 		"Databuddy's comprehensive privacy policy for our privacy-first analytics service. Learn how we protect both customer and end user data with GDPR compliance and no user identification.",
@@ -10,28 +18,36 @@ export default function PrivacyPage() {
 	const lastUpdated = 'June 3rd, 2025';
 
 	return (
-		<div className="container mx-auto max-w-4xl px-4 py-12">
+		<div className="mx-auto w-full max-w-7xl px-4 pt-16 sm:px-6 lg:px-8 lg:pt-24">
 			{/* Header */}
 			<div className="mb-12 text-center">
-				<div className="mb-5 inline-flex items-center justify-center rounded-full border border-primary/20 bg-primary/10 p-3">
-					<Shield className="h-7 w-7 text-primary" />
+				<div className="mb-5 inline-flex items-center justify-center rounded border border-primary/20 bg-primary/10 p-3">
+					<ShieldIcon className="h-7 w-7 text-primary" weight="duotone" />
 				</div>
 				<h1 className="mb-4 font-bold text-4xl md:text-5xl">Privacy Policy</h1>
 				<p className="mb-4 text-muted-foreground">
-					Last Updated:{' '}
+					Last Updated{' '}
 					<span className="font-medium text-foreground">{lastUpdated}</span>
 				</p>
+				{/* TL;DR */}
+				<div className="mx-auto mb-6 max-w-2xl rounded border border-primary/20 bg-primary/10 p-4 text-left">
+					<p className="text-foreground text-sm">
+						<strong>TL;DR</strong> — We don’t use cookies, we don’t identify
+						users, we anonymize IPs, and we only collect minimal, aggregated
+						data so you get insights without tracking people.
+					</p>
+				</div>
 				<p className="mx-auto max-w-2xl text-muted-foreground">
 					This policy explains how we collect, use, and protect information for
-					both our customers and end users. We're committed to privacy-first
-					analytics that respects everyone's privacy.
+					both our customers and end users. We’re committed to privacy-first
+					analytics that respects everyone’s privacy.
 				</p>
 			</div>
 
 			{/* Privacy-first highlight */}
-			<div className="mb-8 rounded-xl border border-primary/20 bg-primary/10 p-6">
+			<div className="mb-8 rounded border border-primary/20 bg-primary/10 p-6">
 				<h2 className="mb-3 flex items-center font-bold text-primary text-xl">
-					<ShieldCheck className="mr-2 h-5 w-5" />
+					<ShieldCheckIcon className="mr-2 h-5 w-5" weight="duotone" />
 					Privacy-First Analytics
 				</h2>
 				<p className="mb-4 text-muted-foreground">
@@ -41,15 +57,15 @@ export default function PrivacyPage() {
 				</p>
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
 					<div className="flex items-center text-primary">
-						<UserX className="mr-2 h-4 w-4" />
+						<UserIcon className="mr-2 h-4 w-4" weight="duotone" />
 						<span className="text-sm">No User Tracking</span>
 					</div>
 					<div className="flex items-center text-primary">
-						<Cookie className="mr-2 h-4 w-4" />
+						<CookieIcon className="mr-2 h-4 w-4" weight="duotone" />
 						<span className="text-sm">No Cookies</span>
 					</div>
 					<div className="flex items-center text-primary">
-						<Shield className="mr-2 h-4 w-4" />
+						<ShieldIcon className="mr-2 h-4 w-4" weight="duotone" />
 						<span className="text-sm">GDPR Compliant</span>
 					</div>
 				</div>
@@ -83,7 +99,7 @@ export default function PrivacyPage() {
 							how we protect your privacy.
 						</li>
 					</ul>
-					<div className="my-4 rounded-lg border border-primary/20 bg-primary/10 p-4">
+					<div className="my-4 rounded border border-primary/20 bg-primary/10 p-4">
 						<p className="text-sm">
 							<strong className="text-primary">Note:</strong> We are committed
 							to privacy-first analytics that respects the rights of all users,
@@ -209,7 +225,7 @@ export default function PrivacyPage() {
 							website owners improve their sites
 						</li>
 					</ul>
-					<div className="my-4 rounded-lg border border-primary/20 bg-primary/10 p-4">
+					<div className="my-4 rounded border border-primary/20 bg-primary/10 p-4">
 						<p className="text-sm">
 							<strong className="text-primary">Important:</strong> We
 							immediately anonymize IP addresses using a one-way hash function.
@@ -286,7 +302,7 @@ export default function PrivacyPage() {
 							and loading metrics
 						</li>
 					</ul>
-					<div className="my-4 rounded-lg border border-primary/20 bg-primary/10 p-4">
+					<div className="my-4 rounded border border-primary/20 bg-primary/10 p-4">
 						<p className="text-sm">
 							<strong className="text-primary">Note:</strong> End user data is
 							never used for advertising, marketing, or any purpose other than
@@ -363,7 +379,7 @@ export default function PrivacyPage() {
 							deleted according to our retention policies
 						</li>
 					</ul>
-					<div className="my-4 rounded-lg border border-primary/20 bg-primary/10 p-4">
+					<div className="my-4 rounded border border-primary/20 bg-primary/10 p-4">
 						<p className="text-sm">
 							<strong className="text-primary">Note:</strong> Because we don't
 							identify individual end users, many traditional rights don't
@@ -401,7 +417,7 @@ export default function PrivacyPage() {
 							anonymized using cryptographic hashes
 						</li>
 					</ul>
-					<div className="my-4 rounded-lg border border-primary/20 bg-primary/10 p-4">
+					<div className="my-4 rounded border border-primary/20 bg-primary/10 p-4">
 						<p className="text-sm">
 							<strong className="text-primary">Note:</strong> Our privacy-first
 							approach means that even in the unlikely event of a data breach,
@@ -418,9 +434,9 @@ export default function PrivacyPage() {
 						exercise your privacy rights, or have concerns about how your data
 						is handled, please contact us:
 					</p>
-					<div className="mt-4 mb-6 rounded-lg border bg-muted/50 p-5">
+					<div className="mt-4 mb-6 rounded border bg-muted/50 p-5">
 						<p className="mb-3 flex items-center text-primary">
-							<Mail className="mr-2 h-5 w-5" />
+							<EnvelopeIcon className="mr-2 h-5 w-5" weight="duotone" />
 							<a className="hover:underline" href="mailto:privacy@databuddy.cc">
 								privacy@databuddy.cc
 							</a>
@@ -432,6 +448,11 @@ export default function PrivacyPage() {
 						</p>
 					</div>
 				</section>
+			</div>
+
+			{/* Footer */}
+			<div className="mt-12">
+				<Footer />
 			</div>
 		</div>
 	);
