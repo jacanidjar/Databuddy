@@ -1,10 +1,10 @@
 'use client';
 
 import { AnimatePresence, motion } from 'motion/react';
-import Image from 'next/image';
+// import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 
-const RE_WWW_PREFIX = /^www\./;
+// const RE_WWW_PREFIX = /^www\./;
 
 interface Logo {
 	id: number;
@@ -26,22 +26,22 @@ function LogoColumn({ logos, columnIndex, currentTime }: LogoColumnProps) {
 	const currentIndex = Math.floor(adjustedTime / CYCLE_DURATION);
 	const currentLogo = logos[currentIndex];
 
-	const [imgError, setImgError] = useState(false);
+	// const [imgError, setImgError] = useState(false);
 
-	const getHostnameFromUrl = (url: string): string => {
-		try {
-			const u = new URL(url);
-			return u.hostname.replace(RE_WWW_PREFIX, '');
-		} catch {
-			return '';
-		}
-	};
+	// const getHostnameFromUrl = (url: string): string => {
+	// 	try {
+	// 		const u = new URL(url);
+	// 		return u.hostname.replace(RE_WWW_PREFIX, '');
+	// 	} catch {
+	// 		return '';
+	// 	}
+	// };
 
-	const faviconSrc = currentLogo.src
-		? `https://icons.duckduckgo.com/ip3/${getHostnameFromUrl(currentLogo.src)}.ico`
-		: '';
+	// const faviconSrc = currentLogo.src
+	// 	? `https://icons.duckduckgo.com/ip3/${getHostnameFromUrl(currentLogo.src)}.ico`
+	// 	: '';
 
-	const showFavicon = Boolean(faviconSrc) && !imgError;
+	// const showFavicon = Boolean(faviconSrc) && !imgError;
 
 	return (
 		<motion.div
@@ -74,7 +74,7 @@ function LogoColumn({ logos, columnIndex, currentTime }: LogoColumnProps) {
 					initial={{ y: '10%', opacity: 0 }}
 					key={`${currentLogo.id}-${currentIndex}`}
 				>
-					{showFavicon ? (
+					{/* {showFavicon ? (
 						<Image
 							alt={`${currentLogo.name} favicon`}
 							className="h-6 w-6"
@@ -86,7 +86,7 @@ function LogoColumn({ logos, columnIndex, currentTime }: LogoColumnProps) {
 							src={faviconSrc}
 							width={24}
 						/>
-					) : null}
+					) : null} */}
 					<h1 className="truncate font-bold text-base sm:text-xl md:text-2xl">
 						{currentLogo.name}
 					</h1>
