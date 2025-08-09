@@ -1,3 +1,4 @@
+import { apikeysRouter } from './routers/apikeys';
 import { autocompleteRouter } from './routers/autocomplete';
 import { funnelsRouter } from './routers/funnels';
 import { goalsRouter } from './routers/goals';
@@ -13,6 +14,7 @@ export const appRouter = createTRPCRouter({
 	preferences: preferencesRouter,
 	goals: goalsRouter,
 	autocomplete: autocompleteRouter,
+	apikeys: apikeysRouter,
 });
 
 export type AppRouter = typeof appRouter;

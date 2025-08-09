@@ -8,6 +8,8 @@ import {
 } from '@phosphor-icons/react';
 import dynamic from 'next/dynamic';
 import { useQueryState } from 'nuqs';
+import { useState } from 'react';
+import { ApiKeyDetailDialog } from '@/components/organizations/api-key-detail-dialog';
 import { Button } from '@/components/ui/button';
 import {
 	Card,
@@ -17,7 +19,7 @@ import {
 	CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import { ApiKeyCreateDialog, ApiKeyList } from './_components';
 import { type NavItem, SettingsSidebar } from './_components/settings-sidebar';
 
 const EmailForm = dynamic(
@@ -97,7 +99,12 @@ const TimezonePreferences = dynamic(
 	}
 );
 
-type SettingsTab = 'profile' | 'account' | 'security' | 'notifications';
+type SettingsTab =
+	| 'profile'
+	| 'account'
+	| 'security'
+	| 'api-keys'
+	| 'notifications';
 
 const tabs: NavItem[] = [
 	{
@@ -114,6 +121,11 @@ const tabs: NavItem[] = [
 		id: 'security',
 		label: 'Security',
 		icon: ShieldIcon,
+	},
+	{
+		id: 'api-keys',
+		label: 'API keys',
+		icon: GearSixIcon,
 	},
 	{
 		id: 'notifications',
@@ -290,6 +302,7 @@ export default function SettingsPage() {
 							</CardContent>
 						</Card>
 					)}
+					{activeTab === 'api-keys' && <ApiKeysSection />}
 					{activeTab === 'notifications' && (
 						<div className="flex h-full items-center justify-center">
 							<div className="text-center">
@@ -305,6 +318,45 @@ export default function SettingsPage() {
 					)}
 				</main>
 			</div>
+		</div>
+	);
+}
+
+function ApiKeysSection() {
+	const [open, setOpen] = useState(false);
+	const [createdSecret, setCreatedSecret] = useState<null | {
+		id: string;
+		secret: string;
+		prefix: string;
+		start: string;
+	}>(null);
+	const [selectedId, setSelectedId] = useState<string | null>(null);
+	return (
+		<div className="space-y-4">
+			<ApiKeyList
+				onCreateNew={() => setOpen(true)}
+				onSelect={(id) => setSelectedId(id)}
+			/>
+			{createdSecret && (
+				<div className="rounded border p-3 text-sm">
+					<div className="mb-1 font-medium">Copy your secret now</div>
+					<code className="block break-all">{createdSecret.secret}</code>
+				</div>
+			)}
+			<ApiKeyCreateDialog
+				onCreated={(res) => setCreatedSecret(res)}
+				onOpenChange={setOpen}
+				open={open}
+			/>
+			<ApiKeyDetailDialog
+				keyId={selectedId}
+				onOpenChange={(o) => {
+					if (!o) {
+						setSelectedId(null);
+					}
+				}}
+				open={!!selectedId}
+			/>
 		</div>
 	);
 }

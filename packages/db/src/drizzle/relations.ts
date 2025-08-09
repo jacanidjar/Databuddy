@@ -5,6 +5,7 @@ import {
 	abVariants,
 	account,
 	apikey,
+	apikeyAccess,
 	funnelDefinitions,
 	funnelGoals,
 	invitation,
@@ -136,7 +137,7 @@ export const teamRelations = relations(team, ({ one }) => ({
 	}),
 }));
 
-export const apikeyRelations = relations(apikey, ({ one }) => ({
+export const apikeyRelations = relations(apikey, ({ one, many }) => ({
 	user: one(user, {
 		fields: [apikey.userId],
 		references: [user.id],
@@ -144,6 +145,14 @@ export const apikeyRelations = relations(apikey, ({ one }) => ({
 	organization: one(organization, {
 		fields: [apikey.organizationId],
 		references: [organization.id],
+	}),
+	access: many(apikeyAccess),
+}));
+
+export const apikeyAccessRelations = relations(apikeyAccess, ({ one }) => ({
+	apikey: one(apikey, {
+		fields: [apikeyAccess.apikeyId],
+		references: [apikey.id],
 	}),
 }));
 
