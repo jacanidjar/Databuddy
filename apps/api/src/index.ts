@@ -1,5 +1,3 @@
-const UNAUTHORIZED_RE = /unauthorized/i;
-const FORBIDDEN_RE = /forbidden/i;
 import './polyfills/compression';
 import { auth } from '@databuddy/auth';
 import { appRouter, createTRPCContext } from '@databuddy/rpc';
@@ -56,54 +54,6 @@ const app = new Elysia()
 	.onError(({ error, code }) => {
 		const errorMessage = error instanceof Error ? error.message : String(error);
 		logger.error(errorMessage, { error });
-
-		if (
-			error instanceof Error &&
-			(UNAUTHORIZED_RE.test(error.message) || error.message === 'Unauthorized')
-		) {
-			return new Response(
-				JSON.stringify({
-					success: false,
-					error: 'Authentication required',
-					code: 'AUTH_REQUIRED',
-				}),
-				{
-					status: 401,
-					headers: { 'Content-Type': 'application/json' },
-				}
-			);
-		}
-
-		if (
-			error instanceof Error &&
-			(FORBIDDEN_RE.test(error.message) || error.message === 'Forbidden')
-		) {
-			return new Response(
-				JSON.stringify({
-					success: false,
-					error: 'Insufficient permissions',
-					code: 'FORBIDDEN',
-				}),
-				{
-					status: 403,
-					headers: { 'Content-Type': 'application/json' },
-				}
-			);
-		}
-
-		if (error instanceof Error && error.message === 'Website not found') {
-			return new Response(
-				JSON.stringify({
-					success: false,
-					error: 'Website not found',
-					code: 'NOT_FOUND',
-				}),
-				{
-					status: 404,
-					headers: { 'Content-Type': 'application/json' },
-				}
-			);
-		}
 
 		return new Response(
 			JSON.stringify({
