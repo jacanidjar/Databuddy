@@ -191,10 +191,6 @@ export const navMenu = [
 		path: '/blog',
 	},
 	{
-		name: 'Privacy',
-		path: '/privacy',
-	},
-	{
 		name: 'Pricing',
 		path: '/pricing',
 	},

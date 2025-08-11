@@ -87,6 +87,14 @@ export function Footer() {
 							<li>
 								<a
 									className="text-muted-foreground hover:text-foreground"
+									href="/contributors"
+								>
+									Contributors
+								</a>
+							</li>
+							<li>
+								<a
+									className="text-muted-foreground hover:text-foreground"
 									href="/privacy"
 								>
 									Privacy
