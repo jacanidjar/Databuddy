@@ -1,3 +1,5 @@
+import type { QueryBuilderMeta } from '@databuddy/shared';
+
 export const FilterOperators = {
 	eq: '=',
 	ne: '!=',
@@ -53,6 +55,7 @@ export interface SimpleQueryConfig {
 		timezone?: string
 	) => string | { sql: string; params: Record<string, unknown> };
 	appendEndOfDayToTo?: boolean; // If true (default), append ' 23:59:59' to 'to' value. If false, use 'to' as-is.
+	meta?: QueryBuilderMeta;
 }
 
 export interface QueryRequest {

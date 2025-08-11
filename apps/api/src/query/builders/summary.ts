@@ -3,6 +3,56 @@ import type { Filter, SimpleQueryConfig, TimeUnit } from '../types';
 
 export const SummaryBuilders: Record<string, SimpleQueryConfig> = {
 	summary_metrics: {
+		meta: {
+			title: 'Summary Metrics',
+			description:
+				'Overview of key website metrics including pageviews, visitors, sessions, bounce rate, and session duration.',
+			category: 'Analytics',
+			tags: ['overview', 'metrics', 'summary', 'kpi'],
+			output_fields: [
+				{
+					name: 'pageviews',
+					type: 'number',
+					label: 'Pageviews',
+					description: 'Total number of page views',
+				},
+				{
+					name: 'unique_visitors',
+					type: 'number',
+					label: 'Unique Visitors',
+					description: 'Number of unique visitors',
+				},
+				{
+					name: 'sessions',
+					type: 'number',
+					label: 'Sessions',
+					description: 'Total number of sessions',
+				},
+				{
+					name: 'bounce_rate',
+					type: 'number',
+					label: 'Bounce Rate',
+					description: 'Percentage of single-page sessions',
+					unit: '%',
+				},
+				{
+					name: 'avg_session_duration',
+					type: 'number',
+					label: 'Avg Session Duration',
+					description: 'Average session duration in seconds',
+					unit: 'seconds',
+				},
+				{
+					name: 'total_events',
+					type: 'number',
+					label: 'Total Events',
+					description: 'Total number of events tracked',
+				},
+			],
+			default_visualization: 'metric',
+			supports_granularity: ['day'],
+			version: '1.0',
+		},
 		customSql: (
 			websiteId: string,
 			startDate: string,
@@ -96,6 +146,43 @@ export const SummaryBuilders: Record<string, SimpleQueryConfig> = {
 	},
 
 	today_metrics: {
+		meta: {
+			title: "Today's Metrics",
+			description:
+				'Real-time metrics for today including pageviews, visitors, sessions, and bounce rate.',
+			category: 'Analytics',
+			tags: ['today', 'realtime', 'current', 'daily'],
+			output_fields: [
+				{
+					name: 'pageviews',
+					type: 'number',
+					label: 'Pageviews Today',
+					description: 'Total page views for today',
+				},
+				{
+					name: 'visitors',
+					type: 'number',
+					label: 'Visitors Today',
+					description: 'Unique visitors for today',
+				},
+				{
+					name: 'sessions',
+					type: 'number',
+					label: 'Sessions Today',
+					description: 'Total sessions for today',
+				},
+				{
+					name: 'bounce_rate',
+					type: 'number',
+					label: 'Bounce Rate',
+					description: 'Bounce rate percentage for today',
+					unit: '%',
+				},
+			],
+			default_visualization: 'metric',
+			supports_granularity: [],
+			version: '1.0',
+		},
 		table: Analytics.events,
 		fields: [
 			'COUNT(*) as pageviews',
@@ -110,6 +197,62 @@ export const SummaryBuilders: Record<string, SimpleQueryConfig> = {
 	},
 
 	events_by_date: {
+		meta: {
+			title: 'Events by Date',
+			description:
+				'Daily or hourly breakdown of website events showing pageviews, visitors, sessions, and engagement metrics.',
+			category: 'Analytics',
+			tags: ['timeseries', 'events', 'trends', 'daily', 'hourly'],
+			output_fields: [
+				{
+					name: 'date',
+					type: 'datetime',
+					label: 'Date',
+					description: 'Date or datetime of the data point',
+				},
+				{
+					name: 'pageviews',
+					type: 'number',
+					label: 'Pageviews',
+					description: 'Total page views for the period',
+				},
+				{
+					name: 'visitors',
+					type: 'number',
+					label: 'Visitors',
+					description: 'Unique visitors for the period',
+				},
+				{
+					name: 'sessions',
+					type: 'number',
+					label: 'Sessions',
+					description: 'Total sessions for the period',
+				},
+				{
+					name: 'bounce_rate',
+					type: 'number',
+					label: 'Bounce Rate',
+					description: 'Bounce rate for the period',
+					unit: '%',
+				},
+				{
+					name: 'avg_session_duration',
+					type: 'number',
+					label: 'Avg Session Duration',
+					description: 'Average session duration',
+					unit: 'seconds',
+				},
+				{
+					name: 'pages_per_session',
+					type: 'number',
+					label: 'Pages per Session',
+					description: 'Average pages viewed per session',
+				},
+			],
+			default_visualization: 'timeseries',
+			supports_granularity: ['hour', 'day'],
+			version: '1.0',
+		},
 		customSql: (
 			websiteId: string,
 			startDate: string,
@@ -283,6 +426,30 @@ export const SummaryBuilders: Record<string, SimpleQueryConfig> = {
 	},
 
 	active_stats: {
+		meta: {
+			title: 'Active Users',
+			description:
+				'Real-time count of active users and sessions currently on your website (last 5 minutes).',
+			category: 'Realtime',
+			tags: ['realtime', 'active', 'current', 'live'],
+			output_fields: [
+				{
+					name: 'active_users',
+					type: 'number',
+					label: 'Active Users',
+					description: 'Number of users active in the last 5 minutes',
+				},
+				{
+					name: 'active_sessions',
+					type: 'number',
+					label: 'Active Sessions',
+					description: 'Number of sessions active in the last 5 minutes',
+				},
+			],
+			default_visualization: 'metric',
+			supports_granularity: [],
+			version: '1.0',
+		},
 		customSql: (websiteId: string) => {
 			return {
 				sql: `

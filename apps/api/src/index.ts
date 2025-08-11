@@ -6,7 +6,6 @@ import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import { autumnHandler } from 'autumn-js/elysia';
 import { Elysia } from 'elysia';
 import { logger } from './lib/logger';
-import { websiteAuth } from './middleware/website-auth';
 import { assistant } from './routes/assistant';
 import { health } from './routes/health';
 import { query } from './routes/query';

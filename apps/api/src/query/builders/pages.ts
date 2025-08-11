@@ -19,6 +19,51 @@ export const PagesBuilders: Record<string, SimpleQueryConfig> = {
 		timeField: 'time',
 		allowedFilters: ['referrer', 'device_type', 'browser_name'],
 		customizable: true,
+		meta: {
+			title: 'Top Pages',
+			description:
+				'Most visited pages on your website, ranked by total pageviews with visitor counts and traffic percentage.',
+			category: 'Content',
+			tags: ['pages', 'content', 'traffic'],
+			output_fields: [
+				{
+					name: 'name',
+					type: 'string',
+					label: 'Page Path',
+					description: 'The URL path of the page',
+					example: '/home',
+				},
+				{
+					name: 'pageviews',
+					type: 'number',
+					label: 'Pageviews',
+					description: 'Total number of page views',
+					example: 1234,
+				},
+				{
+					name: 'visitors',
+					type: 'number',
+					label: 'Unique Visitors',
+					description: 'Number of unique visitors',
+					example: 456,
+				},
+				{
+					name: 'percentage',
+					type: 'number',
+					label: 'Traffic %',
+					description: 'Percentage of total traffic',
+					unit: '%',
+					example: 12.5,
+				},
+			],
+			output_example: [
+				{ name: '/home', pageviews: 1234, visitors: 456, percentage: 12.5 },
+				{ name: '/about', pageviews: 987, visitors: 321, percentage: 10.2 },
+			],
+			default_visualization: 'table',
+			supports_granularity: ['hour', 'day'],
+			version: '1.0',
+		},
 	},
 
 	entry_pages: {

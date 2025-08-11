@@ -34,6 +34,7 @@ export const query = new Elysia({ prefix: '/v1/query' })
 					allowedFilters: config.allowedFilters || [],
 					customizable: config.customizable,
 					defaultLimit: config.limit,
+					meta: config.meta,
 				},
 			])
 		),
