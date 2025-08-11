@@ -22,6 +22,7 @@ const app = new Elysia()
 			],
 		})
 	)
+	.use(health)
 	.use(
 		autumnHandler({
 			identify: async ({ request }) => {
@@ -42,7 +43,6 @@ const app = new Elysia()
 
 	.use(query)
 	.use(assistant)
-	.use(health)
 	.all('/trpc/*', ({ request }) => {
 		return fetchRequestHandler({
 			endpoint: '/trpc',
