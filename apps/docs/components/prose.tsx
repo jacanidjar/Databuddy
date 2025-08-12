@@ -1,4 +1,5 @@
 import type { ComponentPropsWithoutRef } from 'react';
+import { enhanceCodeBlocks } from '@/lib/enhance-code-blocks';
 import { cn } from '@/lib/utils';
 
 interface ProseProps extends ComponentPropsWithoutRef<'article'> {
@@ -6,6 +7,7 @@ interface ProseProps extends ComponentPropsWithoutRef<'article'> {
 }
 
 export function Prose({ children, html, className }: ProseProps) {
+	const enhancedHtml = html ? enhanceCodeBlocks(html) : '';
 	return (
 		<article
 			className={cn(
@@ -31,13 +33,6 @@ export function Prose({ children, html, className }: ProseProps) {
 				'prose-li:marker:text-foreground/60',
 				'prose-ol:my-4',
 				'prose-ul:my-4',
-				'prose-code:bg-muted',
-				'prose-code:px-1.5',
-				'prose-code:py-0.5',
-				'prose-code:rounded',
-				'prose-code:text-foreground',
-				'prose-pre:bg-muted',
-				'prose-pre:rounded',
 				'prose-img:rounded',
 				'prose-table:border-border',
 				'prose-blockquote:border-l-2',
@@ -48,7 +43,11 @@ export function Prose({ children, html, className }: ProseProps) {
 			)}
 		>
 			{/** biome-ignore lint/security/noDangerouslySetInnerHtml: Needed to render markdown */}
-			{html ? <div dangerouslySetInnerHTML={{ __html: html }} /> : children}
+			{html ? (
+				<div dangerouslySetInnerHTML={{ __html: enhancedHtml }} />
+			) : (
+				children
+			)}
 		</article>
 	);
 }

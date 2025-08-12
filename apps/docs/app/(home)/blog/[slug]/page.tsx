@@ -14,6 +14,7 @@ import { Footer } from '@/components/footer';
 import { SciFiButton } from '@/components/landing/scifi-btn';
 import { Prose } from '@/components/prose';
 import { getPosts, getSinglePost } from '@/lib/blog-query';
+import type { Post } from '@/types/post';
 
 const STRIP_HTML_REGEX = /<[^>]+>/g;
 const WORD_SPLIT_REGEX = /\s+/;
@@ -96,12 +97,11 @@ export default async function PostPage({
 }) {
 	const { slug } = await params;
 	const result = (await getSinglePost(slug)) as {
-		post?: import('@/types/post').Post;
+		post?: Post;
 		error?: boolean;
 		status?: number;
 		statusText?: string;
 	};
-
 	if (!result?.post) {
 		return (
 			<>
