@@ -456,6 +456,17 @@ export interface BlockedTraffic {
 	created_at: number;
 }
 
+export interface EmailEvent {
+	event_id: string;
+	email_hash: string;
+	domain: string;
+	labels: string[];
+	event_time: number;
+	received_at: number;
+	ingestion_time: number;
+	metadata_json: Record<string, unknown>;
+}
+
 // TypeScript interface that matches the ClickHouse schema
 export interface AnalyticsEvent {
 	// Core identification
