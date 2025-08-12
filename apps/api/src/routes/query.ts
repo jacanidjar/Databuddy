@@ -1,6 +1,7 @@
+import { filterOptions } from '@databuddy/shared';
 import { Elysia, t } from 'elysia';
 import { getCachedWebsiteDomain, getWebsiteDomain } from '../lib/website-utils';
-import { createRateLimitMiddleware } from '../middleware/rate-limit';
+// import { createRateLimitMiddleware } from '../middleware/rate-limit';
 import { websiteAuth } from '../middleware/website-auth';
 import { compileQuery, executeQuery } from '../query';
 import { QueryBuilders } from '../query/builders';
@@ -11,7 +12,6 @@ import {
 	DynamicQueryRequestSchema,
 	type DynamicQueryRequestType,
 } from '../schemas';
-import { filterOptions } from '@databuddy/shared';
 
 interface QueryParams {
 	start_date?: string;
@@ -23,7 +23,7 @@ interface QueryParams {
 }
 
 export const query = new Elysia({ prefix: '/v1/query' })
-	.use(createRateLimitMiddleware({ type: 'api' }))
+	// .use(createRateLimitMiddleware({ type: 'api' }))
 	.use(websiteAuth())
 	.get('/types', ({ query: params }: { query: { include_meta?: string } }) => {
 		const includeMeta = params.include_meta === 'true';
