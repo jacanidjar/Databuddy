@@ -268,7 +268,10 @@ export default function AmbassadorForm() {
 								required
 							>
 								<Input
+									aria-describedby={errors.name ? 'name-error' : 'name-description'}
+									aria-invalid={!!errors.name}
 									className={errors.name ? 'border-destructive' : ''}
+									id="name"
 									maxLength={100}
 									name="name"
 									onChange={handleInputChange}
@@ -277,6 +280,14 @@ export default function AmbassadorForm() {
 									type="text"
 									value={formData.name}
 								/>
+								{errors.name && (
+									<div id="name-error" className="sr-only">
+										{errors.name}
+									</div>
+								)}
+								<div id="name-description" className="sr-only">
+									Enter your full name
+								</div>
 							</FormField>
 
 							<FormField 
@@ -405,6 +416,7 @@ export default function AmbassadorForm() {
 						{/* Submit Button */}
 						<div className="pt-4">
 							<SciFiButton
+								aria-describedby="submit-status"
 								className="w-full sm:w-auto"
 								disabled={isSubmitting}
 								type="submit"
@@ -421,6 +433,9 @@ export default function AmbassadorForm() {
 									</>
 								)}
 							</SciFiButton>
+							<div id="submit-status" className="sr-only">
+								{isSubmitting ? 'Submitting application, please wait' : 'Submit your ambassador application'}
+							</div>
 						</div>
 					</form>
 				</div>
