@@ -1,4 +1,12 @@
-import { ArrowsOutSimpleIcon, XIcon } from '@phosphor-icons/react';
+import { 
+	ArrowsOutSimpleIcon, 
+	XIcon,
+	ArrowDownIcon,
+	ArrowUpIcon,
+	ArrowsDownUpIcon,
+	DatabaseIcon,
+	MagnifyingGlassIcon,
+} from '@phosphor-icons/react';
 import {
 	type ColumnDef,
 	flexRender,
@@ -9,14 +17,6 @@ import {
 	useReactTable,
 } from '@tanstack/react-table';
 import { AnimatePresence, motion } from 'framer-motion';
-import {
-	ArrowDown,
-	ArrowUp,
-	ArrowUpDown,
-	DatabaseIcon,
-	Search,
-	X,
-} from 'lucide-react';
 import React, {
 	Fragment,
 	useCallback,
@@ -345,12 +345,12 @@ function FullScreenTable<TData extends { name: string | number }, TValue>({
 					<div className="relative w-full max-w-xs">
 						<Input
 							aria-label="Search table"
-							className="h-7 w-full border-0 bg-muted/30 pr-2 pl-7 text-xs focus:bg-background focus:ring-1 focus:ring-primary/20"
+							className="h-8 w-full border border-border/50 bg-muted/30 pr-2 pl-7 text-xs focus:bg-background focus:ring-1 focus:ring-primary/20"
 							onChange={(event) => setGlobalFilter(event.target.value)}
 							placeholder="Filter data..."
 							value={globalFilter ?? ''}
 						/>
-						<Search className="-translate-y-1/2 absolute top-1/2 left-2 h-3 w-3 transform text-muted-foreground/50" />
+						<MagnifyingGlassIcon className="-translate-y-1/2 absolute top-1/2 left-2 h-3 w-3 transform text-muted-foreground/50" />
 						{globalFilter && (
 							<button
 								aria-label="Clear search"
@@ -358,7 +358,7 @@ function FullScreenTable<TData extends { name: string | number }, TValue>({
 								onClick={() => setGlobalFilter('')}
 								type="button"
 							>
-								<X className="h-3 w-3 text-muted-foreground/60" />
+								<XIcon className="h-3 w-3 text-muted-foreground/60" />
 							</button>
 						)}
 					</div>
@@ -416,13 +416,13 @@ function FullScreenTable<TData extends { name: string | number }, TValue>({
 											{header.column.getCanSort() && (
 												<div className="flex h-3 w-3 flex-col items-center justify-center">
 													{!header.column.getIsSorted() && (
-														<ArrowUpDown className="h-3 w-3 text-muted-foreground/40 transition-colors group-hover:text-muted-foreground/70" />
+														<ArrowsDownUpIcon className="h-3 w-3 text-muted-foreground/40 transition-colors group-hover:text-muted-foreground/70" />
 													)}
 													{header.column.getIsSorted() === 'asc' && (
-														<ArrowUp className="h-3 w-3 text-primary" />
+														<ArrowUpIcon className="h-3 w-3 text-primary" />
 													)}
 													{header.column.getIsSorted() === 'desc' && (
-														<ArrowDown className="h-3 w-3 text-primary" />
+														<ArrowDownIcon className="h-3 w-3 text-primary" />
 													)}
 												</div>
 											)}
@@ -490,9 +490,9 @@ function FullScreenTable<TData extends { name: string | number }, TValue>({
 																type="button"
 															>
 																{isExpanded ? (
-																	<ArrowDown className="h-3.5 w-3.5 text-muted-foreground" />
+																	<ArrowDownIcon className="h-3.5 w-3.5 text-muted-foreground" />
 																) : (
-																	<ArrowUp className="h-3.5 w-3.5 text-muted-foreground" />
+																	<ArrowUpIcon className="h-3.5 w-3.5 text-muted-foreground" />
 																)}
 															</button>
 														)}
@@ -794,11 +794,11 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 					</div>
 					<div className="flex items-center gap-2">
 						{showSearch && (
-							<div className="relative w-full flex-shrink-0 border sm:w-auto">
-								<Search className="-translate-y-1/2 absolute top-1/2 left-2 h-3 w-3 transform text-muted-foreground/50" />
+							<div className="relative w-full flex-shrink-0 sm:w-auto">
+								<MagnifyingGlassIcon className="-translate-y-1/2 absolute top-1/2 left-2 h-3 w-3 transform text-muted-foreground/50" />
 								<Input
 									aria-label={`Search ${title}`}
-									className="h-7 w-full border-0 bg-muted/30 pr-2 pl-7 text-xs focus:bg-background focus:ring-1 focus:ring-primary/20 sm:w-36"
+									className="h-8 w-full border border-border/50 bg-muted/30 pr-2 pl-7 text-xs focus:bg-background focus:ring-1 focus:ring-primary/20 sm:w-36"
 									onChange={(event) => setGlobalFilter(event.target.value)}
 									placeholder="Filter data..."
 									value={globalFilter ?? ''}
@@ -808,12 +808,12 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 						{!fullScreen && (
 							<button
 								aria-label="Full screen"
-								className="ml-2 flex items-center justify-center rounded border bg-muted/30 p-2 text-muted-foreground transition hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+								className="flex h-8 w-8 items-center justify-center rounded border border-border/50 bg-muted/30 text-muted-foreground transition hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
 								onClick={() => setFullScreen(true)}
 								title="Full screen"
 								type="button"
 							>
-								<ArrowsOutSimpleIcon size={18} />
+								<ArrowsOutSimpleIcon size={16} />
 							</button>
 						)}
 					</div>
@@ -970,15 +970,15 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 														</span>
 														{header.column.getCanSort() && (
 															<div className="flex h-3 w-3 flex-col items-center justify-center">
-																{!header.column.getIsSorted() && (
-																	<ArrowUpDown className="h-3 w-3 text-muted-foreground/40 transition-colors group-hover:text-muted-foreground/70" />
-																)}
-																{header.column.getIsSorted() === 'asc' && (
-																	<ArrowUp className="h-3 w-3 text-primary" />
-																)}
-																{header.column.getIsSorted() === 'desc' && (
-																	<ArrowDown className="h-3 w-3 text-primary" />
-																)}
+																													{!header.column.getIsSorted() && (
+														<ArrowsDownUpIcon className="h-3 w-3 text-muted-foreground/40 transition-colors group-hover:text-muted-foreground/70" />
+													)}
+													{header.column.getIsSorted() === 'asc' && (
+														<ArrowUpIcon className="h-3 w-3 text-primary" />
+													)}
+													{header.column.getIsSorted() === 'desc' && (
+														<ArrowDownIcon className="h-3 w-3 text-primary" />
+													)}
 															</div>
 														)}
 													</div>
@@ -1077,9 +1077,9 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 																		type="button"
 																	>
 																		{isExpanded ? (
-																			<ArrowDown className="h-3.5 w-3.5 text-muted-foreground" />
+																			<ArrowDownIcon className="h-3.5 w-3.5 text-muted-foreground" />
 																		) : (
-																			<ArrowUp className="h-3.5 w-3.5 text-muted-foreground" />
+																			<ArrowUpIcon className="h-3.5 w-3.5 text-muted-foreground" />
 																		)}
 																	</button>
 																)}
@@ -1157,7 +1157,7 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 							<div className="mb-4">
 								<div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/20">
 									{globalFilter ? (
-										<Search className="h-7 w-7 text-muted-foreground/50" />
+										<MagnifyingGlassIcon className="h-7 w-7 text-muted-foreground/50" />
 									) : (
 										<DatabaseIcon className="h-7 w-7 text-muted-foreground/50" />
 									)}
@@ -1177,7 +1177,7 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 									onClick={() => setGlobalFilter('')}
 									type="button"
 								>
-									<X className="h-4 w-4" />
+									<XIcon className="h-4 w-4" />
 									Clear search
 								</button>
 							)}
