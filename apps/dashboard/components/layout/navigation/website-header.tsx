@@ -11,30 +11,30 @@ interface WebsiteHeaderProps {
 
 export function WebsiteHeader({ website }: WebsiteHeaderProps) {
 	return (
-		<div className="flex flex-col gap-2">
-			<div>
-				<Button
-					asChild
-					className="group w-full cursor-pointer justify-start text-muted-foreground hover:text-foreground"
-					size="sm"
-					variant="ghost"
-				>
-					<Link href="/websites">
-						<CaretLeftIcon
-							className="group-hover:-translate-x-0.5 mr-2 h-4 w-4 transition-transform"
-							size={32}
-							weight="fill"
-						/>
-						<span>Back to Websites</span>
-					</Link>
-				</Button>
-			</div>
+		<div className="space-y-3">
+			{/* Back button */}
+			<Button
+				asChild
+				className="group w-full justify-start text-muted-foreground hover:text-foreground"
+				size="sm"
+				variant="ghost"
+			>
+				<Link href="/websites">
+					<CaretLeftIcon
+						className="group-hover:-translate-x-0.5 mr-2 h-4 w-4 transition-transform"
+						size={32}
+						weight="fill"
+					/>
+					Back to Websites
+				</Link>
+			</Button>
 
-			<div className="rounded-lg border border-border/50 bg-accent/30 px-2 py-2">
-				<h2 className="flex items-center truncate font-semibold text-base">
+			{/* Website info card */}
+			<div className="rounded-lg border bg-card p-3">
+				<div className="flex items-center gap-3">
 					<FaviconImage
 						altText={`${website?.name || website?.domain || 'Website'} favicon`}
-						className="mr-2"
+						className="flex-shrink-0"
 						domain={website?.domain || ''}
 						fallbackIcon={
 							<PlanetIcon
@@ -45,12 +45,18 @@ export function WebsiteHeader({ website }: WebsiteHeaderProps) {
 						}
 						size={20}
 					/>
-					{website?.name || website?.domain || (
-						<Skeleton className="h-5 w-36" />
-					)}
-				</h2>
-				<div className="mt-1 truncate pl-6 text-muted-foreground text-xs">
-					{website?.domain || <Skeleton className="h-4 w-24" />}
+					<div className="min-w-0 flex-1">
+						<h2 className="truncate font-semibold text-sm">
+							{website?.name || website?.domain || (
+								<Skeleton className="h-4 w-32" />
+							)}
+						</h2>
+						{website?.domain && (
+							<p className="truncate text-muted-foreground text-xs">
+								{website.domain}
+							</p>
+						)}
+					</div>
 				</div>
 			</div>
 		</div>
