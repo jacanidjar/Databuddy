@@ -1,3 +1,4 @@
+import type { DynamicQueryFilter } from '@databuddy/shared';
 import dayjs from 'dayjs';
 import { atom } from 'jotai';
 // Consider adding nanoid for unique ID generation for complex filters
@@ -213,11 +214,13 @@ export const activeFiltersForApiAtom = atom((get) => {
 		string | number | boolean | undefined
 	> = {};
 	for (const key in basicFiltersValue) {
-		const value = basicFiltersValue[key];
-		if (Array.isArray(value)) {
-			apiReadyBasicFilters[key] = value.join(',');
-		} else {
-			apiReadyBasicFilters[key] = value;
+		if (Object.hasOwn(basicFiltersValue, key)) {
+			const value = basicFiltersValue[key];
+			if (Array.isArray(value)) {
+				apiReadyBasicFilters[key] = value.join(',');
+			} else {
+				apiReadyBasicFilters[key] = value;
+			}
 		}
 	}
 
@@ -262,3 +265,62 @@ export const hasActiveSubFiltersAtom = atom((get) => {
  * This is primarily for UI feedback (e.g., disabling refresh button) while TanStack Query handles actual data refetching.
  */
 export const isAnalyticsRefreshingAtom = atom(false);
+
+// --- Dynamic Query Filters (for shared package compatibility) ---
+/**
+ * Atom for storing DynamicQueryFilter[] from @databuddy/shared
+ * This is used for the analytics toolbar and shared across all website pages
+ */
+export const dynamicQueryFiltersAtom = atom<DynamicQueryFilter[]>([]);
+
+/**
+ * Action atom for adding a new dynamic query filter.
+ * Adds the filter if it doesn't already exist (based on field and value).
+ */
+export const addDynamicFilterAtom = atom(
+	null,
+	(_get, set, filter: DynamicQueryFilter) => {
+		set(dynamicQueryFiltersAtom, (prev) => {
+			// Check if a filter with the same field and value already exists
+			const isDuplicate = prev.some(
+				(existing) =>
+					existing.field === filter.field &&
+					existing.value === filter.value &&
+					existing.operator === filter.operator
+			);
+
+			if (isDuplicate) {
+				return prev; // Don't add duplicate filters
+			}
+
+			return [...prev, filter];
+		});
+	}
+);
+
+/**
+ * Action atom for removing a dynamic query filter.
+ * Removes the first filter that matches the field, operator, and value.
+ */
+export const removeDynamicFilterAtom = atom(
+	null,
+	(_get, set, filter: Partial<DynamicQueryFilter>) => {
+		set(dynamicQueryFiltersAtom, (prev) =>
+			prev.filter(
+				(existing) =>
+					!(
+						existing.field === filter.field &&
+						existing.value === filter.value &&
+						existing.operator === filter.operator
+					)
+			)
+		);
+	}
+);
+
+/**
+ * Action atom for clearing all dynamic query filters.
+ */
+export const clearDynamicFiltersAtom = atom(null, (_get, set) => {
+	set(dynamicQueryFiltersAtom, []);
+});
