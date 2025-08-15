@@ -1,13 +1,10 @@
 'use client';
 
 import { FunnelIcon, TrendDownIcon } from '@phosphor-icons/react';
-import dayjs from 'dayjs';
+
 import { useAtom } from 'jotai';
 import { useParams } from 'next/navigation';
 import { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react';
-import type { DateRange as DayPickerRange } from 'react-day-picker';
-import { DateRangePicker } from '@/components/date-range-picker';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
 	type CreateFunnelData,
@@ -19,9 +16,8 @@ import {
 } from '@/hooks/use-funnels';
 import { useTrackingSetup } from '@/hooks/use-tracking-setup';
 import {
-	dateRangeAtom,
 	formattedDateRangeAtom,
-	setDateRangeAndAdjustGranularityAtom,
+	isAnalyticsRefreshingAtom,
 	timeGranularityAtom,
 } from '@/stores/jotai/filterAtoms';
 import { WebsitePageHeader } from '../_components/website-page-header';
@@ -90,7 +86,7 @@ const FunnelsListSkeleton = () => (
 export default function FunnelsPage() {
 	const { id } = useParams();
 	const websiteId = id as string;
-	const [isRefreshing, setIsRefreshing] = useState(false);
+	const [isRefreshing, setIsRefreshing] = useAtom(isAnalyticsRefreshingAtom);
 	const [expandedFunnelId, setExpandedFunnelId] = useState<string | null>(null);
 	const [selectedReferrer, setSelectedReferrer] = useState('all');
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -101,46 +97,12 @@ export default function FunnelsPage() {
 	const pageRef = useRef<HTMLDivElement>(null);
 
 	// Date range state
-	const [currentDateRange] = useAtom(dateRangeAtom);
 	const [currentGranularity] = useAtom(timeGranularityAtom);
-	const [, setDateRangeAction] = useAtom(setDateRangeAndAdjustGranularityAtom);
 	const [formattedDateRangeState] = useAtom(formattedDateRangeAtom);
 
 	const { isTrackingSetup, refetchTrackingSetup } = useTrackingSetup(websiteId);
 
-	// Date picker helpers
-	const dayPickerSelectedRange: DayPickerRange | undefined = useMemo(
-		() => ({
-			from: currentDateRange.startDate,
-			to: currentDateRange.endDate,
-		}),
-		[currentDateRange]
-	);
 
-	const quickRanges = useMemo(
-		() => [
-			{ label: '24h', fullLabel: 'Last 24 hours', hours: 24 },
-			{ label: '7d', fullLabel: 'Last 7 days', days: 7 },
-			{ label: '30d', fullLabel: 'Last 30 days', days: 30 },
-			{ label: '90d', fullLabel: 'Last 90 days', days: 90 },
-			{ label: '180d', fullLabel: 'Last 180 days', days: 180 },
-			{ label: '365d', fullLabel: 'Last 365 days', days: 365 },
-		],
-		[]
-	);
-
-	const handleQuickRangeSelect = useCallback(
-		(range: (typeof quickRanges)[0]) => {
-			const now = new Date();
-			const start = range.hours
-				? dayjs(now).subtract(range.hours, 'hour').toDate()
-				: dayjs(now)
-						.subtract(range.days || 7, 'day')
-						.toDate();
-			setDateRangeAction({ startDate: start, endDate: now });
-		},
-		[setDateRangeAction]
-	);
 
 	const memoizedDateRangeForTabs = useMemo(
 		() => ({
@@ -325,60 +287,7 @@ export default function FunnelsPage() {
 				websiteId={websiteId}
 			/>
 
-			{/* Date Range Controls - Only show if tracking is set up */}
-			{isTrackingSetup && (
-				<div className="mt-3 flex flex-col gap-3 rounded-lg border bg-muted/30 p-2.5">
-					<div className="flex items-center gap-2 overflow-x-auto rounded-md border bg-background p-1 shadow-sm">
-						{quickRanges.map((range) => {
-							const now = new Date();
-							const start = range.hours
-								? dayjs(now).subtract(range.hours, 'hour').toDate()
-								: dayjs(now)
-										.subtract(range.days || 7, 'day')
-										.toDate();
-							const dayPickerCurrentRange = dayPickerSelectedRange;
-							const isActive =
-								dayPickerCurrentRange?.from &&
-								dayPickerCurrentRange?.to &&
-								dayjs(dayPickerCurrentRange.from).format('YYYY-MM-DD') ===
-									dayjs(start).format('YYYY-MM-DD') &&
-								dayjs(dayPickerCurrentRange.to).format('YYYY-MM-DD') ===
-									dayjs(now).format('YYYY-MM-DD');
 
-							return (
-								<Button
-									className={`h-6 cursor-pointer touch-manipulation whitespace-nowrap px-2 text-xs sm:px-2.5 ${isActive ? 'shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-									key={range.label}
-									onClick={() => handleQuickRangeSelect(range)}
-									size="sm"
-									title={range.fullLabel}
-									variant={isActive ? 'default' : 'ghost'}
-								>
-									<span className="sm:hidden">{range.label}</span>
-									<span className="hidden sm:inline">{range.fullLabel}</span>
-								</Button>
-							);
-						})}
-
-						<div className="ml-1 border-border/50 border-l pl-2 sm:pl-3">
-							<DateRangePicker
-								className="w-auto"
-								maxDate={new Date()}
-								minDate={new Date(2020, 0, 1)}
-								onChange={(range) => {
-									if (range?.from && range?.to) {
-										setDateRangeAction({
-											startDate: range.from,
-											endDate: range.to,
-										});
-									}
-								}}
-								value={dayPickerSelectedRange}
-							/>
-						</div>
-					</div>
-				</div>
-			)}
 
 			<Suspense fallback={<FunnelsListSkeleton />}>
 				<FunnelsList

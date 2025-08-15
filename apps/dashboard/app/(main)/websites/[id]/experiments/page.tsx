@@ -1,6 +1,7 @@
 'use client';
 
 import { FlaskIcon } from '@phosphor-icons/react';
+import { useAtom } from 'jotai';
 import { useParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import {
 	useExperiments,
 } from '@/hooks/use-experiments';
 import { useWebsite } from '@/hooks/use-websites';
+import { isAnalyticsRefreshingAtom } from '@/stores/jotai/filterAtoms';
 import { WebsitePageHeader } from '../_components/website-page-header';
 import { DeleteExperimentDialog } from './_components/delete-experiment-dialog';
 import { ExperimentFormDialog } from './_components/experiment-form-dialog';
@@ -73,7 +75,7 @@ const ExperimentsListSkeleton = () => (
 export default function ExperimentsPage() {
 	const { id } = useParams();
 	const websiteId = id as string;
-	const [isRefreshing, setIsRefreshing] = useState(false);
+	const [isRefreshing, setIsRefreshing] = useAtom(isAnalyticsRefreshingAtom);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [editingExperiment, setEditingExperiment] = useState<Experiment | null>(
 		null

@@ -2,12 +2,18 @@
 
 import type { DateRange, DynamicQueryFilter } from '@databuddy/shared';
 import { ArrowClockwiseIcon, BugIcon } from '@phosphor-icons/react';
+import { useAtom } from 'jotai';
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { AnimatedLoading } from '@/components/analytics/animated-loading';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useEnhancedErrorData } from '@/hooks/use-dynamic-query';
+import {
+	formattedDateRangeAtom,
+	isAnalyticsRefreshingAtom,
+	timeGranularityAtom,
+} from '@/stores/jotai/filterAtoms';
 import { WebsitePageHeader } from '../../_components/website-page-header';
 import { ErrorDataTable } from './error-data-table';
 // Import our separated components
@@ -25,16 +31,19 @@ export const ErrorsPageContent = ({ params }: ErrorsPageContentProps) => {
 	const resolvedParams = use(params);
 	const websiteId = resolvedParams.id;
 
-	// Default to last 7 days
-	const dateRange: DateRange = {
-		start_date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-			.toISOString()
-			.split('T')[0],
-		end_date: new Date().toISOString().split('T')[0],
-		granularity: 'daily',
-	};
+	// Use shared date range and refresh state
+	const [formattedDateRangeState] = useAtom(formattedDateRangeAtom);
+	const [currentGranularity] = useAtom(timeGranularityAtom);
+	const [isRefreshing, setIsRefreshing] = useAtom(isAnalyticsRefreshingAtom);
 
-	const [isRefreshing, setIsRefreshing] = useState(false);
+	const dateRange: DateRange = useMemo(
+		() => ({
+			start_date: formattedDateRangeState.startDate,
+			end_date: formattedDateRangeState.endDate,
+			granularity: currentGranularity,
+		}),
+		[formattedDateRangeState, currentGranularity]
+	);
 	const [loadingProgress, setLoadingProgress] = useState<number>(0);
 
 	// Filters state

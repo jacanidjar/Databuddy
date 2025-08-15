@@ -2,6 +2,7 @@
 
 import type { LocationData } from '@databuddy/shared';
 import { GlobeIcon, MapPinIcon, QuestionIcon } from '@phosphor-icons/react';
+import { useAtom } from 'jotai';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
@@ -12,6 +13,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMapLocationData } from '@/hooks/use-dynamic-query';
 import { cn } from '@/lib/utils';
+import {
+	dynamicQueryFiltersAtom,
+	formattedDateRangeAtom,
+	isAnalyticsRefreshingAtom,
+	timeGranularityAtom,
+} from '@/stores/jotai/filterAtoms';
 import { WebsitePageHeader } from '../_components/website-page-header';
 
 const MapComponent = dynamic(
@@ -39,6 +46,21 @@ function WebsiteMapPage() {
 	const [mode, setMode] = useState<'total' | 'perCapita'>('total');
 	const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
 
+	// Use shared state atoms for consistency
+	const [formattedDateRangeState] = useAtom(formattedDateRangeAtom);
+	const [currentGranularity] = useAtom(timeGranularityAtom);
+	const [filters] = useAtom(dynamicQueryFiltersAtom);
+	const [isRefreshing, setIsRefreshing] = useAtom(isAnalyticsRefreshingAtom);
+
+	const dateRange = useMemo(
+		() => ({
+			start_date: formattedDateRangeState.startDate,
+			end_date: formattedDateRangeState.endDate,
+			granularity: currentGranularity,
+		}),
+		[formattedDateRangeState, currentGranularity]
+	);
+
 	const handleModeChange = useCallback((value: string) => {
 		setMode(value as 'total' | 'perCapita');
 	}, []);
@@ -47,13 +69,8 @@ function WebsiteMapPage() {
 		setSelectedCountry(countryCode);
 	}, []);
 
-	const { isLoading, getDataForQuery } = useMapLocationData(id, {
-		start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-			.toISOString()
-			.split('T')[0],
-		end_date: new Date().toISOString().split('T')[0],
-		granularity: 'daily',
-	});
+
+	const { isLoading, getDataForQuery } = useMapLocationData(id, dateRange, filters);
 
 	const countriesFromQuery = getDataForQuery('map-countries', 'country');
 	const regionsFromQuery = getDataForQuery('map-regions', 'region');
@@ -147,6 +164,7 @@ function WebsiteMapPage() {
 							weight="duotone"
 						/>
 					}
+					isRefreshing={isRefreshing}
 					subtitle={
 						!isLoading && totalVisitors > 0
 							? `${totalVisitors.toLocaleString()} visitors across ${topCountries.length} countries`

@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useWebsite } from '@/hooks/use-websites';
 import {
 	formattedDateRangeAtom,
+	isAnalyticsRefreshingAtom,
 	timeGranularityAtom,
 } from '@/stores/jotai/filterAtoms';
 import { WebsitePageHeader } from '../_components/website-page-header';
@@ -113,7 +114,7 @@ export default function WebsiteRevenuePage() {
 	const { id } = useParams();
 	const websiteId = id as string;
 	const [activeTab, setActiveTab] = useState('overview');
-	const [isRefreshing, setIsRefreshing] = useState(false);
+	const [isRefreshing, setIsRefreshing] = useAtom(isAnalyticsRefreshingAtom);
 
 	const [formattedDateRangeState] = useAtom(formattedDateRangeAtom);
 	const [currentGranularity] = useAtom(timeGranularityAtom);
