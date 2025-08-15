@@ -159,6 +159,7 @@ export function WebsiteAudienceTab({
 	isRefreshing,
 	setIsRefreshing,
 	filters,
+	addFilter,
 }: FullTabProps) {
 	const batchQueries = useMemo(
 		() => [
@@ -215,6 +216,17 @@ export function WebsiteAudienceTab({
 			handleRefresh();
 		}
 	}, [isRefreshing, handleRefresh]);
+
+	const onAddFilter = useCallback((field: string, value: string, tableTitle?: string) => {
+		// The field parameter now contains the correct filter field from the tab configuration
+		const filter = {
+			field,
+			operator: 'eq' as const,
+			value
+		};
+		
+		addFilter(filter);
+	}, [addFilter]);
 
 	const processedData = useMemo((): ProcessedData => {
 		if (!batchResults?.length) {
@@ -789,6 +801,10 @@ export function WebsiteAudienceTab({
 					_uniqueKey: `country-${item.country_code || item.name}-${index}`,
 				})),
 				columns: countryColumns,
+				getFilter: (row: any) => ({
+					field: 'country',
+					value: row.country_name || row.name
+				}),
 			},
 			{
 				id: 'regions',
@@ -798,6 +814,10 @@ export function WebsiteAudienceTab({
 					_uniqueKey: `region-${item.name}-${index}`,
 				})),
 				columns: geographicColumns,
+				getFilter: (row: any) => ({
+					field: 'region',
+					value: row.name
+				}),
 			},
 			{
 				id: 'cities',
@@ -807,6 +827,10 @@ export function WebsiteAudienceTab({
 					_uniqueKey: `city-${item.name}-${index}`,
 				})),
 				columns: cityColumns,
+				getFilter: (row: any) => ({
+					field: 'city',
+					value: row.name
+				}),
 			},
 			...(canUseDisplayNames
 				? [
@@ -818,6 +842,10 @@ export function WebsiteAudienceTab({
 								_uniqueKey: `language-${item.name}-${index}`,
 							})),
 							columns: languageColumns,
+							getFilter: (row: any) => ({
+								field: 'language',
+								value: row.name
+							}),
 						},
 					]
 				: []),
@@ -829,6 +857,10 @@ export function WebsiteAudienceTab({
 					_uniqueKey: `timezone-${item.name}-${index}`,
 				})),
 				columns: timezoneColumns,
+				getFilter: (row: any) => ({
+					field: 'timezone',
+					value: row.name
+				}),
 			},
 		],
 		[
@@ -864,6 +896,7 @@ export function WebsiteAudienceTab({
 					getSubRows={(row: any) => row.versions}
 					isLoading={isLoading}
 					minHeight={350}
+					onAddFilter={onAddFilter}
 					renderSubRow={(subRow: any, parentRow: any) => {
 						const percentage = Math.round(
 							((subRow.visitors || 0) / (parentRow.visitors || 1)) * 100
@@ -917,6 +950,18 @@ export function WebsiteAudienceTab({
 					}}
 					showSearch={false}
 					title="Browser Versions"
+					tabs={[
+						{
+							id: 'browsers',
+							label: 'Browsers',
+							data: processedBrowserData,
+							columns: browserColumns,
+							getFilter: (row: any) => ({
+								field: 'browser_name',
+								value: row.browserName || row.name
+							}),
+						}
+					]}
 				/>
 
 				<DataTable
@@ -925,8 +970,21 @@ export function WebsiteAudienceTab({
 					description="Visitors by network connection"
 					isLoading={isLoading}
 					minHeight={350}
+					onAddFilter={onAddFilter}
 					showSearch={false}
 					title="Connection Types"
+					tabs={[
+						{
+							id: 'connections',
+							label: 'Connection Types',
+							data: processedConnectionData,
+							columns: connectionColumns,
+							getFilter: (row: any) => ({
+								field: 'connection_type',
+								value: row.name
+							}),
+						}
+					]}
 				/>
 			</div>
 
@@ -938,6 +996,7 @@ export function WebsiteAudienceTab({
 						initialPageSize={8}
 						isLoading={isLoading}
 						minHeight={400}
+						onAddFilter={onAddFilter}
 						tabs={geographicTabs}
 						title="Geographic Distribution"
 					/>

@@ -304,6 +304,7 @@ export function WebsitePerformanceTab({
 	isRefreshing,
 	setIsRefreshing,
 	filters,
+	addFilter,
 }: FullTabProps) {
 	const [activeFilter, setActiveFilter] = useState<'fast' | 'slow' | null>(
 		null
@@ -342,6 +343,17 @@ export function WebsitePerformanceTab({
 		},
 		[]
 	);
+
+	const onAddFilter = useCallback((field: string, value: string, tableTitle?: string) => {
+		// The field parameter now contains the correct filter field from the tab configuration
+		const filter = {
+			field,
+			operator: 'eq' as const,
+			value
+		};
+		
+		addFilter(filter);
+	}, [addFilter]);
 
 	const { processedData, performanceSummary } = useMemo(() => {
 		if (!performanceResults?.length) {
@@ -412,7 +424,7 @@ export function WebsitePerformanceTab({
 
 		const getCountryIcon = (name: string) => {
 			const item = processedData.countries.find(
-				(item) => item.country_name === name
+				(item: any) => item.country_name === name
 			);
 			return <CountryFlag country={item?.country_code || name} size={16} />;
 		};
@@ -453,12 +465,20 @@ export function WebsitePerformanceTab({
 				data: processedData.pages,
 				iconRenderer: undefined,
 				nameFormatter: formatPageName,
+				getFilter: (row: any) => ({
+					field: 'path',
+					value: row.name
+				}),
 			},
 			{
 				id: 'countries',
 				label: 'Country',
 				data: processedData.countries,
 				iconRenderer: getCountryIcon,
+				getFilter: (row: any) => ({
+					field: 'country',
+					value: row.name
+				}),
 			},
 			{
 				id: 'regions',
@@ -466,24 +486,40 @@ export function WebsitePerformanceTab({
 				data: processedData.regions,
 				iconRenderer: getRegionCountryIcon,
 				nameFormatter: formatRegionName,
+				getFilter: (row: any) => ({
+					field: 'region',
+					value: row.name
+				}),
 			},
 			{
 				id: 'devices',
 				label: 'Device Types',
 				data: processedData.devices,
 				iconRenderer: getDeviceIcon,
+				getFilter: (row: any) => ({
+					field: 'device_type',
+					value: row.name
+				}),
 			},
 			{
 				id: 'browsers',
 				label: 'Browsers',
 				data: processedData.browsers,
 				iconRenderer: (name: string) => <BrowserIcon name={name} size="sm" />,
+				getFilter: (row: any) => ({
+					field: 'browser_name',
+					value: row.name
+				}),
 			},
 			{
 				id: 'operating_systems',
 				label: 'Operating Systems',
 				data: processedData.operating_systems,
 				iconRenderer: (name: string) => <OSIcon name={name} size="sm" />,
+				getFilter: (row: any) => ({
+					field: 'os_name',
+					value: row.name
+				}),
 			},
 		];
 
@@ -528,6 +564,7 @@ export function WebsitePerformanceTab({
 				),
 				...performanceColumns,
 			],
+			getFilter: config.getFilter,
 		}));
 	}, [processedData]);
 
@@ -581,6 +618,7 @@ export function WebsitePerformanceTab({
 				}
 				isLoading={isLoading || isRefreshing}
 				minHeight={500}
+				onAddFilter={onAddFilter}
 				tabs={tabs}
 				title="Performance Analysis"
 			/>
