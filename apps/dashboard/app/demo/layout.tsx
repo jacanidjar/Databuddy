@@ -12,6 +12,7 @@ import {
 	TargetIcon,
 	UsersIcon,
 	XIcon,
+	type Icon as PhosphorIcon
 } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -24,32 +25,47 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
-const demoNavigation = [
+interface DemoNavigationItem {
+	title: string;
+	items: DemoNavigationItemItem[];
+}
+
+interface DemoNavigationItemItem {
+	name: string;
+	icon: PhosphorIcon;
+	href: string;
+	highlight: boolean;
+}
+
+const DEMO_WEBSITE_ID = 'OXmNQsViBT-FOS_wZCTHc';
+const DEMO_WEBSITE_URL = 'https://www.databuddy.cc';
+
+const demoNavigation: DemoNavigationItem[] = [
 	{
 		title: 'Web Analytics',
 		items: [
 			{
 				name: 'Overview',
 				icon: HouseIcon,
-				href: '/demo/OXmNQsViBT-FOS_wZCTHc',
+				href: `/demo/${DEMO_WEBSITE_ID}`,
 				highlight: true,
 			},
 			{
 				name: 'Sessions',
 				icon: ClockIcon,
-				href: '/demo/OXmNQsViBT-FOS_wZCTHc/sessions',
+				href: `/demo/${DEMO_WEBSITE_ID}/sessions`,
 				highlight: true,
 			},
 			{
 				name: 'Errors',
 				icon: BugIcon,
-				href: '/demo/OXmNQsViBT-FOS_wZCTHc/errors',
+				href: `/demo/${DEMO_WEBSITE_ID}/errors`,
 				highlight: true,
 			},
 			{
 				name: 'Map',
 				icon: MapPinIcon,
-				href: '/demo/OXmNQsViBT-FOS_wZCTHc/map',
+				href: `/demo/${DEMO_WEBSITE_ID}/map`,
 				highlight: true,
 			},
 		],
@@ -60,26 +76,26 @@ const demoNavigation = [
 			{
 				name: 'Profiles',
 				icon: UsersIcon,
-				href: '/demo/OXmNQsViBT-FOS_wZCTHc/profiles',
+				href: `/demo/${DEMO_WEBSITE_ID}/profiles`,
 				highlight: true,
 			},
 			{
 				name: 'Funnels',
 				icon: FunnelIcon,
-				href: '/demo/OXmNQsViBT-FOS_wZCTHc/funnels',
+				href: `/demo/${DEMO_WEBSITE_ID}/funnels`,
 				highlight: true,
 			},
 			{
 				name: 'Goals',
 				icon: TargetIcon,
-				href: '/demo/OXmNQsViBT-FOS_wZCTHc/goals',
+				href: `/demo/${DEMO_WEBSITE_ID}/goals`,
 				highlight: true,
 			},
 		],
 	},
 ];
 
-export function Sidebar() {
+function Sidebar() {
 	const pathname = usePathname();
 	const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -87,104 +103,88 @@ export function Sidebar() {
 		setIsMobileOpen(false);
 	}, []);
 
-	// Handle keyboard navigation
-	useEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			if (e.key === 'Escape' && isMobileOpen) {
-				closeSidebar();
-			}
-		};
+	const handleKeyDown = useCallback((e: KeyboardEvent) => {
+		if (e.key === 'Escape' && isMobileOpen) {
+			closeSidebar();
+		}
+	}, [isMobileOpen, closeSidebar]);
 
+	useEffect(() => {
 		document.addEventListener('keydown', handleKeyDown);
 		return () => document.removeEventListener('keydown', handleKeyDown);
-	}, [isMobileOpen, closeSidebar]);
+	}, [handleKeyDown]);
 
 	return (
 		<>
-			{/* Top Header */}
 			<header className="fixed top-0 right-0 left-0 z-50 h-16 w-full border-b bg-background/95 backdrop-blur-md">
 				<div className="flex h-full items-center px-4 md:px-6">
-					{/* Left side: Logo + Mobile menu */}
 					<div className="flex items-center gap-4">
 						<Button
+							aria-label="Toggle menu"
 							className="md:hidden"
 							onClick={() => setIsMobileOpen(true)}
 							size="icon"
 							variant="ghost"
 						>
-							<ListIcon className="h-5 w-5" size={32} weight="duotone" />
-							<span className="sr-only">Toggle menu</span>
+							<ListIcon className="h-5 w-5" weight="duotone" />
 						</Button>
 
 						<div className="flex items-center gap-3">
-							<div className="flex flex-row items-center gap-3">
-								<Logo />
-							</div>
+							<Logo />
 						</div>
 					</div>
 
-					{/* Right Side - User Controls */}
 					<div className="ml-auto flex items-center gap-2">
 						<ThemeToggle />
 
-						{/* Help */}
 						<Button
+							aria-label="Help"
 							className="hidden h-8 w-8 md:flex"
 							size="icon"
 							variant="ghost"
 						>
-							<InfoIcon className="h-6 w-6" size={32} weight="duotone" />
-							<span className="sr-only">Help</span>
+							<InfoIcon className="h-6 w-6" weight="duotone" />
 						</Button>
 
-						{/* Notifications */}
 						<NotificationsPopover />
-
-						{/* User Menu */}
 						<UserMenu />
 					</div>
 				</div>
 			</header>
 
-			{/* Mobile backdrop */}
 			{isMobileOpen && (
 				<div
 					aria-hidden="true"
 					className="fixed inset-0 z-30 bg-black/20 md:hidden"
 					onClick={closeSidebar}
-					onKeyDown={closeSidebar}
-					onKeyPress={closeSidebar}
-					onKeyUp={closeSidebar}
 				/>
 			)}
 
-			{/* Sidebar */}
-			<div
+			<aside
+				aria-label="Demo navigation"
 				className={cn(
 					'fixed inset-y-0 left-0 z-40 w-64 bg-background',
 					'border-r pt-16 transition-transform duration-200 ease-out md:translate-x-0',
 					isMobileOpen ? 'translate-x-0' : '-translate-x-full'
 				)}
 			>
-				{/* Mobile close button */}
 				<Button
+					aria-label="Close sidebar"
 					className="absolute top-3 right-3 z-50 h-8 w-8 p-0 md:hidden"
 					onClick={closeSidebar}
 					size="sm"
 					variant="ghost"
 				>
-					<XIcon className="h-4 w-4" size={32} weight="duotone" />
-					<span className="sr-only">Close sidebar</span>
+					<XIcon className="h-4 w-4" weight="duotone" />
 				</Button>
 
 				<ScrollArea className="h-[calc(100vh-4rem)]">
-					<div className="space-y-4 p-3">
-						{/* Demo Website Header */}
+					<nav className="space-y-4 p-3">
 						<div className="flex items-center gap-3 rounded border bg-muted/50 p-3">
 							<div className="rounded border border-primary/20 bg-primary/10 p-2">
 								<GlobeIcon
+									aria-hidden="true"
 									className="h-5 w-5 text-primary"
-									size={32}
 									weight="duotone"
 								/>
 							</div>
@@ -192,7 +192,8 @@ export function Sidebar() {
 								<h2 className="truncate font-semibold text-sm">Landing Page</h2>
 								<Link
 									className="truncate text-muted-foreground text-xs"
-									href="https://www.databuddy.cc"
+									href={DEMO_WEBSITE_URL}
+									rel="noopener"
 									target="_blank"
 								>
 									www.databuddy.cc
@@ -200,58 +201,67 @@ export function Sidebar() {
 							</div>
 						</div>
 
-						{/* Demo Navigation */}
 						{demoNavigation.map((section) => (
 							<div key={section.title}>
 								<h3 className="mb-2 px-2 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
 									{section.title}
 								</h3>
-								<div className="ml-1 space-y-1">
+								<ul className="ml-1 space-y-1">
 									{section.items.map((item) => {
 										const isActive = pathname === item.href;
 										const Icon = item.icon;
 
 										return (
-											<Link
-												className={cn(
-													'flex cursor-pointer items-center gap-3 rounded px-3 py-2 text-sm transition-all',
-													isActive
-														? 'bg-primary/15 font-medium text-primary'
-														: 'text-foreground hover:bg-accent/70'
-												)}
-												href={item.href}
-												key={item.name}
-											>
-												<Icon
-													className={cn('h-4 w-4', isActive && 'text-primary')}
-													size={32}
-													weight="duotone"
-												/>
-												<span className="truncate">{item.name}</span>
-											</Link>
+											<li key={item.name}>
+												<Link
+													className={cn(
+														'group flex items-center gap-x-3 rounded px-3 py-2 text-sm transition-all duration-200',
+														'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-1',
+														isActive
+															? 'bg-accent font-medium text-foreground shadow-sm'
+															: 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+													)}
+													href={item.href}
+												>
+													<span className="flex-shrink-0">
+														<Icon
+															aria-hidden="true"
+															className={cn(
+																'h-5 w-5 transition-colors duration-200',
+																isActive
+																	? 'text-primary'
+																	: 'not-dark:text-primary group-hover:text-primary'
+															)}
+															size={32}
+															weight="duotone"
+														/>
+													</span>
+													<span className="flex-grow truncate">{item.name}</span>
+												</Link>
+											</li>
 										);
 									})}
-								</div>
+								</ul>
 							</div>
 						))}
-					</div>
+					</nav>
 				</ScrollArea>
-			</div>
+			</aside>
 		</>
 	);
 }
 
-export default function MainLayout({
-	children,
-}: {
+interface MainLayoutProps {
 	children: React.ReactNode;
-}) {
+}
+
+export default function MainLayout({ children }: MainLayoutProps) {
 	return (
 		<div className="h-screen overflow-hidden bg-gradient-to-br from-background to-muted/20 text-foreground">
 			<Sidebar />
-			<div className="relative h-screen pt-16 md:pl-64">
+			<main className="relative h-screen pt-16 md:pl-64">
 				<div className="h-[calc(100vh-4rem)] overflow-y-scroll">{children}</div>
-			</div>
+			</main>
 		</div>
 	);
 }
