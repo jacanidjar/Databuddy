@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { isIP } from 'node:net';
-import type { City } from '@maxmind/geoip2-node';
+import type { City, Country } from '@maxmind/geoip2-node';
 import { AddressNotFoundError, Reader } from '@maxmind/geoip2-node';
 
 // import { logger } from '../lib/logger';
@@ -8,6 +8,7 @@ const logger = console;
 
 interface GeoIPReader extends Reader {
 	city(ip: string): City;
+	country(ip: string): Country;
 }
 
 const IPV4_URL = process.env.IPV4_URL;
@@ -126,24 +127,51 @@ export async function getGeoLocation(ip: string) {
 	}
 
 	try {
-		const response = reader.city(ip);
-		const region = response.subdivisions?.[0]?.names?.en;
-		const city = response.city?.names?.en;
-		const country = response.country?.names?.en;
+		// Try city method first (for full city databases)
+		try {
+			const response = reader.city(ip);
+			const region = response.subdivisions?.[0]?.names?.en;
+			const city = response.city?.names?.en;
+			const country = response.country?.names?.en;
 
-		logger.debug('IP lookup successful', {
-			ip,
-			type: ipType,
-			country,
-			region,
-			city,
-		});
+			logger.debug('IP lookup successful (city)', {
+				ip,
+				type: ipType,
+				country,
+				region,
+				city,
+			});
 
-		return {
-			country,
-			region,
-			city,
-		};
+			return {
+				country,
+				region,
+				city,
+			};
+		} catch (cityError) {
+			// If city method fails, try country method (for country-only databases)
+			if (
+				cityError instanceof Error &&
+				cityError.message.includes('cannot be used with')
+			) {
+				logger.debug('Falling back to country lookup', { ip, type: ipType });
+
+				const response = reader.country(ip);
+				const country = response.country?.names?.en;
+
+				logger.debug('IP lookup successful (country)', {
+					ip,
+					type: ipType,
+					country,
+				});
+
+				return {
+					country,
+					region: undefined,
+					city: undefined,
+				};
+			}
+			throw cityError;
+		}
 	} catch (error) {
 		if (error instanceof AddressNotFoundError) {
 			logger.debug('IP not found in database', { ip, type: ipType });
