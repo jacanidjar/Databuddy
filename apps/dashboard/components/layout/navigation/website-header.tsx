@@ -10,10 +10,10 @@ interface WebsiteHeaderProps {
 
 export function WebsiteHeader({ website }: WebsiteHeaderProps) {
 	return (
-		<div className="border-border border-b bg-accent/20">
+		<div className="flex h-16 flex-col border-border border-b bg-accent/20">
 			{/* Back navigation */}
 			<button
-				className="flex w-full items-center gap-3 px-5 py-2.5 text-left font-medium text-foreground text-sm transition-colors hover:bg-muted/50"
+				className="flex w-full items-center gap-3 px-5 py-1.5 text-left font-medium text-foreground text-sm transition-colors hover:bg-muted/50"
 				type="button"
 			>
 				<Link className="flex w-full items-center gap-3" href="/websites">
@@ -28,7 +28,7 @@ export function WebsiteHeader({ website }: WebsiteHeaderProps) {
 			</button>
 
 			{/* Website info - enhanced with background and better spacing */}
-			<div className="border-border border-t bg-gradient-to-r from-accent/30 to-accent/10 px-5 py-3">
+			<div className="flex flex-1 items-center border-border border-t bg-gradient-to-r from-accent/30 to-accent/10 px-5 py-1.5">
 				<div className="flex w-full items-center gap-3">
 					<div className="rounded-lg bg-background/80 p-1.5 shadow-sm ring-1 ring-border/50">
 						<FaviconImage

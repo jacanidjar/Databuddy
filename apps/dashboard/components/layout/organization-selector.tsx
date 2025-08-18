@@ -73,13 +73,13 @@ function OrganizationSelectorTrigger({
 	return (
 		<div
 			className={cn(
-				'w-full border-border border-b bg-accent/20 px-5 py-3 transition-colors',
+				'flex h-16 w-full items-center border-border border-b bg-accent/20 px-5 py-3 transition-colors',
 				'hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
 				isSettingActiveOrganization && 'cursor-not-allowed opacity-70',
 				isOpen && 'bg-accent/30'
 			)}
 		>
-			<div className="flex items-center justify-between">
+			<div className="flex w-full items-center justify-between">
 				<div className="flex items-center gap-3">
 					<div className="rounded-lg bg-background/80 p-1.5 shadow-sm ring-1 ring-border/50">
 						<Avatar className="h-5 w-5">
@@ -263,7 +263,7 @@ export function OrganizationSelector() {
 								<UserIcon className="not-dark:text-primary" weight="duotone" />
 							</AvatarFallback>
 						</Avatar>
-						<div className="flex min-w-0 flex-1 flex-col">
+						<div className="flex min-w-0 flex-1 flex-col text-left">
 							<span className="font-medium text-sm">Personal</span>
 							<span className="text-muted-foreground text-xs">
 								Your workspace

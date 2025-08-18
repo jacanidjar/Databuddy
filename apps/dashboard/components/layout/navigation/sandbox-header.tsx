@@ -1,39 +1,42 @@
 import { CaretLeftIcon, TestTubeIcon } from '@phosphor-icons/react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 
 export function SandboxHeader() {
 	return (
-		<div className="flex flex-col gap-2">
-			<div>
-				<Button
-					asChild
-					className="group w-full cursor-pointer justify-start text-muted-foreground hover:text-foreground"
-					size="sm"
-					variant="ghost"
-				>
-					<Link href="/">
-						<CaretLeftIcon
-							className="group-hover:-translate-x-0.5 mr-2 h-4 w-4 transition-transform"
-							size={32}
-							weight="fill"
-						/>
-						<span>Back to Dashboard</span>
-					</Link>
-				</Button>
-			</div>
-
-			<div className="rounded-lg border border-border/50 bg-accent/30 px-2 py-2">
-				<h2 className="flex items-center truncate font-semibold text-base">
-					<TestTubeIcon
-						className="mr-2 h-5 w-5 text-primary/70"
-						size={64}
-						weight="duotone"
+		<div className="flex h-16 flex-col border-border border-b bg-accent/20">
+			{/* Back navigation */}
+			<button
+				className="flex w-full items-center gap-3 px-5 py-1.5 text-left font-medium text-foreground text-sm transition-colors hover:bg-muted/50"
+				type="button"
+			>
+				<Link className="flex w-full items-center gap-3" href="/">
+					<CaretLeftIcon
+						className="hover:-translate-x-0.5 size-4 flex-shrink-0 transition-transform"
+						weight="fill"
 					/>
-					Sandbox
-				</h2>
-				<div className="mt-1 truncate pl-6 text-muted-foreground text-xs">
-					Test & Experiment
+					<span className="flex-1 text-muted-foreground text-xs">
+						Back to Dashboard
+					</span>
+				</Link>
+			</button>
+
+			{/* Sandbox info */}
+			<div className="flex flex-1 items-center border-border border-t bg-gradient-to-r from-accent/30 to-accent/10 px-5 py-1.5">
+				<div className="flex w-full items-center gap-3">
+					<div className="rounded-lg bg-background/80 p-1.5 shadow-sm ring-1 ring-border/50">
+						<TestTubeIcon
+							className="size-5 flex-shrink-0 text-primary/70"
+							weight="duotone"
+						/>
+					</div>
+					<div className="min-w-0 flex-1">
+						<h2 className="truncate font-semibold text-foreground text-sm">
+							Sandbox
+						</h2>
+						<p className="truncate text-muted-foreground/80 text-xs">
+							Test & Experiment
+						</p>
+					</div>
 				</div>
 			</div>
 		</div>

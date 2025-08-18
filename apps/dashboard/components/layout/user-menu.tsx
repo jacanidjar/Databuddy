@@ -83,7 +83,13 @@ export function UserMenu() {
 					</Avatar>
 				</Button>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="w-56 p-2">
+			<DropdownMenuContent
+				align="start"
+				className="w-56 p-2"
+				collisionPadding={16}
+				side="right"
+				sideOffset={8}
+			>
 				<div className="mb-1 flex items-center justify-start gap-3 p-2">
 					<Avatar className="h-9 w-9 border border-border/50">
 						<AvatarImage

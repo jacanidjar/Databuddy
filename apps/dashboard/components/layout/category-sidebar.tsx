@@ -6,6 +6,11 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { NotificationsPopover } from '@/components/notifications/notifications-popover';
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useWebsites } from '@/hooks/use-websites';
 import { cn } from '@/lib/utils';
 import {
@@ -69,25 +74,30 @@ export function CategorySidebar({
 					const isActive = activeCategory === category.id;
 
 					return (
-						<button
-							className={cn(
-								'flex items-center justify-center p-2 transition-colors hover:bg-muted/50',
-								'focus:outline-none',
-								isActive && 'bg-muted text-foreground'
-							)}
-							key={category.id}
-							onClick={() => onCategoryChange?.(category.id)}
-							title={category.name}
-							type="button"
-						>
-							<Icon
-								className={cn(
-									'h-5 w-5 transition-colors',
-									isActive ? 'text-primary' : 'text-muted-foreground'
-								)}
-								weight={isActive ? 'fill' : 'duotone'}
-							/>
-						</button>
+						<Tooltip key={category.id}>
+							<TooltipTrigger asChild>
+								<button
+									className={cn(
+										'flex items-center justify-center p-2 transition-colors hover:bg-muted/50',
+										'focus:outline-none',
+										isActive && 'bg-muted text-foreground'
+									)}
+									onClick={() => onCategoryChange?.(category.id)}
+									type="button"
+								>
+									<Icon
+										className={cn(
+											'h-5 w-5 transition-colors',
+											isActive ? 'text-primary' : 'text-muted-foreground'
+										)}
+										weight={isActive ? 'fill' : 'duotone'}
+									/>
+								</button>
+							</TooltipTrigger>
+							<TooltipContent side="right" sideOffset={8}>
+								{category.name}
+							</TooltipContent>
+						</Tooltip>
 					);
 				})}
 
@@ -98,38 +108,65 @@ export function CategorySidebar({
 				<div className="space-y-2 border-border border-t p-2 pb-4">
 					{/* Notifications */}
 					<div className="flex justify-center">
-						<div className="flex h-8 w-8 items-center justify-center">
-							<NotificationsPopover />
-						</div>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<div className="flex h-8 w-8 items-center justify-center">
+									<NotificationsPopover />
+								</div>
+							</TooltipTrigger>
+							<TooltipContent side="right" sideOffset={8}>
+								Notifications
+							</TooltipContent>
+						</Tooltip>
 					</div>
 
 					{/* Theme Toggle */}
 					<div className="flex justify-center">
-						<div className="flex h-8 w-8 items-center justify-center">
-							<ThemeToggle />
-						</div>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<div className="flex h-8 w-8 items-center justify-center">
+									<ThemeToggle />
+								</div>
+							</TooltipTrigger>
+							<TooltipContent side="right" sideOffset={8}>
+								Toggle Theme
+							</TooltipContent>
+						</Tooltip>
 					</div>
 
 					{/* Support */}
 					<div className="flex justify-center">
-						<button
-							className="flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-muted/50 focus:outline-none"
-							onClick={() => setHelpOpen(true)}
-							title="Help and Support"
-							type="button"
-						>
-							<InfoIcon
-								className="h-4 w-4 not-dark:text-primary"
-								weight="duotone"
-							/>
-						</button>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<button
+									className="flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-muted/50 focus:outline-none"
+									onClick={() => setHelpOpen(true)}
+									type="button"
+								>
+									<InfoIcon
+										className="h-4 w-4 not-dark:text-primary"
+										weight="duotone"
+									/>
+								</button>
+							</TooltipTrigger>
+							<TooltipContent side="right" sideOffset={8}>
+								Help and Support
+							</TooltipContent>
+						</Tooltip>
 					</div>
 
 					{/* Profile */}
 					<div className="flex justify-center">
-						<div className="flex h-8 w-8 items-center justify-center">
-							<UserMenu />
-						</div>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<div className="flex h-8 w-8 items-center justify-center">
+									<UserMenu />
+								</div>
+							</TooltipTrigger>
+							<TooltipContent side="right" sideOffset={8}>
+								Profile Menu
+							</TooltipContent>
+						</Tooltip>
 					</div>
 				</div>
 
