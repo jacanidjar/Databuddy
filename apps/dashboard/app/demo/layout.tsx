@@ -20,16 +20,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { AnalyticsToolbar } from '@/app/(main)/websites/[id]/_components/analytics-toolbar';
 import { Logo } from '@/components/layout/logo';
-import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { SignOutButton } from '@/components/layout/sign-out-button';
+import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { NotificationsPopover } from '@/components/notifications/notifications-popover';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import {
-	dynamicQueryFiltersAtom,
-	isAnalyticsRefreshingAtom,
-} from '@/stores/jotai/filterAtoms';
+import { isAnalyticsRefreshingAtom } from '@/stores/jotai/filterAtoms';
 
 const DEMO_WEBSITE_ID = 'OXmNQsViBT-FOS_wZCTHc';
 const DEMO_WEBSITE_URL = 'https://www.databuddy.cc';
@@ -248,9 +245,6 @@ interface MainLayoutProps {
 
 export default function MainLayout({ children }: MainLayoutProps) {
 	const [isRefreshing, setIsRefreshing] = useAtom(isAnalyticsRefreshingAtom);
-	const [selectedFilters, setSelectedFilters] = useAtom(
-		dynamicQueryFiltersAtom
-	);
 
 	const handleRefresh = async () => {
 		setIsRefreshing(true);
