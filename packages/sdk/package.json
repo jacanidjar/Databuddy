@@ -1,22 +1,49 @@
 {
   "name": "@databuddy/sdk",
-  "version": "1.4.2",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "module": "dist/index.js",
+  "version": "2.0.0",
+  "description": "Official Databuddy Analytics SDK",
+  "main": "./dist/core/index.mjs",
+  "types": "./dist/core/index.d.ts",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "build": "unbuild"
+  },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "typescript": "catalog:"
+    "@vitejs/plugin-react": "^5.0.0",
+    "react": "18.0.0",
+    "typescript": "catalog:",
+    "unbuild": "^3.6.1",
+    "vue": "3.0.0",
+    "vue-sfc-transformer": "^0.1.16"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "vue": ">=3"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    }
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.js",
-      "default": "./dist/index.js"
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.mjs"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.mjs"
+    },
+    "./vue": {
+      "types": "./dist/vue/index.d.ts",
+      "import": "./dist/vue/index.mjs"
     }
   },
-  "description": "Official Databuddy Analytics SDK",
   "files": [
     "dist"
   ],
@@ -24,11 +51,8 @@
     "analytics",
     "tracking",
     "databuddy",
-    "sdk"
-  ],
-  "license": "MIT",
-  "private": false,
-  "scripts": {
-    "build": "tsc --project tsconfig.json"
-  }
+    "sdk",
+    "react",
+    "vue"
+  ]
 }
