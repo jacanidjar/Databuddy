@@ -43,7 +43,7 @@ export function MobileCategorySelector({
 	const currentCategory = categories.find((cat) => cat.id === activeCategory);
 
 	return (
-		<div className="border-border border-b p-3 md:hidden">
+		<div className="border-sidebar-border border-b p-3 md:hidden">
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
 					<Button
@@ -68,7 +68,7 @@ export function MobileCategorySelector({
 							<DropdownMenuItem
 								className={cn(
 									'flex cursor-pointer items-center gap-2',
-									isActive && 'bg-muted'
+									isActive && 'bg-sidebar-accent text-sidebar-accent-foreground'
 								)}
 								key={category.id}
 								onClick={() => onCategoryChange?.(category.id)}
@@ -76,7 +76,7 @@ export function MobileCategorySelector({
 								<Icon
 									className={cn(
 										'h-4 w-4',
-										isActive ? 'text-primary' : 'text-muted-foreground'
+										isActive ? 'text-sidebar-ring' : 'text-muted-foreground'
 									)}
 									weight={isActive ? 'fill' : 'duotone'}
 								/>

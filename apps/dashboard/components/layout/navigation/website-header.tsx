@@ -10,18 +10,18 @@ interface WebsiteHeaderProps {
 
 export function WebsiteHeader({ website }: WebsiteHeaderProps) {
 	return (
-		<div className="border-border border-b bg-accent/20">
+		<div className="border-sidebar-border border-b bg-sidebar-accent">
 			{/* Website info - aligned with logo section */}
-			<div className="flex h-16 items-center justify-center border-border border-b bg-gradient-to-r from-accent/30 to-accent/10 px-5">
+			<div className="flex h-16 items-center justify-center border-sidebar-border border-b bg-gradient-to-r from-sidebar-accent to-sidebar-accent/80 px-5">
 				<div className="flex w-full items-center gap-3">
-					<div className="rounded-lg bg-background/80 p-1.5 shadow-sm ring-1 ring-border/50">
+					<div className="rounded-lg bg-sidebar/80 p-1.5 shadow-sm ring-1 ring-sidebar-border/50">
 						<FaviconImage
 							altText={`${website?.name || website?.domain || 'Website'} favicon`}
 							className="size-5 flex-shrink-0"
 							domain={website?.domain || ''}
 							fallbackIcon={
 								<PlanetIcon
-									className="text-primary/70"
+									className="text-sidebar-ring"
 									size={20}
 									weight="duotone"
 								/>
@@ -30,13 +30,13 @@ export function WebsiteHeader({ website }: WebsiteHeaderProps) {
 						/>
 					</div>
 					<div className="flex min-w-0 flex-1 flex-col items-start">
-						<h2 className="truncate text-left font-semibold text-foreground text-sm">
+						<h2 className="truncate text-left font-semibold text-sidebar-accent-foreground text-sm">
 							{website?.name || website?.domain || (
 								<Skeleton className="h-4 w-32" />
 							)}
 						</h2>
 						{website?.domain ? (
-							<p className="truncate text-left text-muted-foreground/80 text-xs">
+							<p className="truncate text-left text-sidebar-accent-foreground/70 text-xs">
 								{website.domain}
 							</p>
 						) : (
@@ -50,15 +50,15 @@ export function WebsiteHeader({ website }: WebsiteHeaderProps) {
 
 			{/* Back navigation - aligned with category buttons */}
 			<button
-				className="group flex w-full cursor-pointer items-start justify-start p-2 transition-colors hover:bg-muted/50"
+				className="group flex w-full cursor-pointer items-start justify-start p-2 transition-colors hover:bg-sidebar-accent/60"
 				type="button"
 			>
 				<Link className="flex items-center gap-2" href="/websites">
 					<CaretLeftIcon
-						className="group-hover:-translate-x-0.5 h-5 w-5 flex-shrink-0 transition-transform"
+						className="group-hover:-translate-x-0.5 h-5 w-5 flex-shrink-0 transition-transform text-sidebar-accent-foreground/80"
 						weight="fill"
 					/>
-					<span className="text-muted-foreground text-xs">
+					<span className="text-sidebar-accent-foreground/70 text-xs">
 						Back to Websites
 					</span>
 				</Link>

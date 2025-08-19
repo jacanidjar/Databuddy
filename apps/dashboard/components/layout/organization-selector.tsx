@@ -73,15 +73,15 @@ function OrganizationSelectorTrigger({
 	return (
 		<div
 			className={cn(
-				'flex h-16 w-full items-center border-border border-b bg-accent/20 px-5 py-3 transition-colors',
-				'hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+				'flex h-16 w-full items-center border-sidebar-border border-b bg-sidebar-accent px-5 py-3 transition-colors',
+				'hover:bg-sidebar-accent/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring/50',
 				isSettingActiveOrganization && 'cursor-not-allowed opacity-70',
-				isOpen && 'bg-accent/30'
+				isOpen && 'bg-sidebar-accent/60'
 			)}
 		>
 			<div className="flex w-full items-center justify-between">
 				<div className="flex items-center gap-3">
-					<div className="rounded-lg bg-background/80 p-1.5 shadow-sm ring-1 ring-border/50">
+					<div className="rounded-lg bg-sidebar/80 p-1.5 shadow-sm ring-1 ring-sidebar-border/50">
 						<Avatar className="h-5 w-5">
 							<AvatarImage
 								alt={activeOrganization?.name || 'Personal'}
@@ -92,7 +92,7 @@ function OrganizationSelectorTrigger({
 									getOrganizationInitials(activeOrganization.name)
 								) : (
 									<UserIcon
-										className="not-dark:text-primary"
+										className="text-sidebar-ring"
 										weight="duotone"
 									/>
 								)}
@@ -100,10 +100,10 @@ function OrganizationSelectorTrigger({
 						</Avatar>
 					</div>
 					<div className="flex min-w-0 flex-1 flex-col items-start">
-						<span className="truncate text-left font-semibold text-foreground text-sm">
+						<span className="truncate text-left font-semibold text-sidebar-accent-foreground text-sm">
 							{activeOrganization?.name || 'Personal'}
 						</span>
-						<p className="truncate text-left text-muted-foreground/80 text-xs">
+						<p className="truncate text-left text-sidebar-accent-foreground/70 text-xs">
 							{activeOrganization?.slug || 'Your workspace'}
 						</p>
 					</div>
@@ -111,13 +111,13 @@ function OrganizationSelectorTrigger({
 				{isSettingActiveOrganization ? (
 					<SpinnerGapIcon
 						aria-label="Switching workspace"
-						className="h-4 w-4 animate-spin text-muted-foreground"
+						className="h-4 w-4 animate-spin text-sidebar-accent-foreground/60"
 						weight="duotone"
 					/>
 				) : (
 					<CaretDownIcon
 						className={cn(
-							'h-4 w-4 text-muted-foreground transition-transform duration-200',
+							'h-4 w-4 text-sidebar-accent-foreground/60 transition-transform duration-200',
 							isOpen && 'rotate-180'
 						)}
 						weight="fill"
@@ -190,10 +190,10 @@ export function OrganizationSelector() {
 
 	if (isLoading) {
 		return (
-			<div className="flex h-16 w-full items-center border-border border-b bg-accent/20 px-5 py-3">
+			<div className="flex h-16 w-full items-center border-sidebar-border border-b bg-sidebar-accent px-5 py-3">
 				<div className="flex w-full items-center justify-between">
 					<div className="flex items-center gap-3">
-						<div className="rounded-lg bg-background/80 p-1.5 shadow-sm ring-1 ring-border/50">
+						<div className="rounded-lg bg-sidebar/80 p-1.5 shadow-sm ring-1 ring-sidebar-border/50">
 							<Skeleton className="h-5 w-5 rounded" />
 						</div>
 						<div className="flex min-w-0 flex-1 flex-col items-start">
@@ -209,9 +209,9 @@ export function OrganizationSelector() {
 
 	if (hasError && !isActiveOrgNotFound) {
 		return (
-			<div className="border-border border-b bg-destructive/10 px-5 py-3">
+			<div className="border-sidebar-border border-b bg-destructive/10 px-5 py-3">
 				<div className="flex items-center gap-3">
-					<div className="rounded bg-background/80 p-1.5 shadow-sm ring-1 ring-destructive/50">
+					<div className="rounded bg-sidebar/80 p-1.5 shadow-sm ring-1 ring-destructive/50">
 						<UserIcon className="h-5 w-5 text-destructive" weight="duotone" />
 					</div>
 					<div className="min-w-0 flex-1">

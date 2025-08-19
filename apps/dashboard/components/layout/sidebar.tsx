@@ -207,8 +207,8 @@ export function Sidebar() {
 			<nav
 				aria-hidden={!isMobileOpen}
 				className={cn(
-					'fixed inset-y-0 z-40 w-72 bg-background',
-					'border-r transition-transform duration-200 ease-out',
+					'fixed inset-y-0 z-40 w-72 bg-sidebar',
+					'border-r border-sidebar-border transition-transform duration-200 ease-out',
 					'left-0 md:left-12', // Mobile: left-0, Desktop: left-12 (after category sidebar)
 					'pt-16 md:pt-0', // Mobile: account for mobile header, Desktop: no top padding
 					'md:translate-x-0',

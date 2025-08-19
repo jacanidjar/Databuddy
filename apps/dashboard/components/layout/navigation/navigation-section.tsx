@@ -110,13 +110,13 @@ export const NavigationSection = memo(function NavigationSectionComponent({
 	}
 
 	return (
-		<div className="border-muted-foreground/20 border-b border-dotted last:border-b-0">
+		<div className="border-sidebar-border/30 border-b border-dotted last:border-b-0">
 			<button
-				className="flex w-full items-center gap-3 px-2 py-2 text-left font-medium text-foreground text-sm transition-colors hover:bg-muted/50 focus:outline-none"
+				className="flex w-full items-center gap-3 px-3 py-2.5 text-left font-medium text-sidebar-foreground text-sm transition-colors hover:bg-sidebar-accent/50 focus:outline-none focus:ring-2 focus:ring-sidebar-ring/50"
 				onClick={() => toggleAccordion(title, true)}
 				type="button"
 			>
-				<Icon className="size-5 flex-shrink-0 text-foreground" weight="fill" />
+				<Icon className="size-5 flex-shrink-0 text-sidebar-ring" weight="fill" />
 				<span className="flex-1 text-sm">{title}</span>
 				<motion.div
 					animate={{ rotate: isExpanded ? 180 : 0 }}
@@ -124,13 +124,13 @@ export const NavigationSection = memo(function NavigationSectionComponent({
 					transition={{ duration: 0.2 }}
 				>
 					<CaretDownIcon
-						className="h-4 w-4 text-muted-foreground"
+						className="h-4 w-4 text-sidebar-foreground/60"
 						weight="duotone"
 					/>
 				</motion.div>
 			</button>
 
-			<MotionConfig transition={{ duration: 0.3, type: 'spring', bounce: 0 }}>
+			<MotionConfig transition={{ duration: 0.2, type: 'tween', ease: 'easeOut' }}>
 				<AnimatePresence initial={false}>
 					{isExpanded && (
 						<motion.div
