@@ -15,7 +15,8 @@ import {
 	UsersIcon,
 	WarningIcon,
 } from '@phosphor-icons/react';
-import { memo, useMemo } from 'react';
+import type { Product } from 'autumn-js';
+import React, { memo, useMemo } from 'react';
 import { useBilling } from '@/app/(main)/billing/hooks/use-billing';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,11 +25,7 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import {
-	type FeatureUsage,
-	type Plan,
-	useBillingData,
-} from '../data/billing-data';
+import { type FeatureUsage, useBillingData } from '../data/billing-data';
 import { CancelSubscriptionDialog } from './cancel-subscription-dialog';
 import { NoPaymentMethodDialog } from './no-payment-method-dialog';
 
@@ -41,46 +38,31 @@ const UsageCard = memo(function UsageCardComponent({
 	feature,
 	onUpgrade,
 }: UsageCardProps) {
-	const { calculatedPercentage, isUnlimited, isNearLimit, isOverLimit, Icon } =
-		useMemo(() => {
-			const percentage =
-				feature.limit > 0
-					? Math.min((feature.used / feature.limit) * 100, 100)
-					: 0;
-			const unlimited = !Number.isFinite(feature.limit);
-			const nearLimit = !unlimited && percentage > 80;
-			const overLimit = !unlimited && percentage >= 100;
+	const percentage =
+		feature.limit > 0 ? Math.min((feature.used / feature.limit) * 100, 100) : 0;
+	const isNearLimit = !feature.unlimited && percentage > 80;
+	const isOverLimit = !feature.unlimited && percentage >= 100;
 
-			const getIcon = () => {
-				if (feature.name.toLowerCase().includes('event')) {
-					return ChartBarIcon;
-				}
-				if (feature.name.toLowerCase().includes('storage')) {
-					return DatabaseIcon;
-				}
-				if (
-					feature.name.toLowerCase().includes('user') ||
-					feature.name.toLowerCase().includes('member')
-				) {
-					return UsersIcon;
-				}
-				return ChartBarIcon;
-			};
+	const getIcon = () => {
+		if (feature.name.toLowerCase().includes('event')) {
+			return ChartBarIcon;
+		}
+		if (feature.name.toLowerCase().includes('storage')) {
+			return DatabaseIcon;
+		}
+		if (
+			feature.name.toLowerCase().includes('user') ||
+			feature.name.toLowerCase().includes('member')
+		) {
+			return UsersIcon;
+		}
+		return ChartBarIcon;
+	};
 
-			return {
-				calculatedPercentage: percentage,
-				isUnlimited: unlimited,
-				isNearLimit: nearLimit,
-				isOverLimit: overLimit,
-				Icon: getIcon(),
-			};
-		}, [feature.limit, feature.used, feature.name]);
-
-	const getIntervalText = useMemo(() => {
+	const getIntervalText = () => {
 		if (!feature.interval) {
 			return `Resets ${feature.nextReset}`;
 		}
-
 		switch (feature.interval) {
 			case 'day':
 				return 'Resets daily';
@@ -91,7 +73,7 @@ const UsageCard = memo(function UsageCardComponent({
 			default:
 				return `Resets ${feature.nextReset}`;
 		}
-	}, [feature.interval, feature.nextReset]);
+	};
 
 	const getUsageTextColor = () => {
 		if (isOverLimit) {
@@ -109,11 +91,12 @@ const UsageCard = memo(function UsageCardComponent({
 				<div className="flex items-start justify-between gap-4">
 					<div className="flex min-w-0 flex-1 items-center gap-3">
 						<div className="flex h-12 w-12 items-center justify-center rounded border bg-muted">
-							<Icon
-								className="h-5 w-5 not-dark:text-primary text-muted-foreground"
-								size={32}
-								weight="duotone"
-							/>
+							{React.createElement(getIcon(), {
+								className:
+									'h-5 w-5 not-dark:text-primary text-muted-foreground',
+								size: 32,
+								weight: 'duotone',
+							})}
 						</div>
 						<div className="min-w-0 flex-1">
 							<CardTitle className="truncate font-semibold text-base">
@@ -124,7 +107,7 @@ const UsageCard = memo(function UsageCardComponent({
 					</div>
 
 					<div className="flex-shrink-0 text-right">
-						{isUnlimited ? (
+						{feature.unlimited ? (
 							<Badge>
 								<LightningIcon
 									className="mr-1 font-bold not-dark:text-primary"
@@ -134,25 +117,16 @@ const UsageCard = memo(function UsageCardComponent({
 								Unlimited
 							</Badge>
 						) : (
-							<div>
-								<div
-									className={cn(
-										'font-bold text-xl sm:text-2xl',
-										getUsageTextColor()
-									)}
-								>
-									{feature.used.toLocaleString()}
-									<span className="ml-1 font-normal text-muted-foreground text-sm">
-										/ {feature.limit.toLocaleString()}
-									</span>
-								</div>
-								{feature.hasOverage &&
-									feature.overageAmount &&
-									feature.overageAmount > 0 && (
-										<div className="font-medium text-destructive text-sm">
-											+${feature.overageAmount.toFixed(2)}
-										</div>
-									)}
+							<div
+								className={cn(
+									'font-bold text-xl sm:text-2xl',
+									getUsageTextColor()
+								)}
+							>
+								{feature.used.toLocaleString()}
+								<span className="ml-1 font-normal text-muted-foreground text-sm">
+									/ {feature.limit.toLocaleString()}
+								</span>
 							</div>
 						)}
 					</div>
@@ -160,16 +134,14 @@ const UsageCard = memo(function UsageCardComponent({
 			</CardHeader>
 
 			<CardContent className="pt-0">
-				{!isUnlimited && (
+				{!feature.unlimited && (
 					<div className="space-y-3">
-						<Progress className="h-2" value={calculatedPercentage} />
-
+						<Progress className="h-2" value={percentage} />
 						<div className="flex items-center justify-between text-muted-foreground text-xs">
 							<div className="flex items-center gap-1">
 								<ClockIcon size={12} weight="duotone" />
-								<span>{getIntervalText}</span>
+								<span>{getIntervalText()}</span>
 							</div>
-
 							{isNearLimit && (
 								<Button
 									aria-label={`Upgrade plan to increase ${feature.name} limit`}
@@ -179,7 +151,7 @@ const UsageCard = memo(function UsageCardComponent({
 									type="button"
 									variant="link"
 								>
-									{isOverLimit ? 'Upgrade' : 'Upgrade'}
+									Upgrade
 								</Button>
 							)}
 						</div>
@@ -191,7 +163,7 @@ const UsageCard = memo(function UsageCardComponent({
 });
 
 interface PlanStatusCardProps {
-	plan: Plan | undefined;
+	plan: Product | undefined;
 	statusDetails: string;
 	onUpgrade: () => void;
 	onCancelClick: (
@@ -209,16 +181,11 @@ const PlanStatusCard = memo(function PlanStatusCardComponent({
 	onCancelClick,
 	onManageBilling,
 }: PlanStatusCardProps) {
-	const { isCanceled, isScheduled, isFree } = useMemo(
-		() => ({
-			isCanceled: plan?.status === 'canceled' || plan?.canceled_at,
-			isScheduled: plan?.status === 'scheduled',
-			isFree: plan?.id === 'free',
-		}),
-		[plan?.status, plan?.canceled_at, plan?.id]
-	);
+	const isCanceled = plan?.scenario === 'cancel';
+	const isScheduled = plan?.scenario === 'scheduled';
+	const isFree = plan?.id === 'free' || plan?.properties?.is_free;
 
-	const statusBadge = useMemo(() => {
+	const getStatusBadge = () => {
 		if (isCanceled) {
 			return (
 				<Badge variant="destructive">
@@ -253,35 +220,31 @@ const PlanStatusCard = memo(function PlanStatusCardComponent({
 				Active
 			</Badge>
 		);
-	}, [isCanceled, isScheduled]);
+	};
 
-	const getFeatureText = useMemo(() => {
-		return (item: Plan['items'][0]) => {
-			let mainText = item.primary_text || '';
-
-			if (
-				item.interval &&
-				!mainText.toLowerCase().includes('per ') &&
-				!mainText.toLowerCase().includes('/')
-			) {
-				switch (item.interval) {
-					case 'day':
-						mainText += ' per day';
-						break;
-					case 'month':
-						mainText += ' per month';
-						break;
-					case 'year':
-						mainText += ' per year';
-						break;
-					default:
-						break;
-				}
+	const getFeatureText = (item: Product['items'][0]) => {
+		let mainText = item.display?.primary_text || '';
+		if (
+			item.interval &&
+			!mainText.toLowerCase().includes('per ') &&
+			!mainText.toLowerCase().includes('/')
+		) {
+			switch (item.interval) {
+				case 'day':
+					mainText += ' per day';
+					break;
+				case 'month':
+					mainText += ' per month';
+					break;
+				case 'year':
+					mainText += ' per year';
+					break;
+				default:
+					break;
 			}
-
-			return mainText;
-		};
-	}, []);
+		}
+		return mainText;
+	};
 
 	return (
 		<Card>
@@ -298,7 +261,7 @@ const PlanStatusCard = memo(function PlanStatusCardComponent({
 							</div>
 							<div className="min-w-0 flex-1">
 								<CardTitle className="truncate font-semibold text-lg">
-									{plan?.name || 'Free Plan'}
+									{plan?.display?.name || plan?.name || 'Free Plan'}
 								</CardTitle>
 								<p className="text-muted-foreground text-sm">
 									Current subscription
@@ -307,7 +270,7 @@ const PlanStatusCard = memo(function PlanStatusCardComponent({
 						</div>
 
 						<div className="flex flex-wrap items-center gap-2">
-							{statusBadge}
+							{getStatusBadge()}
 							{statusDetails && (
 								<span className="rounded bg-muted px-2 py-1 text-muted-foreground text-xs">
 									{statusDetails}
@@ -318,10 +281,12 @@ const PlanStatusCard = memo(function PlanStatusCardComponent({
 
 					<div className="flex-shrink-0 text-right">
 						<div className="font-bold text-2xl sm:text-3xl">
-							{plan?.price.primary_text || 'Free'}
+							{isFree
+								? 'Free'
+								: plan?.items[0]?.display?.primary_text || 'Free'}
 						</div>
 						<div className="text-muted-foreground text-sm">
-							{plan?.price.secondary_text}
+							{!isFree && plan?.items[0]?.display?.secondary_text}
 						</div>
 					</div>
 				</div>
@@ -341,9 +306,9 @@ const PlanStatusCard = memo(function PlanStatusCardComponent({
 								<span className="font-medium text-sm">
 									{getFeatureText(item)}
 								</span>
-								{item.secondary_text && (
+								{item.display?.secondary_text && (
 									<p className="mt-0.5 text-muted-foreground text-xs">
-										{item.secondary_text}
+										{item.display.secondary_text}
 									</p>
 								)}
 							</div>
@@ -385,7 +350,11 @@ const PlanStatusCard = memo(function PlanStatusCardComponent({
 									className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
 									onClick={() =>
 										plan &&
-										onCancelClick(plan.id, plan.name, plan.current_period_end)
+										onCancelClick(
+											plan.id,
+											plan.display?.name || plan.name,
+											undefined
+										)
 									}
 									size="sm"
 									type="button"
@@ -422,8 +391,7 @@ interface OverviewTabProps {
 export const OverviewTab = memo(function OverviewTabComponent({
 	onNavigateToPlans,
 }: OverviewTabProps) {
-	const { subscriptionData, usage, customerData, isLoading, refetch } =
-		useBillingData();
+	const { products, usage, customer, isLoading, refetch } = useBillingData();
 	const {
 		onCancelClick,
 		onCancelConfirm,
@@ -437,13 +405,16 @@ export const OverviewTab = memo(function OverviewTabComponent({
 	} = useBilling(refetch);
 
 	const { currentPlan, usageStats, statusDetails } = useMemo(() => {
-		const activePlan = subscriptionData?.list?.find(
-			(p: Plan) => p.scenario === 'active'
+		const activePlan = products?.find(
+			(p: Product) =>
+				p.scenario !== 'upgrade' &&
+				p.scenario !== 'downgrade' &&
+				p.scenario !== 'new'
 		);
 		const featureUsage = usage?.features || [];
 
 		const customerProduct = activePlan
-			? customerData?.products?.find((p) => p.id === activePlan.id)
+			? customer?.products?.find((p) => p.id === activePlan.id)
 			: undefined;
 
 		const planStatusDetails = customerProduct
@@ -460,9 +431,9 @@ export const OverviewTab = memo(function OverviewTabComponent({
 			statusDetails: planStatusDetails,
 		};
 	}, [
-		subscriptionData?.list,
+		products,
 		usage?.features,
-		customerData?.products,
+		customer?.products,
 		getSubscriptionStatusDetails,
 	]);
 

@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import AttachDialog from '@/components/autumn/attach-dialog';
 import type { Customer, CustomerProduct } from '../data/billing-data';
-import { useBillingData } from '../data/billing-data';
 
 export function useBilling(refetch?: () => void) {
 	const { attach, cancel, check, track, openBillingPortal } = useAutumn();
@@ -17,7 +16,6 @@ export function useBilling(refetch?: () => void) {
 		currentPeriodEnd?: number;
 	} | null>(null);
 	const [_isActionLoading, setIsActionLoading] = useState(false);
-	const { subscriptionData } = useBillingData();
 
 	const handleUpgrade = async (planId: string) => {
 		setIsActionLoading(true);

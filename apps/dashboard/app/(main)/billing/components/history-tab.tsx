@@ -7,6 +7,7 @@ import {
 	CreditCardIcon,
 	FileTextIcon,
 } from '@phosphor-icons/react';
+import type { Customer, CustomerInvoice } from 'autumn-js';
 import dayjs from 'dayjs';
 import { memo } from 'react';
 import { useBilling } from '@/app/(main)/billing/hooks/use-billing';
@@ -14,65 +15,57 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Customer, Invoice } from '../data/billing-data';
 
 const InvoiceCard = memo(function InvoiceCardComponent({
 	invoice,
 }: {
-	invoice: Invoice;
+	invoice: CustomerInvoice;
 }) {
 	const getStatusBadge = () => {
-		switch (invoice.status) {
-			case 'paid':
-				return (
-					<Badge className="bg-emerald-500 text-xs hover:bg-emerald-600">
-						Paid
-					</Badge>
-				);
-			case 'open':
-			case 'pending':
-				return (
-					<Badge className="text-xs" variant="secondary">
-						Pending
-					</Badge>
-				);
-			case 'failed':
-				return (
-					<Badge className="text-xs" variant="destructive">
-						Failed
-					</Badge>
-				);
-			case 'draft':
-				return (
-					<Badge className="text-xs" variant="outline">
-						Draft
-					</Badge>
-				);
-			case 'void':
-				return (
-					<Badge className="text-xs" variant="outline">
-						Void
-					</Badge>
-				);
-			default:
-				return null;
+		const statusConfig = {
+			paid: {
+				variant: 'default' as const,
+				className: 'bg-emerald-500 hover:bg-emerald-600',
+				text: 'Paid',
+			},
+			open: { variant: 'secondary' as const, className: '', text: 'Pending' },
+			pending: {
+				variant: 'secondary' as const,
+				className: '',
+				text: 'Pending',
+			},
+			failed: {
+				variant: 'destructive' as const,
+				className: '',
+				text: 'Failed',
+			},
+			draft: { variant: 'outline' as const, className: '', text: 'Draft' },
+			void: { variant: 'outline' as const, className: '', text: 'Void' },
+		};
+
+		const config = statusConfig[invoice.status as keyof typeof statusConfig];
+		if (!config) {
+			return null;
 		}
+
+		return (
+			<Badge className={`text-xs ${config.className}`} variant={config.variant}>
+				{config.text}
+			</Badge>
+		);
 	};
 
-	const formatAmount = (amount: number, currency: string) => {
-		return new Intl.NumberFormat('en-US', {
+	const formatAmount = (amount: number, currency: string) =>
+		new Intl.NumberFormat('en-US', {
 			style: 'currency',
 			currency: currency.toUpperCase(),
 		}).format(amount);
-	};
 
 	const getProductNames = (productIds: string[]) => {
-		const productMap: Record<string, string> = {
-			free: 'Free',
-			pro: 'Pro',
-			buddy: 'Buddy',
-		};
-		return productIds.map((id) => productMap[id] || id).join(', ');
+		const productMap = { free: 'Free', pro: 'Pro', buddy: 'Buddy' };
+		return productIds
+			.map((id) => productMap[id as keyof typeof productMap] || id)
+			.join(', ');
 	};
 
 	return (
@@ -195,7 +188,7 @@ const SubscriptionHistoryCard = memo(function SubscriptionHistoryCardComponent({
 });
 
 interface HistoryTabProps {
-	invoices: Invoice[];
+	invoices: CustomerInvoice[];
 	customerData: Customer | null;
 	isLoading: boolean;
 }
@@ -262,8 +255,8 @@ export const HistoryTab = memo(function HistoryTabComponent({
 					{invoices.length ? (
 						<div className="space-y-3">
 							{invoices
-								.sort((a: Invoice, b: Invoice) => b.created_at - a.created_at)
-								.map((invoice: Invoice) => (
+								.sort((a, b) => b.created_at - a.created_at)
+								.map((invoice) => (
 									<InvoiceCard invoice={invoice} key={invoice.stripe_id} />
 								))}
 						</div>
