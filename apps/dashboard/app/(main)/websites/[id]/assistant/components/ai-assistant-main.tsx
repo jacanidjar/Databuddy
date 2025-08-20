@@ -55,8 +55,8 @@ export default function AIAssistantMain() {
 	);
 
 	return (
-		<div className="h-full bg-gradient-to-br from-background to-muted/20">
-			<div className="flex h-full flex-col gap-3 overflow-hidden lg:flex-row">
+		<div className="h-full">
+			<div className="flex h-full flex-col gap-2 overflow-hidden lg:flex-row">
 				<div
 					className={cn(
 						'flex min-h-0 flex-col overflow-hidden',

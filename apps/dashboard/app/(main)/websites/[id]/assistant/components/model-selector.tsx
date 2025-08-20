@@ -28,13 +28,13 @@ const modelIcons: Record<string, React.ReactNode> = {
 
 interface ModelSelectorProps {
 	selectedModel: AssistantModel;
-	onModelChange: (model: AssistantModel) => void;
+	// onModelChange: (model: AssistantModel) => void;
 	disabled?: boolean;
 }
 
 export function ModelSelector({
 	selectedModel,
-	onModelChange,
+	// onModelChange,
 	disabled = false,
 }: ModelSelectorProps) {
 	const currentConfig = MODEL_CONFIGS[selectedModel];
@@ -73,7 +73,7 @@ export function ModelSelector({
 						)}
 						disabled={!config.isEnabled}
 						key={config.id}
-						onClick={() => !config.isEnabled && onModelChange(config.id)}
+						// onClick={() => !config.isEnabled && onModelChange(config.id)}
 					>
 						<div className="flex min-w-[28px] items-center gap-2">
 							{modelIcons[config.id]}

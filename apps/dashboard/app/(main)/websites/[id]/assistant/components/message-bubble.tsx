@@ -1,25 +1,24 @@
 import {
+	ArrowClockwiseIcon,
 	ChartBarIcon,
 	ChartLineIcon,
 	ChartPieIcon,
-	HashIcon,
 	CopyIcon,
-	ArrowClockwiseIcon,
+	HashIcon,
 } from '@phosphor-icons/react/ssr';
-
-import {
-	Message as AIMessage,
-	MessageContent,
-	MessageAvatar,
-} from '@/components/ai-elements/message';
+import { Action, Actions } from '@/components/ai-elements/actions';
 import { Loader } from '@/components/ai-elements/loader';
 import {
+	Message as AIMessage,
+	MessageAvatar,
+	MessageContent,
+} from '@/components/ai-elements/message';
+import {
 	Reasoning,
-	ReasoningTrigger,
 	ReasoningContent,
+	ReasoningTrigger,
 } from '@/components/ai-elements/reasoning';
 import { Response } from '@/components/ai-elements/response';
-import { Actions, Action } from '@/components/ai-elements/actions';
 import type { Message } from '../types/message';
 
 interface MessageBubbleProps {
@@ -39,17 +38,23 @@ const getChartIcon = (chartType: string) => {
 	}
 };
 
-
-
-function ThinkingStepsReasoning({ steps, isStreaming = false }: { steps: string[]; isStreaming?: boolean }) {
+function ThinkingStepsReasoning({
+	steps,
+	isStreaming = false,
+}: {
+	steps: string[];
+	isStreaming?: boolean;
+}) {
 	if (steps.length === 0) {
 		return null;
 	}
 
-	const reasoningContent = steps.map((step, index) => `${index + 1}. ${step}`).join('\n\n');
+	const reasoningContent = steps
+		.map((step, index) => `${index + 1}. ${step}`)
+		.join('\n\n');
 
 	return (
-		<Reasoning isStreaming={isStreaming} defaultOpen={false}>
+		<Reasoning defaultOpen={false} isStreaming={isStreaming}>
 			<ReasoningTrigger title={`Thinking Process (${steps.length} steps)`} />
 			<ReasoningContent>{reasoningContent}</ReasoningContent>
 		</Reasoning>
@@ -62,10 +67,7 @@ function InProgressMessage({ message }: { message: Message }) {
 
 	return (
 		<AIMessage from="assistant">
-			<MessageAvatar 
-				src="/databunny-avatar.png" 
-				name="Databunny"
-			/>
+			<MessageAvatar name="Databunny" src="/databunny.webp" />
 			<MessageContent>
 				<div className="flex items-center gap-2">
 					<Loader size={16} />
@@ -76,9 +78,9 @@ function InProgressMessage({ message }: { message: Message }) {
 
 				{hasThinkingSteps && (
 					<div className="mt-3 border-border/30 border-t pt-3">
-						<ThinkingStepsReasoning 
-							steps={message.thinkingSteps || []} 
+						<ThinkingStepsReasoning
 							isStreaming={true}
+							steps={message.thinkingSteps || []}
 						/>
 					</div>
 				)}
@@ -99,9 +101,9 @@ function CompletedMessage({
 
 	return (
 		<AIMessage from={isUser ? 'user' : 'assistant'}>
-			<MessageAvatar 
-				src={isUser ? "/user-avatar.png" : "/databunny-avatar.png"} 
-				name={isUser ? "You" : "Databunny"}
+			<MessageAvatar
+				name={isUser ? 'You' : 'Databunny'}
+				src={isUser ? '/user-avatar.png' : '/databunny-avatar.png'}
 			/>
 			<MessageContent>
 				<Response>{message.content}</Response>
@@ -144,7 +146,7 @@ function CompletedMessage({
 				)}
 
 				<div className="mt-3 flex items-center justify-between">
-					<div className="opacity-60 text-xs">
+					<div className="text-xs opacity-60">
 						{message.timestamp.toLocaleTimeString([], {
 							hour: '2-digit',
 							minute: '2-digit',
@@ -152,15 +154,17 @@ function CompletedMessage({
 					</div>
 					{!isUser && (
 						<Actions>
-							<Action 
-								tooltip="Copy message"
+							<Action
 								onClick={() => navigator.clipboard.writeText(message.content)}
+								tooltip="Copy message"
 							>
 								<CopyIcon className="h-4 w-4" />
 							</Action>
-							<Action 
+							<Action
+								onClick={() => {
+									/* TODO: Implement regenerate */
+								}}
 								tooltip="Regenerate response"
-								onClick={() => {/* TODO: Implement regenerate */}}
 							>
 								<ArrowClockwiseIcon className="h-4 w-4" />
 							</Action>

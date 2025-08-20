@@ -22,32 +22,32 @@ const AIAssistantMain = dynamic(
 
 function AIAssistantLoadingSkeleton() {
 	return (
-		<div className="flex h-full min-h-0 flex-col gap-3">
-			<div className="flex min-h-0 flex-1 gap-3 overflow-hidden">
-				<div className="flex flex-[2_2_0%] flex-col overflow-hidden rounded border bg-background shadow-sm">
-					<div className="flex-shrink-0 border-b p-3">
-						<Skeleton className="mb-1 h-5 w-32" />
+		<div className="flex h-full min-h-0 flex-col gap-2">
+			<div className="flex min-h-0 flex-1 gap-2 overflow-hidden">
+				<div className="flex flex-[2_2_0%] flex-col overflow-hidden rounded border bg-background">
+					<div className="flex-shrink-0 border-b p-2">
+						<Skeleton className="mb-1 h-4 w-32" />
 						<Skeleton className="h-3 w-48" />
 					</div>
-					<div className="flex-1 space-y-3 overflow-y-auto p-3">
+					<div className="flex-1 space-y-2 overflow-y-auto p-2">
 						<div className="flex gap-2">
 							<Skeleton className="h-8 w-8 flex-shrink-0 rounded-full" />
-							<Skeleton className="h-16 w-3/4 rounded" />
+							<Skeleton className="h-12 w-3/4 rounded" />
 						</div>
 						<div className="ml-auto flex flex-row-reverse gap-2">
 							<Skeleton className="h-8 w-8 flex-shrink-0 rounded-full" />
-							<Skeleton className="h-10 w-1/2 rounded" />
+							<Skeleton className="h-8 w-1/2 rounded" />
 						</div>
 					</div>
-					<div className="flex-shrink-0 border-t p-3">
-						<Skeleton className="h-9 w-full rounded" />
+					<div className="flex-shrink-0 border-t p-2">
+						<Skeleton className="h-8 w-full rounded" />
 					</div>
 				</div>
-				<div className="flex flex-[3_3_0%] flex-col overflow-hidden rounded border bg-background shadow-sm">
-					<div className="flex-shrink-0 border-b p-3">
-						<Skeleton className="mb-1 h-5 w-32" />
+				<div className="flex flex-[3_3_0%] flex-col overflow-hidden rounded border bg-background">
+					<div className="flex-shrink-0 border-b p-2">
+						<Skeleton className="mb-1 h-4 w-32" />
 					</div>
-					<div className="flex-1 p-3">
+					<div className="flex-1 p-2">
 						<Skeleton className="h-full w-full rounded" />
 					</div>
 				</div>

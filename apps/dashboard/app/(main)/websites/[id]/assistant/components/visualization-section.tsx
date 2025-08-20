@@ -95,26 +95,19 @@ const getChartIcon = (chartType: string) => {
 
 export function VisualizationSkeleton() {
 	return (
-		<div className="flex h-full flex-col overflow-hidden rounded border bg-background shadow-sm">
-			<div className="flex flex-shrink-0 items-center gap-3 border-b bg-muted/30 p-3">
-				<Skeleton className="h-8 w-8 rounded" />
+		<div className="flex h-full flex-col overflow-hidden rounded border bg-background">
+			<div className="flex flex-shrink-0 items-center gap-2 border-b p-2">
+				<Skeleton className="h-6 w-6 rounded" />
 				<div className="flex-1">
-					<Skeleton className="mb-1 h-5 w-32" />
+					<Skeleton className="mb-1 h-4 w-24" />
 				</div>
-				<Skeleton className="h-6 w-24 rounded-md" />
+				<Skeleton className="h-5 w-20 rounded" />
 			</div>
-			<div className="flex-1 space-y-4 overflow-y-auto p-3">
-				<Skeleton className="h-56 w-full rounded-lg" />
+			<div className="flex-1 space-y-3 overflow-y-auto p-2">
+				<Skeleton className="h-48 w-full rounded" />
 				<div>
-					<Skeleton className="mb-2 h-4 w-1/4" />
-					<Skeleton className="h-32 w-full rounded-lg" />
-				</div>
-			</div>
-			<div className="flex-shrink-0 border-t bg-muted/20 p-3">
-				<Skeleton className="mb-1.5 h-4 w-24" />
-				<div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
-					<Skeleton className="h-7 w-full rounded" />
-					<Skeleton className="h-7 w-full rounded" />
+					<Skeleton className="mb-2 h-3 w-1/4" />
+					<Skeleton className="h-24 w-full rounded" />
 				</div>
 			</div>
 		</div>
@@ -864,21 +857,19 @@ export default function VisualizationSection() {
 			!latestAssistantMsg?.chartType
 		) {
 			return (
-				<div
-					className={`flex h-full min-h-[200px] flex-col items-center justify-center py-6 text-center text-muted-foreground transition-all duration-300 ${websiteData ? 'animate-pulse' : 'fade-in-0 slide-in-from-bottom-2 animate-in'}`}
-				>
-					<div className="mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-muted transition-all duration-300">
-						<DatabaseIcon className="h-6 w-6 opacity-50" />
+				<div className="flex h-full min-h-[200px] flex-col items-center justify-center py-4 text-center text-muted-foreground">
+					<div className="mb-2 flex h-10 w-10 items-center justify-center rounded bg-muted">
+						<DatabaseIcon className="h-5 w-5 opacity-50" />
 					</div>
-					<h3 className="mb-1 font-medium text-sm transition-all duration-300">
+					<h3 className="mb-1 font-medium text-sm">
 						{websiteData
 							? 'Loading Visualization...'
 							: 'No Visualization Available'}
 					</h3>
-					<p className="max-w-xs px-4 text-xs transition-all duration-300">
+					<p className="max-w-xs px-2 text-xs">
 						{websiteData
 							? 'Processing your data query...'
-							: 'Ask a question that needs a chart or table to see your data visualized here. For single metrics or general questions, check the chat area.'}
+							: 'Ask a question that needs a chart or table to see your data visualized here.'}
 					</p>
 				</div>
 			);
@@ -1051,19 +1042,19 @@ export default function VisualizationSection() {
 		};
 
 		return (
-			<div className="fade-in-0 slide-in-from-bottom-2 animate-in space-y-4 duration-500">
+			<div className="space-y-3">
 				{showMetricsChart &&
 					chartDisplayConfig.chartDataForDisplay.length > 0 && (
 						<div className="fade-in-0 slide-in-from-top-1 animate-in rounded-lg bg-muted/30 p-2 shadow-sm delay-100 duration-700">
-							<ChartContainer className="h-[260px] w-full" config={chartConfig}>
+							<ChartContainer className="h-[300px] w-min" config={chartConfig}>
 								<ResponsiveContainer>{renderChart()}</ResponsiveContainer>
 							</ChartContainer>
 						</div>
 					)}
 
-				<div className="fade-in-0 slide-in-from-bottom-1 animate-in delay-200 duration-700">
+				<div>
 					<DataTable
-						className="bg-background/70 backdrop-blur-sm"
+						className="bg-background"
 						columns={columnsForTable}
 						data={rawAiData}
 						description={`Full data (${rawAiData.length} rows). Click headers to sort.`}
@@ -1127,27 +1118,17 @@ export default function VisualizationSection() {
 	};
 
 	return (
-		<div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded border bg-background shadow-sm transition-all duration-300">
-			<div
-				className={`flex flex-shrink-0 items-center gap-2 border-b p-3 transition-all duration-300 ${websiteData ? 'bg-muted/30' : 'bg-muted/10'}`}
-			>
-				<div
-					className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded transition-all duration-300 ${websiteData ? 'bg-primary/10' : 'bg-muted/20'}`}
-				>
-					<TrendUpIcon
-						className={`h-4 w-4 transition-all duration-300 ${websiteData ? 'text-primary' : 'text-muted-foreground/60'}`}
-					/>
+		<div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded border bg-background">
+			<div className="flex flex-shrink-0 items-center gap-2 border-b p-2">
+				<div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-primary/10">
+					<TrendUpIcon className="h-3 w-3 text-primary" />
 				</div>
 				<div className="min-w-0 flex-1">
-					<h2
-						className={`truncate font-semibold text-base transition-all duration-300 ${websiteData ? 'text-foreground' : 'text-muted-foreground/80'}`}
-					>
-						Data Visualization
-					</h2>
+					<h2 className="truncate font-medium text-sm">Data Visualization</h2>
 				</div>
 				{latestAssistantMsg?.chartType && websiteData && (
 					<Badge
-						className="fade-in-0 slide-in-from-right-1 animate-in gap-1 whitespace-nowrap px-2 py-1 text-xs duration-300"
+						className="gap-1 whitespace-nowrap px-1.5 py-0.5 text-xs"
 						variant="outline"
 					>
 						{getChartIcon(latestAssistantMsg.chartType)}
@@ -1158,11 +1139,7 @@ export default function VisualizationSection() {
 			</div>
 
 			<ScrollArea className="min-h-0 flex-1">
-				<div
-					className={`p-3 transition-all duration-300 ${websiteData ? 'opacity-100' : 'opacity-90'}`}
-				>
-					{renderChartContent()}
-				</div>
+				<div className="p-2">{renderChartContent()}</div>
 			</ScrollArea>
 		</div>
 	);
