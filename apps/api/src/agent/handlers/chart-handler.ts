@@ -1,5 +1,3 @@
-import type { User } from '@databuddy/auth';
-import type { Website } from '@databuddy/shared';
 import type { z } from 'zod';
 import type { AIResponseJsonSchema } from '../prompts/agent';
 import { executeQuery } from '../utils/query-executor';
@@ -22,23 +20,13 @@ const noDataMessages = [
 	'That search came up empty! Want to try asking about a different metric or time frame?',
 ];
 
-export interface ChartHandlerContext {
-	user?: User | null;
-	website: Website;
-	debugInfo: Record<string, unknown>;
-	startTime: number;
-	aiTime: number;
-}
-
 export async function handleChartResponse(
-	parsedAiJson: z.infer<typeof AIResponseJsonSchema>,
-	context: ChartHandlerContext
+	parsedAiJson: z.infer<typeof AIResponseJsonSchema>
 ): Promise<StreamingUpdate> {
 	if (!parsedAiJson.sql) {
 		return {
 			type: 'error',
 			content: 'AI did not provide a query for the chart.',
-			debugInfo: context.user?.role === 'ADMIN' ? context.debugInfo : undefined,
 		};
 	}
 
@@ -46,21 +34,11 @@ export async function handleChartResponse(
 		return {
 			type: 'error',
 			content: 'Generated query failed security validation.',
-			debugInfo: context.user?.role === 'ADMIN' ? context.debugInfo : undefined,
 		};
 	}
 
 	try {
 		const queryResult = await executeQuery(parsedAiJson.sql);
-		const totalTime = Date.now() - context.startTime;
-
-		if (context.user?.role === 'ADMIN') {
-			context.debugInfo.processing = {
-				aiTime: context.aiTime,
-				queryTime: Date.now() - context.startTime - context.aiTime,
-				totalTime,
-			};
-		}
 
 		return {
 			type: 'complete',
@@ -74,17 +52,11 @@ export async function handleChartResponse(
 				data: queryResult.data,
 				responseType: 'chart',
 			},
-			debugInfo: context.user?.role === 'ADMIN' ? context.debugInfo : undefined,
 		};
-	} catch (queryError: unknown) {
-		console.error('❌ SQL execution error', {
-			error: queryError instanceof Error ? queryError.message : 'Unknown error',
-			sql: parsedAiJson.sql,
-		});
+	} catch {
 		return {
 			type: 'error',
 			content: getRandomMessage(queryFailedMessages),
-			debugInfo: context.user?.role === 'ADMIN' ? context.debugInfo : undefined,
 		};
 	}
 }

@@ -1,15 +1,11 @@
-import type { User } from '@databuddy/auth';
+import { auth, type User, websitesApi } from '@databuddy/auth';
 import { Elysia } from 'elysia';
-import type { StreamingUpdate } from '../agent';
+import { processAssistantRequest } from '../agent/processor';
 import {
-	type AssistantContext,
-	type AssistantRequest,
 	createStreamingResponse,
-	processAssistantRequest,
-} from '../agent';
+	type StreamingUpdate,
+} from '../agent/utils/stream-utils';
 import { validateWebsite } from '../lib/website-utils';
-// import { createRateLimitMiddleware } from '../middleware/rate-limit';
-import { websiteAuth } from '../middleware/website-auth';
 import { AssistantRequestSchema, type AssistantRequestType } from '../schemas';
 
 function createErrorResponse(message: string): StreamingUpdate[] {
@@ -18,15 +14,41 @@ function createErrorResponse(message: string): StreamingUpdate[] {
 
 export const assistant = new Elysia({ prefix: '/v1/assistant' })
 	// .use(createRateLimitMiddleware({ type: 'expensive' }))
-	.use(websiteAuth())
+	.derive(async ({ request }) => {
+		const session = await auth.api.getSession({ headers: request.headers });
+
+		return {
+			user: session?.user ?? null,
+		};
+	})
+	.onBeforeHandle(({ user }) => {
+		if (!user) {
+			return new Response(
+				JSON.stringify({
+					success: false,
+					error: 'Authentication required',
+					code: 'AUTH_REQUIRED',
+				}),
+				{
+					status: 401,
+					headers: { 'Content-Type': 'application/json' },
+				}
+			);
+		}
+	})
 	.post(
 		'/stream',
-		async ({ body, user }: { body: AssistantRequestType; user: User }) => {
-			const { messages, websiteId, model, conversationId } = body;
-
+		async ({
+			body,
+			user,
+			request,
+		}: {
+			body: AssistantRequestType;
+			user: User;
+			request: Request;
+		}) => {
 			try {
-				const websiteValidation = await validateWebsite(websiteId);
-
+				const websiteValidation = await validateWebsite(body.websiteId);
 				if (!websiteValidation.success) {
 					return createStreamingResponse(
 						createErrorResponse(websiteValidation.error || 'Website not found')
@@ -34,31 +56,35 @@ export const assistant = new Elysia({ prefix: '/v1/assistant' })
 				}
 
 				const { website } = websiteValidation;
-
 				if (!website) {
 					return createStreamingResponse(
 						createErrorResponse('Website not found')
 					);
 				}
 
-				const assistantRequest: AssistantRequest = {
-					messages,
-					websiteId,
-					conversationId,
-					websiteHostname: website.domain,
-					model: model || 'chat',
-				};
+				// Authorization: allow public websites, org members with permission, or the owner
+				let authorized = website.isPublic;
+				if (!authorized) {
+					if (website.organizationId) {
+						const { success } = await websitesApi.hasPermission({
+							headers: request.headers,
+							body: { permissions: { website: ['read'] } },
+						});
+						authorized = success;
+					} else {
+						authorized = website.userId === user.id;
+					}
+				}
 
-				const assistantContext: AssistantContext = {
-					user,
-					website,
-					debugInfo: {},
-				};
+				if (!authorized) {
+					return createStreamingResponse(
+						createErrorResponse(
+							'You do not have permission to access this website'
+						)
+					);
+				}
 
-				const updates = await processAssistantRequest(
-					assistantRequest,
-					assistantContext
-				);
+				const updates = await processAssistantRequest(body, user, website);
 				return createStreamingResponse(updates);
 			} catch (error) {
 				const errorMessage =

@@ -850,6 +850,13 @@ export const assistantMessages = pgTable(
 		upvotes: integer('upvotes').default(0).notNull(),
 		downvotes: integer('downvotes').default(0).notNull(),
 		feedbackComments: jsonb('feedback_comments'),
+		aiResponseTime: integer('ai_response_time'),
+		totalProcessingTime: integer('total_processing_time'),
+		promptTokens: integer('prompt_tokens'),
+		completionTokens: integer('completion_tokens'),
+		totalTokens: integer('total_tokens'),
+		debugLogs: text('debug_logs').array(),
+		metadata: jsonb('metadata'),
 		createdAt: timestamp('created_at', { mode: 'string' })
 			.default(sql`CURRENT_TIMESTAMP`)
 			.notNull(),

@@ -1,16 +1,9 @@
 // Shared Website types for consistency across the codebase
 
-export interface Website {
-	id: string;
-	name: string | null;
-	domain: string;
-	userId?: string | null;
-	projectId?: string | null;
-	status?: 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'HEALTHY' | 'UNHEALTHY';
-	createdAt: string;
-	updatedAt: string;
-	deletedAt?: string | null;
-}
+import type { websites } from '@databuddy/db';
+import type { InferSelectModel } from 'drizzle-orm';
+
+export type Website = InferSelectModel<typeof websites>;
 
 export interface MiniChartDataPoint {
 	date: string;

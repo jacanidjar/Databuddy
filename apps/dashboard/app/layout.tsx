@@ -54,7 +54,7 @@ export const metadata: Metadata = {
 		siteName: 'Databuddy Dashboard',
 		images: [
 			{
-				url: '/og-image.webp',
+				url: '/opengraph-image.png',
 				width: 1200,
 				height: 630,
 				alt: 'Databuddy Dashboard Preview',
@@ -66,7 +66,7 @@ export const metadata: Metadata = {
 		title: 'Databuddy Dashboard',
 		description:
 			'Powerful analytics dashboard for your websites. Track visitors, monitor performance, and gain insights into your audience.',
-		images: ['/og-image.webp'],
+		images: ['/opengraph-image.png'],
 		creator: '@databuddy',
 	},
 	robots: {
