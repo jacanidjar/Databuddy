@@ -32,14 +32,10 @@ export function createStreamingResponse(updates: StreamingUpdate[]): Response {
 	});
 }
 
-function createThinkingStep(step: string): string {
-	return `🧠 ${step}`;
-}
-
 export function generateThinkingSteps(steps: string[]): StreamingUpdate[] {
 	const updates: StreamingUpdate[] = [];
 	for (const step of steps) {
-		updates.push({ type: 'thinking', content: createThinkingStep(step) });
+		updates.push({ type: 'thinking', content: step });
 	}
 	return updates;
 }
