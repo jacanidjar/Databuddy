@@ -5,7 +5,7 @@ export const ErrorChartTooltip = ({ active, payload, label }: any) => {
 	}
 
 	return (
-		<div className="rounded-lg border border-border bg-background p-3 text-xs shadow-lg">
+		<div className="rounded border border-border bg-background p-3 text-xs shadow-sm">
 			<p className="mb-2 font-semibold text-foreground">{label}</p>
 			<div className="space-y-1.5">
 				{payload.map((entry: any) => (

@@ -1,41 +1,115 @@
-// Error-related types
+// Error-related types based on ClickHouse schema and API responses
 
-export interface ErrorData {
-	error_message: string;
-	error_stack?: string;
-	page_url: string;
+/**
+ * Raw error event from ClickHouse errors table
+ */
+export interface ErrorEvent {
+	id: string;
+	client_id: string;
+	event_id?: string;
 	anonymous_id: string;
 	session_id: string;
-	time: string;
-	browser_name: string;
-	os_name: string;
-	device_type: string;
-	country: string;
+	timestamp: string;
+	path: string;
+	message: string;
+	filename?: string;
+	lineno?: number;
+	colno?: number;
+	stack?: string;
+	error_type?: string;
+	ip?: string;
+	user_agent?: string;
+	browser_name?: string;
+	browser_version?: string;
+	os_name?: string;
+	os_version?: string;
+	device_type?: string;
+	country?: string;
+	country_code?: string;
+	country_name?: string;
 	region?: string;
-	city?: string;
+	created_at: string;
 }
 
+/**
+ * Error type aggregation (from error_types query)
+ */
 export interface ErrorTypeData {
 	name: string; // error message
-	total_occurrences: number;
-	affected_users: number;
-	affected_sessions: number;
-	last_occurrence: string;
-	first_occurrence: string;
+	count: number;
+	users: number;
+	last_seen: string;
 }
 
-export interface ErrorBreakdownData {
-	name: string; // page, browser, os, country, device
-	total_errors: number;
-	unique_error_types: number;
-	affected_users: number;
-	affected_sessions: number;
+/**
+ * API response structure for error data
+ */
+export interface ErrorApiResponse {
+	recent_errors: ErrorEvent[];
+	error_types: ErrorTypeData[];
+	errors_by_page: ErrorByPageData[];
+	error_trends: ErrorTrendData[];
+	error_frequency: ErrorFrequencyData[];
 }
 
+/**
+ * Error breakdown by page (from errors_by_page query)
+ */
+export interface ErrorByPageData {
+	name: string; // page path
+	errors: number;
+	users: number;
+}
+
+/**
+ * Error trend data (from error_trends query)
+ */
 export interface ErrorTrendData {
 	date: string;
-	total_errors: number;
-	unique_error_types: number;
-	affected_users: number;
-	affected_sessions: number;
+	errors: number;
+	users: number;
+}
+
+/**
+ * Error frequency data (from error_frequency query)
+ */
+export interface ErrorFrequencyData {
+	date: string;
+	count: number;
+}
+
+/**
+ * Error summary statistics (from error_summary query)
+ */
+export interface ErrorSummaryData {
+	totalErrors: number;
+	uniqueErrorTypes: number;
+	affectedUsers: number;
+	affectedSessions: number;
+}
+
+/**
+ * Processed error summary for UI display
+ */
+export interface ErrorSummary extends ErrorSummaryData {
+	errorRate: number;
+}
+
+/**
+ * Error categorization result
+ */
+export interface ErrorCategory {
+	type: string;
+	category: string;
+	severity: 'high' | 'medium' | 'low';
+}
+
+/**
+ * Error table tab configuration
+ */
+export interface ErrorTab {
+	id: string;
+	label: string;
+	data: any[];
+	columns: any[];
 }

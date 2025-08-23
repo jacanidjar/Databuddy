@@ -46,7 +46,6 @@ function EventProperties({
 	);
 }
 
-// Helper component for individual event
 function EventItem({
 	event,
 	eventIndex,

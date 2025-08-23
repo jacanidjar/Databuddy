@@ -56,7 +56,7 @@ export const ErrorTrendsChart = ({ errorChartData }: ErrorTrendsChartProps) => {
 
 	if (!errorChartData.length) {
 		return (
-			<div className="flex h-full items-center justify-center rounded-lg border bg-muted/20 p-6 shadow-sm">
+			<div className="flex h-full items-center justify-center rounded border bg-muted/20 p-6 shadow-sm">
 				<div className="text-center">
 					<BugIcon
 						className="mx-auto h-8 w-8 text-muted-foreground"
@@ -75,7 +75,7 @@ export const ErrorTrendsChart = ({ errorChartData }: ErrorTrendsChartProps) => {
 	}
 
 	return (
-		<div className="flex h-full flex-col rounded-lg border shadow-sm">
+		<div className="flex h-full flex-col rounded border shadow-sm">
 			<div className="flex items-center justify-between border-b p-4">
 				<div>
 					<h3 className="font-semibold text-base">Error Trends</h3>

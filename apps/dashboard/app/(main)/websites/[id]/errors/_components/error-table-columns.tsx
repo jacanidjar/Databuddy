@@ -10,6 +10,11 @@ import { Badge } from '@/components/ui/badge';
 import { getErrorTypeIcon } from './error-icons';
 import { categorizeError, getSeverityColor, safeFormatDate } from './utils';
 
+type CellInfo<T = unknown> = {
+	getValue: () => T;
+	row?: { original?: Record<string, unknown> };
+};
+
 export const createNameColumn = (
 	header: string,
 	renderIcon?: (name: string) => React.ReactNode,
@@ -18,7 +23,7 @@ export const createNameColumn = (
 	id: 'name',
 	accessorKey: 'name',
 	header,
-	cell: (info: any) => {
+	cell: (info: CellInfo<string>) => {
 		const name = info.getValue() as string;
 		const safeName = name || 'Unknown';
 		const displayText = formatText ? formatText(safeName) : safeName;
@@ -35,28 +40,45 @@ export const createNameColumn = (
 
 export const errorColumns = [
 	{
-		id: 'total_errors',
-		accessorKey: 'total_errors',
+		id: 'errors',
+		accessorKey: 'errors',
 		header: 'Total Errors',
-		cell: (info: any) => (info.getValue() as number)?.toLocaleString(),
+		cell: (info: CellInfo<number>) => {
+			const errors = info.getValue();
+			return (
+				<div className="flex flex-col">
+					<span className="font-medium">{errors?.toLocaleString()}</span>
+					<span className="text-muted-foreground text-xs">
+						{errors > 500
+							? 'Critical'
+							: errors > 100
+								? 'High'
+								: errors > 20
+									? 'Medium'
+									: 'Low'}
+					</span>
+				</div>
+			);
+		},
 	},
 	{
-		id: 'unique_error_types',
-		accessorKey: 'unique_error_types',
-		header: 'Error Types',
-		cell: (info: any) => (info.getValue() as number)?.toLocaleString(),
-	},
-	{
-		id: 'affected_users',
-		accessorKey: 'affected_users',
+		id: 'users',
+		accessorKey: 'users',
 		header: 'Affected Users',
-		cell: (info: any) => (info.getValue() as number)?.toLocaleString(),
-	},
-	{
-		id: 'affected_sessions',
-		accessorKey: 'affected_sessions',
-		header: 'Affected Sessions',
-		cell: (info: any) => (info.getValue() as number)?.toLocaleString(),
+		cell: (info: CellInfo<number>) => {
+			const users = info.getValue();
+			const errors = info.row?.original?.errors as number;
+			const errorRate = errors > 0 ? ((users / errors) * 100).toFixed(1) : '0';
+
+			return (
+				<div className="flex flex-col">
+					<span className="font-medium">{users?.toLocaleString()}</span>
+					<span className="text-muted-foreground text-xs">
+						{errorRate}% error rate
+					</span>
+				</div>
+			);
+		},
 	},
 ];
 
@@ -64,7 +86,7 @@ export const createErrorTypeColumn = () => ({
 	id: 'name',
 	accessorKey: 'name',
 	header: 'Error Message',
-	cell: (info: any) => {
+	cell: (info: CellInfo<string>) => {
 		const message = info.getValue() as string;
 		if (!message) {
 			return (
@@ -103,28 +125,67 @@ export const createErrorTypeColumn = () => ({
 export const createErrorTypeColumns = () => [
 	createErrorTypeColumn(),
 	{
-		id: 'total_occurrences',
-		accessorKey: 'total_occurrences',
+		id: 'count',
+		accessorKey: 'count',
 		header: 'Occurrences',
-		cell: (info: any) => (info.getValue() as number)?.toLocaleString(),
+		cell: (info: CellInfo<number>) => {
+			const count = info.getValue();
+			return (
+				<div className="flex flex-col">
+					<span className="font-medium">{count?.toLocaleString()}</span>
+					<span className="text-muted-foreground text-xs">
+						{count > 1000 ? 'High frequency' : count > 100 ? 'Medium' : 'Low'}
+					</span>
+				</div>
+			);
+		},
 	},
 	{
-		id: 'affected_users',
-		accessorKey: 'affected_users',
-		header: 'Users',
-		cell: (info: any) => (info.getValue() as number)?.toLocaleString(),
+		id: 'users',
+		accessorKey: 'users',
+		header: 'Affected Users',
+		cell: (info: CellInfo<number>) => {
+			const users = info.getValue();
+			return (
+				<div className="flex flex-col">
+					<span className="font-medium">{users?.toLocaleString()}</span>
+					<span className="text-muted-foreground text-xs">
+						{users > 50 ? 'Widespread' : users > 10 ? 'Multiple' : 'Limited'}
+					</span>
+				</div>
+			);
+		},
 	},
 	{
-		id: 'affected_sessions',
-		accessorKey: 'affected_sessions',
-		header: 'Sessions',
-		cell: (info: any) => (info.getValue() as number)?.toLocaleString(),
-	},
-	{
-		id: 'last_occurrence',
-		accessorKey: 'last_occurrence',
-		header: 'Last Seen',
-		cell: (info: any) => safeFormatDate(info.getValue(), 'MMM d, HH:mm'),
+		id: 'last_seen',
+		accessorKey: 'last_seen',
+		header: 'Last Occurrence',
+		cell: (info: CellInfo<string>) => {
+			const lastSeen = info.getValue();
+			const formatted = safeFormatDate(lastSeen, 'MMM d, HH:mm');
+			const now = new Date();
+			const lastSeenDate = new Date(lastSeen);
+			const diffHours = Math.floor(
+				(now.getTime() - lastSeenDate.getTime()) / (1000 * 60 * 60)
+			);
+
+			let timeAgo = '';
+			if (diffHours < 1) {
+				timeAgo = 'Just now';
+			} else if (diffHours < 24) {
+				timeAgo = `${diffHours}h ago`;
+			} else {
+				const diffDays = Math.floor(diffHours / 24);
+				timeAgo = `${diffDays}d ago`;
+			}
+
+			return (
+				<div className="flex flex-col">
+					<span className="font-medium">{formatted}</span>
+					<span className="text-muted-foreground text-xs">{timeAgo}</span>
+				</div>
+			);
+		},
 	},
 ];
 

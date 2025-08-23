@@ -57,6 +57,7 @@ interface DataTableProps<TData extends { name: string | number }, TValue> {
 	className?: string;
 	onRowClick?: (field: string, value: string | number) => void;
 	onAddFilter?: (field: string, value: string, tableTitle?: string) => void;
+	onRowAction?: (row: TData) => void;
 	minHeight?: string | number;
 	showSearch?: boolean;
 	getSubRows?: (row: TData) => TData[] | undefined;
@@ -607,6 +608,7 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 	expandable = false,
 	renderTooltipContent,
 	onAddFilter,
+	onRowAction,
 }: DataTableProps<TData, TValue>) {
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [globalFilter, setGlobalFilter] = useState('');
@@ -1017,7 +1019,8 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 														'relative h-11 border-border/20 pl-3 transition-all duration-300 ease-in-out',
 														(onRowClick && !hasSubRows) ||
 															hasSubRows ||
-															onAddFilter
+															onAddFilter ||
+															onRowAction
 															? 'cursor-pointer'
 															: '',
 														hoveredRow && hoveredRow !== row.id
@@ -1031,6 +1034,8 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 													onClick={() => {
 														if (hasSubRows) {
 															toggleRowExpansion(row.id);
+														} else if (onRowAction) {
+															onRowAction(row.original);
 														} else if (onAddFilter && row.original.name) {
 															// Determine the appropriate field and value based on table context
 															const activeTabConfig = tabs?.find(

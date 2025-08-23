@@ -1,3 +1,4 @@
+import type { ErrorCategory } from '@databuddy/shared';
 import dayjs from 'dayjs';
 
 // Helper function to safely parse dates
@@ -40,9 +41,7 @@ export const safeFormatDate = (
 };
 
 // Helper function to categorize errors
-export const categorizeError = (
-	errorMessage: string
-): { type: string; category: string; severity: 'high' | 'medium' | 'low' } => {
+export const categorizeError = (errorMessage: string): ErrorCategory => {
 	if (!errorMessage) {
 		return { type: 'Unknown Error', category: 'Other', severity: 'low' };
 	}
@@ -91,9 +90,3 @@ export const getSeverityColor = (severity: 'high' | 'medium' | 'low') => {
 			return 'bg-gray-100 text-gray-800 border-gray-200';
 	}
 };
-
-export const normalizeData = (data: any[]): any[] =>
-	data?.map((item) => ({
-		...item,
-		name: item.name || 'Unknown',
-	})) || [];
