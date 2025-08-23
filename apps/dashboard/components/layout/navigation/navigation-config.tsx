@@ -6,10 +6,12 @@ import {
 	ClockIcon,
 	CreditCardIcon,
 	CurrencyDollarIcon,
+	DatabaseIcon,
 	EyeIcon,
 	FunnelIcon,
 	GearIcon,
 	GlobeIcon,
+	HandEyeIcon,
 	HouseIcon,
 	IdentificationCardIcon,
 	KeyIcon,
@@ -232,6 +234,21 @@ export const billingNavigation: NavigationSection[] = [
 	},
 ];
 
+export const observabilityNavigation: NavigationSection[] = [
+	{
+		title: 'Database Monitoring',
+		icon: HandEyeIcon,
+		items: [
+			{
+				name: 'Connections',
+				icon: DatabaseIcon,
+				href: '/observability/database',
+				rootLevel: true,
+			},
+		],
+	},
+];
+
 export const websiteNavigation: NavigationSection[] = [
 	{
 		title: 'Web Analytics',
@@ -289,30 +306,61 @@ export const createDemoNavigation = (): NavigationSection[] => [
 export const categoryConfig = {
 	main: {
 		categories: [
-			{ id: 'websites', name: 'Websites', icon: GlobeIcon },
-			{ id: 'organizations', name: 'Organizations', icon: UsersIcon },
-			{ id: 'billing', name: 'Billing', icon: CreditCardIcon },
-			{ id: 'settings', name: 'Settings', icon: GearIcon },
-			{ id: 'resources', name: 'Resources', icon: BookOpenIcon },
+			{ id: 'websites', name: 'Websites', icon: GlobeIcon, production: true },
+			{
+				id: 'organizations',
+				name: 'Organizations',
+				icon: UsersIcon,
+				production: true,
+			},
+			{
+				id: 'billing',
+				name: 'Billing',
+				icon: CreditCardIcon,
+				production: true,
+			},
+			{
+				id: 'observability',
+				name: 'Observability',
+				icon: HandEyeIcon,
+				production: false,
+			},
+			{ id: 'settings', name: 'Settings', icon: GearIcon, production: true },
+			{
+				id: 'resources',
+				name: 'Resources',
+				icon: BookOpenIcon,
+				production: true,
+			},
 		],
 		defaultCategory: 'websites',
 		navigationMap: {
 			websites: [],
 			organizations: organizationNavigation,
 			billing: billingNavigation,
+			observability: observabilityNavigation,
 			settings: personalNavigation,
 			resources: resourcesNavigation,
 		},
 	},
 	website: {
-		categories: [{ id: 'analytics', name: 'Analytics', icon: ChartBarIcon }],
+		categories: [
+			{
+				id: 'analytics',
+				name: 'Analytics',
+				icon: ChartBarIcon,
+				production: true,
+			},
+		],
 		defaultCategory: 'analytics',
 		navigationMap: {
 			analytics: websiteNavigation, // All analytics sections in one category
 		},
 	},
 	demo: {
-		categories: [{ id: 'demo', name: 'Demo', icon: TestTubeIcon }],
+		categories: [
+			{ id: 'demo', name: 'Demo', icon: TestTubeIcon, production: true },
+		],
 		defaultCategory: 'demo',
 		navigationMap: {
 			demo: createDemoNavigation(),
@@ -338,6 +386,9 @@ export const getDefaultCategory = (pathname: string) => {
 	}
 	if (pathname.startsWith('/billing')) {
 		return 'billing';
+	}
+	if (pathname.startsWith('/observability')) {
+		return 'observability';
 	}
 	if (pathname.startsWith('/settings')) {
 		return 'settings';

@@ -874,4 +874,46 @@ export const assistantMessages = pgTable(
 	]
 );
 
-export type AssistantMessageInput = typeof assistantMessages.$inferInsert;
+export const dbConnections = pgTable(
+	'db_connections',
+	{
+		id: text().primaryKey().notNull(),
+		userId: text('user_id').notNull(),
+		name: text().notNull(),
+		type: text().notNull().default('postgres'),
+		url: text('url').notNull(),
+		organizationId: text('organization_id'),
+		createdAt: timestamp('created_at', { mode: 'string' })
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+		updatedAt: timestamp('updated_at', { mode: 'string' })
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+	},
+	(table) => [
+		index('db_connections_user_id_idx').using(
+			'btree',
+			table.userId.asc().nullsLast().op('text_ops')
+		),
+		index('db_connections_type_idx').using(
+			'btree',
+			table.type.asc().nullsLast().op('text_ops')
+		),
+		index('db_connections_organization_id_idx').using(
+			'btree',
+			table.organizationId.asc().nullsLast().op('text_ops')
+		),
+		foreignKey({
+			columns: [table.userId],
+			foreignColumns: [user.id],
+			name: 'db_connections_user_id_fkey',
+		})
+			.onUpdate('cascade')
+			.onDelete('cascade'),
+		foreignKey({
+			columns: [table.organizationId],
+			foreignColumns: [organization.id],
+			name: 'db_connections_organization_id_fkey',
+		}).onDelete('cascade'),
+	]
+);

@@ -18,3 +18,10 @@ export interface NavigationSection {
 	icon: Icon;
 	items: NavigationItem[];
 }
+
+export interface Category {
+	id: string;
+	name: string;
+	icon: Icon;
+	production?: boolean;
+}

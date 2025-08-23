@@ -49,7 +49,18 @@ export function CategorySidebar({
 			isLoadingWebsites
 		);
 		const defaultCat = getDefaultCategory(pathname);
-		return { categories: config.categories, defaultCategory: defaultCat };
+
+		const filteredCategories = config.categories.filter((category) => {
+			if (category.production === false) {
+				return (
+					process.env.NODE_ENV !== 'production' &&
+					process.env.NEXT_PUBLIC_ENVIRONMENT !== 'production'
+				);
+			}
+			return true;
+		});
+
+		return { categories: filteredCategories, defaultCategory: defaultCat };
 	}, [pathname, websites, isLoadingWebsites]);
 
 	const activeCategory = selectedCategory || defaultCategory;

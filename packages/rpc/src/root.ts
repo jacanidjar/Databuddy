@@ -1,6 +1,7 @@
 import { apikeysRouter } from './routers/apikeys';
 import { assistantRouter } from './routers/assistant';
 import { autocompleteRouter } from './routers/autocomplete';
+import { dbConnectionsRouter } from './routers/db-connections';
 import { experimentsRouter } from './routers/experiments';
 import { funnelsRouter } from './routers/funnels';
 import { goalsRouter } from './routers/goals';
@@ -21,6 +22,7 @@ export const appRouter = createTRPCRouter({
 	experiments: experimentsRouter,
 	assistant: assistantRouter,
 	organizations: organizationsRouter,
+	dbConnections: dbConnectionsRouter,
 });
 
 export type AppRouter = typeof appRouter;
