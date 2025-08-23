@@ -9,7 +9,7 @@ import { BrowserIcon, OSIcon } from '@/components/icon';
 import { Badge } from '@/components/ui/badge';
 import { ErrorDetailModal } from './error-detail-modal';
 import { getErrorTypeIcon } from './error-icons';
-import { formatDate, getErrorCategory, getSeverityColor } from './utils';
+import { formatDateTime, getErrorCategory, getSeverityColor } from './utils';
 
 interface Props {
 	recentErrors: ErrorEvent[];
@@ -145,9 +145,7 @@ export const RecentErrorsTable = ({ recentErrors, isLoading }: Props) => {
 			cell: (info: any) => {
 				const time = info.getValue() as string;
 				return (
-					<span className="font-mono text-sm">
-						{formatDate(time, 'MMM d, YYYY HH:mm')}
-					</span>
+					<span className="font-mono text-sm">{formatDateTime(time)}</span>
 				);
 			},
 		},

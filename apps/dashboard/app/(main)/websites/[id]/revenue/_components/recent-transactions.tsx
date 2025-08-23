@@ -1,10 +1,9 @@
 'use client';
 
 import { CalendarIcon, CreditCardIcon } from '@phosphor-icons/react';
-import dayjs from 'dayjs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatCurrency } from '@/lib/formatters';
+import { formatCurrency, formatDateTime } from '@/lib/formatters';
 
 interface Transaction {
 	id: string;
@@ -81,14 +80,6 @@ export function RecentTransactions({
 		}
 	};
 
-	const formatDate = (dateString: string) => {
-		try {
-			return dayjs(new Date(dateString)).format('MMM dd, yyyy HH:mm');
-		} catch {
-			return dateString;
-		}
-	};
-
 	return (
 		<div className="space-y-3">
 			{data.map((transaction) => (
@@ -119,7 +110,7 @@ export function RecentTransactions({
 							</div>
 							<div className="flex items-center gap-1.5 text-muted-foreground text-xs">
 								<CalendarIcon size={12} />
-								<span>{formatDate(transaction.created)}</span>
+								<span>{formatDateTime(transaction.created)}</span>
 							</div>
 						</div>
 					</div>

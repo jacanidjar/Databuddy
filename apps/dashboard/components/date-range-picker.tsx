@@ -1,7 +1,6 @@
 'use client';
 
 import { CalendarDotsIcon } from '@phosphor-icons/react';
-import dayjs from 'dayjs';
 import { useCallback, useEffect, useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from '@/components/ui/popover';
+import { formatDateOnly, formatDateRange } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 
 interface DateRangePickerProps {
@@ -71,19 +71,19 @@ export function DateRangePicker({
 		}
 
 		if (appliedRange.from && !appliedRange.to) {
-			return dayjs(appliedRange.from).format('MMM D, YYYY');
+			return formatDateOnly(appliedRange.from);
 		}
 
 		if (appliedRange.from && appliedRange.to) {
 			if (appliedRange.from.getTime() === appliedRange.to.getTime()) {
-				return dayjs(appliedRange.from).format('MMM D, YYYY');
+				return formatDateOnly(appliedRange.from);
 			}
 
 			if (appliedRange.from.getFullYear() !== appliedRange.to.getFullYear()) {
-				return `${dayjs(appliedRange.from).format('MMM D, YYYY')} - ${dayjs(appliedRange.to).format('MMM D, YYYY')}`;
+				return formatDateRange(appliedRange.from, appliedRange.to);
 			}
 
-			return `${dayjs(appliedRange.from).format('MMM D')} - ${dayjs(appliedRange.to).format('MMM D, YYYY')}`;
+			return formatDateRange(appliedRange.from, appliedRange.to);
 		}
 
 		return 'Select dates';
@@ -119,13 +119,12 @@ export function DateRangePicker({
 						<div className="text-muted-foreground text-sm">
 							{tempRange?.from && tempRange?.to ? (
 								<span className="font-medium text-foreground">
-									{dayjs(tempRange.from).format('MMM D')} -{' '}
-									{dayjs(tempRange.to).format('MMM D, YYYY')}
+									{formatDateRange(tempRange.from, tempRange.to)}
 								</span>
 							) : tempRange?.from ? (
 								<span>
 									<span className="font-medium text-foreground">
-										{dayjs(tempRange.from).format('MMM D')}
+										{formatDateOnly(tempRange.from)}
 									</span>
 									<span className="text-muted-foreground">
 										{' '}

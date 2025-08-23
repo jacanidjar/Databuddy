@@ -8,7 +8,7 @@ import { CountryFlag } from '@/components/analytics/icons/CountryFlag';
 import { BrowserIcon, OSIcon } from '@/components/icon';
 import { Badge } from '@/components/ui/badge';
 import { getErrorTypeIcon } from './error-icons';
-import { formatDate, getErrorCategory, getSeverityColor } from './utils';
+import { formatDateTime, getErrorCategory, getSeverityColor } from './utils';
 
 type CellInfo<T = unknown> = {
 	getValue: () => T;
@@ -162,7 +162,7 @@ export const createErrorTypeColumns = () => [
 		header: 'Last Occurrence',
 		cell: (info: CellInfo<string>) => {
 			const lastSeen = info.getValue();
-			const formatted = formatDate(lastSeen, 'MMM d, YYYY HH:mm');
+			const formatted = formatDateTime(lastSeen);
 			const now = new Date();
 			const lastSeenDate = new Date(lastSeen);
 			const diffHours = Math.floor(

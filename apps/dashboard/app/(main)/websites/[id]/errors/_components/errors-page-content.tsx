@@ -9,13 +9,13 @@ import { AnimatedLoading } from '@/components/analytics/animated-loading';
 import { Button } from '@/components/ui/button';
 import { useDateFilters } from '@/hooks/use-date-filters';
 import { useEnhancedErrorData } from '@/hooks/use-dynamic-query';
+import { formatDateOnly } from '@/lib/formatters';
 import { isAnalyticsRefreshingAtom } from '@/stores/jotai/filterAtoms';
 import { ErrorDataTable } from './error-data-table';
 import { ErrorSummaryStats } from './error-summary-stats';
 import { ErrorTrendsChart } from './error-trends-chart';
 import { RecentErrorsTable } from './recent-errors-table';
 import { TopErrorCard } from './top-error-card';
-import { formatDate } from './utils';
 
 interface ErrorsPageContentProps {
 	params: Promise<{ id: string }>;
@@ -81,7 +81,7 @@ export const ErrorsPageContent = ({ params }: ErrorsPageContentProps) => {
 	const topError = (errorTypes as Record<string, unknown>[])[0] || null;
 	const errorChartData = (errorTrends as Record<string, unknown>[]).map(
 		(point: Record<string, unknown>) => ({
-			date: formatDate(point.date as string, 'MMM d, YYYY'),
+			date: formatDateOnly(point.date as string),
 			'Total Errors': (point.errors as number) || 0,
 			'Affected Users': (point.users as number) || 0,
 		})
@@ -130,7 +130,15 @@ export const ErrorsPageContent = ({ params }: ErrorsPageContentProps) => {
 								errorSummary={errorSummary}
 								isLoading={isLoading}
 							/>
-							<TopErrorCard topError={topError as any} />
+							<TopErrorCard
+								topError={
+									topError as {
+										name: string;
+										count: number;
+										users: number;
+									} | null
+								}
+							/>
 						</div>
 					</div>
 					<RecentErrorsTable

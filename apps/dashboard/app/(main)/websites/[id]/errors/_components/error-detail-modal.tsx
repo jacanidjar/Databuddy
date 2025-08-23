@@ -16,7 +16,11 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from '@/components/ui/sheet';
-import { formatDate, getErrorCategory, getSeverityColor } from './utils';
+import {
+	formatDateTimeSeconds,
+	getErrorCategory,
+	getSeverityColor,
+} from './utils';
 
 interface InfoProps {
 	label: string;
@@ -108,7 +112,7 @@ export const ErrorDetailModal = ({
 								<div className="flex items-center gap-2">
 									<Badge className={getSeverityColor(severity)}>{type}</Badge>
 									<span className="text-muted-foreground text-sm">
-										{formatDate(error.timestamp, 'MMM d, YYYY HH:mm:ss')}
+										{formatDateTimeSeconds(error.timestamp)}
 									</span>
 								</div>
 							</div>
@@ -188,7 +192,7 @@ export const ErrorDetailModal = ({
 									</span>
 									<div className="rounded border bg-muted/20 p-3">
 										<span className="font-mono text-sm">
-											{formatDate(error.timestamp, 'MMM d, YYYY HH:mm:ss')}
+											{formatDateTimeSeconds(error.timestamp)}
 										</span>
 									</div>
 								</div>
@@ -264,7 +268,7 @@ Context:
 - Page URL: ${error.path}
 - Session ID: ${error.session_id}
 - User ID: ${error.anonymous_id}
-- Timestamp: ${formatDate(error.timestamp, 'MMM d, YYYY HH:mm:ss')}
+- Timestamp: ${formatDateTimeSeconds(error.timestamp)}
 - Browser: ${error.browser_name}
 - OS: ${error.os_name}
 - Device: ${error.device_type || '—'}

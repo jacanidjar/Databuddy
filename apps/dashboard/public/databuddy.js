@@ -1010,7 +1010,6 @@
 			}
 			const viewport_size = width && height ? `${width}x${height}` : null;
 
-			// Clamp screen resolution
 			let screenWidth = window.screen.width;
 			let screenHeight = window.screen.height;
 			if (
@@ -1027,7 +1026,6 @@
 			const screen_resolution =
 				screenWidth && screenHeight ? `${screenWidth}x${screenHeight}` : null;
 
-			// Validate referrer and path as URLs
 			let referrer = this.global?.referrer || document.referrer || 'direct';
 			try {
 				if (referrer && referrer !== 'direct') {
@@ -1117,7 +1115,6 @@
 				return;
 			}
 
-			// Clamp fcp and lcp to 60000
 			const clamp = (v) =>
 				typeof v === 'number' ? Math.min(60_000, Math.max(0, v)) : v;
 
@@ -1320,7 +1317,6 @@
 
 				this.isInternalNavigation = false;
 
-				// Clamp page_count
 				const pageData = {
 					page_count: Math.min(10_000, this.pageCount),
 					...(n ?? {}),

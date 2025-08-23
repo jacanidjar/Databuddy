@@ -1,43 +1,6 @@
 import type { ErrorCategory } from '@databuddy/shared';
-import dayjs from 'dayjs';
 
-export const parseDate = (dateString: string): Date => {
-	if (!dateString) {
-		return new Date();
-	}
-
-	let date = dayjs(dateString);
-	if (date.isValid()) {
-		return date.toDate();
-	}
-
-	const isoString = dateString.replace(' ', 'T');
-	date = dayjs(isoString);
-	if (date.isValid()) {
-		return date.toDate();
-	}
-
-	date = dayjs(new Date(dateString));
-	if (date.isValid()) {
-		return date.toDate();
-	}
-
-	console.warn('Failed to parse date:', dateString);
-	return new Date();
-};
-
-export const formatDate = (
-	dateString: string,
-	formatString: string
-): string => {
-	try {
-		const date = parseDate(dateString);
-		return dayjs(date).format(formatString);
-	} catch (error) {
-		console.warn('Failed to format date:', dateString, error);
-		return dateString;
-	}
-};
+export { formatDateTime, formatDateTimeSeconds } from '@/lib/formatters';
 
 export const getErrorCategory = (errorMessage: string): ErrorCategory => {
 	if (!errorMessage) {
