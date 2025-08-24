@@ -17,10 +17,14 @@ export {
 } from './monitoring';
 export {
 	buildPostgresUrl,
+	type CreateUserResult,
+	createAdminUser,
 	createReadonlyUser,
+	createUser,
+	deleteUser,
+	type PermissionLevel,
 	type PostgresConnectionInfo,
 	parsePostgresUrl,
-	type ReadonlyUserResult,
 	testConnection,
 	validateReadonlyAccess,
 } from './postgres';

@@ -33,31 +33,23 @@ const getWebsiteById = cacheable(
 	}
 );
 
-const getDbConnectionById = cacheable(
-	async (id: string) => {
-		try {
-			if (!id) {
-				return null;
-			}
-			return await db.query.dbConnections.findFirst({
-				where: eq(dbConnections.id, id),
-			});
-		} catch (error) {
-			logger.error(
-				'Error fetching database connection by ID:',
-				error instanceof Error ? error.message : String(error),
-				{ id }
-			);
+const getDbConnectionById = async (id: string) => {
+	try {
+		if (!id) {
 			return null;
 		}
-	},
-	{
-		expireInSec: 600,
-		prefix: 'db_connection_by_id',
-		staleWhileRevalidate: true,
-		staleTime: 60,
+		return await db.query.dbConnections.findFirst({
+			where: eq(dbConnections.id, id),
+		});
+	} catch (error) {
+		logger.error(
+			'Error fetching database connection by ID:',
+			error instanceof Error ? error.message : String(error),
+			{ id }
+		);
+		return null;
 	}
-);
+};
 
 /**
  * A utility to centralize authorization checks for websites.

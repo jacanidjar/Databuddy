@@ -13,7 +13,6 @@ import { use } from 'react';
 import { DataTable } from '@/components/analytics/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { trpc } from '@/lib/trpc';
 
 interface DatabasePageProps {
@@ -163,89 +162,6 @@ const tableStatsColumns: ColumnDef<TableStat, unknown>[] = [
 		},
 	},
 ];
-
-// Database page skeleton loading component
-function DatabasePageSkeleton() {
-	return (
-		<div className="mx-auto max-w-[1600px] space-y-6 p-3 sm:p-4 lg:p-6">
-			{/* Header Skeleton */}
-			<div className="space-y-4">
-				<div className="flex items-center gap-2">
-					<Skeleton className="h-5 w-5 rounded" />
-					<Skeleton className="h-7 w-48" />
-				</div>
-
-				{/* Stats Overview Skeleton */}
-				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-					{Array.from({ length: 6 }).map((_, i) => (
-						<div className="rounded border bg-card p-4" key={i.toString()}>
-							<div className="flex items-center gap-3">
-								<div className="rounded bg-muted p-2">
-									<Skeleton className="h-4 w-4" />
-								</div>
-								<div className="space-y-2">
-									<Skeleton className="h-3 w-24" />
-									<Skeleton className="h-6 w-16" />
-								</div>
-							</div>
-						</div>
-					))}
-				</div>
-			</div>
-
-			{/* Table Stats Skeleton */}
-			<div className="space-y-4">
-				<div className="flex items-center justify-between">
-					<div className="flex items-center gap-2">
-						<Skeleton className="h-5 w-5 rounded" />
-						<Skeleton className="h-7 w-36" />
-					</div>
-					<Skeleton className="h-6 w-20 rounded" />
-				</div>
-
-				{/* Table Skeleton */}
-				<div className="rounded border bg-background">
-					<div className="border-b p-4">
-						<div className="flex items-center gap-4">
-							<Skeleton className="h-9 w-80" />
-							<div className="ml-auto flex gap-2">
-								<Skeleton className="h-9 w-32" />
-								<Skeleton className="h-9 w-28" />
-							</div>
-						</div>
-					</div>
-					<div className="p-0">
-						{/* Table Headers */}
-						<div className="grid grid-cols-7 gap-4 border-b p-4 font-medium text-sm">
-							<Skeleton className="h-4 w-full" />
-							<Skeleton className="h-4 w-full" />
-							<Skeleton className="h-4 w-full" />
-							<Skeleton className="h-4 w-full" />
-							<Skeleton className="h-4 w-full" />
-							<Skeleton className="h-4 w-full" />
-							<Skeleton className="h-4 w-full" />
-						</div>
-						{/* Table Rows */}
-						{Array.from({ length: 8 }).map((_, i) => (
-							<div
-								className="grid grid-cols-7 gap-4 border-b p-4 last:border-0"
-								key={i.toString()}
-							>
-								<Skeleton className="h-4 w-full" />
-								<Skeleton className="h-4 w-full" />
-								<Skeleton className="h-4 w-full" />
-								<Skeleton className="h-4 w-full" />
-								<Skeleton className="h-4 w-full" />
-								<Skeleton className="h-4 w-full" />
-								<Skeleton className="h-4 w-full" />
-							</div>
-						))}
-					</div>
-				</div>
-			</div>
-		</div>
-	);
-}
 
 // Database stats overview component
 function DatabaseStatsOverview({

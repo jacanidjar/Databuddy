@@ -5,12 +5,18 @@ import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import {
 	checkExtensionSafety,
-	createReadonlyUser,
+	createUser,
+	deleteUser,
 	getAvailableExtensions,
 	getDatabaseStats,
 	getExtensions,
 	getTableStats,
+	parsePostgresUrl,
+	resetExtensionStats,
+	safeDropExtension,
+	safeInstallExtension,
 	testConnection,
+	updateExtension,
 } from '../database';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 import { authorizeDbConnectionAccess } from '../utils/auth';
@@ -23,6 +29,7 @@ const createDbConnectionSchema = z.object({
 	name: z.string().min(1, 'Name is required'),
 	type: z.string().default('postgres'),
 	url: z.string().url('Must be a valid connection URL'),
+	permissionLevel: z.enum(['readonly', 'admin']).default('readonly'),
 	organizationId: z.string().optional(),
 });
 
@@ -67,6 +74,7 @@ export const dbConnectionsRouter = createTRPCRouter({
 					id: true,
 					name: true,
 					type: true,
+					permissionLevel: true,
 					userId: true,
 					organizationId: true,
 					createdAt: true,
@@ -87,6 +95,7 @@ export const dbConnectionsRouter = createTRPCRouter({
 					id: true,
 					name: true,
 					type: true,
+					permissionLevel: true,
 					userId: true,
 					organizationId: true,
 					createdAt: true,
@@ -139,25 +148,12 @@ export const dbConnectionsRouter = createTRPCRouter({
 				}
 			}
 
-			try {
-				await testConnection(input.url);
-			} catch (error) {
-				throw new TRPCError({
-					code: 'BAD_REQUEST',
-					message: `Failed to connect to database: ${error.message}`,
-				});
-			}
-
-			let readonlyUrl: string;
-			try {
-				const { readonlyUrl: readonly } = await createReadonlyUser(input.url);
-				readonlyUrl = readonly;
-			} catch (error) {
-				throw new TRPCError({
-					code: 'BAD_REQUEST',
-					message: `Failed to create readonly user: ${error.message}`,
-				});
-			}
+			// Test connection and create user
+			await testConnection(input.url);
+			const { connectionUrl } = await createUser(
+				input.url,
+				input.permissionLevel
+			);
 
 			const [connection] = await ctx.db
 				.insert(dbConnections)
@@ -166,7 +162,8 @@ export const dbConnectionsRouter = createTRPCRouter({
 					userId: ctx.user.id,
 					name: input.name,
 					type: input.type,
-					url: encryptConnectionUrl(readonlyUrl),
+					url: encryptConnectionUrl(connectionUrl),
+					permissionLevel: input.permissionLevel,
 					organizationId: input.organizationId,
 					createdAt: new Date().toISOString(),
 					updatedAt: new Date().toISOString(),
@@ -175,6 +172,7 @@ export const dbConnectionsRouter = createTRPCRouter({
 					id: dbConnections.id,
 					name: dbConnections.name,
 					type: dbConnections.type,
+					permissionLevel: dbConnections.permissionLevel,
 					userId: dbConnections.userId,
 					organizationId: dbConnections.organizationId,
 					createdAt: dbConnections.createdAt,
@@ -200,6 +198,7 @@ export const dbConnectionsRouter = createTRPCRouter({
 					id: dbConnections.id,
 					name: dbConnections.name,
 					type: dbConnections.type,
+					permissionLevel: dbConnections.permissionLevel,
 					userId: dbConnections.userId,
 					organizationId: dbConnections.organizationId,
 					createdAt: dbConnections.createdAt,
@@ -219,15 +218,79 @@ export const dbConnectionsRouter = createTRPCRouter({
 	delete: protectedProcedure
 		.input(z.object({ id: z.string() }))
 		.mutation(async ({ ctx, input }) => {
-			await authorizeDbConnectionAccess(ctx, input.id, 'delete');
+			const existingConnection = await authorizeDbConnectionAccess(
+				ctx,
+				input.id,
+				'delete'
+			);
 
+			// Get connection details for cleanup
+			const connectionUrl = decryptConnectionUrl(existingConnection.url);
+			const { username } = parsePostgresUrl(connectionUrl);
+
+			// Delete from our database first
 			const [connection] = await ctx.db
 				.delete(dbConnections)
 				.where(eq(dbConnections.id, input.id))
 				.returning({
 					id: dbConnections.id,
 					name: dbConnections.name,
+				});
+
+			if (!connection) {
+				throw new TRPCError({
+					code: 'NOT_FOUND',
+					message: 'Connection not found',
+				});
+			}
+
+			try {
+				await deleteUser(connectionUrl, username);
+			} catch {
+				// Log but don't fail - user cleanup is not critical for the API operation.
+			}
+
+			return { success: true };
+		}),
+
+	updateUrl: protectedProcedure
+		.input(
+			z.object({
+				id: z.string(),
+				adminUrl: z.string().url('Must be a valid connection URL'),
+				permissionLevel: z.enum(['readonly', 'admin']).default('admin'),
+			})
+		)
+		.mutation(async ({ ctx, input }) => {
+			const existingConnection = await authorizeDbConnectionAccess(
+				ctx,
+				input.id,
+				'update'
+			);
+
+			const oldUrl = decryptConnectionUrl(existingConnection.url);
+			const oldUsername = parsePostgresUrl(oldUrl).username;
+
+			await testConnection(input.adminUrl);
+			const { connectionUrl } = await createUser(
+				input.adminUrl,
+				input.permissionLevel
+			);
+
+			// Update connection
+			const [connection] = await ctx.db
+				.update(dbConnections)
+				.set({
+					url: encryptConnectionUrl(connectionUrl),
+					permissionLevel: input.permissionLevel,
+					updatedAt: new Date().toISOString(),
+				})
+				.where(eq(dbConnections.id, input.id))
+				.returning({
+					id: dbConnections.id,
+					name: dbConnections.name,
 					type: dbConnections.type,
+					permissionLevel: dbConnections.permissionLevel,
 					userId: dbConnections.userId,
 					organizationId: dbConnections.organizationId,
 					createdAt: dbConnections.createdAt,
@@ -241,7 +304,14 @@ export const dbConnectionsRouter = createTRPCRouter({
 				});
 			}
 
-			return { success: true };
+			// Clean up old user (don't fail the operation if this fails)
+			try {
+				await deleteUser(input.adminUrl, oldUsername);
+			} catch {
+				// Log but don't fail - old user cleanup is not critical
+			}
+
+			return connection;
 		}),
 
 	getDatabaseStats: protectedProcedure
@@ -369,12 +439,31 @@ export const dbConnectionsRouter = createTRPCRouter({
 				extensionName: z.string(),
 			})
 		)
-		.mutation(() => {
-			throw new TRPCError({
-				code: 'FORBIDDEN',
-				message:
-					'Extension updates require admin database access. This feature is not available with read-only connections. Use ALTER EXTENSION UPDATE with admin credentials.',
-			});
+		.mutation(async ({ ctx, input }) => {
+			const connection = await authorizeDbConnectionAccess(
+				ctx,
+				input.id,
+				'update'
+			);
+
+			if (connection.permissionLevel !== 'admin') {
+				throw new TRPCError({
+					code: 'FORBIDDEN',
+					message:
+						'Extension updates require admin database access. Please update your connection to use admin permissions.',
+				});
+			}
+
+			try {
+				const decryptedUrl = decryptConnectionUrl(connection.url);
+				await updateExtension(decryptedUrl, input.extensionName);
+				return { success: true };
+			} catch (error) {
+				throw new TRPCError({
+					code: 'INTERNAL_SERVER_ERROR',
+					message: `Failed to update extension: ${error.message}`,
+				});
+			}
 		}),
 
 	resetExtensionStats: protectedProcedure
@@ -384,12 +473,31 @@ export const dbConnectionsRouter = createTRPCRouter({
 				extensionName: z.string(),
 			})
 		)
-		.mutation(() => {
-			throw new TRPCError({
-				code: 'FORBIDDEN',
-				message:
-					'Resetting extension statistics requires admin database access. This feature is not available with read-only connections.',
-			});
+		.mutation(async ({ ctx, input }) => {
+			const connection = await authorizeDbConnectionAccess(
+				ctx,
+				input.id,
+				'update'
+			);
+
+			if (connection.permissionLevel !== 'admin') {
+				throw new TRPCError({
+					code: 'FORBIDDEN',
+					message:
+						'Resetting extension statistics requires admin database access. Please update your connection to use admin permissions.',
+				});
+			}
+
+			try {
+				const decryptedUrl = decryptConnectionUrl(connection.url);
+				await resetExtensionStats(decryptedUrl, input.extensionName);
+				return { success: true };
+			} catch (error) {
+				throw new TRPCError({
+					code: 'INTERNAL_SERVER_ERROR',
+					message: `Failed to reset extension stats: ${error.message}`,
+				});
+			}
 		}),
 
 	installExtension: protectedProcedure
@@ -401,12 +509,36 @@ export const dbConnectionsRouter = createTRPCRouter({
 				force: z.boolean().optional(),
 			})
 		)
-		.mutation(() => {
-			throw new TRPCError({
-				code: 'FORBIDDEN',
-				message:
-					'Extension installation requires admin database access. This feature is not available with read-only connections. Connect with an admin user to install extensions.',
-			});
+		.mutation(async ({ ctx, input }) => {
+			const connection = await authorizeDbConnectionAccess(
+				ctx,
+				input.id,
+				'update'
+			);
+
+			if (connection.permissionLevel !== 'admin') {
+				throw new TRPCError({
+					code: 'FORBIDDEN',
+					message:
+						'Extension installation requires admin database access. Please update your connection to use admin permissions.',
+				});
+			}
+
+			try {
+				const decryptedUrl = decryptConnectionUrl(connection.url);
+				const result = await safeInstallExtension(
+					decryptedUrl,
+					input.extensionName,
+					input.schema,
+					input.force
+				);
+				return result;
+			} catch (error) {
+				throw new TRPCError({
+					code: 'INTERNAL_SERVER_ERROR',
+					message: `Failed to install extension: ${error.message}`,
+				});
+			}
 		}),
 
 	dropExtension: protectedProcedure
@@ -417,11 +549,34 @@ export const dbConnectionsRouter = createTRPCRouter({
 				cascade: z.boolean().optional(),
 			})
 		)
-		.mutation(() => {
-			throw new TRPCError({
-				code: 'FORBIDDEN',
-				message:
-					'Extension removal requires admin database access. This feature is not available with read-only connections. Connect with an admin user to drop extensions.',
-			});
+		.mutation(async ({ ctx, input }) => {
+			const connection = await authorizeDbConnectionAccess(
+				ctx,
+				input.id,
+				'update'
+			);
+
+			if (connection.permissionLevel !== 'admin') {
+				throw new TRPCError({
+					code: 'FORBIDDEN',
+					message:
+						'Extension removal requires admin database access. Please update your connection to use admin permissions.',
+				});
+			}
+
+			try {
+				const decryptedUrl = decryptConnectionUrl(connection.url);
+				const result = await safeDropExtension(
+					decryptedUrl,
+					input.extensionName,
+					input.cascade
+				);
+				return result;
+			} catch (error) {
+				throw new TRPCError({
+					code: 'INTERNAL_SERVER_ERROR',
+					message: `Failed to drop extension: ${error.message}`,
+				});
+			}
 		}),
 });

@@ -874,6 +874,11 @@ export const assistantMessages = pgTable(
 	]
 );
 
+export const dbPermissionLevel = pgEnum('db_permission_level', [
+	'readonly',
+	'admin',
+]);
+
 export const dbConnections = pgTable(
 	'db_connections',
 	{
@@ -882,6 +887,9 @@ export const dbConnections = pgTable(
 		name: text().notNull(),
 		type: text().notNull().default('postgres'),
 		url: text('url').notNull(),
+		permissionLevel: dbPermissionLevel('permission_level')
+			.notNull()
+			.default('readonly'),
 		organizationId: text('organization_id'),
 		createdAt: timestamp('created_at', { mode: 'string' })
 			.default(sql`CURRENT_TIMESTAMP`)
