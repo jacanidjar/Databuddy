@@ -1,8 +1,6 @@
 'use client';
 
 import {
-	CaretDownIcon,
-	CaretRightIcon,
 	ChartLineIcon,
 	CursorIcon,
 	GlobeIcon,
@@ -15,8 +13,7 @@ import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 import { useAtom } from 'jotai';
-
-import { useCallback, useMemo, useState } from 'react';
+import { lazy, useCallback, useMemo } from 'react';
 import {
 	DataTable,
 	DeviceTypeCell,
@@ -30,11 +27,9 @@ import {
 	type ReferrerSourceCellData,
 } from '@/components/atomic/ReferrerSourceCell';
 import { MetricsChart } from '@/components/charts/metrics-chart';
-
 import { useBatchDynamicQuery } from '@/hooks/use-dynamic-query';
 import { useTableTabs } from '@/lib/table-tabs';
 import { getUserTimezone } from '@/lib/timezone';
-
 import {
 	metricVisibilityAtom,
 	toggleMetricAtom,
@@ -52,6 +47,12 @@ import {
 } from '../utils/technology-helpers';
 import type { FullTabProps, MetricPoint } from '../utils/types';
 import { MetricToggles } from '../utils/ui-components';
+
+const CustomEventsSection = lazy(() =>
+	import('./overview/_components/custom-events-section').then((mod) => ({
+		default: mod.CustomEventsSection,
+	}))
+);
 
 interface ChartDataPoint {
 	date: string;
@@ -72,59 +73,9 @@ interface TechnologyData {
 	category?: string;
 }
 
-interface CustomEventData {
-	name: string;
-	total_events: number;
-	unique_users: number;
-	percentage: number;
-	last_occurrence?: string;
-	first_occurrence?: string;
-	propertyCategories?: PropertyCategory[];
-}
-
-interface PropertyCategory {
-	key: string;
-	total: number;
-	values: PropertyValue[];
-}
-
-interface PropertyValue {
-	value: string;
-	count: number;
-	percentage: number;
-	percentage_within_event: number;
-	unique_users: number;
-	unique_sessions: number;
-}
-
 interface CellInfo {
 	getValue: () => unknown;
 	row: { original: unknown };
-}
-
-interface EventProperty {
-	name: string;
-	property_key: string;
-	property_value: string;
-	count: number;
-}
-
-interface OutboundLinkData {
-	href: string;
-	text: string;
-	total_clicks: number;
-	unique_users: number;
-	unique_sessions: number;
-	percentage: number;
-	last_clicked: string;
-}
-
-interface OutboundDomainData {
-	domain: string;
-	total_clicks: number;
-	unique_users: number;
-	unique_links: number;
-	percentage: number;
 }
 
 interface AnalyticsRowData {
@@ -312,10 +263,6 @@ export function WebsiteOverviewTab({
 		[visibleMetrics]
 	);
 
-	const [expandedProperties, setExpandedProperties] = useState<Set<string>>(
-		new Set()
-	);
-
 	const referrerCustomCell = (info: CellInfo) => {
 		const cellData = info.row.original as ReferrerSourceCellData;
 		return <ReferrerSourceCell {...cellData} />;
@@ -501,89 +448,6 @@ export function WebsiteOverviewTab({
 		};
 	}, [analytics.events_by_date, dateRange.granularity, filterFutureEvents]);
 
-	const togglePropertyExpansion = useCallback((propertyId: string) => {
-		setExpandedProperties((prev) => {
-			const newExpanded = new Set(prev);
-			if (newExpanded.has(propertyId)) {
-				newExpanded.delete(propertyId);
-			} else {
-				newExpanded.add(propertyId);
-			}
-			return newExpanded;
-		});
-	}, []);
-
-	const processedCustomEventsData = useMemo(() => {
-		if (!customEventsData?.custom_events?.length) {
-			return [];
-		}
-		const customEvents = customEventsData.custom_events;
-		const propertiesData = customEventsData.custom_event_properties || [];
-
-		const propertiesByEvent = new Map<string, EventProperty[]>();
-		for (const prop of propertiesData) {
-			if (!propertiesByEvent.has(prop.name)) {
-				propertiesByEvent.set(prop.name, []);
-			}
-			propertiesByEvent.get(prop.name)?.push(prop);
-		}
-
-		return customEvents.map((event: CustomEventData) => {
-			const eventProperties = propertiesByEvent.get(event.name) || [];
-
-			const propertyCategories: PropertyCategory[] = [];
-			const propertyMap = new Map<string, Map<string, { count: number }>>();
-
-			for (const prop of eventProperties) {
-				const key = prop.property_key;
-				const value = prop.property_value;
-
-				if (!propertyMap.has(key)) {
-					propertyMap.set(key, new Map());
-				}
-
-				propertyMap.get(key)?.set(value, { count: prop.count });
-			}
-
-			for (const [key, valueMap] of propertyMap.entries()) {
-				const values = Array.from(valueMap.entries(), ([value, data]) => ({
-					value,
-					count: data.count,
-					percentage: 0,
-					percentage_within_event: 0,
-					unique_users: 0,
-					unique_sessions: 0,
-				}));
-
-				const total = values.reduce((sum, item) => sum + item.count, 0);
-				values.sort((a, b) => b.count - a.count);
-
-				propertyCategories.push({
-					key,
-					total,
-					values,
-				});
-			}
-
-			propertyCategories.sort((a, b) => b.total - a.total);
-
-			return {
-				...event,
-				percentage: event.percentage || 0,
-				last_occurrence_formatted: event.last_occurrence
-					? new Date(event.last_occurrence).toLocaleDateString()
-					: 'N/A',
-				first_occurrence_formatted: event.first_occurrence
-					? new Date(event.first_occurrence).toLocaleDateString()
-					: 'N/A',
-				propertyCategories,
-			};
-		});
-	}, [
-		customEventsData?.custom_events,
-		customEventsData?.custom_event_properties,
-	]);
-
 	const createTechnologyCell = (type: 'browser' | 'os') => (info: CellInfo) => {
 		const entry = info.row.original as TechnologyData;
 		const icon =
@@ -607,15 +471,6 @@ export function WebsiteOverviewTab({
 			}).format(value);
 		},
 		[]
-	);
-
-	const createMetricCell = (label: string) => (info: CellInfo) => (
-		<div>
-			<div className="font-medium text-foreground">
-				{formatNumber(info.getValue() as number)}
-			</div>
-			<div className="text-muted-foreground text-xs">{label}</div>
-		</div>
 	);
 
 	const formatTimeSeconds = useCallback((seconds: number): string => {
@@ -792,149 +647,6 @@ export function WebsiteOverviewTab({
 					{formatNumber(info.getValue() as number)}
 				</span>
 			),
-		},
-		{
-			id: 'percentage',
-			accessorKey: 'percentage',
-			header: 'Share',
-			cell: createPercentageCell(),
-		},
-	];
-
-	const customEventsColumns = [
-		{
-			id: 'name',
-			accessorKey: 'name',
-			header: 'Event Name',
-			cell: (info: CellInfo) => {
-				const eventName = info.getValue() as string;
-				return (
-					<div className="flex items-center gap-3">
-						<div className="h-2 w-2 flex-shrink-0 rounded-full bg-primary" />
-						<span className="font-medium text-foreground">{eventName}</span>
-					</div>
-				);
-			},
-		},
-		{
-			id: 'total_events',
-			accessorKey: 'total_events',
-			header: 'Events',
-			cell: createMetricCell('total'),
-		},
-		{
-			id: 'unique_users',
-			accessorKey: 'unique_users',
-			header: 'Users',
-			cell: createMetricCell('unique'),
-		},
-		{
-			id: 'percentage',
-			accessorKey: 'percentage',
-			header: 'Share',
-			cell: createPercentageCell(),
-		},
-	];
-
-	const outboundLinksColumns = [
-		{
-			id: 'href',
-			accessorKey: 'href',
-			header: 'Destination URL',
-			cell: (info: CellInfo) => {
-				const href = info.getValue() as string;
-				let domain = href;
-				try {
-					domain = new URL(href).hostname;
-				} catch {
-					domain = href;
-				}
-				return (
-					<div className="flex flex-col gap-1">
-						<a
-							className="max-w-[300px] truncate font-medium text-primary hover:underline"
-							href={href}
-							rel="noopener noreferrer"
-							target="_blank"
-							title={href}
-						>
-							{domain}
-						</a>
-						<span
-							className="max-w-[300px] truncate text-muted-foreground text-xs"
-							title={href}
-						>
-							{href}
-						</span>
-					</div>
-				);
-			},
-		},
-		{
-			id: 'text',
-			accessorKey: 'text',
-			header: 'Link Text',
-			cell: (info: CellInfo) => {
-				const text = info.getValue() as string;
-				return (
-					<span className="max-w-[200px] truncate font-medium" title={text}>
-						{text || '(no text)'}
-					</span>
-				);
-			},
-		},
-		{
-			id: 'total_clicks',
-			accessorKey: 'total_clicks',
-			header: 'Clicks',
-			cell: createMetricCell('total'),
-		},
-		{
-			id: 'unique_users',
-			accessorKey: 'unique_users',
-			header: 'Users',
-			cell: createMetricCell('unique'),
-		},
-		{
-			id: 'percentage',
-			accessorKey: 'percentage',
-			header: 'Share',
-			cell: createPercentageCell(),
-		},
-	];
-
-	const outboundDomainsColumns = [
-		{
-			id: 'domain',
-			accessorKey: 'domain',
-			header: 'Domain',
-			cell: (info: CellInfo) => {
-				const domain = info.getValue() as string;
-				return (
-					<div className="flex items-center gap-3">
-						<div className="h-2 w-2 flex-shrink-0 rounded-full bg-blue-500" />
-						<span className="font-medium text-foreground">{domain}</span>
-					</div>
-				);
-			},
-		},
-		{
-			id: 'total_clicks',
-			accessorKey: 'total_clicks',
-			header: 'Clicks',
-			cell: createMetricCell('total'),
-		},
-		{
-			id: 'unique_users',
-			accessorKey: 'unique_users',
-			header: 'Users',
-			cell: createMetricCell('unique'),
-		},
-		{
-			id: 'unique_links',
-			accessorKey: 'unique_links',
-			header: 'Links',
-			cell: createMetricCell('unique'),
 		},
 		{
 			id: 'percentage',
@@ -1290,118 +1002,10 @@ export function WebsiteOverviewTab({
 			</div>
 
 			{/* Custom Events Table */}
-			<DataTable
-				description="User-defined events, interactions, and outbound link tracking"
-				expandable={true}
-				getSubRows={(row: CustomEventData) =>
-					row.propertyCategories as unknown as CustomEventData[]
-				}
+			<CustomEventsSection
+				customEventsData={customEventsData}
 				isLoading={isLoading}
-				minHeight={350}
 				onAddFilter={onAddFilter}
-				renderSubRow={(subRow: CustomEventData, parentRow: CustomEventData) => {
-					const typedSubRow = subRow as unknown as PropertyCategory;
-					const propertyKey = typedSubRow.key;
-					const propertyTotal = typedSubRow.total;
-					const propertyValues = typedSubRow.values;
-					const propertyId = `${parentRow.name}-${propertyKey}`;
-					const isPropertyExpanded = expandedProperties.has(propertyId);
-
-					return (
-						<div className="ml-4">
-							<button
-								className="flex w-full items-center justify-between rounded border border-sidebar-border/30 bg-sidebar-accent/20 px-3 py-2.5 transition-colors hover:bg-sidebar-accent/50"
-								onClick={() => togglePropertyExpansion(propertyId)}
-								type="button"
-							>
-								<div className="flex items-center gap-2">
-									{isPropertyExpanded ? (
-										<CaretDownIcon
-											className="h-3 w-3 text-sidebar-foreground/60"
-											size={16}
-											weight="fill"
-										/>
-									) : (
-										<CaretRightIcon
-											className="h-3 w-3 text-sidebar-foreground/60"
-											size={16}
-											weight="fill"
-										/>
-									)}
-									<span className="font-medium text-sidebar-foreground text-sm">
-										{propertyKey}
-									</span>
-								</div>
-								<div className="flex items-center gap-2">
-									<div className="font-medium text-sidebar-foreground text-sm">
-										{formatNumber(propertyTotal)}
-									</div>
-									<div className="rounded bg-sidebar-ring/10 px-2 py-0.5 font-medium text-sidebar-ring text-xs">
-										{propertyValues.length}{' '}
-										{propertyValues.length === 1 ? 'value' : 'values'}
-									</div>
-								</div>
-							</button>
-
-							{isPropertyExpanded && (
-								<div className="mt-1 max-h-48 overflow-y-auto rounded border border-sidebar-border/20">
-									{propertyValues.map(
-										(valueItem: PropertyValue, valueIndex: number) => (
-											<div
-												className="flex items-center justify-between border-sidebar-border/10 border-b px-3 py-2 transition-colors last:border-b-0 hover:bg-sidebar-accent/20"
-												key={`${propertyKey}-${valueItem.value}-${valueIndex}`}
-											>
-												<span
-													className="truncate font-mono text-sidebar-foreground text-sm"
-													title={valueItem.value}
-												>
-													{valueItem.value}
-												</span>
-												<div className="flex items-center gap-2">
-													<span className="font-medium text-sidebar-foreground text-sm">
-														{formatNumber(valueItem.count)}
-													</span>
-													<div className="min-w-[2.5rem] rounded bg-sidebar-accent px-2 py-0.5 text-center font-medium text-sidebar-accent-foreground text-xs">
-														{valueItem.percentage}%
-													</div>
-												</div>
-											</div>
-										)
-									)}
-								</div>
-							)}
-						</div>
-					);
-				}}
-				tabs={[
-					{
-						id: 'custom_events',
-						label: 'Custom Events',
-						data: processedCustomEventsData,
-						columns: customEventsColumns,
-					},
-					{
-						id: 'outbound_links',
-						label: 'Outbound Links',
-						data: customEventsData.outbound_links,
-						columns: outboundLinksColumns,
-						getFilter: (row: OutboundLinkData) => ({
-							field: 'href',
-							value: row.href,
-						}),
-					},
-					{
-						id: 'outbound_domains',
-						label: 'Outbound Domains',
-						data: customEventsData.outbound_domains,
-						columns: outboundDomainsColumns,
-						getFilter: (row: OutboundDomainData) => ({
-							field: 'href',
-							value: `*${row.domain}*`,
-						}),
-					},
-				]}
-				title="Events & Links"
 			/>
 
 			{/* Technology */}

@@ -38,7 +38,6 @@ export const sponsors: Sponsor[] = [
 		website: 'https://upstash.com',
 		tier: 'silver',
 		description: 'Modern Serverless Data Platform for Developers',
-		disabled: true,
 	},
 ];
 

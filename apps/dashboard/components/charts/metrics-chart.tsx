@@ -1,5 +1,5 @@
 import { ChartLineIcon } from '@phosphor-icons/react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
 	Area,
 	AreaChart,
@@ -40,7 +40,7 @@ const CustomTooltip = ({
 	}
 
 	return (
-		<div className="min-w-[200px] rounded-xl border border-border/50 bg-card p-4 shadow-2xl backdrop-blur-md">
+		<div className="min-w-[200px] rounded border border-border/50 bg-card p-4">
 			<div className="mb-3 flex items-center gap-2 border-border/30 border-b pb-2">
 				<div className="h-2 w-2 animate-pulse rounded-full bg-primary" />
 				<p className="font-semibold text-foreground text-sm">{label}</p>
@@ -106,7 +106,6 @@ export function MetricsChart({
 	className,
 }: MetricsChartProps) {
 	const chartData = useMemo(() => data || [], [data]);
-	const [hoveredMetric, setHoveredMetric] = useState<string | null>(null);
 
 	const valueFormatter = useCallback((value: number): string => {
 		if (value >= 1_000_000) {
@@ -136,7 +135,7 @@ export function MetricsChart({
 		return (
 			<Card
 				className={cn(
-					'w-full border-0 bg-gradient-to-br from-background to-muted/20 shadow-lg',
+					'w-full border-0 bg-gradient-to-br from-background to-muted/20',
 					className
 				)}
 			>
@@ -178,12 +177,7 @@ export function MetricsChart({
 	);
 
 	return (
-		<Card
-			className={cn(
-				'w-full overflow-hidden border-0 bg-gradient-to-br from-background via-background to-muted/10 shadow-lg',
-				className
-			)}
-		>
+		<Card className={cn('w-full overflow-hidden rounded-none', className)}>
 			<CardContent className="p-0">
 				<div
 					className="relative"
@@ -271,12 +265,8 @@ export function MetricsChart({
 									<span
 										className={cn(
 											'cursor-pointer font-medium text-xs',
-											hoveredMetric === value
-												? 'text-primary'
-												: 'text-muted-foreground hover:text-foreground'
+											'text-muted-foreground hover:text-foreground'
 										)}
-										onMouseEnter={() => setHoveredMetric(value)}
-										onMouseLeave={() => setHoveredMetric(null)}
 									>
 										{value.charAt(0).toUpperCase() +
 											value.slice(1).replace(/_/g, ' ')}
