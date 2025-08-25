@@ -60,6 +60,7 @@ export const LeapComponent = () => {
 							'border border-border hover:animate-[borderGlitch_0.6s_ease-in-out]',
 							'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring active:scale-[0.98]'
 						)}
+						data-track="leap-generate"
 						onClick={handleGenerate}
 						type="button"
 					>
