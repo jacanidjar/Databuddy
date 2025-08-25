@@ -716,10 +716,20 @@
 				return false;
 			}
 
+			// More reliable bot detection that doesn't flag mobile browsers
 			return (
 				navigator.webdriver ||
-				!navigator.plugins.length ||
-				!navigator.languages.length
+				// Remove plugins check - mobile browsers legitimately have 0 plugins
+				!navigator.languages.length ||
+				// Additional bot indicators
+				navigator.userAgent.includes('HeadlessChrome') ||
+				navigator.userAgent.includes('PhantomJS') ||
+				window.callPhantom ||
+				window._phantom ||
+				// Check for automation frameworks
+				window.selenium ||
+				window.webdriver ||
+				document.documentElement.getAttribute('webdriver') === 'true'
 			);
 		}
 
@@ -728,11 +738,24 @@
 				return;
 			}
 
-			for (const event of ['mousemove', 'scroll', 'keydown']) {
+			const interactionEvents = [
+				'mousemove',
+				'scroll',
+				'keydown',
+				'touchstart',
+				'touchmove',
+				'click',
+			];
+
+			for (const event of interactionEvents) {
 				window.addEventListener(
 					event,
 					() => {
 						this.hasInteracted = true;
+						// Debug mobile interaction detection
+						if (event.startsWith('touch') && this.options.debug) {
+							console.log(`Databuddy: Mobile interaction detected (${event})`);
+						}
 					},
 					{ once: true, passive: true }
 				);
@@ -807,6 +830,11 @@
 				return;
 			}
 
+			// Add bot detection check to match screen_view behavior
+			if (this.options.disabled || this.isLikelyBot) {
+				return;
+			}
+
 			const baseContext = this.getBaseContext();
 
 			const exitEventId = `exit_${this.sessionId}_${btoa(window.location.pathname)}_${this.pageEngagementStart}`;
@@ -833,7 +861,6 @@
 					interaction_count,
 					has_exit_intent: this.hasExitIntent,
 					page_count,
-					is_bounce: page_count <= 1 ? 1 : 0,
 				},
 			};
 
@@ -842,15 +869,24 @@
 
 		async sendExitEventImmediately(exitEvent) {
 			try {
-				const beaconResult = await this.sendBeacon(exitEvent);
-				if (beaconResult) {
-					return beaconResult;
+				if (navigator.sendBeacon) {
+					const beaconResult = await this.sendBeacon(exitEvent);
+					if (beaconResult) {
+						return beaconResult;
+					}
 				}
 
 				return this.api.fetch('/', exitEvent, {
 					keepalive: true,
 				});
 			} catch (_e) {
+				try {
+					if (navigator.sendBeacon) {
+						return this.sendBeacon(exitEvent);
+					}
+				} catch (_e2) {
+					// Silent fail - don't block page unload
+				}
 				return null;
 			}
 		}
@@ -1230,7 +1266,8 @@
 
 			if (this.options.trackScreenViews) {
 				this.trackScreenViews();
-				setTimeout(() => this.screenView(), 0);
+				// Delay initial screen view to ensure proper mobile initialization
+				setTimeout(() => this.screenView(), 100);
 			}
 
 			if (this.options.trackOutgoingLinks) {
@@ -1310,7 +1347,7 @@
 					});
 					this.isInternalNavigation = true;
 					this.screenView();
-				}, 50);
+				}, 100); // Increase debounce for mobile stability
 
 			this.options.trackHashChanges
 				? window.addEventListener('hashchange', i)
