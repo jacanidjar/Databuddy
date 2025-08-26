@@ -16,47 +16,32 @@ import { CodeBlock } from "@/components/docs";
 
 ## Authentication
 
-All API requests require authentication using your API key in the `X-Api-Key` header:
+All API requests require authentication using your session cookies or API key. The API uses the same authentication system as the dashboard.
 
 <CodeBlock 
   language="bash"
-  code={`curl -H "X-Api-Key: YOUR_API_KEY" \\
+  code={`curl -H "Cookie: your-session-cookie" \\
   https://api.databuddy.cc/v1/query`}
 />
 
-Get your API key from your [dashboard settings](https://app.databuddy.cc/settings/api). Learn more about scopes and resource access on the [API Keys](/docs/api-keys) page.
+## Base URLs
 
-<Callout type="tip">
-  **Test your API key** instantly in the [API Playground](/api) - no need to
-  write code first!
-</Callout>
+- **Analytics API**: `https://api.databuddy.cc/v1`
+- **Event Tracking (Basket)**: `https://basket.databuddy.cc`
 
-## Analytics Endpoints
+## Analytics Query API
 
-### Get Website Analytics
+### Get Available Query Types
 
-Retrieve analytics data for a specific website and date range.
+Get all available query types and their configurations.
 
 <CodeBlock 
   language="http"
-  code="GET /v1/websites/{website_id}/analytics"
+  code="GET /v1/query/types"
 />
 
 **Parameters:**
-
-- `website_id` (required) - Your website ID
-- `start_date` (optional) - Start date (ISO 8601)
-- `end_date` (optional) - End date (ISO 8601)
-- `granularity` (optional) - Data granularity: `hour`, `day`, `week`, `month`
-- `metrics` (optional) - Comma-separated metrics to include
-
-**Example:**
-
-<CodeBlock 
-  language="bash"
-  code={`curl -H "X-Api-Key: YOUR_API_KEY" \\
-  "https://api.databuddy.cc/v1/websites/web_123/analytics?start_date=2024-01-01&end_date=2024-01-31&granularity=day"`}
-/>
+- `include_meta` (optional) - Include metadata about query types
 
 **Response:**
 
@@ -66,186 +51,31 @@ Retrieve analytics data for a specific website and date range.
   "success": true,
   "data": {
     "summary": {
-      "pageviews": 15420,
-      "visitors": 8921,
-      "sessions": 12340,
-      "bounce_rate": 0.32,
-      "avg_session_duration": 285.5
+      "allowedFilters": ["date", "country", "device", "browser"],
+      "customizable": true,
+      "defaultLimit": 100
     },
-    "events_by_date": [
-      {
-        "date": "2024-01-01",
-        "pageviews": 512,
-        "visitors": 324,
-        "sessions": 456
-      }
-    ],
-    "top_pages": [
-      {
-        "path": "/",
-        "pageviews": 3420,
-        "visitors": 2100
-      }
-    ],
-    "top_referrers": [
-      {
-        "referrer": "google.com",
-        "visitors": 1250,
-        "percentage": 15.2
-      }
-    ],
-    "countries": [
-      {
-        "country": "United States",
-        "visitors": 4200,
-        "percentage": 28.5
-      }
-    ],
-    "devices": [
-      {
-        "device_type": "desktop",
-        "visitors": 5200,
-        "percentage": 35.3
-      }
-    ],
-    "browsers": [
-      {
-        "browser_name": "Chrome",
-        "visitors": 6800,
-        "percentage": 46.2
-      }
-    ]
-  }
-}`}
-/>
-
-### Get Real-time Analytics
-
-<div className="flex items-center gap-2 mb-4">
-  <span className="bg-amber-600/20 text-amber-400 py-1 px-2 rounded text-sm font-medium">
-    Coming Soon
-  </span>
-</div>
-
-Get current active visitors and real-time metrics.
-
-<CodeBlock 
-  language="http"
-  code="GET /v1/websites/{website_id}/realtime"
-/>
-
-Real-time analytics with WebSocket streaming will be available soon.
-
-### Get Custom Events
-
-Retrieve custom event data and conversions.
-
-<CodeBlock 
-  language="http"
-  code="GET /v1/websites/{website_id}/events"
-/>
-
-**Parameters:**
-
-- `event_name` (optional) - Filter by specific event name
-- `start_date` (optional) - Start date (ISO 8601)
-- `end_date` (optional) - End date (ISO 8601)
-
-**Response:**
-
-<CodeBlock 
-  language="json"
-  code={`{
-  "success": true,
-  "data": {
-    "events": [
-      {
-        "event_name": "signup",
-        "count": 156,
-        "unique_users": 142
-      },
-      {
-        "event_name": "purchase",
-        "count": 89,
-        "unique_users": 85
-      }
-    ],
-    "events_over_time": [
-      {
-        "date": "2024-01-01",
-        "signup": 12,
-        "purchase": 8
-      }
-    ]
-  }
-}`}
-/>
-
-## Websites Management
-
-### List Websites
-
-Get all websites in your account.
-
-<CodeBlock 
-  language="http"
-  code="GET /v1/websites"
-/>
-
-**Response:**
-
-<CodeBlock 
-  language="json"
-  code={`{
-  "success": true,
-  "data": [
-    {
-      "id": "web_123",
-      "name": "My Website",
-      "domain": "example.com",
-      "created_at": "2024-01-01T00:00:00Z",
-      "verified": true
+    "pages": {
+      "allowedFilters": ["date", "path"],
+      "customizable": true,
+      "defaultLimit": 50
+    },
+    "traffic": {
+      "allowedFilters": ["date", "referrer"],
+      "customizable": false,
+      "defaultLimit": 100
     }
-  ]
-}`}
-/>
-
-### Get Website Details
-
-Get details for a specific website.
-
-<CodeBlock 
-  language="http"
-  code="GET /v1/websites/{website_id}"
-/>
-
-**Response:**
-
-<CodeBlock 
-  language="json"
-  code={`{
-  "success": true,
-  "data": {
-    "id": "web_123",
-    "name": "My Website",
-    "domain": "example.com",
-    "created_at": "2024-01-01T00:00:00Z",
-    "verified": true,
-    "tracking_code": "db_abc123...",
-    "monthly_pageviews": 45678
   }
 }`}
 />
 
-## AI Assistant
+### Execute Analytics Query
 
-### Query Analytics with AI
-
-Use natural language to query your analytics data.
+Execute a specific analytics query with filters and parameters.
 
 <CodeBlock 
   language="http"
-  code="POST /v1/websites/{website_id}/assistant/chat"
+  code="POST /v1/query"
 />
 
 **Request:**
@@ -253,6 +83,106 @@ Use natural language to query your analytics data.
 <CodeBlock 
   language="json"
   code={`{
+  "type": "summary",
+  "websiteId": "web_123",
+  "startDate": "2024-01-01",
+  "endDate": "2024-01-31",
+  "timezone": "America/New_York",
+  "filters": {
+    "country": ["US", "CA"],
+    "device": ["desktop"]
+  }
+}`}
+/>
+
+**Available Query Types:**
+- `summary` - Overall website metrics and KPIs
+- `pages` - Page views and performance data
+- `traffic` - Traffic sources and referrers  
+- `devices` - Device and browser analytics
+- `geo` - Geographic visitor data
+- `errors` - JavaScript errors and issues
+- `performance` - Web vitals and performance metrics
+- `sessions` - Session-based analytics
+- `custom_events` - Custom event tracking data
+- `profiles` - User profile analytics
+- `links` - Outgoing link tracking
+- `engagement` - User engagement metrics
+
+**Response:**
+
+<CodeBlock 
+  language="json"
+  code={`{
+  "success": true,
+  "data": {
+    "results": [
+      {
+        "date": "2024-01-01",
+        "pageviews": 1250,
+        "visitors": 890,
+        "sessions": 1100
+      }
+    ],
+    "meta": {
+      "total": 1,
+      "hasMore": false
+    }
+  }
+}`}
+/>
+
+### Compile Query (Advanced)
+
+Compile a query to see the generated SQL without executing it.
+
+<CodeBlock 
+  language="http"
+  code="POST /v1/query/compile"
+/>
+
+**Request:**
+
+<CodeBlock 
+  language="json"
+  code={`{
+  "type": "summary",
+  "websiteId": "web_123",
+  "startDate": "2024-01-01",
+  "endDate": "2024-01-31"
+}`}
+/>
+
+**Response:**
+
+<CodeBlock 
+  language="json"
+  code={`{
+  "success": true,
+  "data": {
+    "sql": "SELECT date, count(*) as pageviews FROM analytics.events WHERE...",
+    "parameters": ["web_123", "2024-01-01", "2024-01-31"]
+  }
+}`}
+/>
+
+## AI Assistant
+
+### Stream Analytics Query
+
+Use natural language to query your analytics data with streaming responses.
+
+<CodeBlock 
+  language="http"
+  code="POST /v1/assistant/stream"
+/>
+
+**Request:**
+
+<CodeBlock 
+  language="json"
+  code={`{
+  "websiteId": "web_123",
   "message": "Show me the top pages by pageviews last week",
   "context": {
     "dateRange": {
@@ -263,38 +193,26 @@ Use natural language to query your analytics data.
 }`}
 />
 
-**Response (Streaming):**
+**Response (Server-Sent Events):**
 
 <CodeBlock 
   language="json"
-  code={`{
-  "type": "complete",
-  "content": "Here are your top pages by pageviews last week:",
-  "data": {
-    "chart_type": "bar",
-    "results": [
-      {
-        "path": "/",
-        "pageviews": 1250
-      },
-      {
-        "path": "/pricing",
-        "pageviews": 890
-      }
-    ]
-  }
-}`}
+  code={`data: {"type": "thinking", "content": "Analyzing your page views..."}
+
+data: {"type": "query", "content": "SELECT path, COUNT(*) as pageviews FROM analytics.events..."}
+
+data: {"type": "complete", "content": "Here are your top pages:", "data": {"results": [{"path": "/", "pageviews": 1250}]}}`}
 />
 
-## Event Tracking
+## Data Export
 
-### Send Custom Events
+### Export Analytics Data
 
-Track custom events programmatically.
+Export analytics data in various formats (CSV, JSON).
 
 <CodeBlock 
   language="http"
-  code="POST /v1/track"
+  code="POST /v1/export"
 />
 
 **Request:**
@@ -302,27 +220,181 @@ Track custom events programmatically.
 <CodeBlock 
   language="json"
   code={`{
-  "client_id": "your_tracking_id",
-  "events": [
+  "websiteId": "web_123",
+  "type": "summary",
+  "format": "csv",
+  "startDate": "2024-01-01",
+  "endDate": "2024-01-31",
+  "timezone": "UTC"
+}`}
+/>
+
+**Response:**
+Returns a downloadable file in the requested format.
+
+## Event Tracking
+
+### Send Custom Events
+
+Track custom events programmatically using the basket endpoint.
+
+<CodeBlock 
+  language="http"
+  code="POST basket.databuddy.cc/?client_id={website_id}"
+/>
+
+**Single Custom Event Request:**
+
+<CodeBlock 
+  language="json"
+  code={`{
+  "type": "custom",
+  "eventId": "evt_12345",
+  "name": "purchase",
+  "anonymousId": "anon_user_123",
+  "sessionId": "session_456",
+  "timestamp": 1704067200000,
+  "properties": {
+    "value": 99.99,
+    "currency": "USD",
+    "product_id": "prod_123"
+  }
+}`}
+/>
+
+**Minimal Custom Event (without session/user tracking):**
+
+<CodeBlock 
+  language="json"
+  code={`{
+  "type": "custom",
+  "eventId": "evt_simple_123",
+  "name": "newsletter_signup",
+  "properties": {
+    "source": "footer_form"
+  }
+}`}
+/>
+
+**Batch Custom Events Request:**
+
+<CodeBlock 
+  language="http"
+  code="POST basket.databuddy.cc/batch?client_id={website_id}"
+/>
+
+<CodeBlock 
+  language="json"
+  code={`[
+  {
+    "type": "custom",
+    "eventId": "evt_12345",
+    "name": "purchase",
+    "anonymousId": "anon_user_123",
+    "sessionId": "session_456",
+    "timestamp": 1704067200000,
+    "properties": {
+      "value": 99.99,
+      "currency": "USD",
+      "product_id": "prod_123"
+    }
+  },
+  {
+    "type": "custom",
+    "eventId": "evt_12346",
+    "name": "signup",
+    "anonymousId": "anon_user_124",
+    "sessionId": "session_457",
+    "timestamp": 1704067260000,
+    "properties": {
+      "plan": "premium",
+      "source": "landing_page"
+    }
+  }
+]`}
+/>
+
+**Required Fields:**
+- `type`: Must be "custom"
+- `eventId`: Unique identifier for the event (max 512 characters)
+- `name`: Event name (1-128 characters)
+
+**Optional Fields:**
+- `anonymousId`: Anonymous user identifier (max 128 characters) - not needed for all use cases
+- `sessionId`: Session identifier (max 128 characters) - not needed for all use cases
+- `timestamp`: Unix timestamp in milliseconds (defaults to current time)
+- `properties`: JSON object with custom event properties
+
+<Callout type="tip">
+  **Simple tracking**: For basic event tracking, you only need `type`, `eventId`, and `name`. The `anonymousId` and `sessionId` are useful for user journey tracking but not required for simple conversion or action tracking.
+</Callout>
+
+**Response:**
+
+<CodeBlock 
+  language="json"
+  code={`{
+  "status": "success",
+  "type": "custom"
+}`}
+/>
+
+**Batch Response:**
+
+<CodeBlock 
+  language="json"
+  code={`{
+  "status": "success",
+  "batch": true,
+  "processed": 2,
+  "results": [
     {
-      "event": "purchase",
-      "properties": {
-        "value": 99.99,
-        "currency": "USD",
-        "product_id": "prod_123"
-      },
-      "timestamp": "2024-01-01T12:00:00Z"
+      "status": "success",
+      "type": "custom",
+      "eventId": "evt_12345"
+    },
+    {
+      "status": "success", 
+      "type": "custom",
+      "eventId": "evt_12346"
     }
   ]
 }`}
 />
 
+## Health Check
+
+### API Health Status
+
+Check the health status of the API and its dependencies.
+
+<CodeBlock 
+  language="http"
+  code="GET /health"
+/>
+
+**Response:**
+
+<CodeBlock 
+  language="json"
+  code={`{
+  "clickhouse": true,
+  "database": true,
+  "redis": true,
+  "success": true,
+  "version": "1.0.0",
+  "timestamp": "2024-01-01T12:00:00.000Z"
+}`}
+/>
+
 ## Rate Limits
 
-All API endpoints are rate-limited:
+API endpoints have different rate limits based on their computational cost:
 
-- **Analytics endpoints**: 100 requests per minute
-- **Real-time endpoints**: 60 requests per minute
+- **Standard endpoints**: 100 requests per minute
+- **Query endpoints**: 60 requests per minute  
+- **AI Assistant**: 20 requests per minute
+- **Export endpoints**: 10 requests per minute
 - **Event tracking**: 1000 requests per minute
 
 Rate limit headers are included in responses:
@@ -342,21 +414,18 @@ All errors follow a consistent format:
   language="json"
   code={`{
   "success": false,
-  "error": {
-    "code": "INVALID_WEBSITE_ID",
-    "message": "Website not found or access denied",
-    "details": {}
-  }
+  "error": "Website not found or access denied",
+  "code": "WEBSITE_NOT_FOUND"
 }`}
 />
 
 **Common Error Codes:**
 
-- `AUTHENTICATION_FAILED` - Invalid or missing API key
-- `RATE_LIMIT_EXCEEDED` - Too many requests
-- `INVALID_WEBSITE_ID` - Website not found or no access
-- `INVALID_DATE_RANGE` - Invalid start/end dates
+- `AUTH_REQUIRED` - Authentication required
+- `WEBSITE_NOT_FOUND` - Website not found or no access
+- `INVALID_QUERY_TYPE` - Unknown query type
 - `VALIDATION_ERROR` - Request validation failed
+- `RATE_LIMIT_EXCEEDED` - Too many requests
 
 ## SDKs and Libraries
 
@@ -364,8 +433,3 @@ All errors follow a consistent format:
 - **Python**: Coming soon
 - **Go**: Coming soon
 - **PHP**: Coming soon
-
-## Base URLs
-
-- **Production**: `https://api.databuddy.cc/v1`
-- **Sandbox**: `https://api-sandbox.databuddy.cc/v1`
