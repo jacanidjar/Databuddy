@@ -160,10 +160,15 @@ async function insertError(
 	userAgent: string,
 	ip: string
 ): Promise<void> {
-	const eventId = sanitizeString(
+	let eventId = sanitizeString(
 		errorData.payload.eventId,
 		VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH
 	);
+
+	if (!eventId) {
+		eventId = randomUUID();
+	}
+
 	if (await checkDuplicate(eventId, 'error')) {
 		return;
 	}
@@ -234,10 +239,14 @@ async function insertWebVitals(
 	userAgent: string,
 	ip: string
 ): Promise<void> {
-	const eventId = sanitizeString(
+	let eventId = sanitizeString(
 		vitalsData.payload.eventId,
 		VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH
 	);
+
+	if (!eventId) {
+		eventId = randomUUID();
+	}
 
 	if (await checkDuplicate(eventId, 'web_vitals')) {
 		return;
@@ -298,10 +307,15 @@ async function insertCustomEvent(
 	userAgent: string,
 	ip: string
 ): Promise<void> {
-	const eventId = sanitizeString(
+	let eventId = sanitizeString(
 		customData.eventId,
 		VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH
 	);
+	q
+	if (!eventId) {
+		eventId = randomUUID();
+	}
+
 	if (await checkDuplicate(eventId, 'custom')) {
 		return;
 	}
@@ -348,10 +362,15 @@ async function insertOutgoingLink(
 	userAgent: string,
 	ip: string
 ): Promise<void> {
-	const eventId = sanitizeString(
+	let eventId = sanitizeString(
 		linkData.eventId,
 		VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH
 	);
+
+	if (!eventId) {
+		eventId = randomUUID();
+	}
+
 	if (await checkDuplicate(eventId, 'outgoing_link')) {
 		return;
 	}
@@ -396,10 +415,15 @@ async function insertTrackEvent(
 	userAgent: string,
 	ip: string
 ): Promise<void> {
-	const eventId = sanitizeString(
+	let eventId = sanitizeString(
 		trackData.eventId,
 		VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH
 	);
+
+	if (!eventId) {
+		eventId = randomUUID();
+	}
+
 	if (await checkDuplicate(eventId, 'track')) {
 		return;
 	}
@@ -472,11 +496,7 @@ async function insertTrackEvent(
 		time_on_page: trackData.time_on_page,
 		scroll_depth: trackData.scroll_depth,
 		interaction_count: trackData.interaction_count,
-		exit_intent: trackData.exit_intent || 0,
 		page_count: trackData.page_count || 1,
-		is_bounce: trackData.is_bounce || 0,
-		has_exit_intent: trackData.has_exit_intent,
-		page_size: trackData.page_size,
 
 		utm_source: trackData.utm_source,
 		utm_medium: trackData.utm_medium,

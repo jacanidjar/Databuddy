@@ -316,7 +316,7 @@ Track custom events programmatically using the basket endpoint.
 
 **Required Fields:**
 - `type`: Must be "custom"
-- `eventId`: Unique identifier for the event (max 512 characters)
+- `eventId`: Unique identifier for the event (max 512 characters) - used for deduplication (auto-generated if empty)
 - `name`: Event name (1-128 characters)
 
 **Optional Fields:**
@@ -327,6 +327,10 @@ Track custom events programmatically using the basket endpoint.
 
 <Callout type="tip">
   **Simple tracking**: For basic event tracking, you only need `type`, `eventId`, and `name`. The `anonymousId` and `sessionId` are useful for user journey tracking but not required for simple conversion or action tracking.
+</Callout>
+
+<Callout type="info">
+  **Event ID Generation**: The `eventId` is a custom string you provide for deduplication. It can be any unique identifier (UUID, timestamp-based, etc.). If you send the same `eventId` twice, the second event will be ignored. This prevents duplicate events from network retries or accidental double-sends.
 </Callout>
 
 **Response:**
