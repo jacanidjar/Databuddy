@@ -87,6 +87,7 @@
     "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
+    "shiki": "^3.11.0",
     "sonner": "catalog:",
     "stripe": "catalog:",
     "superjson": "catalog:",
