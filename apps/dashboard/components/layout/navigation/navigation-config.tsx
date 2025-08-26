@@ -393,7 +393,7 @@ export const categoryConfig = {
 			},
 			{
 				id: 'observability',
-				name: 'Observability',
+				name: 'Observability BETA',
 				icon: HandEyeIcon,
 				production: false,
 			},

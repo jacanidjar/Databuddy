@@ -70,17 +70,7 @@ export function CategorySidebar({
 
 		const defaultCat = getDefaultCategory(pathname);
 
-		const filteredCategories = config.categories.filter((category) => {
-			if (category.production === false) {
-				return (
-					process.env.NODE_ENV !== 'production' &&
-					process.env.NEXT_PUBLIC_ENVIRONMENT !== 'production'
-				);
-			}
-			return true;
-		});
-
-		return { categories: filteredCategories, defaultCategory: defaultCat };
+		return { categories: config.categories, defaultCategory: defaultCat };
 	}, [pathname, websites, isLoadingWebsites, databases, isLoadingDatabases]);
 
 	const activeCategory = selectedCategory || defaultCategory;
