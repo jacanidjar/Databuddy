@@ -7,155 +7,6 @@
 		});
 	}
 
-	const WebVitalsCollector = class {
-		constructor(onReadyCallback) {
-			this.data = {
-				fcp: null,
-				lcp: null,
-				cls: null,
-				fid: null,
-				inp: null,
-				ttfb: null,
-			};
-			this.sent = false;
-			this.timeout = null;
-			this.observers = [];
-			this.onReadyCallback = onReadyCallback;
-		}
-
-		initialize() {
-			try {
-				for (const method of [
-					'observeFCP',
-					'observeLCP',
-					'observeCLS',
-					'observeFID',
-					'observeINP',
-					'observeTTFB',
-				]) {
-					this[method]();
-				}
-
-				this.timeout = setTimeout(() => !this.sent && this.sendData(), 20_000);
-
-				const sendOnHidden = () => !this.sent && this.sendData();
-				window.addEventListener('beforeunload', sendOnHidden, true);
-				document.addEventListener(
-					'visibilitychange',
-					() => document.visibilityState === 'hidden' && sendOnHidden(),
-					true
-				);
-			} catch (e) {
-				console.warn('Error initializing web vitals tracking:', e);
-			}
-		}
-
-		observe(type, callback) {
-			try {
-				if (PerformanceObserver.supportedEntryTypes?.includes(type)) {
-					const observer = new PerformanceObserver((list) => {
-						Promise.resolve().then(() => {
-							callback(list.getEntries());
-						});
-					});
-					observer.observe({ type, buffered: true });
-					this.observers.push(observer);
-					return observer;
-				}
-			} catch {
-				//
-			}
-		}
-
-		observeFCP() {
-			this.observe('paint', (entries) => {
-				const entry = entries.find((e) => e.name === 'first-contentful-paint');
-				if (entry && !this.data.fcp) {
-					this.data.fcp = Math.round(entry.startTime);
-				}
-			});
-		}
-
-		observeLCP() {
-			this.observe('largest-contentful-paint', (entries) => {
-				const entry = entries.at(-1);
-				if (entry) {
-					this.data.lcp = Math.round(entry.startTime);
-				}
-			});
-		}
-
-		observeCLS() {
-			let clsValue = 0;
-			this.observe('layout-shift', (entries) => {
-				clsValue += entries
-					.filter((e) => !e.hadRecentInput)
-					.reduce((sum, e) => sum + e.value, 0);
-				this.data.cls = Math.round(clsValue * 1000) / 1000;
-			});
-		}
-
-		observeFID() {
-			this.observe('first-input', (entries) => {
-				const entry = entries[0];
-				if (entry && !this.data.fid) {
-					this.data.fid = Math.round(entry.processingStart - entry.startTime);
-				}
-			});
-		}
-
-		observeINP() {
-			this.observe('event', (entries) => {
-				const maxDuration = Math.max(
-					...entries.filter((e) => e.interactionId).map((e) => e.duration),
-					this.data.inp || 0
-				);
-				if (maxDuration > (this.data.inp || 0)) {
-					this.data.inp = Math.round(maxDuration);
-				}
-			});
-		}
-
-		observeTTFB() {
-			try {
-				const navEntry = performance.getEntriesByType('navigation')[0];
-				if (navEntry && navEntry.responseStart > 0) {
-					this.data.ttfb = Math.round(navEntry.responseStart);
-				}
-			} catch {
-				//
-			}
-		}
-
-		sendData() {
-			if (this.sent) {
-				return;
-			}
-			this.sent = true;
-			this.clearTimeout();
-			this.onReadyCallback?.({ timestamp: Date.now(), ...this.data });
-		}
-
-		clearTimeout() {
-			if (this.timeout) {
-				clearTimeout(this.timeout);
-				this.timeout = null;
-			}
-		}
-
-		cleanup() {
-			this.clearTimeout();
-			for (const observer of this.observers) {
-				try {
-					observer.disconnect();
-				} catch {
-					//
-				}
-			}
-			this.observers = [];
-		}
-	};
-
 	// HTTP Client
 	const c = class {
 		constructor(config) {
@@ -275,8 +126,10 @@
 				trackWebVitals: false,
 				trackEngagement: false,
 				trackScrollDepth: false,
+				trackExitIntent: false,
 				trackInteractions: false,
 				trackErrors: false,
+				trackBounceRate: false,
 				samplingRate: 1.0,
 				enableRetries: true,
 				maxRetries: 3,
@@ -313,12 +166,16 @@
 
 			this.maxScrollDepth = 0;
 			this.interactionCount = 0;
+			this.hasExitIntent = false;
 			this.pageStartTime = Date.now();
 			this.pageEngagementStart = Date.now();
 			this.utmParams = this.getUtmParams();
 			this.isTemporarilyHidden = false;
 			this.visibilityChangeTimer = null;
-			this.webVitalsCollector = null;
+			this.webVitalObservers = [];
+			this.webVitalsReportTimeoutId = null;
+			this.webVitalsVisibilityChangeHandler = null;
+			this.webVitalsPageHideHandler = null;
 
 			this.isLikelyBot = this.detectBot();
 			this.hasInteracted = false;
@@ -354,21 +211,20 @@
 			const storedId = sessionStorage.getItem('did_session');
 			const sessionTimestamp = sessionStorage.getItem('did_session_timestamp');
 
-			if (
-				storedId &&
-				sessionTimestamp &&
-				Date.now() - Number.parseInt(sessionTimestamp, 10) < 1_800_000
-			) {
-				sessionStorage.setItem('did_session_timestamp', Date.now().toString());
-				return storedId;
-			}
+			if (storedId && sessionTimestamp) {
+				const sessionAge = Date.now() - Number.parseInt(sessionTimestamp, 10);
+				const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
-			for (const key of [
-				'did_session',
-				'did_session_timestamp',
-				'did_session_start',
-			]) {
-				sessionStorage.removeItem(key);
+				if (sessionAge < SESSION_TIMEOUT) {
+					sessionStorage.setItem(
+						'did_session_timestamp',
+						Date.now().toString()
+					);
+					return storedId;
+				}
+				sessionStorage.removeItem('did_session');
+				sessionStorage.removeItem('did_session_timestamp');
+				sessionStorage.removeItem('did_session_start');
 			}
 
 			const newId = this.generateSessionId();
@@ -444,10 +300,18 @@
 			if (this.options.trackEngagement) {
 				this.maxScrollDepth = 0;
 				this.interactionCount = 0;
+				this.hasExitIntent = false;
+
+				if (this.options.trackExitIntent) {
+					document.addEventListener('mouseleave', (e) => {
+						if (e.clientY <= 0) {
+							this.hasExitIntent = true;
+						}
+					});
+				}
 			}
 
 			if (this.options.trackErrors) {
-				// Handle regular JavaScript errors
 				window.addEventListener('error', (event) => {
 					this.trackError({
 						timestamp: Date.now(),
@@ -457,20 +321,6 @@
 						colno: event.colno,
 						stack: event.error?.stack,
 						errorType: event.error?.name || 'Error',
-					});
-				});
-
-				// Handle unhandled promise rejections (important for mobile)
-				window.addEventListener('unhandledrejection', (event) => {
-					const error =
-						event.reason instanceof Error
-							? event.reason
-							: new Error(String(event.reason));
-					this.trackError({
-						timestamp: Date.now(),
-						message: error.message,
-						stack: error.stack,
-						errorType: 'UnhandledPromiseRejection',
 					});
 				});
 			}
@@ -597,7 +447,7 @@
 				if (success) {
 					return { success: true };
 				}
-			} catch {
+			} catch (_e) {
 				//
 			}
 
@@ -633,54 +483,10 @@
 				finalProperties = { value: properties };
 			}
 
-			const customEvent = {
-				type: 'custom',
-				eventId: generateUUIDv4(),
-				name: eventName,
-				anonymousId: this.anonymousId,
-				sessionId: this.sessionId,
-				timestamp: Date.now(),
-				properties: finalProperties,
-			};
-
-			if (this.options.enableBatching) {
-				return this.send(customEvent);
-			}
-
-			try {
-				const beaconResult = await this.sendBeacon(customEvent);
-				if (beaconResult) {
-					return beaconResult;
-				}
-			} catch (_e) {}
-
-			return this.send(customEvent);
-		}
-
-		async _trackSystemEvent(eventName, properties) {
-			if (this.options.disabled || this.isLikelyBot) {
-				return;
-			}
-
-			if (this.options.samplingRate < 1.0) {
-				const samplingValue = Math.random();
-
-				if (samplingValue > this.options.samplingRate) {
-					return { sampled: false };
-				}
-			}
-
-			let finalProperties;
-			if (properties === undefined || properties === null) {
-				finalProperties = {};
-			} else if (typeof properties === 'object') {
-				finalProperties = properties;
-			} else {
-				finalProperties = { value: properties };
-			}
-
+			// Collect base context data
 			const baseContext = this.getBaseContext();
 
+			// Collect performance data for page views
 			let performanceData = {};
 			if (
 				(eventName === 'screen_view' || eventName === 'page_view') &&
@@ -688,6 +494,10 @@
 				this.options.trackPerformance
 			) {
 				performanceData = this.collectNavigationTiming();
+
+				if (this.options.trackWebVitals) {
+					this.initWebVitalsObservers(eventName);
+				}
 			}
 
 			const payload = {
@@ -859,7 +669,6 @@
 			if (typeof window === 'undefined') {
 				return false;
 			}
-
 			return (
 				navigator.webdriver ||
 				!navigator.languages.length ||
@@ -878,16 +687,7 @@
 				return;
 			}
 
-			const interactionEvents = [
-				'mousemove',
-				'scroll',
-				'keydown',
-				'touchstart',
-				'touchmove',
-				'click',
-			];
-
-			for (const event of interactionEvents) {
+			for (const event of ['mousemove', 'scroll', 'keydown']) {
 				window.addEventListener(
 					event,
 					() => {
@@ -917,6 +717,12 @@
 				},
 				{ passive: true }
 			);
+
+			window.addEventListener('mouseout', (e) => {
+				if (e.clientY <= 0) {
+					this.hasExitIntent = true;
+				}
+			});
 
 			document.addEventListener('click', (e) => {
 				const link = e.target.closest('a[href]');
@@ -960,13 +766,13 @@
 				return;
 			}
 
-			if (this.options.disabled || this.isLikelyBot) {
+			if (this.isBot()) {
 				return;
 			}
 
 			const baseContext = this.getBaseContext();
 
-			const exitEventId = `exit_${generateUUIDv4()}`;
+			const exitEventId = `exit_${this.sessionId}_${btoa(window.location.pathname)}_${this.pageEngagementStart}`;
 
 			const page_count = Math.min(10_000, this.pageCount);
 			const interaction_count = Math.min(10_000, this.interactionCount);
@@ -988,7 +794,9 @@
 					time_on_page,
 					scroll_depth: Math.round(this.maxScrollDepth),
 					interaction_count,
+					has_exit_intent: this.hasExitIntent,
 					page_count,
+					is_bounce: page_count <= 1 ? 1 : 0,
 				},
 			};
 
@@ -997,48 +805,156 @@
 
 		async sendExitEventImmediately(exitEvent) {
 			try {
-				if (navigator.sendBeacon) {
-					const beaconResult = await this.sendBeacon(exitEvent);
-					if (beaconResult) {
-						return beaconResult;
-					}
+				const beaconResult = await this.sendBeacon(exitEvent);
+				if (beaconResult) {
+					return beaconResult;
 				}
 
 				return this.api.fetch('/', exitEvent, {
 					keepalive: true,
 				});
 			} catch (_e) {
-				try {
-					if (navigator.sendBeacon) {
-						return this.sendBeacon(exitEvent);
-					}
-				} catch (_e2) {
-					// Silent fail - don't block page unload
-				}
 				return null;
 			}
 		}
 
-		initWebVitals() {
+		cleanupWebVitals() {
+			if (this.webVitalObservers) {
+				for (const o of this.webVitalObservers) {
+					try {
+						o.disconnect();
+					} catch (e) {
+						console.error(e);
+					}
+				}
+				this.webVitalObservers = [];
+			}
+			if (this.webVitalsReportTimeoutId) {
+				clearTimeout(this.webVitalsReportTimeoutId);
+				this.webVitalsReportTimeoutId = null;
+			}
+			if (this.webVitalsVisibilityChangeHandler) {
+				document.removeEventListener(
+					'visibilitychange',
+					this.webVitalsVisibilityChangeHandler
+				);
+				this.webVitalsVisibilityChangeHandler = null;
+			}
+			if (this.webVitalsPageHideHandler) {
+				window.removeEventListener('pagehide', this.webVitalsPageHideHandler);
+				this.webVitalsPageHideHandler = null;
+			}
+		}
+
+		initWebVitalsObservers(_eventName) {
 			if (
 				this.isServer() ||
 				!this.options.trackWebVitals ||
-				typeof PerformanceObserver === 'undefined' ||
-				this.webVitalsCollector
+				typeof window.performance === 'undefined' ||
+				typeof PerformanceObserver === 'undefined'
 			) {
 				return;
 			}
 
-			this.webVitalsCollector = new WebVitalsCollector((data) => {
-				this.trackWebVitals(data);
-			});
-			this.webVitalsCollector.initialize();
-		}
+			try {
+				const metrics = { fcp: null, lcp: null, cls: 0, fid: null, inp: null };
+				let reported = false;
 
-		cleanupWebVitals() {
-			if (this.webVitalsCollector) {
-				this.webVitalsCollector.cleanup();
-				this.webVitalsCollector = null;
+				const clamp = (v) =>
+					typeof v === 'number' ? Math.min(60_000, Math.max(0, v)) : v;
+
+				const report = () => {
+					if (
+						reported ||
+						!Object.values(metrics).some((m) => m !== null && m !== 0)
+					) {
+						return;
+					}
+					reported = true;
+					this.trackWebVitals({
+						timestamp: Date.now(),
+						fcp: clamp(metrics.fcp),
+						lcp: clamp(metrics.lcp),
+						cls: metrics.cls,
+						fid: metrics.fid,
+						inp: metrics.inp,
+					});
+					this.cleanupWebVitals();
+				};
+
+				const observe = (type, callback) => {
+					try {
+						if (PerformanceObserver.supportedEntryTypes?.includes(type)) {
+							const observer = new PerformanceObserver((list) =>
+								callback(list.getEntries())
+							);
+							observer.observe({ type, buffered: true });
+							this.webVitalObservers.push(observer);
+						}
+					} catch (_e) {
+						//
+					}
+				};
+
+				observe('paint', (entries) => {
+					for (const entry of entries) {
+						if (entry.name === 'first-contentful-paint' && !metrics.fcp) {
+							metrics.fcp = Math.round(entry.startTime);
+						}
+					}
+				});
+
+				observe('largest-contentful-paint', (entries) => {
+					const entry = entries.at(-1);
+					if (entry) {
+						metrics.lcp = Math.round(entry.startTime);
+					}
+				});
+
+				observe('layout-shift', (entries) => {
+					for (const entry of entries) {
+						if (!entry.hadRecentInput) {
+							metrics.cls += entry.value;
+						}
+					}
+				});
+
+				observe('first-input', (entries) => {
+					const entry = entries[0];
+					if (entry && !metrics.fid) {
+						metrics.fid = Math.round(entry.processingStart - entry.startTime);
+					}
+				});
+
+				observe('event', (entries) => {
+					for (const entry of entries) {
+						if (entry.interactionId && entry.duration > (metrics.inp || 0)) {
+							metrics.inp = Math.round(entry.duration);
+						}
+					}
+				});
+
+				this.webVitalsVisibilityChangeHandler = () => {
+					if (document.visibilityState === 'hidden') {
+						report();
+					}
+				};
+				document.addEventListener(
+					'visibilitychange',
+					this.webVitalsVisibilityChangeHandler,
+					{
+						once: true,
+					}
+				);
+
+				this.webVitalsPageHideHandler = report;
+				window.addEventListener('pagehide', this.webVitalsPageHideHandler, {
+					once: true,
+				});
+
+				this.webVitalsReportTimeoutId = setTimeout(report, 10_000);
+			} catch (_e) {
+				//
 			}
 		}
 
@@ -1063,34 +979,21 @@
 			};
 		}
 
-		async trackOutgoingLink(linkData) {
+		trackCustomEvent(eventName, properties = {}) {
 			if (this.isServer()) {
 				return;
 			}
 
-			const outgoingLinkEvent = {
-				type: 'outgoing_link',
-				eventId: generateUUIDv4(),
-				anonymousId: this.anonymousId,
-				sessionId: this.sessionId,
-				timestamp: Date.now(),
-				href: linkData.href,
-				text: linkData.text || null,
-				properties: linkData.properties || {},
-			};
-
-			if (this.options.enableBatching) {
-				return this.send(outgoingLinkEvent);
+			let finalProperties;
+			if (properties === undefined || properties === null) {
+				finalProperties = {};
+			} else if (typeof properties === 'object') {
+				finalProperties = properties;
+			} else {
+				finalProperties = { value: properties };
 			}
 
-			try {
-				const beaconResult = await this.sendBeacon(outgoingLinkEvent);
-				if (beaconResult) {
-					return beaconResult;
-				}
-			} catch (_e) {}
-
-			return this.send(outgoingLinkEvent);
+			this.track(eventName, finalProperties);
 		}
 
 		getBaseContext() {
@@ -1116,6 +1019,7 @@
 			}
 			const viewport_size = width && height ? `${width}x${height}` : null;
 
+			// Clamp screen resolution
 			let screenWidth = window.screen.width;
 			let screenHeight = window.screen.height;
 			if (
@@ -1132,6 +1036,7 @@
 			const screen_resolution =
 				screenWidth && screenHeight ? `${screenWidth}x${screenHeight}` : null;
 
+			// Validate referrer and path as URLs
 			let referrer = this.global?.referrer || document.referrer || 'direct';
 			try {
 				if (referrer && referrer !== 'direct') {
@@ -1149,6 +1054,7 @@
 				path = null;
 			}
 
+			// Get timezone safely to handle browser extension interference
 			let timezone = null;
 			try {
 				const resolvedOptions = Intl.DateTimeFormat().resolvedOptions();
@@ -1156,20 +1062,25 @@
 					timezone = resolvedOptions.timeZone;
 				}
 			} catch (_e) {
+				// Fallback if Intl API is not available or interfered with
 				timezone = null;
 			}
 
 			return {
+				// Page context
 				path,
 				title: document.title,
 				referrer,
+				// User context
 				screen_resolution,
 				viewport_size,
 				timezone,
 				language: navigator.language,
+				// Connection info
 				connection_type: connectionInfo.connection_type,
 				rtt: connectionInfo.rtt,
 				downlink: connectionInfo.downlink,
+				// UTM parameters
 				utm_source: utmParams.utm_source,
 				utm_medium: utmParams.utm_medium,
 				utm_campaign: utmParams.utm_campaign,
@@ -1209,7 +1120,7 @@
 				if (beaconResult) {
 					return beaconResult;
 				}
-			} catch {
+			} catch (_e) {
 				//
 			}
 
@@ -1221,6 +1132,10 @@
 				return;
 			}
 
+			// Clamp fcp and lcp to 60000
+			const clamp = (v) =>
+				typeof v === 'number' ? Math.min(60_000, Math.max(0, v)) : v;
+
 			const webVitalsEvent = {
 				type: 'web_vitals',
 				payload: {
@@ -1229,8 +1144,8 @@
 					sessionId: this.sessionId,
 					timestamp: vitalsData.timestamp || Date.now(),
 					path: window.location.pathname,
-					fcp: vitalsData.fcp,
-					lcp: vitalsData.lcp,
+					fcp: clamp(vitalsData.fcp),
+					lcp: clamp(vitalsData.lcp),
 					cls: vitalsData.cls,
 					fid: vitalsData.fid,
 					inp: vitalsData.inp,
@@ -1246,7 +1161,7 @@
 				if (beaconResult) {
 					return beaconResult;
 				}
-			} catch {
+			} catch (_e) {
 				//
 			}
 
@@ -1274,11 +1189,7 @@
 
 			if (this.options.trackScreenViews) {
 				this.trackScreenViews();
-				setTimeout(() => this.screenView(), 100);
-			}
-
-			if (this.options.trackWebVitals) {
-				this.initWebVitals();
+				setTimeout(() => this.screenView(), 0);
 			}
 
 			if (this.options.trackOutgoingLinks) {
@@ -1295,16 +1206,6 @@
 			clearTimeout(this.debounceTimer);
 			this.debounceTimer = setTimeout(t, r);
 		}
-
-		onPageChange() {
-			if (this.options.enableBatching) {
-				this.flushBatch();
-			}
-
-			this.pageEngagementStart = Date.now();
-			this.maxScrollDepth = 0;
-			this.interactionCount = 0;
-		}
 		trackOutgoingLinks() {
 			this.isServer() ||
 				document.addEventListener('click', (t) => {
@@ -1318,7 +1219,7 @@
 								const isOutgoing = url.origin !== window.location.origin;
 
 								if (isOutgoing) {
-									this.trackOutgoingLink({
+									this.track('link_out', {
 										href: n,
 										text:
 											i.innerText ||
@@ -1367,9 +1268,8 @@
 						referrer: previous_path,
 					});
 					this.isInternalNavigation = true;
-					this.onPageChange(); // Call improved page change handler
 					this.screenView();
-				}, 100); // Increase debounce for mobile stability
+				}, 50);
 
 			this.options.trackHashChanges
 				? window.addEventListener('hashchange', i)
@@ -1413,6 +1313,7 @@
 			) {
 				this.maxScrollDepth = 0;
 				this.interactionCount = 0;
+				this.hasExitIntent = false;
 			}
 
 			this.pageEngagementStart = Date.now();
@@ -1426,17 +1327,21 @@
 			}
 
 			if (this.lastPath !== i) {
+				if (this.options.trackWebVitals) {
+					this.cleanupWebVitals();
+				}
 				this.lastPath = i;
 				this.pageCount++;
 
 				this.isInternalNavigation = false;
 
+				// Clamp page_count
 				const pageData = {
 					page_count: Math.min(10_000, this.pageCount),
 					...(n ?? {}),
 				};
 
-				this._trackSystemEvent('screen_view', pageData);
+				this.track('screen_view', pageData);
 			}
 		}
 	};
@@ -1446,33 +1351,22 @@
 			return;
 		}
 
+		// Check for opt-out flags
 		try {
 			if (
-				window.databuddyOptedOut === true ||
-				window.databuddyDisabled === true ||
 				localStorage.getItem('databuddy_opt_out') === 'true' ||
-				localStorage.getItem('databuddy_disabled') === 'true'
+				localStorage.getItem('databuddy_disabled') === 'true' ||
+				window.databuddyOptedOut === true ||
+				window.databuddyDisabled === true
 			) {
+				// Set up no-op functions for compatibility
 				window.databuddy = {
-					track: () => {
-						//
-					},
-					screenView: () => {
-						//
-					},
-					clear: () => {
-						//
-					},
-					flush: () => {
-						//
-					},
-					setGlobalProperties: () => {
-						//
-					},
-
-					trackOutgoingLink: () => {
-						//
-					},
+					track: () => {},
+					screenView: () => {},
+					clear: () => {},
+					flush: () => {},
+					setGlobalProperties: () => {},
+					trackCustomEvent: () => {},
 					options: { disabled: true },
 				};
 
@@ -1482,14 +1376,13 @@
 					clear: () => {},
 					flush: () => {},
 					setGlobalProperties: () => {},
-
-					trackOutgoingLink: () => {},
+					trackCustomEvent: () => {},
 				};
 
 				return;
 			}
-		} catch {
-			//
+		} catch (_e) {
+			// localStorage not available, continue with initialization
 		}
 
 		const currentScript =
@@ -1543,7 +1436,7 @@
 						urlParams[key] = value;
 					}
 				});
-			} catch {
+			} catch (_e) {
 				//
 			}
 
@@ -1641,9 +1534,8 @@
 				flush: () => window.databuddy?.flush(),
 				setGlobalProperties: (...args) =>
 					window.databuddy?.setGlobalProperties(...args),
-
-				trackOutgoingLink: (...args) =>
-					window.databuddy?.trackOutgoingLink(...args),
+				trackCustomEvent: (...args) =>
+					window.databuddy?.trackCustomEvent(...args),
 			};
 		}
 
@@ -1656,27 +1548,31 @@
 
 	initializeDatabuddy();
 
+	// Opt-out functionality
 	if (typeof window !== 'undefined') {
 		window.Databuddy = d;
 
+		// Global opt-out functions
 		window.databuddyOptOut = () => {
 			try {
 				localStorage.setItem('databuddy_opt_out', 'true');
 				localStorage.setItem('databuddy_disabled', 'true');
-			} catch {
-				//
+			} catch (_e) {
+				// localStorage not available
 			}
 
 			window.databuddyOptedOut = true;
 			window.databuddyDisabled = true;
 
+			// Disable existing instance
 			if (window.databuddy && typeof window.databuddy === 'object') {
 				window.databuddy.options.disabled = true;
 
+				// Override methods to no-ops
 				const noop = () => {};
 				window.databuddy.track = noop;
 				window.databuddy.screenView = noop;
-				window.databuddy.trackOutgoingLink = noop;
+				window.databuddy.trackCustomEvent = noop;
 				window.databuddy.clear = noop;
 				window.databuddy.flush = noop;
 				window.databuddy.setGlobalProperties = noop;
@@ -1686,7 +1582,7 @@
 				const noop = () => {};
 				window.db.track = noop;
 				window.db.screenView = noop;
-				window.db.trackOutgoingLink = noop;
+				window.db.trackCustomEvent = noop;
 				window.db.clear = noop;
 				window.db.flush = noop;
 				window.db.setGlobalProperties = noop;
@@ -1701,8 +1597,8 @@
 			try {
 				localStorage.removeItem('databuddy_opt_out');
 				localStorage.removeItem('databuddy_disabled');
-			} catch {
-				//
+			} catch (_e) {
+				// localStorage not available
 			}
 
 			window.databuddyOptedOut = false;
@@ -1713,6 +1609,7 @@
 			);
 		};
 
+		// Check if user wants to opt out via URL parameter
 		try {
 			const urlParams = new URLSearchParams(window.location.search);
 			if (
@@ -1721,8 +1618,8 @@
 			) {
 				window.databuddyOptOut();
 			}
-		} catch {
-			//
+		} catch (_e) {
+			// URL parsing failed
 		}
 	} else if (typeof exports === 'object') {
 		module.exports = d;
