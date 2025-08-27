@@ -4,6 +4,7 @@ import { HeartIcon, PaletteIcon } from '@phosphor-icons/react';
 import { motion } from 'motion/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { SciFiCard } from '@/components/scifi-card';
 
 interface Sponsor {
 	id: string;
@@ -82,16 +83,16 @@ function FlipCard() {
 				style={{ transformStyle: 'preserve-3d' }}
 				transition={{ duration: 0.7, ease: 'easeInOut' }}
 				variants={{
-					initial: { rotateY: 0 },
-					flipped: { rotateY: 180 },
+					initial: { rotateX: 0 },
+					flipped: { rotateX: 180 },
 				}}
 			>
 				{/* Front Side - Sponsors */}
 				<motion.div
-					className="absolute inset-0 rounded border border-border bg-card/50 backdrop-blur-sm transition-all duration-300 hover:border-border/80 hover:bg-card/70"
+					className="absolute inset-0 rounded-none border border-border bg-card/50 backdrop-blur-sm transition-all duration-300 hover:border-border/80 hover:bg-card/70"
 					style={{ backfaceVisibility: 'hidden' }}
 				>
-					<div className="flex h-full flex-col items-center justify-center p-6">
+					<SciFiCard className="flex h-full flex-col items-center justify-center p-6">
 						<motion.div
 							animate={{ scale: 1, opacity: 1 }}
 							className="mb-4 rounded-full bg-purple-500/10 p-3"
@@ -172,35 +173,15 @@ function FlipCard() {
 								View all sponsors →
 							</Link>
 						</motion.div>
-					</div>
-
-					{/* Sci-fi corners */}
-					<div className="pointer-events-none absolute inset-0">
-						<div className="absolute top-0 left-0 h-2 w-2 group-hover:animate-[cornerGlitch_0.6s_ease-in-out]">
-							<div className="absolute top-0 left-0.5 h-0.5 w-1.5 origin-left bg-foreground" />
-							<div className="absolute top-0 left-0 h-2 w-0.5 origin-top bg-foreground" />
-						</div>
-						<div className="-scale-x-[1] absolute top-0 right-0 h-2 w-2 group-hover:animate-[cornerGlitch_0.6s_ease-in-out]">
-							<div className="absolute top-0 left-0.5 h-0.5 w-1.5 origin-left bg-foreground" />
-							<div className="absolute top-0 left-0 h-2 w-0.5 origin-top bg-foreground" />
-						</div>
-						<div className="-scale-y-[1] absolute bottom-0 left-0 h-2 w-2 group-hover:animate-[cornerGlitch_0.6s_ease-in-out]">
-							<div className="absolute top-0 left-0.5 h-0.5 w-1.5 origin-left bg-foreground" />
-							<div className="absolute top-0 left-0 h-2 w-0.5 origin-top bg-foreground" />
-						</div>
-						<div className="-scale-[1] absolute right-0 bottom-0 h-2 w-2 group-hover:animate-[cornerGlitch_0.6s_ease-in-out]">
-							<div className="absolute top-0 left-0.5 h-0.5 w-1.5 origin-left bg-foreground" />
-							<div className="absolute top-0 left-0 h-2 w-0.5 origin-top bg-foreground" />
-						</div>
-					</div>
+					</SciFiCard>
 				</motion.div>
 
 				{/* Back Side - Non-Code Contributors */}
 				<motion.div
-					className="absolute inset-0 rounded border border-border bg-card/50 backdrop-blur-sm transition-all duration-300 hover:border-border/80 hover:bg-card/70"
-					style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+					className="absolute inset-0 rounded-none border border-border bg-card/50 backdrop-blur-sm transition-all duration-300 hover:border-border/80 hover:bg-card/70"
+					style={{ backfaceVisibility: 'hidden', transform: 'rotateX(180deg)' }}
 				>
-					<div className="flex h-full flex-col p-4">
+					<SciFiCard className="flex h-full flex-col p-4">
 						{/* Header - Compact */}
 						<div className="mb-4 text-center">
 							<motion.div
@@ -301,27 +282,7 @@ function FlipCard() {
 								</motion.div>
 							))}
 						</motion.div>
-					</div>
-
-					{/* Sci-fi corners */}
-					<div className="pointer-events-none absolute inset-0">
-						<div className="absolute top-0 left-0 h-2 w-2 group-hover:animate-[cornerGlitch_0.6s_ease-in-out]">
-							<div className="absolute top-0 left-0.5 h-0.5 w-1.5 origin-left bg-foreground" />
-							<div className="absolute top-0 left-0 h-2 w-0.5 origin-top bg-foreground" />
-						</div>
-						<div className="-scale-x-[1] absolute top-0 right-0 h-2 w-2 group-hover:animate-[cornerGlitch_0.6s_ease-in-out]">
-							<div className="absolute top-0 left-0.5 h-0.5 w-1.5 origin-left bg-foreground" />
-							<div className="absolute top-0 left-0 h-2 w-0.5 origin-top bg-foreground" />
-						</div>
-						<div className="-scale-y-[1] absolute bottom-0 left-0 h-2 w-2 group-hover:animate-[cornerGlitch_0.6s_ease-in-out]">
-							<div className="absolute top-0 left-0.5 h-0.5 w-1.5 origin-left bg-foreground" />
-							<div className="absolute top-0 left-0 h-2 w-0.5 origin-top bg-foreground" />
-						</div>
-						<div className="-scale-[1] absolute right-0 bottom-0 h-2 w-2 group-hover:animate-[cornerGlitch_0.6s_ease-in-out]">
-							<div className="absolute top-0 left-0.5 h-0.5 w-1.5 origin-left bg-foreground" />
-							<div className="absolute top-0 left-0 h-2 w-0.5 origin-top bg-foreground" />
-						</div>
-					</div>
+					</SciFiCard>
 				</motion.div>
 			</motion.div>
 		</motion.div>
