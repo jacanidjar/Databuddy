@@ -45,3 +45,5 @@ use Icon at the end of phosphor react icons, like CaretIcon not Caret AND THATS 
 use json.stringify() when adding debugging
 
 Almost NEVER use useEffect unless it's critical
+
+do NOT use types any, unknown or never, use proper explicit types, check the @shared/types folder for types, and use them in the codebase, or create ones if needed, don't define types in the same file as the component, create a new file in the @shared/types folder for the type

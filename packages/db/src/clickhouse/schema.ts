@@ -1,21 +1,12 @@
 import { clickHouse } from './client';
 
-// Define the analytics database schema with tables for events, sessions, and aggregated data
 const ANALYTICS_DATABASE = 'analytics';
 const OBSERVABILITY_DATABASE = 'observability';
 
-// SQL statements for creating the analytics database and tables
 const CREATE_DATABASE = `
 CREATE DATABASE IF NOT EXISTS ${ANALYTICS_DATABASE}
 `;
 
-// Optimizations:
-// 1. Use LowCardinality(String) for fields with limited distinct values
-// 2. Reorder ORDER BY to prioritize time-based queries
-// 3. Add materialized views for common aggregations
-// 4. Remove Nullable where 0 is a sensible default
-
-// Events table stores all raw events
 const CREATE_EVENTS_TABLE = `
 CREATE TABLE IF NOT EXISTS ${ANALYTICS_DATABASE}.events (
   id UUID,
@@ -93,7 +84,6 @@ ORDER BY (client_id, time, id)
 SETTINGS index_granularity = 8192
 `;
 
-// Dedicated errors table for error events
 const CREATE_ERRORS_TABLE = `
 CREATE TABLE IF NOT EXISTS ${ANALYTICS_DATABASE}.errors (
   id UUID,
@@ -130,7 +120,6 @@ ORDER BY (client_id, timestamp, id)
 SETTINGS index_granularity = 8192
 `;
 
-// Dedicated web vitals table for performance metrics
 const CREATE_WEB_VITALS_TABLE = `
 CREATE TABLE IF NOT EXISTS ${ANALYTICS_DATABASE}.web_vitals (
   id UUID,
@@ -166,7 +155,6 @@ ORDER BY (client_id, timestamp, id)
 SETTINGS index_granularity = 8192
 `;
 
-// Stripe Payment Intents table
 const CREATE_STRIPE_PAYMENT_INTENTS_TABLE = `
 CREATE TABLE IF NOT EXISTS ${ANALYTICS_DATABASE}.stripe_payment_intents (
   id String,
@@ -195,7 +183,6 @@ ORDER BY (client_id, webhook_token, created, id)
 SETTINGS index_granularity = 8192
 `;
 
-// Stripe Charges table
 const CREATE_STRIPE_CHARGES_TABLE = `
 CREATE TABLE IF NOT EXISTS ${ANALYTICS_DATABASE}.stripe_charges (
   id String,
@@ -224,7 +211,6 @@ ORDER BY (client_id, webhook_token, created, id)
 SETTINGS index_granularity = 8192
 `;
 
-// Stripe Refunds table
 const CREATE_STRIPE_REFUNDS_TABLE = `
 CREATE TABLE IF NOT EXISTS ${ANALYTICS_DATABASE}.stripe_refunds (
   id String,
@@ -285,7 +271,6 @@ TTL toDateTime(timestamp) + INTERVAL 6 MONTH
 SETTINGS index_granularity = 8192
 `;
 
-// Email events table for tracking email processing and labeling
 const CREATE_EMAIL_EVENTS_TABLE = `
 CREATE TABLE IF NOT EXISTS ${ANALYTICS_DATABASE}.email_events (
     event_id UUID DEFAULT generateUUIDv4(),
@@ -341,11 +326,11 @@ ORDER BY (service, environment, category, level, start_time)
 SETTINGS index_granularity = 8192
 `;
 
-// OpenTelemetry traces table for distributed tracing
 const CREATE_OTEL_TRACES_TABLE = `
 CREATE TABLE IF NOT EXISTS ${OBSERVABILITY_DATABASE}.otel_traces (
     Timestamp DateTime64(9) CODEC(Delta(8), ZSTD(1)),
     TraceId String CODEC(ZSTD(1)),
+    TenantId String CODEC(ZSTD(1)),
     SpanId String CODEC(ZSTD(1)),
     ParentSpanId String CODEC(ZSTD(1)),
     TraceState String CODEC(ZSTD(1)),
@@ -379,11 +364,11 @@ TTL toDateTime(Timestamp) + toIntervalDay(3)
 SETTINGS ttl_only_drop_parts = 1
 `;
 
-// OpenTelemetry logs table for structured logging
 const CREATE_OTEL_LOGS_TABLE = `
 CREATE TABLE IF NOT EXISTS ${OBSERVABILITY_DATABASE}.otel_logs (
     Timestamp DateTime64(9) CODEC(Delta(8), ZSTD(1)),
     TraceId String CODEC(ZSTD(1)),
+    TenantId String CODEC(ZSTD(1)),
     SpanId String CODEC(ZSTD(1)),
     TraceFlags UInt32 CODEC(ZSTD(1)),
     SeverityText LowCardinality(String) CODEC(ZSTD(1)),
@@ -412,7 +397,6 @@ TTL toDateTime(Timestamp) + toIntervalDay(3)
 SETTINGS ttl_only_drop_parts = 1
 `;
 
-// Custom events table with minimal essential fields
 const CREATE_CUSTOM_EVENTS_TABLE = `
 CREATE TABLE IF NOT EXISTS ${ANALYTICS_DATABASE}.custom_events (
   id UUID,
@@ -690,9 +674,7 @@ export interface CustomOutgoingLink {
 	timestamp: number;
 }
 
-// TypeScript interface that matches the ClickHouse schema
 export interface AnalyticsEvent {
-	// Core identification
 	id: string;
 	client_id: string;
 	event_name: string;
@@ -700,19 +682,16 @@ export interface AnalyticsEvent {
 	time: number;
 	session_id: string;
 
-	// New fields
 	event_type?: 'track' | 'error' | 'web_vitals';
 	event_id?: string;
 	session_start_time?: number;
 	timestamp?: number;
 
-	// Page context
 	referrer?: string;
 	url: string;
 	path: string;
 	title?: string;
 
-	// Server enrichment
 	ip: string;
 	user_agent: string;
 	browser_name?: string;
@@ -726,31 +705,26 @@ export interface AnalyticsEvent {
 	region?: string;
 	city?: string;
 
-	// User context
 	screen_resolution?: string;
 	viewport_size?: string;
 	language?: string;
 	timezone?: string;
 
-	// Connection info
 	connection_type?: string;
 	rtt?: number;
 	downlink?: number;
 
-	// Engagement metrics
 	time_on_page?: number;
 	scroll_depth?: number;
 	interaction_count?: number;
 	page_count: number;
 
-	// UTM parameters
 	utm_source?: string;
 	utm_medium?: string;
 	utm_campaign?: string;
 	utm_term?: string;
 	utm_content?: string;
 
-	// Performance metrics
 	load_time?: number;
 	dom_ready_time?: number;
 	dom_interactive?: number;
@@ -760,17 +734,13 @@ export interface AnalyticsEvent {
 	redirect_time?: number;
 	domain_lookup_time?: number;
 
-	// Link tracking
 	href?: string;
 	text?: string;
 
-	// Custom event value
 	value?: string;
 
-	// Legacy properties
 	properties: string;
 
-	// Metadata
 	created_at: number;
 }
 
