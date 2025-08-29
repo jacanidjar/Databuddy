@@ -66,77 +66,71 @@ export function useOrganizations() {
 		data: organizationsData,
 		error: organizationsError,
 		isPending: isOrganizationsPending,
-	} = trpc.organizations.list.useQuery();
+	} = authClient.useListOrganizations();
+	const {
+		data: activeOrganization,
+		error: activeOrganizationError,
+		isPending: isActiveOrganizationPending,
+	} = authClient.useActiveOrganization();
 
-	const organizations = organizationsData?.organizations || [];
-	const activeOrganization = organizationsData?.activeOrganization || null;
+	const organizations = organizationsData || [];
 
-	const createOrganizationMutation = useMutation({
-		mutationFn: async (orgInput: CreateOrganizationData) => {
-			const { data: result, error: apiError } =
-				await authClient.organization.create({
-					name: orgInput.name,
-					slug:
-						orgInput.slug || orgInput.name.toLowerCase().replace(/\s+/g, '-'),
-					logo: orgInput.logo,
-					metadata: orgInput.metadata,
-				});
-			if (apiError) {
-				throw new Error(apiError.message || 'Failed to create organization');
-			}
-			return result;
-		},
-		onSuccess: () => {
-			// Invalidate organizations list after creation
-			trpcUtils.organizations.list.invalidate();
-			toast.success('Organization created successfully');
-		},
-		onError: (error: Error) => {
-			toast.error(error.message || 'Failed to create organization');
-		},
-	});
+	const createOrganizationMutation = useMutation(
+		createMutation(
+			async (orgInput: CreateOrganizationData) => {
+				const { data: result, error: apiError } =
+					await authClient.organization.create({
+						name: orgInput.name,
+						slug:
+							orgInput.slug || orgInput.name.toLowerCase().replace(/\s+/g, '-'),
+						logo: orgInput.logo,
+						metadata: orgInput.metadata,
+					});
+				if (apiError) {
+					throw new Error(apiError.message || 'Failed to create organization');
+				}
+				return result;
+			},
+			'Organization created successfully',
+			'Failed to create organization'
+		)
+	);
 
-	const updateOrganizationMutation = useMutation({
-		mutationFn: async ({
-			organizationId,
-			data: updateData,
-		}: {
-			organizationId?: string;
-			data: UpdateOrganizationData;
-		}) => {
-			if (!organizationId) {
-				throw new Error('Organization ID is required');
-			}
-			const { data: result, error: apiError } =
-				await authClient.organization.update({
-					organizationId,
-					data: {
-						name: updateData.name,
-						slug: updateData.slug,
-						logo: updateData.logo,
-						metadata: updateData.metadata,
-					},
-				});
-			if (apiError) {
-				throw new Error(apiError.message || 'Failed to update organization');
-			}
-			return result;
-		},
-		onSuccess: () => {
-			trpcUtils.organizations.list.invalidate();
-			toast.success('Organization updated successfully');
-		},
-		onError: (error: Error) => {
-			toast.error(error.message || 'Failed to update organization');
-		},
-	});
-
-	const trpcUtils = trpc.useUtils();
+	const updateOrganizationMutation = useMutation(
+		createMutation(
+			async ({
+				organizationId,
+				data: updateData,
+			}: {
+				organizationId?: string;
+				data: UpdateOrganizationData;
+			}) => {
+				if (!organizationId) {
+					throw new Error('Organization ID is required');
+				}
+				const { data: result, error: apiError } =
+					await authClient.organization.update({
+						organizationId,
+						data: {
+							name: updateData.name,
+							slug: updateData.slug,
+							logo: updateData.logo,
+							metadata: updateData.metadata,
+						},
+					});
+				if (apiError) {
+					throw new Error(apiError.message || 'Failed to update organization');
+				}
+				return result;
+			},
+			'Organization updated successfully',
+			'Failed to update organization'
+		)
+	);
 
 	const uploadOrganizationLogoMutation =
 		trpc.organizations.uploadLogo.useMutation({
 			onSuccess: () => {
-				trpcUtils.organizations.list.invalidate();
 				toast.success('Logo uploaded successfully');
 			},
 			onError: (error) => {
@@ -147,7 +141,6 @@ export function useOrganizations() {
 	const deleteOrganizationLogoMutation =
 		trpc.organizations.deleteLogo.useMutation({
 			onSuccess: () => {
-				trpcUtils.organizations.list.invalidate();
 				toast.success('Logo deleted successfully');
 			},
 			onError: (error) => {
@@ -155,25 +148,22 @@ export function useOrganizations() {
 			},
 		});
 
-	const deleteOrganizationMutation = useMutation({
-		mutationFn: async (organizationId: string) => {
-			const { data: result, error: apiError } =
-				await authClient.organization.delete({
-					organizationId,
-				});
-			if (apiError) {
-				throw new Error(apiError.message || 'Failed to delete organization');
-			}
-			return result;
-		},
-		onSuccess: () => {
-			trpcUtils.organizations.list.invalidate();
-			toast.success('Organization deleted successfully');
-		},
-		onError: (error: Error) => {
-			toast.error(error.message || 'Failed to delete organization');
-		},
-	});
+	const deleteOrganizationMutation = useMutation(
+		createMutation(
+			async (organizationId: string) => {
+				const { data: result, error: apiError } =
+					await authClient.organization.delete({
+						organizationId,
+					});
+				if (apiError) {
+					throw new Error(apiError.message || 'Failed to delete organization');
+				}
+				return result;
+			},
+			'Organization deleted successfully',
+			'Failed to delete organization'
+		)
+	);
 
 	const setActiveOrganizationMutation = useMutation({
 		mutationFn: async (organizationId: string | null) => {
@@ -201,7 +191,6 @@ export function useOrganizations() {
 			return setActiveData2;
 		},
 		onSuccess: () => {
-			trpcUtils.organizations.list.invalidate();
 			toast.success('Workspace updated');
 		},
 		onError: (error: Error) => {
@@ -221,11 +210,11 @@ export function useOrganizations() {
 		organizations,
 		activeOrganization,
 
-		isLoading: isOrganizationsPending,
+		isLoading: isOrganizationsPending || isActiveOrganizationPending,
 
 		organizationsError,
-		activeOrganizationError: null, // No separate error for active org anymore
-		hasError: !!organizationsError,
+		activeOrganizationError,
+		hasError: !!organizationsError || !!activeOrganizationError,
 
 		createOrganization: createOrganizationMutation.mutate,
 		createOrganizationAsync: createOrganizationMutation.mutateAsync,
@@ -357,3 +346,103 @@ export function useOrganizationMembers(organizationId: string) {
 		isRemovingMember: removeMemberMutation.isPending,
 	};
 }
+
+// useOrganizationInvitations has been moved to @/hooks/use-organization-invitations for simplified state management
+
+export function useUserInvitations() {
+	const queryClient = useQueryClient();
+
+	const {
+		data: invitations = [],
+		isLoading,
+		error,
+		refetch,
+	} = useQuery({
+		queryKey: QUERY_KEYS.userInvitations,
+		queryFn: async () => {
+			const { data, error: apiError } =
+				await authClient.organization.listUserInvitations();
+			if (apiError) {
+				throw new Error(apiError.message || 'Failed to fetch user invitations');
+			}
+			return data || [];
+		},
+	});
+
+	const invalidateUserInvitations = () => {
+		queryClient.invalidateQueries({ queryKey: QUERY_KEYS.userInvitations });
+	};
+
+	const acceptInvitationMutation = useMutation(
+		createMutation(
+			async (invitationId: string) => {
+				const { data: result, error: apiError } =
+					await authClient.organization.acceptInvitation({
+						invitationId,
+					});
+				if (apiError) {
+					throw new Error(apiError.message || 'Failed to accept invitation');
+				}
+				return result;
+			},
+			'Invitation accepted successfully',
+			'Failed to accept invitation',
+			invalidateUserInvitations
+		)
+	);
+
+	const rejectInvitationMutation = useMutation(
+		createMutation(
+			async (invitationId: string) => {
+				const { data: result, error: apiError } =
+					await authClient.organization.rejectInvitation({
+						invitationId,
+					});
+				if (apiError) {
+					throw new Error(apiError.message || 'Failed to reject invitation');
+				}
+				return result;
+			},
+			'Invitation rejected',
+			'Failed to reject invitation',
+			invalidateUserInvitations
+		)
+	);
+
+	return {
+		invitations,
+		isLoading,
+		error,
+		hasError: !!error,
+		refetch,
+
+		acceptInvitation: acceptInvitationMutation.mutate,
+		acceptInvitationAsync: acceptInvitationMutation.mutateAsync,
+		rejectInvitation: rejectInvitationMutation.mutate,
+		rejectInvitationAsync: rejectInvitationMutation.mutateAsync,
+
+		isAcceptingInvitation: acceptInvitationMutation.isPending,
+		isRejectingInvitation: rejectInvitationMutation.isPending,
+	};
+}
+
+export type Organization = ReturnType<
+	typeof useOrganizations
+>['organizations'][number];
+
+export type ActiveOrganization = ReturnType<
+	typeof useOrganizations
+>['activeOrganization'];
+
+export type OrganizationsError = ReturnType<
+	typeof useOrganizations
+>['organizationsError'];
+
+export type OrganizationMember = ReturnType<
+	typeof useOrganizationMembers
+>['members'][number];
+
+// Invitation types are now in @/stores/jotai/organizationAtoms
+export type { Invitation } from '@/stores/jotai/organizationAtoms';
+
+export type CancelInvitation = (invitationId: string) => Promise<void>;

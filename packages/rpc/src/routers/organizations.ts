@@ -19,49 +19,6 @@ import { createTRPCRouter, protectedProcedure } from '../trpc';
 import { s3 } from '../utils/s3';
 
 export const organizationsRouter = createTRPCRouter({
-	list: protectedProcedure.query(async ({ ctx }) => {
-		try {
-			const organizations = await db
-				.select({
-					id: organization.id,
-					name: organization.name,
-					slug: organization.slug,
-					logo: organization.logo,
-				})
-				.from(organization)
-				.innerJoin(member, eq(organization.id, member.organizationId))
-				.where(eq(member.userId, ctx.user.id))
-				.orderBy(organization.name);
-
-			const [userSession] = await db
-				.select({
-					activeOrganizationId: session.activeOrganizationId,
-				})
-				.from(session)
-				.where(eq(session.userId, ctx.user.id))
-				.limit(1);
-
-			let activeOrganization: (typeof organizations)[number] | null = null;
-			if (userSession?.activeOrganizationId) {
-				activeOrganization =
-					organizations.find(
-						(org) => org.id === userSession.activeOrganizationId
-					) || null;
-			}
-
-			return {
-				organizations,
-				activeOrganization,
-			};
-		} catch (error) {
-			throw new TRPCError({
-				code: 'INTERNAL_SERVER_ERROR',
-				message: 'Failed to fetch organizations',
-				cause: error,
-			});
-		}
-	}),
-
 	uploadLogo: protectedProcedure
 		.input(
 			uploadOrganizationLogoSchema.extend({
@@ -83,6 +40,7 @@ export const organizationsRouter = createTRPCRouter({
 				});
 			}
 
+			// Get organization
 			const [org] = await db
 				.select()
 				.from(organization)
@@ -97,10 +55,12 @@ export const organizationsRouter = createTRPCRouter({
 			}
 
 			try {
+				// Delete old logo if it exists
 				if (org.logo) {
 					await s3.deleteOrganizationLogo(org.logo);
 				}
 
+				// Type check the input since it's extended
 				if (
 					typeof input.fileData !== 'string' ||
 					typeof input.fileName !== 'string' ||
@@ -129,6 +89,7 @@ export const organizationsRouter = createTRPCRouter({
 					file
 				);
 
+				// Update organization with new logo URL
 				const [updatedOrganization] = await db
 					.update(organization)
 					.set({ logo: logoUrl })
@@ -166,6 +127,7 @@ export const organizationsRouter = createTRPCRouter({
 				});
 			}
 
+			// Get organization
 			const [org] = await db
 				.select()
 				.from(organization)
@@ -180,10 +142,12 @@ export const organizationsRouter = createTRPCRouter({
 			}
 
 			try {
+				// Delete logo if it exists
 				if (org.logo) {
 					await s3.deleteOrganizationLogo(org.logo);
 				}
 
+				// Remove logo URL from database
 				const [updatedOrganization] = await db
 					.update(organization)
 					.set({ logo: null })
@@ -282,6 +246,7 @@ export const organizationsRouter = createTRPCRouter({
 			.where(and(eq(session.userId, ctx.user.id), eq(member.role, 'owner')))
 			.limit(1);
 
+		// Determine customer ID: organization owner or current user
 		const customerId = orgResult?.ownerId || ctx.user.id;
 
 		try {
