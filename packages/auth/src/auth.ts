@@ -14,6 +14,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import {
 	customSession,
 	emailOTP,
+	genericOAuth,
 	magicLink,
 	organization,
 	twoFactor,
@@ -193,6 +194,55 @@ export const auth = betterAuth({
 		},
 	},
 	plugins: [
+		genericOAuth({
+			config: [
+				{
+					providerId: 'vercel',
+					clientId: process.env.VERCEL_CLIENT_ID as string,
+					clientSecret: process.env.VERCEL_CLIENT_SECRET as string,
+					authorizationUrl: 'https://vercel.com/oauth/authorize',
+					tokenUrl: 'https://api.vercel.com/v2/oauth/access_token',
+					userInfoUrl: 'https://api.vercel.com/v2/user',
+					scopes: [
+						'user:email',
+						'user:read',
+						'team:read',
+						'project:read',
+						'deployment:read',
+					],
+					getUserInfo: async (tokens) => {
+						try {
+							const response = await fetch('https://api.vercel.com/v2/user', {
+								headers: {
+									Authorization: `Bearer ${tokens.accessToken}`,
+								},
+							});
+
+							if (!response.ok) {
+								return null;
+							}
+
+							const userInfo = await response.json();
+
+							return {
+								id: userInfo.uid,
+								email: userInfo.email,
+								name: userInfo.name,
+								image: userInfo.avatar,
+								emailVerified: true,
+							};
+						} catch (error) {
+							logger.exception(error as Error, {
+								provider: 'vercel',
+								context: 'getUserInfo',
+								hasTokens: !!tokens,
+							});
+							return null;
+						}
+					},
+				},
+			],
+		}),
 		emailOTP({
 			async sendVerificationOTP({ email, otp, type }) {
 				logger.info('Email OTP', `Sending OTP to ${email} of type ${type}`);

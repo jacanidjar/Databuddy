@@ -10,7 +10,7 @@ import {
 	SpinnerIcon,
 } from '@phosphor-icons/react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -20,11 +20,14 @@ import { Separator } from '@/components/ui/separator';
 
 function LoginPage() {
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const [isLoading, setIsLoading] = useState(false);
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [showPassword, setShowPassword] = useState(false);
 	const [lastUsed, setLastUsed] = useState<string | null>(null);
+
+	const callbackUrl = searchParams.get('callback') || '/websites';
 
 	useEffect(() => {
 		setLastUsed(localStorage.getItem('lastUsedLogin'));
@@ -34,7 +37,7 @@ function LoginPage() {
 		setIsLoading(true);
 		signIn.social({
 			provider: 'google',
-			callbackURL: '/websites',
+			callbackURL: callbackUrl,
 			newUserCallbackURL: '/onboarding',
 			fetchOptions: {
 				onSuccess: () => {
@@ -52,7 +55,7 @@ function LoginPage() {
 		setIsLoading(true);
 		signIn.social({
 			provider: 'github',
-			callbackURL: '/websites',
+			callbackURL: callbackUrl,
 			newUserCallbackURL: '/onboarding',
 			fetchOptions: {
 				onSuccess: () => {
@@ -78,7 +81,7 @@ function LoginPage() {
 		await signIn.email({
 			email,
 			password,
-			callbackURL: '/websites',
+			callbackURL: callbackUrl,
 			fetchOptions: {
 				onSuccess: () => {
 					localStorage.setItem('lastUsedLogin', 'email');
