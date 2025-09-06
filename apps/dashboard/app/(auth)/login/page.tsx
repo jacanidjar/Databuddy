@@ -27,21 +27,33 @@ function LoginPage() {
 	const [showPassword, setShowPassword] = useState(false);
 	const [lastUsed, setLastUsed] = useState<string | null>(null);
 
-	const callbackUrl = searchParams.get('callback') || '/websites';
+	const defaultCallbackUrl = searchParams.get('callback') || '/websites';
+	const prefilledEmail = searchParams.get('email');
 
 	useEffect(() => {
 		setLastUsed(localStorage.getItem('lastUsedLogin'));
-	}, []);
+		if (prefilledEmail) {
+			setEmail(prefilledEmail);
+		}
+	}, [prefilledEmail]);
+
+	const handlePostAuthCallback = () => {
+		const callbackUrl = searchParams.get('callback');
+		if (callbackUrl) {
+			router.push(callbackUrl);
+		}
+	};
 
 	const handleGoogleLogin = () => {
 		setIsLoading(true);
 		signIn.social({
 			provider: 'google',
-			callbackURL: callbackUrl,
+			callbackURL: defaultCallbackUrl,
 			newUserCallbackURL: '/onboarding',
 			fetchOptions: {
 				onSuccess: () => {
 					localStorage.setItem('lastUsedLogin', 'google');
+					handlePostAuthCallback();
 				},
 				onError: () => {
 					setIsLoading(false);
@@ -55,11 +67,12 @@ function LoginPage() {
 		setIsLoading(true);
 		signIn.social({
 			provider: 'github',
-			callbackURL: callbackUrl,
+			callbackURL: defaultCallbackUrl,
 			newUserCallbackURL: '/onboarding',
 			fetchOptions: {
 				onSuccess: () => {
 					localStorage.setItem('lastUsedLogin', 'github');
+					handlePostAuthCallback();
 				},
 				onError: () => {
 					setIsLoading(false);
@@ -81,10 +94,11 @@ function LoginPage() {
 		await signIn.email({
 			email,
 			password,
-			callbackURL: callbackUrl,
+			callbackURL: defaultCallbackUrl,
 			fetchOptions: {
 				onSuccess: () => {
 					localStorage.setItem('lastUsedLogin', 'email');
+					handlePostAuthCallback();
 				},
 				onError: (error) => {
 					setIsLoading(false);

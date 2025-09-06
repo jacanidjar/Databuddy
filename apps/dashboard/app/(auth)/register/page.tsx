@@ -33,10 +33,13 @@ function RegisterPageContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const selectedPlan = searchParams.get('plan');
+	const callbackUrl = searchParams.get('callback');
+	const prefilledEmail = searchParams.get('email');
+	const prefilledName = searchParams.get('name');
 	const [isLoading, setIsLoading] = useState(false);
 	const [formData, setFormData] = useState({
-		name: '',
-		email: '',
+		name: prefilledName || '',
+		email: prefilledEmail || '',
 		password: '',
 		confirmPassword: '',
 	});
@@ -51,6 +54,12 @@ function RegisterPageContent() {
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
 		setFormData((prev) => ({ ...prev, [name]: value }));
+	};
+
+	const handlePostAuthCallback = () => {
+		if (callbackUrl) {
+			router.push(callbackUrl);
+		}
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -83,6 +92,13 @@ function RegisterPageContent() {
 					if (authToken) {
 						localStorage.setItem('authToken', authToken);
 					}
+
+					if (callbackUrl) {
+						toast.success('Account created! Completing integration...');
+						handlePostAuthCallback();
+						return;
+					}
+
 					toast.success(
 						'Account created! Please check your email to verify your account.'
 					);
@@ -130,12 +146,14 @@ function RegisterPageContent() {
 
 		await authClient.signIn.social({
 			provider,
+			callbackURL: callbackUrl || '/websites',
 			fetchOptions: {
 				onSuccess: (ctx) => {
 					const authToken = ctx.response.headers.get('set-auth-token');
 					if (authToken) {
 						localStorage.setItem('authToken', authToken);
 					}
+
 					toast.success('Registration successful!');
 
 					// Redirect to billing with plan selection if plan was specified
@@ -143,7 +161,7 @@ function RegisterPageContent() {
 						localStorage.setItem('pendingPlanSelection', selectedPlan);
 						router.push(`/billing?tab=plans&plan=${selectedPlan}`);
 					} else {
-						router.push('/home');
+						router.push('/websites');
 					}
 				},
 				onError: () => {
@@ -549,7 +567,11 @@ function RegisterPageContent() {
 						Already have an account?{' '}
 						<Link
 							className="font-medium text-primary hover:text-primary/80"
-							href="/login"
+							href={
+								callbackUrl
+									? `/login?email=${encodeURIComponent(formData.email)}&callback=${encodeURIComponent(callbackUrl)}`
+									: '/login'
+							}
 						>
 							Sign in
 						</Link>

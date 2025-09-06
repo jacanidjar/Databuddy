@@ -1,6 +1,19 @@
-import { db, eq, user, account, sql, and } from '@databuddy/db';
-import { NextRequest, NextResponse } from 'next/server';
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
+import { account, and, db, eq, user } from '@databuddy/db';
+import { type NextRequest, NextResponse } from 'next/server';
+
+interface VercelTokenResponse {
+	access_token: string;
+	token_type: string;
+	installation_id: string;
+}
+
+interface VercelUserInfo {
+	id: string;
+	email: string;
+	name?: string;
+	avatar?: string;
+}
 
 export async function GET(request: NextRequest) {
 	try {
@@ -40,7 +53,7 @@ export async function GET(request: NextRequest) {
 			);
 		}
 
-		const tokens = await tokenResponse.json();
+		const tokens: VercelTokenResponse = await tokenResponse.json();
 
 		const userResponse = await fetch('https://api.vercel.com/v2/user', {
 			headers: {
@@ -55,9 +68,9 @@ export async function GET(request: NextRequest) {
 		}
 
 		const userResponse_json = await userResponse.json();
-		const userInfo = userResponse_json.user;
+		const userInfo: VercelUserInfo = userResponse_json.user;
 
-		if (!userInfo.email || !userInfo.id) {
+		if (!(userInfo.email && userInfo.id)) {
 			return NextResponse.redirect(
 				`${process.env.BETTER_AUTH_URL}/auth/error?error=invalid_user_info`
 			);
@@ -67,75 +80,50 @@ export async function GET(request: NextRequest) {
 			where: eq(user.email, userInfo.email),
 		});
 
-		let userId: string;
+		if (!existingUser) {
+			// Create the callback URL that will complete the integration after auth
+			const callbackUrl = new URL(request.url);
+			const completeIntegrationUrl = `${process.env.BETTER_AUTH_URL}${callbackUrl.pathname}${callbackUrl.search}`;
 
-		if (existingUser) {
-			userId = existingUser.id;
-		} else {
-			const newUserId = randomUUID();
-			const now = new Date().toISOString();
-
-			await db.execute(sql`
-				INSERT INTO "user" (
-					id, name, email, email_verified, image, created_at, updated_at
-				) VALUES (
-					${newUserId}, 
-					${userInfo.name || userInfo.email}, 
-					${userInfo.email}, 
-					${true}, 
-					${userInfo.avatar || null}, 
-					${now}, 
-					${now}
-				)
-			`);
-
-			userId = newUserId;
+			return NextResponse.redirect(
+				`${process.env.BETTER_AUTH_URL}/register?email=${encodeURIComponent(userInfo.email)}&name=${encodeURIComponent(userInfo.name || '')}&callback=${encodeURIComponent(completeIntegrationUrl)}`
+			);
 		}
+
+		const userId = existingUser.id;
 
 		const existingAccount = await db.query.account.findFirst({
 			where: and(eq(account.userId, userId), eq(account.providerId, 'vercel')),
 		});
 
-		const now = new Date();
-		const accountData = {
-			id: existingAccount?.id || randomUUID(),
-			accountId: userInfo.id,
-			providerId: 'vercel',
-			userId: userId,
-			accessToken: tokens.access_token,
-			scope: JSON.stringify({
-				configurationId,
-				teamId,
-				installationId: tokens.installation_id,
-				tokenType: tokens.token_type,
-			}),
-			createdAt: existingAccount?.createdAt || now.toISOString(),
-			updatedAt: now.toISOString(),
-		};
+		const now = new Date().toISOString();
+		const scopeData = JSON.stringify({
+			configurationId,
+			teamId,
+			installationId: tokens.installation_id,
+			tokenType: tokens.token_type,
+		});
 
 		if (existingAccount) {
-			await db.execute(sql`
-				UPDATE "account" SET
-					access_token = ${accountData.accessToken},
-					scope = ${accountData.scope},
-					updated_at = ${accountData.updatedAt}
-				WHERE id = ${existingAccount.id}
-			`);
+			await db
+				.update(account)
+				.set({
+					accessToken: tokens.access_token,
+					scope: scopeData,
+					updatedAt: now,
+				})
+				.where(eq(account.id, existingAccount.id));
 		} else {
-			await db.execute(sql`
-				INSERT INTO "account" (
-					id, account_id, provider_id, user_id, access_token, scope, created_at, updated_at
-				) VALUES (
-					${accountData.id},
-					${accountData.accountId},
-					${accountData.providerId},
-					${accountData.userId},
-					${accountData.accessToken},
-					${accountData.scope},
-					${accountData.createdAt},
-					${accountData.updatedAt}
-				)
-			`);
+			await db.insert(account).values({
+				id: randomUUID(),
+				accountId: userInfo.id,
+				providerId: 'vercel',
+				userId,
+				accessToken: tokens.access_token,
+				scope: scopeData,
+				createdAt: now,
+				updatedAt: now,
+			});
 		}
 
 		const redirectUrl =
@@ -143,6 +131,7 @@ export async function GET(request: NextRequest) {
 
 		return NextResponse.redirect(redirectUrl);
 	} catch (error) {
+		console.error('Vercel OAuth callback error:', error);
 		return NextResponse.redirect(
 			`${process.env.BETTER_AUTH_URL}/auth/error?error=internal_error`
 		);
