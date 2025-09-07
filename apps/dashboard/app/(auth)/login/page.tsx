@@ -27,43 +27,34 @@ function LoginPage() {
 	const [showPassword, setShowPassword] = useState(false);
 	const [lastUsed, setLastUsed] = useState<string | null>(null);
 
-	const callbackUrl = searchParams.get('callback') || '/websites';
+	const defaultCallbackUrl = searchParams.get('callback') || '/websites';
 
 	useEffect(() => {
 		setLastUsed(localStorage.getItem('lastUsedLogin'));
 	}, []);
 
-	const handleGoogleLogin = () => {
+	const handleSocialLogin = (provider: 'github' | 'google') => {
 		setIsLoading(true);
-		signIn.social({
-			provider: 'google',
-			callbackURL: callbackUrl,
-			newUserCallbackURL: '/onboarding',
-			fetchOptions: {
-				onSuccess: () => {
-					localStorage.setItem('lastUsedLogin', 'google');
-				},
-				onError: () => {
-					setIsLoading(false);
-					toast.error('Google login failed. Please try again.');
-				},
-			},
-		});
-	};
 
-	const handleGithubLogin = () => {
-		setIsLoading(true);
+		const callbackUrl = searchParams.get('callback');
+		const finalCallbackUrl = callbackUrl || defaultCallbackUrl;
+
 		signIn.social({
-			provider: 'github',
-			callbackURL: callbackUrl,
+			provider,
+			callbackURL: finalCallbackUrl,
 			newUserCallbackURL: '/onboarding',
 			fetchOptions: {
 				onSuccess: () => {
-					localStorage.setItem('lastUsedLogin', 'github');
+					localStorage.setItem('lastUsedLogin', provider);
+					if (callbackUrl) {
+						router.push(callbackUrl);
+					}
 				},
 				onError: () => {
 					setIsLoading(false);
-					toast.error('GitHub login failed. Please try again.');
+					toast.error(
+						`${provider === 'github' ? 'GitHub' : 'Google'} login failed. Please try again.`
+					);
 				},
 			},
 		});
@@ -81,10 +72,14 @@ function LoginPage() {
 		await signIn.email({
 			email,
 			password,
-			callbackURL: callbackUrl,
+			callbackURL: defaultCallbackUrl,
 			fetchOptions: {
 				onSuccess: () => {
 					localStorage.setItem('lastUsedLogin', 'email');
+					const callbackUrl = searchParams.get('callback');
+					if (callbackUrl) {
+						router.push(callbackUrl);
+					}
 				},
 				onError: (error) => {
 					setIsLoading(false);
@@ -125,7 +120,7 @@ function LoginPage() {
 							<Button
 								className="relative flex h-11 w-full cursor-pointer items-center justify-center transition-all duration-200 hover:bg-primary/5"
 								disabled={isLoading}
-								onClick={handleGithubLogin}
+								onClick={() => handleSocialLogin('github')}
 								type="button"
 								variant="outline"
 							>
@@ -140,7 +135,7 @@ function LoginPage() {
 							<Button
 								className="relative flex h-11 w-full cursor-pointer items-center justify-center transition-all duration-200 hover:bg-primary/5"
 								disabled={isLoading}
-								onClick={handleGoogleLogin}
+								onClick={() => handleSocialLogin('google')}
 								type="button"
 								variant="outline"
 							>
