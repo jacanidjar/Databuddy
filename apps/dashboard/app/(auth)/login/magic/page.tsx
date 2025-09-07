@@ -75,7 +75,7 @@ export default function MagicLinkPage() {
 						value={email}
 					/>
 				</div>
-				<div className="flex items-center gap-3 p-3 text-blue-800 text-sm">
+				<div className="flex items-center gap-3 p-3 text-info-foreground text-sm">
 					<Sparkles className="h-5 w-5 flex-shrink-0 text-foreground" />
 					<p className="text-muted-foreground">
 						We'll send a secure link to your email that will sign you in
@@ -83,7 +83,7 @@ export default function MagicLinkPage() {
 					</p>
 				</div>
 				<Button
-					className="h-11 w-full bg-blue-500 text-white hover:bg-blue-600"
+					className="h-11 w-full bg-info text-info-foreground hover:bg-info/90"
 					disabled={isLoading}
 					type="submit"
 				>
@@ -101,7 +101,7 @@ export default function MagicLinkPage() {
 				</Button>
 				<Link className="block" href="/login">
 					<Button
-						className="h-11 w-full border-blue-200 hover:cursor-pointer hover:bg-blue-50"
+						className="h-11 w-full border-info/20 hover:cursor-pointer hover:bg-info/5"
 						type="button"
 						variant="outline"
 					>

@@ -167,11 +167,11 @@ function RegisterPageContent() {
 			case 'verification-needed':
 				return (
 					<>
-						<div className="relative mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 p-3">
-							<div className="absolute inset-0 animate-pulse rounded-full bg-amber-50" />
-							<div className="-inset-1 absolute rounded-full bg-gradient-to-tr from-amber-200 to-amber-100 opacity-70 blur-md" />
-							<div className="relative rounded-full bg-gradient-to-tr from-amber-500 to-amber-400 p-2.5">
-								<WarningCircleIcon className="h-8 w-8 text-white" />
+						<div className="relative mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full bg-warning/10 p-3">
+							<div className="absolute inset-0 animate-pulse rounded-full bg-warning/5" />
+							<div className="-inset-1 absolute rounded-full bg-gradient-to-tr from-warning/20 to-warning/10 opacity-70 blur-md" />
+							<div className="relative rounded-full bg-gradient-to-tr from-warning to-warning/80 p-2.5">
+								<WarningCircleIcon className="h-8 w-8 text-warning-foreground" />
 							</div>
 						</div>
 						<h1 className="font-bold text-2xl text-foreground">
@@ -179,7 +179,7 @@ function RegisterPageContent() {
 						</h1>
 						<p className="mt-2 text-muted-foreground">
 							We've sent a verification link to{' '}
-							<strong className="font-medium text-amber-600">
+							<strong className="font-medium text-warning">
 								{formData.email}
 							</strong>
 						</p>
@@ -188,11 +188,11 @@ function RegisterPageContent() {
 			case 'success':
 				return (
 					<>
-						<div className="relative mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100 p-3">
-							<div className="absolute inset-0 animate-pulse rounded-full bg-green-50" />
-							<div className="-inset-1 absolute rounded-full bg-gradient-to-tr from-green-200 to-green-100 opacity-70 blur-md" />
-							<div className="relative rounded-full bg-gradient-to-tr from-green-500 to-green-400 p-2.5">
-								<CheckCircleIcon className="h-8 w-8 text-white" />
+						<div className="relative mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full bg-success/10 p-3">
+							<div className="absolute inset-0 animate-pulse rounded-full bg-success/5" />
+							<div className="-inset-1 absolute rounded-full bg-gradient-to-tr from-success/20 to-success/10 opacity-70 blur-md" />
+							<div className="relative rounded-full bg-gradient-to-tr from-success to-success/80 p-2.5">
+								<CheckCircleIcon className="h-8 w-8 text-success-foreground" />
 							</div>
 						</div>
 						<h1 className="font-bold text-2xl text-foreground">Success!</h1>
@@ -218,7 +218,7 @@ function RegisterPageContent() {
 	// Split render content into smaller components
 	const renderVerificationContent = () => (
 		<div className="space-y-5 py-4">
-			<div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800">
+			<div className="rounded-lg border border-warning/20 bg-warning/5 p-4 text-warning-foreground">
 				<p className="text-sm">
 					Please check your email inbox and click the verification link to
 					activate your account. If you don't see the email, check your spam
@@ -228,7 +228,7 @@ function RegisterPageContent() {
 
 			<div className="flex flex-col space-y-3">
 				<Button
-					className="w-full bg-amber-500 text-sm text-white hover:bg-amber-600 sm:text-base"
+					className="w-full bg-warning text-sm text-warning-foreground hover:bg-warning/90 sm:text-base"
 					disabled={isLoading}
 					onClick={resendVerificationEmail}
 				>
@@ -248,7 +248,7 @@ function RegisterPageContent() {
 				</Button>
 
 				<Button
-					className="w-full border-amber-200 text-amber-700 text-sm hover:bg-amber-50 sm:text-base"
+					className="w-full border-warning/20 text-sm text-warning hover:bg-warning/5 sm:text-base"
 					onClick={() => setRegistrationStep('form')}
 					variant="outline"
 				>
@@ -262,7 +262,7 @@ function RegisterPageContent() {
 
 	const renderSuccessContent = () => (
 		<div className="space-y-5 py-4">
-			<div className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800">
+			<div className="rounded-lg border border-success/20 bg-success/5 p-4 text-success-foreground">
 				<p className="text-sm">
 					Your account has been created successfully. You can now sign in to
 					access your dashboard.
@@ -270,7 +270,7 @@ function RegisterPageContent() {
 			</div>
 
 			<Button
-				className="w-full bg-green-500 text-sm text-white hover:bg-green-600 sm:text-base"
+				className="w-full bg-success text-sm text-success-foreground hover:bg-success/90 sm:text-base"
 				onClick={() => router.push('/login')}
 			>
 				<span className="hidden sm:inline">Continue to login</span>
@@ -319,7 +319,7 @@ function RegisterPageContent() {
 			<form className="space-y-4" onSubmit={handleSubmit}>
 				<div className="space-y-2">
 					<Label className="font-medium text-foreground" htmlFor="name">
-						Full name<span className="text-blue-700">*</span>
+						Full name<span className="text-primary">*</span>
 					</Label>
 					<Input
 						autoComplete="name"
@@ -337,7 +337,7 @@ function RegisterPageContent() {
 
 				<div className="space-y-2">
 					<Label className="font-medium text-foreground" htmlFor="email">
-						Email address<span className="text-blue-700">*</span>
+						Email address<span className="text-primary">*</span>
 					</Label>
 					<Input
 						autoComplete="email"
@@ -357,7 +357,7 @@ function RegisterPageContent() {
 					<div className="space-y-2">
 						<div className="flex items-center gap-2">
 							<Label className="font-medium text-foreground" htmlFor="password">
-								Password<span className="text-blue-700">*</span>
+								Password<span className="text-primary">*</span>
 							</Label>
 							<TooltipProvider>
 								<Tooltip>
@@ -407,7 +407,7 @@ function RegisterPageContent() {
 							className="whitespace-nowrap font-medium text-foreground"
 							htmlFor="confirmPassword"
 						>
-							Confirm password<span className="text-blue-700">*</span>
+							Confirm password<span className="text-primary">*</span>
 						</Label>
 						<div className="relative">
 							<Input

@@ -5,6 +5,7 @@ import { dbConnectionsRouter } from './routers/db-connections';
 import { experimentsRouter } from './routers/experiments';
 import { funnelsRouter } from './routers/funnels';
 import { goalsRouter } from './routers/goals';
+import { integrationsRouter } from './routers/integrations';
 import { miniChartsRouter } from './routers/mini-charts';
 import { organizationsRouter } from './routers/organizations';
 import { performanceRouter } from './routers/performance';
@@ -25,6 +26,7 @@ export const appRouter = createTRPCRouter({
 	organizations: organizationsRouter,
 	dbConnections: dbConnectionsRouter,
 	performance: performanceRouter,
+	integrations: integrationsRouter,
 });
 
 export type AppRouter = typeof appRouter;

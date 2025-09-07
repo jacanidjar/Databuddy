@@ -161,7 +161,7 @@ function LoginPage() {
 						<form className="space-y-4" onSubmit={handleEmailPasswordLogin}>
 							<div className="space-y-2">
 								<Label className="font-medium text-foreground" htmlFor="email">
-									Email<span className="text-blue-700">*</span>
+									Email<span className="text-primary">*</span>
 								</Label>
 								<div className="relative">
 									<Input
@@ -189,7 +189,7 @@ function LoginPage() {
 										className="font-medium text-foreground"
 										htmlFor="password"
 									>
-										Password<span className="text-blue-700">*</span>
+										Password<span className="text-primary">*</span>
 									</Label>
 									<Link
 										className="h-auto cursor-pointer p-0 text-primary text-xs sm:text-sm"
