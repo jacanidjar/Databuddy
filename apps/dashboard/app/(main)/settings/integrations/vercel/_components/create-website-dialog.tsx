@@ -59,7 +59,7 @@ export function CreateWebsiteDialog({
 				name: '', // Start with empty name, will use placeholder
 				target: isMultipleMode
 					? inferTargetFromDomain(domain)
-					: (['production', 'preview', 'development'] as string[]),
+					: (['production', 'preview'] as string[]),
 			}));
 			setWebsiteConfigs(configs);
 		}
@@ -198,7 +198,7 @@ export function CreateWebsiteDialog({
 									Target Environments
 								</Label>
 								<div className="flex flex-wrap gap-2">
-									{['production', 'preview', 'development'].map((env) => (
+									{['production', 'preview'].map((env) => (
 										<Button
 											className="h-8 rounded text-xs transition-colors"
 											key={env}

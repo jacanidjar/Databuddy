@@ -11,37 +11,16 @@ export const generateWebsitePlaceholder = (domainName: string) => {
 };
 
 export const inferTargetFromDomain = (domain: Domain): string[] => {
-	const name = domain.name.toLowerCase();
-
-	if (name.endsWith('.vercel.app')) {
-		return ['preview'];
-	}
-
-	if (domain.customEnvironmentId) {
-		return ['preview', 'development'];
-	}
-
-	if (
-		name.includes('staging') ||
-		name.includes('stage') ||
-		name.includes('dev') ||
-		name.includes('preview') ||
-		name.includes('test')
-	) {
-		return ['preview', 'development'];
-	}
-
-	if (
-		domain.gitBranch &&
-		domain.gitBranch !== 'main' &&
-		domain.gitBranch !== 'master'
-	) {
-		return ['preview'];
-	}
-
-	if (!(name.endsWith('.vercel.app') || domain.customEnvironmentId)) {
+	// BOOOOOM: No redirect status code = production
+	if (!domain.redirectStatusCode) {
 		return ['production'];
 	}
 
+	// BOOOOOOOOOM: Has redirect status = not production (preview only)
+	if (domain.redirectStatusCode) {
+		return ['preview'];
+	}
+
+	// Fallback (should not reach here, but just in case)
 	return ['production'];
 };

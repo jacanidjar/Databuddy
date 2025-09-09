@@ -7,6 +7,7 @@ import {
 } from '@phosphor-icons/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
+import { FaviconImage } from '@/components/analytics/favicon-image';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -134,25 +135,44 @@ export function ProjectRow({
 						<CaretRightIcon className="h-4 w-4 text-muted-foreground" />
 					</motion.div>
 
-					<div className="mr-3 flex h-8 w-8 items-center justify-center rounded bg-muted font-medium text-muted-foreground text-sm">
-						{project.name.charAt(0).toUpperCase()}
-					</div>
+					{project.primaryDomain ? (
+						<div className="mr-3">
+							<FaviconImage
+								className="size-8"
+								domain={project.primaryDomain}
+								fallbackIcon={
+									<div className="flex h-8 w-8 items-center justify-center rounded bg-muted font-medium text-muted-foreground text-sm">
+										{project.name.charAt(0).toUpperCase()}
+									</div>
+								}
+								size={32}
+							/>
+						</div>
+					) : (
+						<div className="mr-3 flex h-8 w-8 items-center justify-center rounded bg-muted font-medium text-muted-foreground text-sm">
+							{project.name.charAt(0).toUpperCase()}
+						</div>
+					)}
 
-					<div className="flex items-center">
-						<span className="font-medium text-foreground">{project.name}</span>
-						{project.framework && (
-							<Badge className="ml-2 text-xs" variant="secondary">
-								{project.framework}
-							</Badge>
-						)}
-						{project.live && (
-							<Badge
-								className="ml-2 bg-green-100 text-green-800 text-xs dark:bg-green-900 dark:text-green-100"
-								variant="default"
-							>
-								Live
-							</Badge>
-						)}
+					<div className="flex flex-col">
+						<div className="flex items-center">
+							<span className="font-medium text-foreground">
+								{project.name}
+							</span>
+							{project.framework && (
+								<Badge className="ml-2 text-xs" variant="secondary">
+									{project.framework}
+								</Badge>
+							)}
+							{project.live && (
+								<Badge
+									className="ml-2 bg-green-100 text-green-800 text-xs dark:bg-green-900 dark:text-green-100"
+									variant="default"
+								>
+									Live
+								</Badge>
+							)}
+						</div>
 					</div>
 				</div>
 

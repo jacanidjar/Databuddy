@@ -14,10 +14,22 @@ export interface VercelProject {
 		org?: string;
 		productionBranch?: string;
 	};
+	latestDeployments?: Array<{
+		id: string;
+		alias?: string[];
+		automaticAliases?: string[];
+		url?: string;
+		target?: string | null;
+	}>;
+}
+
+export interface VercelProjectWithDomain extends VercelProject {
+	primaryDomain?: string;
+	productionUrl?: string;
 }
 
 export interface VercelProjectsResponse {
-	projects: VercelProject[];
+	projects: VercelProjectWithDomain[];
 	pagination: {
 		count: number;
 		next: number | null;
@@ -148,7 +160,68 @@ export class VercelSDK {
 		const query = searchParams.toString();
 		const endpoint = `/v10/projects${query ? `?${query}` : ''}`;
 
-		return this.request<VercelProjectsResponse>(endpoint);
+		const response = await this.request<{
+			projects: VercelProject[];
+			pagination: { count: number; next: number | null; prev: number | null };
+		}>(endpoint);
+
+		// Process projects to extract primary domain information
+		const projectsWithDomains: VercelProjectWithDomain[] =
+			response.projects.map((project) => {
+				let primaryDomain: string | undefined;
+				let productionUrl: string | undefined;
+
+				// Find production deployment and extract primary domain
+				if (project.latestDeployments?.length) {
+					const productionDeployment = project.latestDeployments.find(
+						(deployment) =>
+							deployment.target === 'production' || deployment.target === null
+					);
+
+					if (productionDeployment) {
+						// Prefer custom domains (alias) over automatic aliases
+						if (productionDeployment.alias?.length) {
+							// Find the first non-vercel.app domain, or fallback to first alias
+							primaryDomain =
+								productionDeployment.alias.find(
+									(domain) => !domain.endsWith('.vercel.app')
+								) || productionDeployment.alias[0];
+						} else if (productionDeployment.automaticAliases?.length) {
+							primaryDomain = productionDeployment.automaticAliases[0];
+						} else if (productionDeployment.url) {
+							primaryDomain = productionDeployment.url;
+						}
+
+						productionUrl = productionDeployment.url;
+					}
+
+					// Fallback: if no production deployment, use any deployment
+					if (!primaryDomain && project.latestDeployments[0]) {
+						const firstDeployment = project.latestDeployments[0];
+						if (firstDeployment.alias?.length) {
+							primaryDomain =
+								firstDeployment.alias.find(
+									(domain) => !domain.endsWith('.vercel.app')
+								) || firstDeployment.alias[0];
+						} else if (firstDeployment.automaticAliases?.length) {
+							primaryDomain = firstDeployment.automaticAliases[0];
+						} else if (firstDeployment.url) {
+							primaryDomain = firstDeployment.url;
+						}
+					}
+				}
+
+				return {
+					...project,
+					primaryDomain,
+					productionUrl,
+				};
+			});
+
+		return {
+			projects: projectsWithDomains,
+			pagination: response.pagination,
+		};
 	}
 
 	async getProjectEnvs(projectId: string): Promise<VercelEnvVarsResponse> {

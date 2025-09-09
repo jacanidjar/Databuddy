@@ -1,4 +1,4 @@
-import { isNotNull, isNull, sql } from 'drizzle-orm';
+import { isNotNull, isNull } from 'drizzle-orm';
 import {
 	boolean,
 	foreignKey,
@@ -73,16 +73,12 @@ export const account = pgTable(
 		accessToken: text('access_token'),
 		refreshToken: text('refresh_token'),
 		idToken: text('id_token'),
-		accessTokenExpiresAt: timestamp('access_token_expires_at', {
-			mode: 'string',
-		}),
-		refreshTokenExpiresAt: timestamp('refresh_token_expires_at', {
-			mode: 'string',
-		}),
+		accessTokenExpiresAt: timestamp('access_token_expires_at'),
+		refreshTokenExpiresAt: timestamp('refresh_token_expires_at'),
 		scope: text(),
 		password: text(),
-		createdAt: timestamp('created_at', { mode: 'string' }).notNull(),
-		updatedAt: timestamp('updated_at', { mode: 'string' }).notNull(),
+		createdAt: timestamp('created_at').notNull(),
+		updatedAt: timestamp('updated_at').notNull(),
 	},
 	(table) => [
 		index('accounts_userId_idx').using(
@@ -109,7 +105,7 @@ export const session = pgTable(
 		expiresAt: timestamp({ precision: 3, mode: 'string' }).notNull(),
 		token: text().notNull(),
 		createdAt: timestamp({ precision: 3, mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
+			.defaultNow()
 			.notNull(),
 		updatedAt: timestamp({ precision: 3, mode: 'string' }).notNull(),
 		ipAddress: text(),
@@ -149,7 +145,7 @@ export const invitation = pgTable(
 		role: text().default('member'),
 		teamId: text('team_id'),
 		status: text().default('pending').notNull(),
-		expiresAt: timestamp('expires_at', { mode: 'string' }).notNull(),
+		expiresAt: timestamp('expires_at').notNull(),
 		inviterId: text('inviter_id').notNull(),
 	},
 	(table) => [
@@ -182,7 +178,7 @@ export const member = pgTable(
 		userId: text('user_id').notNull(),
 		role: text().default('member').notNull(),
 		teamId: text('team_id'),
-		createdAt: timestamp('created_at', { mode: 'string' }).notNull(),
+		createdAt: timestamp('created_at').notNull(),
 	},
 	(table) => [
 		index('members_userId_idx').using(
@@ -212,9 +208,9 @@ export const verification = pgTable(
 		id: text().primaryKey().notNull(),
 		identifier: text().notNull(),
 		value: text().notNull(),
-		expiresAt: timestamp('expires_at', { mode: 'string' }).notNull(),
-		createdAt: timestamp('created_at', { mode: 'string' }),
-		updatedAt: timestamp('updated_at', { mode: 'string' }),
+		expiresAt: timestamp('expires_at').notNull(),
+		createdAt: timestamp('created_at'),
+		updatedAt: timestamp('updated_at'),
 	},
 	(table) => [
 		index('verifications_identifier_idx').using(
@@ -257,10 +253,8 @@ export const userPreferences = pgTable(
 		timezone: text().default('auto').notNull(),
 		dateFormat: text().default('MMM D, YYYY').notNull(),
 		timeFormat: text().default('h:mm a').notNull(),
-		createdAt: timestamp({ precision: 3, mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
-		updatedAt: timestamp({ precision: 3, mode: 'string' }).notNull(),
+		createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+		updatedAt: timestamp({ precision: 3 }).notNull(),
 	},
 	(table) => [
 		uniqueIndex('user_preferences_userId_key').using(
@@ -286,13 +280,9 @@ export const websites = pgTable(
 		status: websiteStatus().default('ACTIVE').notNull(),
 		userId: text(),
 		isPublic: boolean().default(false).notNull(),
-		createdAt: timestamp({ precision: 3, mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
-		updatedAt: timestamp({ precision: 3, mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
-		deletedAt: timestamp({ precision: 3, mode: 'string' }),
+		createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+		updatedAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+		deletedAt: timestamp({ precision: 3 }),
 		organizationId: text('organization_id'),
 	},
 	(table) => [
@@ -332,8 +322,8 @@ export const user = pgTable(
 		firstName: text(),
 		lastName: text(),
 		status: userStatus().default('ACTIVE').notNull(),
-		createdAt: timestamp('created_at', { mode: 'string' }).notNull(),
-		updatedAt: timestamp('updated_at', { mode: 'string' }).notNull(),
+		createdAt: timestamp('created_at').notNull(),
+		updatedAt: timestamp('updated_at').notNull(),
 		deletedAt: timestamp({ precision: 3, mode: 'string' }),
 		role: role().default('USER').notNull(),
 		twoFactorEnabled: boolean('two_factor_enabled'),
@@ -352,10 +342,10 @@ export const userStripeConfig = pgTable(
 		webhookSecret: text('webhook_secret').notNull(),
 		isLiveMode: boolean('is_live_mode').default(false).notNull(),
 		isActive: boolean('is_active').default(true).notNull(),
-		lastWebhookAt: timestamp('last_webhook_at', { mode: 'string' }),
+		lastWebhookAt: timestamp('last_webhook_at'),
 		webhookFailureCount: integer('webhook_failure_count').default(0).notNull(),
-		createdAt: timestamp('created_at', { mode: 'string' }).notNull(),
-		updatedAt: timestamp('updated_at', { mode: 'string' }).notNull(),
+		createdAt: timestamp('created_at').notNull(),
+		updatedAt: timestamp('updated_at').notNull(),
 	},
 	(table) => [
 		uniqueIndex('user_stripe_config_userId_key').using(
@@ -385,12 +375,8 @@ export const funnelGoals = pgTable(
 		targetValue: text(),
 		description: text(),
 		isActive: boolean().default(true).notNull(),
-		createdAt: timestamp({ precision: 3, mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
-		updatedAt: timestamp({ precision: 3, mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
+		createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+		updatedAt: timestamp({ precision: 3 }).defaultNow().notNull(),
 	},
 	(table) => [
 		index('funnel_goals_funnelId_idx').using(
@@ -418,13 +404,9 @@ export const funnelDefinitions = pgTable(
 		filters: jsonb(),
 		isActive: boolean().default(true).notNull(),
 		createdBy: text().notNull(),
-		createdAt: timestamp({ precision: 3, mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
-		updatedAt: timestamp({ precision: 3, mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
-		deletedAt: timestamp({ precision: 3, mode: 'string' }),
+		createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+		updatedAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+		deletedAt: timestamp({ precision: 3 }),
 	},
 	(table) => [
 		index('funnel_definitions_createdBy_idx').using(
@@ -464,13 +446,9 @@ export const goals = pgTable(
 		filters: jsonb(),
 		isActive: boolean().default(true).notNull(),
 		createdBy: text().notNull(),
-		createdAt: timestamp({ precision: 3, mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
-		updatedAt: timestamp({ precision: 3, mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
-		deletedAt: timestamp({ precision: 3, mode: 'string' }),
+		createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+		updatedAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+		deletedAt: timestamp({ precision: 3 }),
 	},
 	(table) => [
 		index('goals_websiteId_idx').using(
@@ -514,8 +492,8 @@ export const team = pgTable(
 		id: text().primaryKey().notNull(),
 		name: text().notNull(),
 		organizationId: text('organization_id').notNull(),
-		createdAt: timestamp('created_at', { mode: 'string' }).notNull(),
-		updatedAt: timestamp('updated_at', { mode: 'string' }),
+		createdAt: timestamp('created_at').notNull(),
+		updatedAt: timestamp('updated_at'),
 	},
 	(table) => [
 		foreignKey({
@@ -578,7 +556,7 @@ export const apikey = pgTable(
 		scopes: apiScope('scopes').array().notNull().default([]),
 		enabled: boolean('enabled').notNull().default(true),
 		// Optional lifecycle field to complement `enabled`
-		revokedAt: timestamp('revoked_at', { mode: 'string' }),
+		revokedAt: timestamp('revoked_at'),
 		rateLimitEnabled: boolean('rate_limit_enabled').notNull().default(true),
 		rateLimitTimeWindow: integer('rate_limit_time_window'),
 		rateLimitMax: integer('rate_limit_max'),
@@ -590,12 +568,8 @@ export const apikey = pgTable(
 		refillAmount: integer('refill_amount'),
 		expiresAt: timestamp('expires_at', { mode: 'string' }),
 		metadata: jsonb('metadata').default({}),
-		createdAt: timestamp('created_at', { mode: 'string' })
-			.notNull()
-			.default(sql`CURRENT_TIMESTAMP`),
-		updatedAt: timestamp('updated_at', { mode: 'string' })
-			.notNull()
-			.default(sql`CURRENT_TIMESTAMP`),
+		createdAt: timestamp('created_at').notNull().defaultNow(),
+		updatedAt: timestamp('updated_at').notNull().defaultNow(),
 	},
 	(table) => [
 		foreignKey({
@@ -642,12 +616,8 @@ export const apikeyAccess = pgTable(
 		// Nullable when resourceType = 'global'
 		resourceId: text('resource_id'),
 		scopes: apiScope('scopes').array().notNull().default([]),
-		createdAt: timestamp('created_at', { mode: 'string' })
-			.notNull()
-			.default(sql`CURRENT_TIMESTAMP`),
-		updatedAt: timestamp('updated_at', { mode: 'string' })
-			.notNull()
-			.default(sql`CURRENT_TIMESTAMP`),
+		createdAt: timestamp('created_at').notNull().defaultNow(),
+		updatedAt: timestamp('updated_at').notNull().defaultNow(),
 	},
 	(table) => [
 		foreignKey({
@@ -679,7 +649,7 @@ export const organization = pgTable(
 		name: text().notNull(),
 		slug: text(),
 		logo: text(),
-		createdAt: timestamp('created_at', { mode: 'string' }).notNull(),
+		createdAt: timestamp('created_at').notNull(),
 		metadata: text(),
 	},
 	(table) => [
@@ -713,17 +683,13 @@ export const abExperiments = pgTable(
 		description: text(),
 		status: abTestStatus().default('draft').notNull(),
 		trafficAllocation: integer().default(100).notNull(),
-		startDate: timestamp({ precision: 3, mode: 'string' }),
-		endDate: timestamp({ precision: 3, mode: 'string' }),
+		startDate: timestamp({ precision: 3 }),
+		endDate: timestamp({ precision: 3 }),
 		primaryGoal: text(),
 		createdBy: text().notNull(),
-		createdAt: timestamp({ precision: 3, mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
-		updatedAt: timestamp({ precision: 3, mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
-		deletedAt: timestamp({ precision: 3, mode: 'string' }),
+		createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+		updatedAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+		deletedAt: timestamp({ precision: 3 }),
 	},
 	(table) => [
 		index('ab_experiments_websiteId_idx').using(
@@ -765,12 +731,8 @@ export const abVariants = pgTable(
 		content: jsonb().notNull(),
 		trafficWeight: integer().default(50).notNull(),
 		isControl: boolean().default(false).notNull(),
-		createdAt: timestamp({ precision: 3, mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
-		updatedAt: timestamp({ precision: 3, mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
+		createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+		updatedAt: timestamp({ precision: 3 }).defaultNow().notNull(),
 	},
 	(table) => [
 		index('ab_variants_experimentId_idx').using(
@@ -796,12 +758,8 @@ export const abGoals = pgTable(
 		type: text().notNull(),
 		target: text().notNull(),
 		description: text(),
-		createdAt: timestamp({ precision: 3, mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
-		updatedAt: timestamp({ precision: 3, mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
+		createdAt: timestamp({ precision: 3 }).defaultNow().notNull(),
+		updatedAt: timestamp({ precision: 3 }).defaultNow().notNull(),
 	},
 	(table) => [
 		index('ab_goals_experimentId_idx').using(
@@ -825,12 +783,8 @@ export const assistantConversations = pgTable(
 		userId: text('user_id'),
 		websiteId: text('website_id').notNull(),
 		title: text(),
-		createdAt: timestamp('created_at', { mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
-		updatedAt: timestamp('updated_at', { mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').defaultNow().notNull(),
 	},
 	(table) => [
 		index('assistant_conversations_website_id_idx').using(
@@ -876,9 +830,7 @@ export const assistantMessages = pgTable(
 		totalTokens: integer('total_tokens'),
 		debugLogs: text('debug_logs').array(),
 		metadata: jsonb('metadata'),
-		createdAt: timestamp('created_at', { mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
 	},
 	(table) => [
 		index('assistant_messages_conversation_id_idx').using(
@@ -910,12 +862,8 @@ export const dbConnections = pgTable(
 			.notNull()
 			.default('admin'),
 		organizationId: text('organization_id'),
-		createdAt: timestamp('created_at', { mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
-		updatedAt: timestamp('updated_at', { mode: 'string' })
-			.default(sql`CURRENT_TIMESTAMP`)
-			.notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').defaultNow().notNull(),
 	},
 	(table) => [
 		index('db_connections_user_id_idx').using(

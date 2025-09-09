@@ -8,6 +8,8 @@ export interface Project {
 	live?: boolean;
 	createdAt?: number;
 	updatedAt?: number;
+	primaryDomain?: string;
+	productionUrl?: string;
 	link?: {
 		type: string;
 		repo?: string;
