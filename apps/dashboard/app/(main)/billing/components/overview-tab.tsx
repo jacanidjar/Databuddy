@@ -519,7 +519,9 @@ export const OverviewTab = memo(function OverviewTabComponent({
 					{/* Current Plan Header */}
 					<div className="lg:col-span-1">
 						<div>
-							<h2 className="font-bold text-2xl tracking-tight">Current Plan</h2>
+							<h2 className="font-bold text-2xl tracking-tight">
+								Current Plan
+							</h2>
 							<p className="mt-1 text-muted-foreground">
 								Manage your subscription
 							</p>
