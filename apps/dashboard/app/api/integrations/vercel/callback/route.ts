@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { auth } from '@databuddy/auth';
 import { account, and, db, eq } from '@databuddy/db';
-import { encryptToken } from '@databuddy/shared';
 import { headers } from 'next/headers';
 import { type NextRequest, NextResponse } from 'next/server';
 
@@ -98,7 +97,7 @@ export async function GET(request: NextRequest) {
 			where: and(eq(account.userId, userId), eq(account.providerId, 'vercel')),
 		});
 
-		const now = new Date();
+		const now = new Date().toISOString();
 		const scopeData = JSON.stringify({
 			configurationId,
 			teamId,
@@ -106,22 +105,11 @@ export async function GET(request: NextRequest) {
 			tokenType: tokens.token_type,
 		});
 
-		// Encrypt the access token using Better Auth secret
-		const betterAuthSecret = process.env.BETTER_AUTH_SECRET;
-		if (!betterAuthSecret) {
-			throw new Error('BETTER_AUTH_SECRET environment variable is required');
-		}
-
-		const encryptedAccessToken = encryptToken(
-			tokens.access_token,
-			betterAuthSecret
-		);
-
 		if (existingAccount) {
 			await db
 				.update(account)
 				.set({
-					accessToken: encryptedAccessToken,
+					accessToken: tokens.access_token,
 					scope: scopeData,
 					updatedAt: now,
 				})
@@ -132,7 +120,7 @@ export async function GET(request: NextRequest) {
 				accountId: userInfo.id,
 				providerId: 'vercel',
 				userId,
-				accessToken: encryptedAccessToken,
+				accessToken: tokens.access_token,
 				scope: scopeData,
 				createdAt: now,
 				updatedAt: now,
