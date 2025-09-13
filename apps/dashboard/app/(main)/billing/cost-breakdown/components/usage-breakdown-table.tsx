@@ -145,7 +145,7 @@ export function UsageBreakdownTable({ usageData, isLoading, overageInfo }: Usage
 									</TableCell>
 									<TableCell>
 										<div className="font-medium">
-											${overageCost.toFixed(6)}
+											${overageCost.toPrecision(3)}
 										</div>
 									</TableCell>
 								</TableRow>

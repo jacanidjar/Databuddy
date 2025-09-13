@@ -38,6 +38,7 @@ interface ConsumptionChartProps {
 
 export function ConsumptionChart({ usageData, isLoading, onDateRangeChange, overageInfo }: ConsumptionChartProps) {
 	const [viewMode, setViewMode] = useState<ViewMode>('daily');
+	const [hiddenTypes, setHiddenTypes] = useState<Record<string, boolean>>({});
 
 	const chartData = useMemo(() => {
 		if (!usageData?.dailyUsageByType) return [];
@@ -82,6 +83,10 @@ export function ConsumptionChart({ usageData, isLoading, onDateRangeChange, over
 
 			// Use real data from ClickHouse, not approximations
 			Object.keys(EVENT_TYPE_COLORS).forEach(eventType => {
+				if (hiddenTypes[eventType]) {
+					dayData[eventType] = 0;
+					return;
+				}
 				const actualAmount = eventCounts[eventType] || 0;
 				
 				if (viewMode === 'cumulative') {
@@ -94,7 +99,7 @@ export function ConsumptionChart({ usageData, isLoading, onDateRangeChange, over
 
 			return dayData;
 		});
-	}, [usageData?.dailyUsageByType, viewMode]);
+	}, [usageData?.dailyUsageByType, viewMode, hiddenTypes]);
 
 	if (isLoading) {
 		return (
@@ -295,10 +300,18 @@ export function ConsumptionChart({ usageData, isLoading, onDateRangeChange, over
 								)}
 								iconSize={10}
 								iconType="circle"
+								onClick={(payload) => {
+									const anyPayload = payload as unknown as { dataKey?: string | number; value?: string | number };
+									const raw = anyPayload?.dataKey ?? anyPayload?.value;
+									if (raw == null) return;
+									const key = String(raw);
+									setHiddenTypes((prev) => ({ ...prev, [key]: !prev[key] }));
+								}}
 								wrapperStyle={{
 									fontSize: '12px',
 									paddingTop: '20px',
 									fontWeight: 500,
+									cursor: 'pointer',
 								}}
 							/>
 							{Object.keys(EVENT_TYPE_COLORS).map((eventType) => (
@@ -309,6 +322,7 @@ export function ConsumptionChart({ usageData, isLoading, onDateRangeChange, over
 									fill={`url(#gradient-${eventType})`}
 									stroke={EVENT_TYPE_COLORS[eventType as keyof typeof EVENT_TYPE_COLORS]}
 									strokeWidth={0.5}
+									hide={!!hiddenTypes[eventType]}
 								/>
 							))}
 						</BarChart>

@@ -4,6 +4,7 @@ import { ChartLineUpIcon, FlaskIcon } from '@phosphor-icons/react';
 import { Suspense, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useOrganizations } from '@/hooks/use-organizations';
 import { trpc } from '@/lib/trpc';
 import { ConsumptionChart } from './components/consumption-chart';
 import { UsageBreakdownTable } from './components/usage-breakdown-table';
@@ -18,14 +19,16 @@ const getDefaultDateRange = () => {
 
 export default function CostBreakdownPage() {
 	const [dateRange, setDateRange] = useState(() => getDefaultDateRange());
+	const { activeOrganization } = useOrganizations();
 
 	const usageQueryInput = useMemo(() => ({
 		startDate: dateRange.startDate,
 		endDate: dateRange.endDate,
-	}), [dateRange]);
+		organizationId: activeOrganization?.id || null,
+	}), [dateRange, activeOrganization?.id]);
 
-	const { data: usageData, isLoading } = trpc.billing.getUsage.useQuery(usageQueryInput);
 	const { data: organizationUsage } = trpc.organizations.getUsage.useQuery();
+	const { data: usageData, isLoading } = trpc.billing.getUsage.useQuery(usageQueryInput);
 
 	const handleDateRangeChange = (startDate: string, endDate: string) => {
 		setDateRange({ startDate, endDate });

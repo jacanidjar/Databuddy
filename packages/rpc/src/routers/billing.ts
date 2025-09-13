@@ -1,3 +1,4 @@
+import { websitesApi } from '@databuddy/auth';
 import { chQuery, db, eq, session, websites } from '@databuddy/db';
 import type { DailyUsageRow, DailyUsageByTypeRow, EventTypeBreakdown, UsageResponse } from '@databuddy/shared';
 import { TRPCError } from '@trpc/server';
@@ -9,6 +10,7 @@ import { createTRPCRouter, protectedProcedure } from '../trpc';
 const usageQuerySchema = z.object({
 	startDate: z.string().optional(),
 	endDate: z.string().optional(),
+	organizationId: z.string().nullable().optional(),
 });
 
 
@@ -136,21 +138,26 @@ export const billingRouter = createTRPCRouter({
 					? { startDate: input.startDate, endDate: input.endDate }
 					: getDefaultDateRange();
 
-			const [sessionData] = await db
-				.select({
-					activeOrganizationId: session.activeOrganizationId,
-				})
-				.from(session)
-				.where(eq(session.userId, ctx.user.id))
-				.limit(1);
+			const organizationIdRaw = input.organizationId;
+			const organizationId = organizationIdRaw && organizationIdRaw.trim().length > 0 ? organizationIdRaw : null;
 
-			const organizationId = sessionData?.activeOrganizationId || null;
+			if (organizationId) {
+				const { success } = await websitesApi.hasPermission({
+					headers: ctx.headers,
+					body: { permissions: { website: ['read'] } },
+				});
+				if (!success) {
+					throw new TRPCError({
+						code: 'FORBIDDEN',
+						message: 'Missing organization permissions.',
+					});
+				}
+			}
 
-			// Execute query directly without caching for now
 			try {
 				const whereClause = buildWebsiteFilter(
 					ctx.user.id,
-					organizationId
+					organizationId ?? undefined
 				);
 
 				const userWebsites = await ctx.db.query.websites.findMany({
