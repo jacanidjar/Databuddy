@@ -57,7 +57,8 @@ export async function handleChat(
 		model: openrouter.chat(modeConfig.model),
 		tools,
 		stopWhen: stepCountIs(modeConfig.stepCount),
-		messages: [{ role: 'system', content: prompt }, ...messages],
+		system: prompt,
+		messages,
 		temperature: modeConfig.temperature,
 		experimental_transform: smoothStream({ chunking: 'line' }),
 	});

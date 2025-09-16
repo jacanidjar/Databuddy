@@ -30,14 +30,12 @@ function validateSQL(sql: string): boolean {
 	const upperSQL = sql.toUpperCase();
 	const trimmed = upperSQL.trim();
 
-	// Check for dangerous keyword patterns
 	for (const keyword of FORBIDDEN_SQL_KEYWORDS) {
 		if (upperSQL.includes(keyword)) {
 			return false;
 		}
 	}
 
-	// Must start with SELECT or WITH (for CTEs)
 	return trimmed.startsWith('SELECT') || trimmed.startsWith('WITH');
 }
 
@@ -52,7 +50,6 @@ export const executeSqlQueryTool = tool({
 			),
 	}),
 	execute: async ({ sql }) => {
-		// Validate SQL for security
 		if (!validateSQL(sql)) {
 			throw new Error(
 				'Query failed security validation. Only SELECT and WITH statements are allowed.'
