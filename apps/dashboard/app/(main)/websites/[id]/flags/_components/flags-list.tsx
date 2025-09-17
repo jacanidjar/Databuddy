@@ -12,24 +12,13 @@ import {
 } from '@/components/ui/select';
 import { EmptyState } from './empty-state';
 import { FlagRow } from './flag-row';
-
-interface Flag {
-	id: string;
-	key: string;
-	name?: string | null;
-	description?: string | null;
-	type: string;
-	status: string;
-	rolloutPercentage?: number | null;
-	rules?: any;
-	createdAt: Date;
-}
+import type { Flag } from './types';
 
 interface FlagsListProps {
 	flags: Flag[];
 	isLoading: boolean;
 	onCreateFlag: () => void;
-	onEditFlag: (flagId: string) => void;
+	onEditFlag: (flag: Flag) => void;
 }
 
 type FlagStatus = 'active' | 'inactive' | 'archived';
@@ -121,7 +110,7 @@ export function FlagsList({
 						<FlagRow
 							flag={flag}
 							key={flag.id}
-							onEdit={() => onEditFlag(flag.id)}
+							onEdit={() => onEditFlag(flag)}
 						/>
 					))}
 				</div>

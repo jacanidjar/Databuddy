@@ -14,18 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { trpc } from '@/lib/trpc';
-
-interface Flag {
-	id: string;
-	key: string;
-	name?: string | null;
-	description?: string | null;
-	type: string;
-	status: string;
-	rolloutPercentage?: number | null;
-	rules?: any;
-	createdAt: Date;
-}
+import type { Flag } from './types';
 
 interface FlagRowProps {
 	flag: Flag;
@@ -56,11 +45,17 @@ export function FlagRow({
 
 	const handleArchive = async () => {
 		setIsArchiving(true);
+
+		utils.flags.list.setData({ websiteId: flag.websiteId ?? '' }, (oldData) =>
+			oldData?.filter((f) => f.id !== flag.id)
+		);
+
 		try {
 			await deleteMutation.mutateAsync({ id: flag.id });
 			toast.success('Flag archived successfully');
-			utils.flags.list.invalidate();
 		} catch (error) {
+			// Revert optimistic update on error
+			utils.flags.list.invalidate();
 			toast.error('Failed to archive flag');
 		} finally {
 			setIsArchiving(false);

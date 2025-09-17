@@ -35,9 +35,10 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { trpc } from '@/lib/trpc';
+import type { Flag, UserRule } from './types';
 
 const userRuleSchema = z.object({
-	type: z.enum(['user_id', 'email', 'property', 'percentage']),
+	type: z.enum(['user_id', 'email', 'property']),
 	operator: z.enum([
 		'equals',
 		'contains',
@@ -48,12 +49,11 @@ const userRuleSchema = z.object({
 		'exists',
 		'not_exists',
 	]),
-	field: z.string().optional(), // For property rules
+	field: z.string().optional(),
 	value: z.any().optional(),
-	values: z.array(z.any()).optional(), // For 'in' and 'not_in' operators
+	values: z.array(z.any()).optional(),
 	enabled: z.boolean(),
-	// Batch support
-	batch: z.boolean().default(false),
+	batch: z.boolean(),
 	batchValues: z.array(z.string()).optional(),
 });
 
@@ -86,19 +86,18 @@ interface FlagSheetProps {
 	isOpen: boolean;
 	onClose: () => void;
 	websiteId: string;
-	flagId?: string | null;
+	flag?: Flag | null;
 }
 
 export function FlagSheet({
 	isOpen,
 	onClose,
 	websiteId,
-	flagId,
+	flag,
 }: FlagSheetProps) {
 	const [keyManuallyEdited, setKeyManuallyEdited] = useState(false);
-	const [showPayload, setShowPayload] = useState(false);
 	const [sliderValue, setSliderValue] = useState(0);
-	const isEditing = Boolean(flagId);
+	const isEditing = Boolean(flag);
 
 	const form = useForm<FlagFormData>({
 		resolver: zodResolver(flagFormSchema),
@@ -115,46 +114,33 @@ export function FlagSheet({
 		},
 	});
 
-	// Fetch flag data for editing
-	const { data: flagData } = trpc.flags.getById.useQuery(
-		{ id: flagId ?? '', websiteId },
-		{ enabled: isEditing && Boolean(flagId) }
-	);
-
-	// Mutations
+	const utils = trpc.useUtils();
 	const createMutation = trpc.flags.create.useMutation();
 	const updateMutation = trpc.flags.update.useMutation();
 
-	// Reset form when sheet opens/closes or flag data changes
 	useEffect(() => {
 		if (isOpen) {
-			if (flagData && isEditing) {
-				const hasPayload = Boolean(flagData.payload);
+			if (flag && isEditing) {
 				form.reset({
-					key: flagData.key,
-					name: flagData.name || '',
-					description: flagData.description || '',
-					type: flagData.type as 'boolean' | 'rollout',
-					status: flagData.status as 'active' | 'inactive' | 'archived',
-					defaultValue: Boolean(flagData.defaultValue),
-					payload: flagData.payload
-						? JSON.stringify(flagData.payload, null, 2)
-						: '',
-					rolloutPercentage: flagData.rolloutPercentage || 0,
-					rules: (flagData.rules as any[]) || [],
+					key: flag.key,
+					name: flag.name || '',
+					description: flag.description || '',
+					type: flag.type as 'boolean' | 'rollout',
+					status: flag.status as 'active' | 'inactive' | 'archived',
+					defaultValue: Boolean(flag.defaultValue),
+					payload: '', // Payload is commented out
+					rolloutPercentage: flag.rolloutPercentage || 0,
+					rules: (flag.rules as any[]) || [],
 				});
-				setShowPayload(hasPayload);
-				setSliderValue(flagData.rolloutPercentage || 0);
+				setSliderValue(flag.rolloutPercentage || 0);
 			} else {
 				form.reset();
-				setShowPayload(false);
 				setSliderValue(0);
 			}
 			setKeyManuallyEdited(false);
 		}
-	}, [isOpen, flagData, isEditing, form]);
+	}, [isOpen, flag, isEditing, form]);
 
-	// Auto-generate key from name
 	const watchedName = form.watch('name');
 	const watchedType = form.watch('type');
 
@@ -178,21 +164,14 @@ export function FlagSheet({
 
 	const onSubmit = async (data: FlagFormData) => {
 		try {
-			let payload;
-			if (data.payload?.trim()) {
-				try {
-					payload = JSON.parse(data.payload);
-				} catch {
-					toast.error('Invalid JSON payload');
-					return;
-				}
-			}
+			// Payload is commented out for now
+			const payload = undefined;
 
 			const mutation = isEditing ? updateMutation : createMutation;
 			const mutationData =
-				isEditing && flagId
+				isEditing && flag
 					? {
-							id: flagId,
+							id: flag.id,
 							name: data.name || undefined,
 							description: data.description || undefined,
 							type: data.type,
@@ -217,6 +196,9 @@ export function FlagSheet({
 
 			await mutation.mutateAsync(mutationData as any);
 			toast.success(`Flag ${isEditing ? 'updated' : 'created'} successfully`);
+
+			// Invalidate to refresh with real server data
+			utils.flags.list.invalidate();
 			onClose();
 		} catch (error: any) {
 			if (
@@ -266,34 +248,20 @@ export function FlagSheet({
 					<Form {...form}>
 						<form className="space-y-8" onSubmit={form.handleSubmit(onSubmit)}>
 							{/* Basic Information */}
-							<div className="space-y-6">
-								<div className="space-y-1">
-									<h3 className="font-semibold text-base text-foreground">
-										Basic Information
-									</h3>
-									<p className="text-muted-foreground text-xs">
-										Configure the flag name, key, and description
-									</p>
-								</div>
-								<div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+							<div className="space-y-4">
+								<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 									<FormField
 										control={form.control}
 										name="name"
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel className="font-medium text-foreground text-sm">
-													Flag Name
-												</FormLabel>
+												<FormLabel>Flag Name</FormLabel>
 												<FormControl>
 													<Input
-														className="rounded border-border/50 focus:border-primary/50 focus:ring-primary/20"
-														placeholder="New Dashboard"
+														placeholder="New Dashboard Feature"
 														{...field}
 													/>
 												</FormControl>
-												<FormDescription className="text-muted-foreground text-xs">
-													A human-readable name for this flag
-												</FormDescription>
 												<FormMessage />
 											</FormItem>
 										)}
@@ -304,12 +272,14 @@ export function FlagSheet({
 										name="key"
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel className="font-medium text-foreground text-sm">
-													Key {!isEditing && '*'}
+												<FormLabel>
+													Key{' '}
+													{!isEditing && (
+														<span className="text-red-500">*</span>
+													)}
 												</FormLabel>
 												<FormControl>
 													<Input
-														className="rounded border-border/50 focus:border-primary/50 focus:ring-primary/20"
 														placeholder="new-dashboard"
 														{...field}
 														disabled={isEditing}
@@ -320,11 +290,6 @@ export function FlagSheet({
 														}}
 													/>
 												</FormControl>
-												<FormDescription className="text-muted-foreground text-xs">
-													{isEditing
-														? 'Cannot be changed after creation'
-														: 'Unique identifier used in code'}
-												</FormDescription>
 												<FormMessage />
 											</FormItem>
 										)}
@@ -336,80 +301,47 @@ export function FlagSheet({
 									name="description"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel className="font-medium text-foreground text-sm">
-												Description
-											</FormLabel>
+											<FormLabel>Description (Optional)</FormLabel>
 											<FormControl>
 												<Textarea
-													className="rounded border-border/50 focus:border-primary/50 focus:ring-primary/20"
-													placeholder="Enable the redesigned dashboard with improved UX"
+													placeholder="What does this flag control?"
+													rows={2}
 													{...field}
 												/>
 											</FormControl>
-											<FormDescription className="text-muted-foreground text-xs">
-												Optional description of what this flag controls
-											</FormDescription>
 											<FormMessage />
 										</FormItem>
 									)}
 								/>
 							</div>
 
-							{/* Flag Configuration */}
-							<div className="space-y-6">
-								<div className="space-y-1">
-									<h3 className="font-semibold text-base text-foreground">
-										Configuration
-									</h3>
-									<p className="text-muted-foreground text-xs">
-										Set flag type, status, and default behavior
-									</p>
-								</div>
-
-								<div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+							{/* Configuration */}
+							<div className="space-y-4">
+								<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 									<FormField
 										control={form.control}
 										name="type"
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel className="font-medium text-foreground text-sm">
-													Flag Type *
-												</FormLabel>
+												<FormLabel>Flag Type</FormLabel>
 												<Select
 													onValueChange={field.onChange}
 													value={field.value}
 												>
 													<FormControl>
-														<SelectTrigger className="rounded border-border/50">
+														<SelectTrigger>
 															<SelectValue />
 														</SelectTrigger>
 													</FormControl>
-													<SelectContent className="rounded">
+													<SelectContent>
 														<SelectItem value="boolean">
-															<div className="flex flex-col">
-																<span className="font-medium">Boolean</span>
-																<span className="text-muted-foreground text-xs">
-																	Simple on/off toggle
-																</span>
-															</div>
+															Boolean (On/Off)
 														</SelectItem>
 														<SelectItem value="rollout">
-															<div className="flex flex-col">
-																<span className="font-medium">Rollout</span>
-																<span className="text-muted-foreground text-xs">
-																	Percentage-based gradual release
-																</span>
-															</div>
+															Rollout (Percentage)
 														</SelectItem>
 													</SelectContent>
 												</Select>
-												<FormDescription className="text-muted-foreground text-xs">
-													{watchedType === 'boolean' &&
-														'Simple true/false flag for feature toggles'}
-													{watchedType === 'rollout' &&
-														'Gradual rollout with percentage control'}
-													{!watchedType && 'Choose the type of feature flag'}
-												</FormDescription>
 												<FormMessage />
 											</FormItem>
 										)}
@@ -420,203 +352,64 @@ export function FlagSheet({
 										name="status"
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel className="font-medium text-foreground text-sm">
-													Status
-												</FormLabel>
+												<FormLabel>Status</FormLabel>
 												<Select
 													onValueChange={field.onChange}
 													value={field.value}
 												>
 													<FormControl>
-														<SelectTrigger className="rounded border-border/50">
+														<SelectTrigger>
 															<SelectValue />
 														</SelectTrigger>
 													</FormControl>
-													<SelectContent className="rounded">
-														<SelectItem value="active">Active</SelectItem>
-														<SelectItem value="inactive">Inactive</SelectItem>
-														<SelectItem value="archived">Archived</SelectItem>
+													<SelectContent>
+														<SelectItem value="active">🟢 Active</SelectItem>
+														<SelectItem value="inactive">
+															🟡 Inactive
+														</SelectItem>
+														<SelectItem value="archived">
+															⚫ Archived
+														</SelectItem>
 													</SelectContent>
 												</Select>
-												<FormDescription className="text-muted-foreground text-xs">
-													Current flag status
-												</FormDescription>
 												<FormMessage />
 											</FormItem>
 										)}
 									/>
-								</div>
-
-								<FormField
-									control={form.control}
-									name="defaultValue"
-									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between rounded border bg-muted/30 p-4">
-											<div className="space-y-0.5">
-												<FormLabel className="font-medium text-foreground text-sm">
-													Default Value
-												</FormLabel>
-												<FormDescription className="text-muted-foreground text-xs">
-													Value returned when no conditions match
-												</FormDescription>
-											</div>
-											<FormControl>
-												<Switch
-													checked={field.value}
-													onCheckedChange={field.onChange}
-												/>
-											</FormControl>
-										</FormItem>
-									)}
-								/>
-							</div>
-
-							{/* Advanced Settings */}
-							<div className="space-y-6">
-								<div className="space-y-1">
-									<h3 className="font-semibold text-base text-foreground">
-										Advanced Settings
-									</h3>
-									<p className="text-muted-foreground text-xs">
-										Configure rollout and payload options
-									</p>
-								</div>
-
-								{/* Rollout Percentage - Only show for rollout type */}
-								{showRolloutPercentage && (
-									<div className="slide-in-from-top-2 animate-in duration-300">
-										<FormField
-											control={form.control}
-											name="rolloutPercentage"
-											render={({ field }) => {
-												// Sync slider value with form value when form changes
-												useEffect(() => {
-													const formValue = Number(field.value) || 0;
-													if (formValue !== sliderValue) {
-														setSliderValue(formValue);
-													}
-												}, [field.value]);
-
-												return (
-													<FormItem>
-														<FormLabel className="font-medium text-foreground text-sm">
-															Rollout Percentage
-														</FormLabel>
-														<FormControl>
-															<div className="space-y-3">
-																<Slider
-																	className="w-full"
-																	max={100}
-																	min={0}
-																	onValueChange={(values) => {
-																		const newValue = values[0];
-																		setSliderValue(newValue);
-																		field.onChange(newValue);
-																	}}
-																	step={1}
-																	value={[sliderValue]}
-																/>
-																<div className="flex items-center justify-between text-muted-foreground text-xs">
-																	<span>0%</span>
-																	<span className="font-medium text-foreground">
-																		{sliderValue}%
-																	</span>
-																	<span>100%</span>
-																</div>
-															</div>
-														</FormControl>
-														<FormDescription className="text-muted-foreground text-xs">
-															{sliderValue}% of users will see this flag enabled
-														</FormDescription>
-														<FormMessage />
-													</FormItem>
-												);
-											}}
-										/>
-									</div>
-								)}
-
-								{/* Payload Section - Expandable */}
-								<div className="space-y-3">
-									{showPayload ? (
-										<div className="slide-in-from-top-2 animate-in duration-300">
-											<FormField
-												control={form.control}
-												name="payload"
-												render={({ field }) => (
-													<FormItem>
-														<div className="flex items-center justify-between">
-															<FormLabel className="font-medium text-foreground text-sm">
-																Payload (Optional)
-															</FormLabel>
-															<Button
-																className="h-6 px-2 text-muted-foreground hover:text-foreground"
-																onClick={() => {
-																	setShowPayload(false);
-																	form.setValue('payload', '');
-																}}
-																size="sm"
-																type="button"
-																variant="ghost"
-															>
-																Remove
-															</Button>
-														</div>
-														<FormControl>
-															<Textarea
-																className="rounded border-border/50 font-mono text-sm focus:border-primary/50 focus:ring-primary/20"
-																placeholder='{"theme": "dark", "timeout": 5000}'
-																rows={4}
-																{...field}
-															/>
-														</FormControl>
-														<FormDescription className="text-muted-foreground text-xs">
-															JSON data returned when flag is enabled
-														</FormDescription>
-														<FormMessage />
-													</FormItem>
-												)}
-											/>
-										</div>
-									) : (
-										<Button
-											className="group w-full rounded border-2 border-primary/30 border-dashed transition-all duration-300 hover:border-primary/50 hover:bg-primary/5"
-											onClick={() => setShowPayload(true)}
-											type="button"
-											variant="outline"
-										>
-											<PlusIcon
-												className="mr-2 h-4 w-4 transition-transform duration-300 group-hover:rotate-90"
-												size={16}
-											/>
-											Add Payload (Optional)
-										</Button>
-									)}
-								</div>
-
-								{/* User Targeting Rules */}
-								<div className="slide-in-from-top-2 animate-in space-y-4 duration-300">
-									<div className="flex items-center justify-between">
-										<div>
-											<h3 className="font-medium text-foreground text-sm">
-												User Targeting
-											</h3>
-											<p className="text-muted-foreground text-xs">
-												Define rules to target specific users
-											</p>
-										</div>
-									</div>
 
 									<FormField
 										control={form.control}
-										name="rules"
+										name="defaultValue"
 										render={({ field }) => (
 											<FormItem>
+												<FormLabel>Default Value</FormLabel>
 												<FormControl>
-													<UserRulesBuilder
-														onChange={field.onChange}
-														rules={field.value || []}
-													/>
+													<div className="flex h-10 items-center justify-center rounded-md border bg-background px-3">
+														<div className="flex items-center gap-2">
+															<span
+																className={
+																	field.value
+																		? 'text-muted-foreground'
+																		: 'font-medium'
+																}
+															>
+																Off
+															</span>
+															<Switch
+																checked={field.value}
+																onCheckedChange={field.onChange}
+															/>
+															<span
+																className={
+																	field.value
+																		? 'font-medium'
+																		: 'text-muted-foreground'
+																}
+															>
+																On
+															</span>
+														</div>
+													</div>
 												</FormControl>
 												<FormMessage />
 											</FormItem>
@@ -625,32 +418,158 @@ export function FlagSheet({
 								</div>
 							</div>
 
-							<div className="flex justify-end gap-3 border-border/50 border-t pt-6">
-								<Button
-									className="rounded"
-									onClick={onClose}
-									type="button"
-									variant="outline"
-								>
+							{/* Rollout Percentage */}
+							{showRolloutPercentage && (
+								<div className="space-y-4">
+									<FormField
+										control={form.control}
+										name="rolloutPercentage"
+										render={({ field }) => {
+											useEffect(() => {
+												const formValue = Number(field.value) || 0;
+												if (formValue !== sliderValue) {
+													setSliderValue(formValue);
+												}
+											}, [field.value]);
+
+											return (
+												<FormItem>
+													<div className="flex items-center justify-between">
+														<FormLabel>Rollout Percentage</FormLabel>
+														<span className="font-mono font-semibold text-sm">
+															{sliderValue}%
+														</span>
+													</div>
+													<FormControl>
+														<div className="space-y-3">
+															<Slider
+																className="w-full"
+																max={100}
+																min={0}
+																onValueChange={(values) => {
+																	const newValue = values[0];
+																	setSliderValue(newValue);
+																	field.onChange(newValue);
+																}}
+																step={5}
+																value={[sliderValue]}
+															/>
+															<div className="flex justify-center gap-2">
+																{[0, 25, 50, 75, 100].map((preset) => (
+																	<button
+																		className={`rounded border px-2 py-1 text-xs transition-colors ${
+																			sliderValue === preset
+																				? 'border-primary bg-primary text-primary-foreground'
+																				: 'border-border hover:border-primary/50'
+																		}`}
+																		key={preset}
+																		onClick={() => {
+																			setSliderValue(preset);
+																			field.onChange(preset);
+																		}}
+																		type="button"
+																	>
+																		{preset}%
+																	</button>
+																))}
+															</div>
+														</div>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											);
+										}}
+									/>
+								</div>
+							)}
+
+							{/* Payload Section - Commented out for now */}
+							{/* <div className="space-y-3">
+								{showPayload ? (
+									<div className="slide-in-from-top-2 animate-in duration-300">
+										<FormField
+											control={form.control}
+											name="payload"
+											render={({ field }) => (
+												<FormItem>
+													<div className="flex items-center justify-between">
+														<FormLabel className="font-medium text-foreground text-sm">
+															Payload (Optional)
+														</FormLabel>
+														<Button
+															className="h-6 px-2 text-muted-foreground hover:text-foreground"
+															onClick={() => {
+																setShowPayload(false);
+																form.setValue('payload', '');
+															}}
+															size="sm"
+															type="button"
+															variant="ghost"
+														>
+															Remove
+														</Button>
+													</div>
+													<FormControl>
+														<Textarea
+															className="rounded border-border/50 font-mono text-sm focus:border-primary/50 focus:ring-primary/20"
+															placeholder='{"theme": "dark", "timeout": 5000}'
+															rows={4}
+															{...field}
+														/>
+													</FormControl>
+													<FormDescription className="text-muted-foreground text-xs">
+														JSON data returned when flag is enabled
+													</FormDescription>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									</div>
+								) : (
+									<Button
+										className="group w-full rounded border-2 border-primary/30 border-dashed transition-all duration-300 hover:border-primary/50 hover:bg-primary/5"
+										onClick={() => setShowPayload(true)}
+										type="button"
+										variant="outline"
+									>
+										<PlusIcon
+											className="mr-2 h-4 w-4 transition-transform duration-300 group-hover:rotate-90"
+											size={16}
+										/>
+										Add Payload (Optional)
+									</Button>
+								)}
+							</div> */}
+
+							{/* User Targeting Rules */}
+							<div className="space-y-4">
+								<FormField
+									control={form.control}
+									name="rules"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>User Targeting (Optional)</FormLabel>
+											<FormControl>
+												<UserRulesBuilder
+													onChange={field.onChange}
+													rules={field.value || []}
+												/>
+											</FormControl>
+											<FormDescription>
+												Define rules to target specific users or groups
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
+
+							<div className="flex justify-end gap-3 border-t pt-6">
+								<Button onClick={onClose} type="button" variant="outline">
 									Cancel
 								</Button>
-								<Button
-									className="relative rounded"
-									disabled={isLoading}
-									type="submit"
-								>
-									{isLoading && (
-										<div className="absolute left-3">
-											<div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
-										</div>
-									)}
-									<span className={isLoading ? 'ml-6' : ''}>
-										{isLoading
-											? 'Saving...'
-											: isEditing
-												? 'Update Flag'
-												: 'Create Flag'}
-									</span>
+								<Button disabled={isLoading} type="submit">
+									{isLoading ? 'Saving...' : isEditing ? 'Update' : 'Create'}
 								</Button>
 							</div>
 						</form>
@@ -662,26 +581,6 @@ export function FlagSheet({
 }
 
 // User Rules Builder Component
-interface UserRule {
-	type: 'user_id' | 'email' | 'property' | 'percentage';
-	operator:
-		| 'equals'
-		| 'contains'
-		| 'starts_with'
-		| 'ends_with'
-		| 'in'
-		| 'not_in'
-		| 'exists'
-		| 'not_exists';
-	field?: string;
-	value?: any;
-	values?: any[];
-	enabled: boolean;
-	// Batch support
-	batch: boolean;
-	batchValues?: string[];
-}
-
 interface UserRulesBuilderProps {
 	rules: UserRule[];
 	onChange: (rules: UserRule[]) => void;
@@ -704,11 +603,7 @@ function UserRulesBuilder({ rules, onChange }: UserRulesBuilderProps) {
 	};
 
 	const canUseBatch = (rule: UserRule) => {
-		return (
-			rule.type !== 'percentage' &&
-			rule.operator !== 'exists' &&
-			rule.operator !== 'not_exists'
-		);
+		return rule.operator !== 'exists' && rule.operator !== 'not_exists';
 	};
 
 	const updateRule = (index: number, updatedRule: Partial<UserRule>) => {
@@ -804,7 +699,6 @@ function UserRulesBuilder({ rules, onChange }: UserRulesBuilderProps) {
 									{rule.type === 'user_id' && 'User ID'}
 									{rule.type === 'email' && 'Email'}
 									{rule.type === 'property' && 'Property'}
-									{rule.type === 'percentage' && 'Percentage'}
 									{rule.batch && ' (Batch)'}
 								</span>
 							</div>
@@ -834,9 +728,8 @@ function UserRulesBuilder({ rules, onChange }: UserRulesBuilderProps) {
 											const newType = value as UserRule['type'];
 											updateRule(index, {
 												type: newType,
-												batch: newType === 'percentage' ? false : rule.batch,
-												operator:
-													newType === 'percentage' ? 'equals' : rule.operator,
+												batch: rule.batch,
+												operator: rule.operator,
 											});
 										}}
 										value={rule.type}
@@ -847,10 +740,7 @@ function UserRulesBuilder({ rules, onChange }: UserRulesBuilderProps) {
 										<SelectContent>
 											<SelectItem value="user_id">User ID</SelectItem>
 											<SelectItem value="email">Email</SelectItem>
-											<SelectItem value="property">Custom Property</SelectItem>
-											<SelectItem value="percentage">
-												Percentage Rollout
-											</SelectItem>
+											<SelectItem value="property">Property</SelectItem>
 										</SelectContent>
 									</Select>
 								</div>
@@ -900,33 +790,7 @@ function UserRulesBuilder({ rules, onChange }: UserRulesBuilderProps) {
 							)}
 
 							{/* Condition & Value */}
-							{rule.type === 'percentage' ? (
-								<div>
-									<label
-										className="mb-1 block font-medium text-sm"
-										htmlFor={`${ruleId}-percentage`}
-									>
-										Percentage of Users
-									</label>
-									<div className="flex items-center gap-2">
-										<Input
-											id={`${ruleId}-percentage`}
-											max="100"
-											min="0"
-											onChange={(e) =>
-												updateRule(index, { value: Number(e.target.value) })
-											}
-											placeholder="50"
-											type="number"
-											value={rule.value || ''}
-										/>
-										<span className="font-medium text-sm">%</span>
-									</div>
-									<p className="mt-1 text-muted-foreground text-xs">
-										{rule.value || 0}% of users will match this rule
-									</p>
-								</div>
-							) : rule.batch ? (
+							{rule.batch ? (
 								<div>
 									<label
 										className="mb-1 block font-medium text-sm"
@@ -1069,13 +933,13 @@ function UserRulesBuilder({ rules, onChange }: UserRulesBuilderProps) {
 			})}
 
 			<Button
-				className="w-full rounded border-2 border-primary/30 border-dashed transition-all duration-300 hover:border-primary/50 hover:bg-primary/5"
+				className="w-full"
 				onClick={addRule}
 				type="button"
 				variant="outline"
 			>
-				<PlusIcon className="mr-2 h-4 w-4" size={16} />
-				Add Another Rule
+				<PlusIcon className="mr-2 h-4 w-4" />
+				Add Rule
 			</Button>
 		</div>
 	);

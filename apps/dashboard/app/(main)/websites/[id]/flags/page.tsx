@@ -11,6 +11,7 @@ import { isAnalyticsRefreshingAtom } from '@/stores/jotai/filterAtoms';
 import { WebsitePageHeader } from '../_components/website-page-header';
 import { FlagSheet } from './_components/flag-sheet';
 import { FlagsList } from './_components/flags-list';
+import type { Flag } from './_components/types';
 
 type FlagStatus = 'active' | 'inactive' | 'archived';
 
@@ -54,7 +55,7 @@ export default function FlagsPage() {
 	const websiteId = id as string;
 	const [isRefreshing, setIsRefreshing] = useAtom(isAnalyticsRefreshingAtom);
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
-	const [editingFlag, setEditingFlag] = useState<string | null>(null);
+	const [editingFlag, setEditingFlag] = useState<Flag | null>(null);
 
 	const { data: website } = useWebsite(websiteId);
 
@@ -83,15 +84,14 @@ export default function FlagsPage() {
 		setIsSheetOpen(true);
 	};
 
-	const handleEditFlag = (flagId: string) => {
-		setEditingFlag(flagId);
+	const handleEditFlag = (flag: Flag) => {
+		setEditingFlag(flag);
 		setIsSheetOpen(true);
 	};
 
 	const handleSheetClose = () => {
 		setIsSheetOpen(false);
 		setEditingFlag(null);
-		refetchFlags();
 	};
 
 	if (flagsError) {
@@ -155,7 +155,7 @@ export default function FlagsPage() {
 			{isSheetOpen && (
 				<Suspense fallback={null}>
 					<FlagSheet
-						flagId={editingFlag}
+						flag={editingFlag}
 						isOpen={isSheetOpen}
 						onClose={handleSheetClose}
 						websiteId={websiteId}
