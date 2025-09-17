@@ -88,7 +88,6 @@ export const contents: SidebarSection[] = [
 				title: 'Feature Flags',
 				href: '/docs/features/feature-flags',
 				icon: FlagIcon,
-				isNew: true,
 			},
 		],
 	},
