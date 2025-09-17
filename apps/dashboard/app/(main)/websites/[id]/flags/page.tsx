@@ -4,7 +4,6 @@ import { FlagIcon } from '@phosphor-icons/react';
 import { useAtom } from 'jotai';
 import { useParams } from 'next/navigation';
 import { Suspense, useCallback, useState } from 'react';
-import { TestFlags } from '@/components/test-flags';
 import { Card, CardContent } from '@/components/ui/card';
 import { useWebsite } from '@/hooks/use-websites';
 import { trpc } from '@/lib/trpc';
@@ -143,8 +142,6 @@ export default function FlagsPage() {
 				websiteId={websiteId}
 				websiteName={website?.name || undefined}
 			/>
-
-			<TestFlags />
 
 			<Suspense fallback={<FlagsListSkeleton />}>
 				<FlagsList

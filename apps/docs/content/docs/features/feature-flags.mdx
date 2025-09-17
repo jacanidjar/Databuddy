@@ -1,0 +1,144 @@
+---
+title: Feature Flags
+description: Control feature rollouts and A/B testing with Databuddy's feature flag system
+---
+
+import { Tab, Tabs } from "@/components/docs";
+import { Callout } from "@/components/docs";
+import { CodeBlock } from "@/components/docs";
+
+Feature flags allow you to control feature rollouts and conduct A/B testing without deploying new code. Enable or disable features instantly from your dashboard.
+
+<Callout type="info">
+  **Real-time Updates** | **Client-side Caching** | **User Targeting**
+</Callout>
+
+## Quick Start
+
+<Tabs items={['React/Next.js', 'Setup']}>
+
+<Tab>
+<CodeBlock language="tsx" filename="app.tsx">
+{`'use client';
+
+import { FlagsProvider, useFlags } from '@databuddy/sdk/react';
+
+function App() {
+  return (
+    <FlagsProvider
+      clientId="your-client-id"
+      apiUrl="https://api.databuddy.cc"
+      user={{
+        userId: "user-123",
+        email: "user@example.com"
+      }}
+    >
+      <MyComponent />
+    </FlagsProvider>
+  );
+}
+
+function MyComponent() {
+  const { isEnabled } = useFlags();
+  
+  const showNewFeature = isEnabled('new-feature');
+  
+  return (
+    <div>
+      {showNewFeature && <NewFeature />}
+      <button>Click me</button>
+    </div>
+  );
+}`}
+</CodeBlock>
+</Tab>
+
+<Tab>
+<CodeBlock language="bash" filename="terminal">
+{`# Install the SDK
+bun add @databuddy/sdk`}
+</CodeBlock>
+</Tab>
+
+</Tabs>
+
+## Flag Types
+
+### Boolean Flags
+Simple on/off switches for features.
+
+<CodeBlock language="tsx">
+{`const showFeature = isEnabled('my-feature');`}
+</CodeBlock>
+
+### Rollout Flags
+Gradually roll out features to a percentage of users.
+
+<CodeBlock language="tsx">
+{`// Set rollout percentage in dashboard (e.g., 25%)
+const showNewUI = isEnabled('new-ui-rollout');`}
+</CodeBlock>
+
+## Configuration
+
+<CodeBlock language="tsx" filename="provider.tsx">
+{`<FlagsProvider
+  clientId="your-website-id"
+  apiUrl="https://api.databuddy.cc"
+  user={{
+    userId: currentUser.id,
+    email: currentUser.email
+  }}
+  debug={process.env.NODE_ENV === 'development'}
+>
+  <App />
+</FlagsProvider>`}
+</CodeBlock>
+
+## Hook API
+
+<CodeBlock language="tsx">
+{`const { isEnabled, fetchAllFlags, refresh } = useFlags();
+
+// Check if flag is enabled
+const showFeature = isEnabled('my-feature');
+
+// Refresh all flags
+await fetchAllFlags();`}
+</CodeBlock>
+
+## User Targeting
+
+Target specific users or groups from your dashboard:
+
+- **User ID**: Target specific users
+- **Email**: Target by email or domain
+- **Properties**: Target by custom user properties
+
+<CodeBlock language="tsx">
+{`<FlagsProvider
+  user={{
+    userId: "user-123",
+    email: "user@example.com",
+    properties: {
+      plan: 'premium',
+      region: 'us-east'
+    }
+  }}
+>`}
+</CodeBlock>
+
+## Debug Mode
+
+<CodeBlock language="tsx">
+{`<FlagsProvider
+  debug={true}
+  // ... other props
+>`}
+</CodeBlock>
+
+Enable debug mode to see flag evaluation in the browser console.
+
+---
+
+Ready to get started? [Create your first feature flag in the dashboard →](/dashboard)
