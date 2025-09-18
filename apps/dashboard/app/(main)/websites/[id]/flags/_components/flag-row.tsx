@@ -1,18 +1,11 @@
 'use client';
 
-import {
-	CaretDownIcon,
-	CaretUpIcon,
-	CopyIcon,
-	FlagIcon,
-	PencilIcon,
-	TrashIcon,
-} from '@phosphor-icons/react';
+import { CaretDownIcon, CaretUpIcon, FlagIcon } from '@phosphor-icons/react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { trpc } from '@/lib/trpc';
+import { FlagActions } from './flag-actions';
 import type { Flag } from './types';
 
 interface FlagRowProps {
@@ -35,31 +28,6 @@ export function FlagRow({
 	const [isArchiving, setIsArchiving] = useState(false);
 
 	const utils = trpc.useUtils();
-	const deleteMutation = trpc.flags.delete.useMutation();
-
-	const handleCopyKey = () => {
-		navigator.clipboard.writeText(flag.key);
-		toast.success('Flag key copied to clipboard');
-	};
-
-	const handleArchive = async () => {
-		setIsArchiving(true);
-
-		utils.flags.list.setData({ websiteId: flag.websiteId ?? '' }, (oldData) =>
-			oldData?.filter((f) => f.id !== flag.id)
-		);
-
-		try {
-			await deleteMutation.mutateAsync({ id: flag.id });
-			toast.success('Flag archived successfully');
-		} catch (error) {
-			// Revert optimistic update on error
-			utils.flags.list.invalidate();
-			toast.error('Failed to archive flag');
-		} finally {
-			setIsArchiving(false);
-		}
-	};
 
 	const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
 		const target = e.target as HTMLElement;
@@ -174,42 +142,11 @@ export function FlagRow({
 					)}
 				</div>
 				<div className="flex items-center gap-2">
-					<Button
-						className="focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
-						onClick={(e) => {
-							e.stopPropagation();
-							handleCopyKey();
-						}}
-						size="icon"
-						type="button"
-						variant="ghost"
-					>
-						<CopyIcon className="h-4 w-4" weight="duotone" />
-					</Button>
-					<Button
-						className="focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
-						onClick={(e) => {
-							e.stopPropagation();
-							onEdit();
-						}}
-						size="icon"
-						type="button"
-						variant="ghost"
-					>
-						<PencilIcon className="h-4 w-4" weight="duotone" />
-					</Button>
-					<Button
-						className="focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
-						onClick={(e) => {
-							e.stopPropagation();
-							handleArchive();
-						}}
-						size="icon"
-						type="button"
-						variant="ghost"
-					>
-						<TrashIcon className="h-4 w-4" weight="duotone" />
-					</Button>
+					<FlagActions
+						flag={flag}
+						onDeleted={() => utils.flags.list.invalidate()}
+						onEdit={() => onEdit()}
+					/>
 					{onToggle && (
 						<Button
 							className="focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"

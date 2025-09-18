@@ -32,6 +32,7 @@ import {
 	SheetTitle,
 } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
+import { TagsChat } from '@/components/ui/tags';
 import { Textarea } from '@/components/ui/textarea';
 import { trpc } from '@/lib/trpc';
 import type { Flag, UserRule } from './types';
@@ -574,10 +575,6 @@ interface UserRulesBuilderProps {
 }
 
 function UserRulesBuilder({ rules, onChange }: UserRulesBuilderProps) {
-	const [batchTextValues, setBatchTextValues] = useState<
-		Record<number, string>
-	>({});
-
 	const addRule = () => {
 		const newRule: UserRule = {
 			type: 'user_id',
@@ -600,49 +597,8 @@ function UserRulesBuilder({ rules, onChange }: UserRulesBuilderProps) {
 	};
 
 	const removeRule = (index: number) => {
-		// Clean up local state when removing a rule
-		setBatchTextValues((prev) => {
-			const newValues = { ...prev };
-			delete newValues[index];
-			// Shift indices down for rules after the removed one
-			const shiftedValues: Record<number, string> = {};
-			Object.entries(newValues).forEach(([key, value]) => {
-				const numKey = Number(key);
-				if (numKey > index) {
-					shiftedValues[numKey - 1] = value;
-				} else {
-					shiftedValues[numKey] = value;
-				}
-			});
-			return shiftedValues;
-		});
 		onChange(rules.filter((_, i) => i !== index));
 	};
-
-	const updateBatchText = (index: number, rawValue: string) => {
-		// Update local state for textarea display
-		setBatchTextValues((prev) => ({ ...prev, [index]: rawValue }));
-
-		// Process the value for the rule
-		const batchValues = rawValue
-			.split('\n')
-			.map((v) => v.trim())
-			.filter(Boolean);
-
-		updateRule(index, { batchValues });
-	};
-
-	useEffect(() => {
-		const initialValues: Record<number, string> = {};
-		rules.forEach((rule, index) => {
-			if (rule.batch && rule.batchValues?.length) {
-				initialValues[index] = rule.batchValues.join('\n');
-			}
-		});
-		if (Object.keys(initialValues).length > 0) {
-			setBatchTextValues((prev) => ({ ...prev, ...initialValues }));
-		}
-	}, [rules]);
 
 	if (rules.length === 0) {
 		return (
@@ -779,35 +735,26 @@ function UserRulesBuilder({ rules, onChange }: UserRulesBuilderProps) {
 							{/* Condition & Value */}
 							{rule.batch ? (
 								<div>
-									<label
-										className="mb-1 block font-medium text-sm"
-										htmlFor={`${ruleId}-batch`}
-									>
+									<div className="mb-1 block font-medium text-sm">
 										{rule.type === 'user_id' && 'User IDs'}
 										{rule.type === 'email' && 'Email Addresses'}
 										{rule.type === 'property' && 'Property Values'}
-										{' (one per line)'}
-									</label>
-									<Textarea
-										id={`${ruleId}-batch`}
-										onChange={(e) => updateBatchText(index, e.target.value)}
+									</div>
+									<TagsChat
+										allowDuplicates={false}
+										maxTags={100}
+										onChange={(values) =>
+											updateRule(index, { batchValues: values })
+										}
 										placeholder={
 											rule.type === 'user_id'
-												? 'user_123\nuser_456\nuser_789'
+												? 'Type user ID and press Enter...'
 												: rule.type === 'email'
-													? 'user@example.com\nadmin@company.com\ntest@domain.org'
-													: 'premium\nenterprise\nvip'
+													? 'Type email address and press Enter...'
+													: 'Type property value and press Enter...'
 										}
-										rows={4}
-										value={
-											batchTextValues[index] ||
-											rule.batchValues?.join('\n') ||
-											''
-										}
+										values={rule.batchValues || []}
 									/>
-									<p className="mt-1 text-muted-foreground text-xs">
-										{rule.batchValues?.length || 0} values entered
-									</p>
 								</div>
 							) : (
 								<div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -854,22 +801,23 @@ function UserRulesBuilder({ rules, onChange }: UserRulesBuilderProps) {
 													htmlFor={`${ruleId}-value`}
 												>
 													{rule.operator === 'in' || rule.operator === 'not_in'
-														? 'Values (comma-separated)'
+														? 'Values'
 														: 'Value'}
 												</label>
 												{rule.operator === 'in' ||
 												rule.operator === 'not_in' ? (
-													<Input
-														id={`${ruleId}-value`}
-														onChange={(e) => {
-															const values = e.target.value
-																.split(',')
-																.map((v) => v.trim())
-																.filter(Boolean);
-															updateRule(index, { values });
-														}}
-														placeholder="value1, value2, value3"
-														value={rule.values?.join(', ') || ''}
+													<TagsChat
+														allowDuplicates={false}
+														maxTags={20}
+														onChange={(values) => updateRule(index, { values })}
+														placeholder={
+															rule.type === 'user_id'
+																? 'Type user ID and press Enter...'
+																: rule.type === 'email'
+																	? 'Type email address and press Enter...'
+																	: 'Type property value and press Enter...'
+														}
+														values={rule.values || []}
 													/>
 												) : (
 													<Input
@@ -877,7 +825,13 @@ function UserRulesBuilder({ rules, onChange }: UserRulesBuilderProps) {
 														onChange={(e) =>
 															updateRule(index, { value: e.target.value })
 														}
-														placeholder="Enter value"
+														placeholder={
+															rule.type === 'user_id'
+																? 'Enter user ID'
+																: rule.type === 'email'
+																	? 'Enter email address'
+																	: 'Enter property value'
+														}
 														value={rule.value || ''}
 													/>
 												)}

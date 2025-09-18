@@ -1,6 +1,10 @@
 'use client';
 
-import { FlagIcon } from '@phosphor-icons/react';
+import {
+	FlagIcon,
+	FunnelSimpleIcon,
+	MagnifyingGlassIcon,
+} from '@phosphor-icons/react';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import {
@@ -38,7 +42,6 @@ export function FlagsList({
 			return false;
 		}
 
-		// Search filter
 		if (searchQuery) {
 			const query = searchQuery.toLowerCase();
 			return (
@@ -62,30 +65,36 @@ export function FlagsList({
 	return (
 		<div className="space-y-4">
 			{/* Filters */}
-			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<div className="flex flex-1 gap-4">
-					<Input
-						className="max-w-sm"
-						onChange={(e) => setSearchQuery(e.target.value)}
-						placeholder="Search flags..."
-						value={searchQuery}
-					/>
-					<Select
-						onValueChange={(value: FlagStatus | 'all') =>
-							setStatusFilter(value)
-						}
-						value={statusFilter}
-					>
-						<SelectTrigger className="w-32">
-							<SelectValue />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">All</SelectItem>
-							<SelectItem value="active">Active</SelectItem>
-							<SelectItem value="inactive">Inactive</SelectItem>
-							<SelectItem value="archived">Archived</SelectItem>
-						</SelectContent>
-					</Select>
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+				<div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+					<div className="relative max-w-sm flex-1">
+						<MagnifyingGlassIcon className="-translate-y-1/2 pointer-events-none absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
+						<Input
+							className="pl-9"
+							onChange={(e) => setSearchQuery(e.target.value)}
+							placeholder="Search flags by key, name, description"
+							value={searchQuery}
+						/>
+					</div>
+					<div className="flex items-center gap-2">
+						<FunnelSimpleIcon className="h-4 w-4 text-muted-foreground" />
+						<Select
+							onValueChange={(value: FlagStatus | 'all') =>
+								setStatusFilter(value)
+							}
+							value={statusFilter}
+						>
+							<SelectTrigger className="w-36">
+								<SelectValue placeholder="Status" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="all">All statuses</SelectItem>
+								<SelectItem value="active">Active</SelectItem>
+								<SelectItem value="inactive">Inactive</SelectItem>
+								<SelectItem value="archived">Archived</SelectItem>
+							</SelectContent>
+						</Select>
+					</div>
 				</div>
 				<div className="text-muted-foreground text-sm">
 					{filteredFlags.length} flag{filteredFlags.length !== 1 ? 's' : ''}
