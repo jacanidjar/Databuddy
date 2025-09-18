@@ -11,17 +11,17 @@ interface EmptyStateProps {
 
 export function EmptyState({ onCreateFlag }: EmptyStateProps) {
 	return (
-		<Card className="fade-in-50 animate-in rounded-xl border-2 border-dashed bg-gradient-to-br from-background to-muted/20 duration-700">
+		<Card className="rounded-xl border-2 border-dashed bg-gradient-to-br from-background to-muted/20">
 			<CardContent className="flex flex-col items-center justify-center px-8 py-16">
 				<div className="group relative mb-8">
-					<div className="rounded-full border-2 border-primary/20 bg-primary/10 p-6 transition-transform duration-300 group-hover:scale-105">
+					<div className="rounded-full border-2 border-primary/20 bg-primary/10 p-6">
 						<FlagIcon
 							className="h-16 w-16 text-primary"
 							size={16}
 							weight="duotone"
 						/>
 					</div>
-					<div className="-top-2 -right-2 absolute animate-pulse rounded-full border-2 border-primary/20 bg-background p-2 shadow-sm">
+					<div className="-top-2 -right-2 absolute rounded-full border-2 border-primary/20 bg-background p-2 shadow-sm">
 						<PlusIcon className="h-6 w-6 text-primary" size={16} />
 					</div>
 				</div>
