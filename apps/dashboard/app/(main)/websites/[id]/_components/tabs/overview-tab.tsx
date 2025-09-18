@@ -876,7 +876,6 @@ export function WebsiteOverviewTab({
 								<WarningIcon
 									aria-label="Performance warning"
 									size={16}
-									title="Performance warning"
 									weight="fill"
 								/>
 								<span className="sr-only">Performance notice:</span>

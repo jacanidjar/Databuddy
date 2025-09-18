@@ -51,7 +51,6 @@ interface BrowserVersion {
 	version: string;
 	visitors: number;
 	pageviews: number;
-	sessions: number;
 }
 
 interface BrowserEntry {
@@ -59,7 +58,6 @@ interface BrowserEntry {
 	browserName: string;
 	visitors: number;
 	pageviews: number;
-	sessions: number;
 	percentage: number;
 	versions: BrowserVersion[];
 }
@@ -71,8 +69,8 @@ interface ScreenResolutionEntry {
 }
 
 interface DeviceData {
-	device_type: string[];
 	browser_name: string[];
+	browser_versions: string[];
 	os_name: string[];
 	screen_resolution: ScreenResolutionEntry[];
 	connection_type: string[];
@@ -131,8 +129,6 @@ const getConnectionIcon = (connection: string): React.ReactNode => {
 	return <GlobeIcon className="h-4 w-4 text-primary" />;
 };
 
-// API already provides clean, normalized data - no transformation needed
-
 export function WebsiteAudienceTab({
 	websiteId,
 	dateRange,
@@ -152,8 +148,8 @@ export function WebsiteAudienceTab({
 			{
 				id: 'device-data',
 				parameters: [
-					'device_type',
 					'browser_name',
+					'browser_versions',
 					'os_name',
 					'screen_resolution',
 					'connection_type',
@@ -172,10 +168,6 @@ export function WebsiteAudienceTab({
 	} = useBatchDynamicQuery(websiteId, dateRange, batchQueries);
 
 	const handleRefresh = useCallback(async () => {
-		if (!isRefreshing) {
-			return;
-		}
-
 		try {
 			await refetchBatch();
 		} catch (error) {
@@ -183,7 +175,7 @@ export function WebsiteAudienceTab({
 		} finally {
 			setIsRefreshing(false);
 		}
-	}, [isRefreshing, refetchBatch, setIsRefreshing]);
+	}, [refetchBatch, setIsRefreshing]);
 
 	useEffect(() => {
 		if (isRefreshing) {
@@ -192,15 +184,12 @@ export function WebsiteAudienceTab({
 	}, [isRefreshing, handleRefresh]);
 
 	const onAddFilter = useCallback(
-		(field: string, value: string, _tableTitle?: string) => {
-			// The field parameter now contains the correct filter field from the tab configuration
-			const filter = {
+		(field: string, value: string) => {
+			addFilter({
 				field,
 				operator: 'eq' as const,
 				value,
-			};
-
-			addFilter(filter);
+			});
 		},
 		[addFilter]
 	);
@@ -216,8 +205,8 @@ export function WebsiteAudienceTab({
 					languages: [],
 				},
 				device: {
-					device_type: [],
 					browser_name: [],
+					browser_versions: [],
 					os_name: [],
 					screen_resolution: [],
 					connection_type: [],
@@ -230,36 +219,52 @@ export function WebsiteAudienceTab({
 		);
 		const deviceResult = batchResults.find((r) => r.queryId === 'device-data');
 
+		const geographicData = geographicResult?.data || {};
+		const deviceData = deviceResult?.data || {};
+
 		return {
 			geographic: {
-				countries: geographicResult?.data?.country || [],
-				regions: geographicResult?.data?.region || [],
-				cities: geographicResult?.data?.city || [],
-				timezones: geographicResult?.data?.timezone || [],
-				languages: geographicResult?.data?.language || [],
+				countries: geographicData.country || [],
+				regions: geographicData.region || [],
+				cities: geographicData.city || [],
+				timezones: geographicData.timezone || [],
+				languages: geographicData.language || [],
 			},
 			device: {
-				device_type: deviceResult?.data?.device_type || [],
-				browser_name: deviceResult?.data?.browser_name || [],
-				os_name: deviceResult?.data?.os_name || [],
-				screen_resolution: deviceResult?.data?.screen_resolution || [],
-				connection_type: deviceResult?.data?.connection_type || [],
+				browser_name: deviceData.browser_name || [],
+				browser_versions: deviceData.browser_versions || [],
+				os_name: deviceData.os_name || [],
+				screen_resolution: deviceData.screen_resolution || [],
+				connection_type: deviceData.connection_type || [],
 			},
 		};
 	}, [batchResults]);
 
 	const processedBrowserData = useMemo((): BrowserEntry[] => {
-		// API already provides clean data with percentages and sorting
-		return (processedData.device.browser_name || []).map((browser: any) => ({
-			...browser,
-			browserName: browser.name,
-			sessions: browser.sessions || 0,
-			versions: [], // No versions in simple browser data
-		}));
-	}, [processedData.device.browser_name]);
+		const browserVersions = processedData.device.browser_versions || [];
+		const browserData = processedData.device.browser_name || [];
+
+		return browserData.map((browser: any) => {
+			const versions = browserVersions
+				.filter((version: any) => version.name.startsWith(`${browser.name} `))
+				.map((version: any) => ({
+					version: version.name.slice(browser.name.length + 1),
+					visitors: version.visitors,
+					pageviews: version.pageviews,
+				}));
+
+			return {
+				...browser,
+				browserName: browser.name,
+				versions,
+			};
+		});
+	}, [
+		processedData.device.browser_name,
+		processedData.device.browser_versions,
+	]);
 
 	const processedConnectionData = useMemo((): ConnectionEntry[] => {
-		// API already provides sorted data with percentages
 		return (processedData.device.connection_type || []).map((item: any) => ({
 			...item,
 			iconComponent: getConnectionIcon(item.name || ''),
