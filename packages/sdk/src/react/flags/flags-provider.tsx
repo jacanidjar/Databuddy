@@ -71,51 +71,17 @@ export function FlagsProvider({ children, ...config }: FlagsProviderProps) {
 			return;
 		}
 
-		try {
-			const cachedFlags: Record<string, FlagResult> = {};
-			const flagKeys = Object.keys(localStorage).filter((key) =>
-				key.startsWith('db-flag-')
-			);
-
-			for (const key of flagKeys) {
-				const flagKey = key.replace('db-flag-', '');
-				try {
-					const value = localStorage.getItem(key);
-					if (value) {
-						cachedFlags[flagKey] = JSON.parse(value);
-					}
-				} catch {}
-			}
-
-			if (Object.keys(cachedFlags).length > 0) {
-				flagsStore.set(memoryFlagsAtom, cachedFlags);
-				if (config.debug) {
-					console.log(
-						'[Databuddy Flags] Loaded cached flags immediately:',
-						Object.keys(cachedFlags)
-					);
-				}
-			}
-		} catch (err) {
-			if (config.debug) {
-				console.warn(
-					'[Databuddy Flags] Error loading cached flags immediately:',
-					err
-				);
-			}
-		}
-
 		flagStorage
 			.getAll()
 			.then((cachedFlags) => {
 				if (Object.keys(cachedFlags).length > 0) {
-					flagsStore.set(memoryFlagsAtom, (prev) => ({
-						...prev,
-						...(cachedFlags as Record<string, FlagResult>),
-					}));
+					flagsStore.set(
+						memoryFlagsAtom,
+						cachedFlags as Record<string, FlagResult>
+					);
 					if (config.debug) {
 						console.log(
-							'[Databuddy Flags] Loaded cached flags from IndexedDB:',
+							'[Databuddy Flags] Loaded cached flags:',
 							Object.keys(cachedFlags)
 						);
 					}
@@ -123,7 +89,7 @@ export function FlagsProvider({ children, ...config }: FlagsProviderProps) {
 			})
 			.catch((err) => {
 				if (config.debug) {
-					console.warn('[Databuddy Flags] Error loading from IndexedDB:', err);
+					console.warn('[Databuddy Flags] Error loading cached flags:', err);
 				}
 			});
 	};
