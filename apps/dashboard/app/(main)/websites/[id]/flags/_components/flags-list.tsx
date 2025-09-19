@@ -6,6 +6,7 @@ import {
 	MagnifyingGlassIcon,
 } from '@phosphor-icons/react';
 import { useState } from 'react';
+import { EmptyState } from '@/components/empty-state';
 import { Input } from '@/components/ui/input';
 import {
 	Select,
@@ -14,7 +15,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { EmptyState } from './empty-state';
 import { FlagRow } from './flag-row';
 import type { Flag } from './types';
 
@@ -59,7 +59,24 @@ export function FlagsList({
 	}
 
 	if (flags.length === 0) {
-		return <EmptyState onCreateFlag={onCreateFlag} />;
+		return (
+			<EmptyState
+				action={{
+					label: 'Create Your First Flag',
+					onClick: onCreateFlag,
+				}}
+				description="Create your first feature flag to start controlling feature rollouts and A/B testing across your application."
+				icon={
+					<FlagIcon
+						className="h-16 w-16 text-primary"
+						size={16}
+						weight="duotone"
+					/>
+				}
+				title="No feature flags yet"
+				variant="default"
+			/>
+		);
 	}
 
 	return (
