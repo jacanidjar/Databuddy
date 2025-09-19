@@ -49,16 +49,15 @@ function App() {
 }
 
 function MyComponent() {
-  const { isEnabled, getValue } = useFlags();
+  const { isEnabled } = useFlags();
 
-  const showNewFeature = isEnabled('new-dashboard');
-  const showBetaFeatures = isEnabled('beta-features');
-  const darkModeEnabled = getValue('dark-mode-default', false);
+  const newDashboardFlag = isEnabled('new-dashboard');
+  const betaFeaturesFlag = isEnabled('beta-features');
 
   return (
-    <div className={darkModeEnabled ? 'dark' : ''}>
-      {showNewFeature !== undefined && showNewFeature && <NewDashboard />}
-      {showBetaFeatures !== undefined && showBetaFeatures && <BetaFeatures />}
+    <div>
+      {newDashboardFlag.isReady && newDashboardFlag.enabled && <NewDashboard />}
+      {betaFeaturesFlag.isReady && betaFeaturesFlag.enabled && <BetaFeatures />}
       <button>Click me</button>
     </div>
   );
@@ -90,11 +89,11 @@ function App() {
 function MyComponent() {
   const { isEnabled } = useFlags();
 
-  const showNewFeature = isEnabled('new-feature');
+  const newFeatureFlag = isEnabled('new-feature');
 
   return (
     <div>
-      {showNewFeature !== undefined && showNewFeature && <NewFeature />}
+      {newFeatureFlag.isReady && newFeatureFlag.enabled && <NewFeature />}
       <button>Click me</button>
     </div>
   );
@@ -162,24 +161,54 @@ const showNewUI = isEnabled('new-ui-rollout');`}
 <CodeBlock language="tsx">
 {`const {
   isEnabled,
-  getValue,
   fetchAllFlags,
   updateUser,
   refresh
 } = useFlags();
 
-// Check if flag is enabled (returns boolean | undefined)
-const showFeature = isEnabled('my-feature'); // undefined if not evaluated yet
-const darkModeDefault = getValue('dark-mode', false);
+// Get flag state with loading information
+const featureFlag = isEnabled('my-feature');
+// Returns: { enabled: boolean, isLoading: boolean, isReady: boolean }
 
-// Only render when flag is evaluated
-{showFeature !== undefined && (
-  showFeature ? <NewFeature /> : <OldFeature />
-)}
+// Conditional rendering - clean and predictable
+{featureFlag.isReady && featureFlag.enabled && <NewFeature />}
+
+// Show loading states explicitly
+{featureFlag.isLoading && <LoadingSpinner />}
+{!featureFlag.isReady && <Skeleton />}
 
 // Refresh all flags
 await fetchAllFlags();`}
 </CodeBlock>
+
+## Flag States
+
+The `isEnabled` function returns a flag state object with loading information:
+
+<CodeBlock language="tsx">
+{`const { isEnabled } = useFlags();
+const myFlag = isEnabled('my-feature');
+
+// Always returns an object with these properties:
+myFlag.enabled  // boolean - the flag value
+myFlag.isReady  // boolean - true when flag has been evaluated
+myFlag.isLoading // boolean - true while fetching from server
+
+// Clean, predictable conditional rendering
+{myFlag.isReady && myFlag.enabled && <MyFeature />}
+
+// Show loading states when needed
+{myFlag.isLoading && <LoadingSpinner />}
+{!myFlag.isReady && <Skeleton />}
+{myFlag.isReady && myFlag.enabled && <Feature />}`}
+</CodeBlock>
+
+**Benefits:**
+- No `undefined` checks required
+- Explicit loading states
+- More predictable behavior
+- Better TypeScript support
+- Cleaner component code
 
 ## Why isPending Matters
 
@@ -246,29 +275,55 @@ Enable debug mode to see flag evaluation in the browser console.
 
 ## Performance Benefits
 
-- **Client-side Caching**: Flags are cached in IndexedDB and localStorage for instant loading
+- **Client-side Caching**: Flags are cached in localStorage for instant loading
 - **Intelligent Updates**: Only re-evaluates flags when user context changes
 - **Background Sync**: Fetches flag updates without blocking the UI
 - **Minimal Bundle Size**: Lightweight SDK with zero external dependencies
 
 ## Best Practices
 
-1. **Use `isPending`** with authentication to prevent race conditions
-2. **Pass Custom Properties** for granular targeting and A/B testing
-3. **Enable Debug Mode** during development to monitor flag evaluation
-4. **Handle Flag Evaluation States** properly - flags return `undefined` until evaluated
-5. **Update User Context** after profile changes to refresh flag evaluation
+1. **Use `isEnabled` for flag states** - returns loading and ready information
+2. **Use `isPending`** with authentication to prevent race conditions
+3. **Pass Custom Properties** for granular targeting and A/B testing
+4. **Enable Debug Mode** during development to monitor flag evaluation
+5. **Check `isReady`** before showing features to avoid flash of incorrect content
+6. **Update User Context** after profile changes to refresh flag evaluation
 
 <CodeBlock language="tsx">
-{`// Best practice: Wait for flag evaluation before rendering
+{`// ✅ Recommended: Check isReady before rendering features
 function FeatureComponent() {
   const { isEnabled } = useFlags();
-  const showNewFeature = isEnabled('new-feature');
+  const featureFlag = isEnabled('new-feature');
 
-  // Don't render until flag is evaluated
-  if (showNewFeature === undefined) return <Skeleton />;
+  // Always check isReady to avoid flash of wrong content
+  if (!featureFlag.isReady) return <Skeleton />;
+  return featureFlag.enabled ? <NewFeature /> : <OldFeature />;
+}
 
-  return showNewFeature ? <NewFeature /> : <OldFeature />;
+// ✅ Show loading states explicitly
+function FeatureWithLoading() {
+  const { isEnabled } = useFlags();
+  const featureFlag = isEnabled('new-feature');
+
+  if (featureFlag.isLoading) return <LoadingSpinner />;
+  if (!featureFlag.isReady) return <Skeleton />;
+  return featureFlag.enabled ? <NewFeature /> : <OldFeature />;
+}
+
+// ✅ Multiple flags in one component
+function Dashboard() {
+  const { isEnabled } = useFlags();
+  const darkMode = isEnabled('dark-mode');
+  const newLayout = isEnabled('new-layout');
+
+  // Both flags must be ready before rendering
+  if (!darkMode.isReady || !newLayout.isReady) return <Skeleton />;
+
+  return (
+    <div className={darkMode.enabled ? 'dark' : ''}>
+      {newLayout.enabled ? <NewLayout /> : <OldLayout />}
+    </div>
+  );
 }`}
 </CodeBlock>
 

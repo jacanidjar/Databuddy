@@ -59,7 +59,7 @@ export default function FlagsPage() {
 
 	const { data: website } = useWebsite(websiteId);
 	const { isEnabled } = useFlags();
-	const isExperimentEnabled = isEnabled('experiment-50');
+	const experimentFlag = isEnabled('experiment-50');
 
 	const {
 		data: flags,
@@ -144,15 +144,15 @@ export default function FlagsPage() {
 				websiteId={websiteId}
 				websiteName={website?.name || undefined}
 			/>
-			{isExperimentEnabled !== undefined && (
+			{experimentFlag.isReady && (
 				<div className="flex items-center gap-2">
 					<FlagIcon
 						className="h-5 w-5"
-						color={isExperimentEnabled ? 'red' : 'blue'}
+						color={experimentFlag.enabled ? 'red' : 'blue'}
 						size={16}
 						weight="fill"
 					/>
-					{isExperimentEnabled ? (
+					{experimentFlag.enabled ? (
 						<Badge className="bg-red-500 text-white">Red Team</Badge>
 					) : (
 						<Badge className="bg-blue-500 text-white">Blue Team</Badge>

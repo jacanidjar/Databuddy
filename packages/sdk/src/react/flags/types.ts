@@ -27,9 +27,14 @@ export interface FlagsConfig {
 	autoFetch?: boolean;
 }
 
+export interface FlagState {
+	enabled: boolean;
+	isLoading: boolean;
+	isReady: boolean;
+}
+
 export interface FlagsContext {
-	isEnabled: (key: string) => boolean | undefined;
-	getValue: (key: string, defaultValue?: boolean) => boolean;
+	isEnabled: (key: string) => FlagState;
 	fetchAllFlags: () => Promise<void>;
 	updateUser: (user: FlagsConfig['user']) => void;
 	refresh: (forceClear?: boolean) => Promise<void>;

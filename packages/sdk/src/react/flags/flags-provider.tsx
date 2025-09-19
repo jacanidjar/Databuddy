@@ -2,7 +2,7 @@ import { atom, createStore, Provider, useAtom } from 'jotai';
 import type { ReactNode } from 'react';
 import { createElement, useEffect } from 'react';
 import { flagStorage } from './flag-storage';
-import type { FlagResult, FlagsConfig } from './types';
+import type { FlagResult, FlagState, FlagsConfig } from './types';
 
 const flagsStore = createStore();
 
@@ -318,20 +318,27 @@ export function useFlags() {
 		return fetchFlag(key);
 	};
 
-	const isEnabled = (key: string): boolean | undefined => {
+	const isEnabled = (key: string): FlagState => {
 		if (memoryFlags[key]) {
-			return memoryFlags[key].enabled;
+			return {
+				enabled: memoryFlags[key].enabled,
+				isLoading: false,
+				isReady: true,
+			};
+		}
+		if (pendingFlags.has(key)) {
+			return {
+				enabled: false,
+				isLoading: true,
+				isReady: false,
+			};
 		}
 		getFlag(key);
-		return;
-	};
-
-	const getValue = (key: string, defaultValue = false): boolean => {
-		if (memoryFlags[key]) {
-			return memoryFlags[key].value ?? defaultValue;
-		}
-		getFlag(key);
-		return defaultValue;
+		return {
+			enabled: false,
+			isLoading: true,
+			isReady: false,
+		};
 	};
 
 	const refresh = async (forceClear = false): Promise<void> => {
@@ -382,7 +389,6 @@ export function useFlags() {
 
 	return {
 		isEnabled,
-		getValue,
 		fetchAllFlags,
 		updateUser,
 		refresh,
