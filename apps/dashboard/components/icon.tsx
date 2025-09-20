@@ -121,7 +121,7 @@ function getOSMappedName(normalizedName: string): string {
 }
 
 function getIconSrc(iconName: string, folder: string): string {
-	if (iconName === 'Brave' && folder === 'browsers') {
+	if ((iconName === 'Brave' || iconName === 'QQ') && folder === 'browsers') {
 		return `/${folder}/${iconName}.webp`;
 	}
 	return `/${folder}/${iconName}.svg`;

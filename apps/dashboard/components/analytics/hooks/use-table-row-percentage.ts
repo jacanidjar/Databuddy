@@ -1,12 +1,3 @@
-import type { Table } from '@tanstack/react-table';
-import { useMemo } from 'react';
-
-declare module '@tanstack/react-table' {
-	interface ColumnMeta<TData, TValue> {
-		isPercentageColumn?: boolean;
-	}
-}
-
 const PERCENTAGE_THRESHOLDS = {
 	HIGH: 50,
 	MEDIUM: 25,
@@ -113,19 +104,10 @@ function getPercentageGradient(percentage: number) {
 	);
 }
 
-export function useTableRowPercentage<TData>(table: Table<TData>) {
-	const percentageColumnId = useMemo(() => {
-		return table
-			.getAllColumns()
-			.find((column) => column.columnDef.meta?.isPercentageColumn)?.id;
-	}, [table]);
-
+export function useTableRowPercentage<TData>() {
 	const getRowPercentage = (row: TData): number => {
-		if (!percentageColumnId) {
-			return 0;
-		}
-		const value = (row as any)[percentageColumnId];
-		return Number.parseFloat(String(value)) || 0;
+		const value = (row as any).percentage;
+		return value !== undefined ? Number.parseFloat(String(value)) || 0 : 0;
 	};
 
 	const getRowGradient = (row: TData) => {
@@ -133,9 +115,17 @@ export function useTableRowPercentage<TData>(table: Table<TData>) {
 		return getPercentageGradient(percentage);
 	};
 
+	const hasPercentageColumn = (data: TData[]): boolean => {
+		if (!data || data.length === 0) {
+			return false;
+		}
+		const firstRow = data[0] as any;
+		return firstRow.percentage !== undefined;
+	};
+
 	return {
 		getRowPercentage,
 		getRowGradient,
-		hasPercentageColumn: Boolean(percentageColumnId),
+		hasPercentageColumn,
 	};
 }

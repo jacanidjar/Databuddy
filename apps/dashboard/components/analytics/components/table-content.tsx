@@ -60,13 +60,15 @@ export function TableContent<TData extends { name: string | number }>({
 }: TableContentProps<TData>) {
 	const [expandedRow, setExpandedRow] = useState<string | null>(null);
 	const { getRowPercentage, getRowGradient, hasPercentageColumn } =
-		useTableRowPercentage(table);
+		useTableRowPercentage();
 
 	const toggleRowExpansion = useCallback((rowId: string) => {
 		setExpandedRow((prev) => (prev === rowId ? null : rowId));
 	}, []);
 
 	const displayData = table.getRowModel().rows;
+	const tableData = displayData.map((row) => row.original);
+	const hasPercentageData = hasPercentageColumn(tableData);
 
 	if (!displayData.length) {
 		return (
@@ -197,10 +199,10 @@ export function TableContent<TData extends { name: string | number }>({
 							expandable && getSubRows ? getSubRows(row.original) : undefined;
 						const hasSubRows = subRows && subRows.length > 0;
 						const isExpanded = expandedRow === row.id;
-						const percentage = hasPercentageColumn
+						const percentage = hasPercentageData
 							? getRowPercentage(row.original)
 							: 0;
-						const gradient = hasPercentageColumn
+						const gradient = hasPercentageData
 							? getRowGradient(row.original)
 							: null;
 
@@ -215,8 +217,8 @@ export function TableContent<TData extends { name: string | number }>({
 											onRowAction
 											? 'cursor-pointer'
 											: '',
-
-										rowIndex % 2 === 0 ? 'bg-background/50' : 'bg-muted/10'
+										!(percentage > 0 && gradient) &&
+											(rowIndex % 2 === 0 ? 'bg-background/50' : 'bg-muted/10')
 									)}
 									onClick={() => {
 										if (hasSubRows) {
