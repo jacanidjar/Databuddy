@@ -850,6 +850,7 @@ export function WebsiteOverviewTab({
 			accessorKey: 'name',
 			header: 'Browser',
 			cell: createTechnologyCell('browser'),
+			size: 180,
 		},
 		{
 			id: 'visitors',
@@ -885,6 +886,7 @@ export function WebsiteOverviewTab({
 			accessorKey: 'name',
 			header: 'Operating System',
 			cell: createTechnologyCell('os'),
+			size: 200,
 		},
 		{
 			id: 'visitors',
