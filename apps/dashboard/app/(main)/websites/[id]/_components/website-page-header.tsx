@@ -115,7 +115,7 @@ export function WebsitePageHeader({
 								rel="noopener noreferrer"
 								target="_blank"
 							>
-								<BookIcon size={16} weight="duotone" />
+								<BookIcon size={16} />
 								<span className="xs:inline hidden">Docs</span>
 							</Link>
 						</Button>
