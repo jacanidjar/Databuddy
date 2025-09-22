@@ -18,7 +18,12 @@ import {
 	CardTitle,
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { type ChartDataRow, METRIC_COLORS, METRICS } from './metrics-constants';
+import {
+	type ChartDataRow,
+	METRIC_COLORS,
+	METRICS,
+	type MetricConfig,
+} from './metrics-constants';
 import { SkeletonChart } from './skeleton-chart';
 
 const CustomTooltip = ({
@@ -97,6 +102,8 @@ interface MetricsChartProps {
 	className?: string;
 	hiddenMetrics?: Record<string, boolean>;
 	onToggleMetric?: (metricKey: string) => void;
+	metricsFilter?: (metric: MetricConfig) => boolean;
+	showLegend?: boolean;
 }
 
 export function MetricsChart({
@@ -108,6 +115,8 @@ export function MetricsChart({
 	className,
 	hiddenMetrics = {},
 	onToggleMetric,
+	metricsFilter,
+	showLegend = true,
 }: MetricsChartProps) {
 	const chartData = useMemo(() => data || [], [data]);
 
@@ -174,15 +183,17 @@ export function MetricsChart({
 		);
 	}
 
-	const analyticsMetrics = METRICS.filter((metric) =>
-		[
-			'pageviews',
-			'visitors',
-			'sessions',
-			'bounce_rate',
-			'avg_session_duration',
-		].includes(metric.key)
-	);
+	const displayMetrics = metricsFilter
+		? METRICS.filter(metricsFilter)
+		: METRICS.filter((metric) =>
+				[
+					'pageviews',
+					'visitors',
+					'sessions',
+					'bounce_rate',
+					'avg_session_duration',
+				].includes(metric.key)
+			);
 
 	return (
 		<Card className={cn('w-full overflow-hidden rounded-none p-0', className)}>
@@ -268,85 +279,89 @@ export function MetricsChart({
 								}}
 								wrapperStyle={{ outline: 'none' }}
 							/>
-							<Legend
-								align="center"
-								formatter={(value) => {
-									const metric = analyticsMetrics.find(
-										(m) => m.label === value || m.key === value
-									);
-									if (!metric) {
-										// Fallback for unknown metrics
+							{showLegend && (
+								<Legend
+									align="center"
+									formatter={(value) => {
+										const metric = displayMetrics.find(
+											(m) => m.label === value || m.key === value
+										);
+										if (!metric) {
+											// Fallback for unknown metrics
+											return (
+												<span className="inline-flex cursor-pointer select-none items-center font-medium text-muted-foreground text-xs capitalize leading-none opacity-100 transition-all duration-200 hover:text-foreground">
+													{String(value).replace(/_/g, ' ')}
+												</span>
+											);
+										}
+
+										const hasData = chartData.some(
+											(item) =>
+												metric.key in item &&
+												item[metric.key] !== undefined &&
+												item[metric.key] !== null
+										);
+										const isHidden = hiddenMetrics[metric.key];
+
 										return (
-											<span className="inline-flex cursor-pointer select-none items-center font-medium text-muted-foreground text-xs capitalize leading-none opacity-100 transition-all duration-200 hover:text-foreground">
-												{String(value).replace(/_/g, ' ')}
+											<span
+												className={`inline-flex cursor-pointer select-none items-center font-medium text-xs capitalize leading-none transition-all duration-200 ${
+													isHidden
+														? 'text-slate-600 line-through decoration-1 opacity-40'
+														: hasData
+															? 'text-muted-foreground opacity-100 hover:text-foreground'
+															: 'text-muted-foreground/60 opacity-60 hover:text-foreground'
+												}`}
+											>
+												{metric.label}
 											</span>
 										);
-									}
-
-									const hasData = chartData.some(
-										(item) =>
-											metric.key in item &&
-											item[metric.key] !== undefined &&
-											item[metric.key] !== null
-									);
-									const isHidden = hiddenMetrics[metric.key];
-
-									return (
-										<span
-											className={`inline-flex cursor-pointer select-none items-center font-medium text-xs capitalize leading-none transition-all duration-200 ${
-												isHidden
-													? 'text-slate-600 line-through decoration-1 opacity-40'
-													: hasData
-														? 'text-muted-foreground opacity-100 hover:text-foreground'
-														: 'text-muted-foreground/60 opacity-60 hover:text-foreground'
-											}`}
-										>
-											{metric.label}
-										</span>
-									);
-								}}
-								iconSize={10}
-								iconType="circle"
-								layout="horizontal"
-								onClick={(payload) => {
-									const anyPayload = payload as unknown as {
-										dataKey?: string | number;
-										value?: string | number;
-										id?: string | number;
-									};
-									const raw =
-										anyPayload?.dataKey ?? anyPayload?.value ?? anyPayload?.id;
-									if (raw == null || !onToggleMetric) {
-										return;
-									}
-									const key = String(raw);
-									const metric = analyticsMetrics.find(
-										(m) => m.label === key || m.key === key
-									);
-									if (metric) {
-										onToggleMetric(metric.key);
-									}
-								}}
-								payload={analyticsMetrics.map((metric) => ({
-									value: metric.label,
-									type: 'circle',
-									color: metric.color,
-									id: metric.key,
-									dataKey: metric.key,
-								}))}
-								verticalAlign="bottom"
-								wrapperStyle={{
-									display: 'flex',
-									justifyContent: 'center',
-									gap: 12,
-									fontSize: '12px',
-									paddingTop: '20px',
-									bottom: chartData.length > 5 ? 35 : 5,
-									fontWeight: 500,
-									cursor: 'pointer',
-								}}
-							/>
-							{analyticsMetrics.map((metric) => {
+									}}
+									iconSize={10}
+									iconType="circle"
+									layout="horizontal"
+									onClick={(payload) => {
+										const anyPayload = payload as unknown as {
+											dataKey?: string | number;
+											value?: string | number;
+											id?: string | number;
+										};
+										const raw =
+											anyPayload?.dataKey ??
+											anyPayload?.value ??
+											anyPayload?.id;
+										if (raw == null || !onToggleMetric) {
+											return;
+										}
+										const key = String(raw);
+										const metric = displayMetrics.find(
+											(m) => m.label === key || m.key === key
+										);
+										if (metric) {
+											onToggleMetric(metric.key);
+										}
+									}}
+									payload={displayMetrics.map((metric) => ({
+										value: metric.label,
+										type: 'circle',
+										color: metric.color,
+										id: metric.key,
+										dataKey: metric.key,
+									}))}
+									verticalAlign="bottom"
+									wrapperStyle={{
+										display: 'flex',
+										justifyContent: 'center',
+										gap: 12,
+										fontSize: '12px',
+										paddingTop: '20px',
+										bottom: chartData.length > 5 ? 35 : 5,
+										fontWeight: 500,
+										cursor: 'pointer',
+									}}
+								/>
+							)}
+							{displayMetrics.map((metric) => {
 								const hasData = chartData.some(
 									(item) =>
 										metric.key in item &&

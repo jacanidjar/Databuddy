@@ -183,6 +183,11 @@ export function WebVitalsChart({
 						description={`${WEB_VITALS_METRICS.find((m) => m.key === selectedMetric)?.desc || 'Performance metric'} showing percentile distributions over time`}
 						height={400}
 						isLoading={isLoading || isRefreshing}
+						metricsFilter={(metric) =>
+							metric.category === 'performance' ||
+							metric.category === 'core_web_vitals'
+						}
+						showLegend={false}
 						title={`${WEB_VITALS_METRICS.find((m) => m.key === selectedMetric)?.label || 'Core Web Vitals'} Performance`}
 					/>
 				) : (

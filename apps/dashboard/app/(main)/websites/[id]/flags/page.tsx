@@ -60,7 +60,6 @@ export default function FlagsPage() {
 	const { data: website } = useWebsite(websiteId);
 	const { isEnabled } = useFlags();
 	const experimentFlag = isEnabled('experiment-50');
-
 	const {
 		data: flags,
 		isLoading,

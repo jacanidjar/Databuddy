@@ -286,7 +286,6 @@ export const websitesRouter = createTRPCRouter({
 				websiteToUpdate.organizationId
 			);
 
-			// Clean logging
 			const changes: string[] = [];
 			if (input.name !== websiteToUpdate.name) {
 				changes.push(`name: "${websiteToUpdate.name}" → "${input.name}"`);
