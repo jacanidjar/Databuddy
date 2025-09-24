@@ -17,9 +17,6 @@ interface FullScreenModalProps<TData extends { name: string | number }> {
 	title?: string;
 	description?: string;
 	onClose: () => void;
-	showSearch?: boolean;
-	globalFilter: string;
-	onGlobalFilterChange: (value: string) => void;
 	tabs?: TabConfig<TData>[];
 	activeTab?: string;
 	onTabChange?: (tabId: string) => void;
@@ -33,6 +30,8 @@ interface FullScreenModalProps<TData extends { name: string | number }> {
 	onAddFilter?: (field: string, value: string, tableTitle?: string) => void;
 	onRowAction?: (row: TData) => void;
 	onRowClick?: (field: string, value: string | number) => void;
+	searchValue?: string;
+	onSearchChange?: (value: string) => void;
 }
 
 export function FullScreenModal<TData extends { name: string | number }>({
@@ -40,12 +39,11 @@ export function FullScreenModal<TData extends { name: string | number }>({
 	title,
 	description,
 	onClose,
-	showSearch = true,
-	globalFilter,
-	onGlobalFilterChange,
 	tabs,
 	activeTab,
 	onTabChange,
+	searchValue,
+	onSearchChange,
 	expandable = false,
 	getSubRows,
 	renderSubRow,
@@ -68,17 +66,31 @@ export function FullScreenModal<TData extends { name: string | number }>({
 						</p>
 					)}
 				</div>
-				<button
-					aria-label="Close full screen"
-					className="ml-2 flex items-center justify-center rounded bg-sidebar-accent/60 p-2 text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
-					onClick={onClose}
-					style={{ minWidth: 40, minHeight: 40 }}
-					tabIndex={0}
-					title="Close"
-					type="button"
-				>
-					<XIcon size={20} />
-				</button>
+				<div className="flex items-center gap-2">
+					{onSearchChange && (
+						<div className="relative">
+							<MagnifyingGlassIcon className="-translate-y-1/2 absolute top-1/2 left-2.5 h-4 w-4 text-muted-foreground" />
+							<Input
+								className="h-8 w-64 pl-8 text-sm"
+								onChange={(e) => onSearchChange(e.target.value)}
+								placeholder="Search..."
+								type="search"
+								value={searchValue}
+							/>
+						</div>
+					)}
+					<button
+						aria-label="Close full screen"
+						className="ml-2 flex items-center justify-center rounded bg-sidebar-accent/60 p-2 text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+						onClick={onClose}
+						style={{ minWidth: 40, minHeight: 40 }}
+						tabIndex={0}
+						title="Close"
+						type="button"
+					>
+						<XIcon size={20} />
+					</button>
+				</div>
 			</div>
 
 			{tabs && tabs.length > 1 && (
@@ -91,40 +103,13 @@ export function FullScreenModal<TData extends { name: string | number }>({
 				</div>
 			)}
 
-			{showSearch && (
-				<div className="flex items-center px-3 py-2">
-					<div className="relative w-full max-w-xs">
-						<Input
-							aria-label="Search table"
-							className="h-8 w-full border-sidebar-border bg-sidebar-accent/30 pr-2 pl-7 text-sidebar-foreground text-xs"
-							onChange={(event) => onGlobalFilterChange(event.target.value)}
-							placeholder="Filter data..."
-							value={globalFilter ?? ''}
-						/>
-						<MagnifyingGlassIcon className="-translate-y-1/2 absolute top-1/2 left-2 h-3 w-3 transform text-sidebar-foreground/50" />
-						{globalFilter && (
-							<button
-								aria-label="Clear search"
-								className="-translate-y-1/2 absolute top-1/2 right-2 rounded p-1 hover:bg-sidebar-accent/60"
-								onClick={() => onGlobalFilterChange('')}
-								type="button"
-							>
-								<XIcon className="h-3 w-3 text-sidebar-foreground/60" />
-							</button>
-						)}
-					</div>
-				</div>
-			)}
-
 			<div className="flex-1 overflow-auto px-3 pb-3">
 				<TableContent
 					activeTab={activeTab}
 					expandable={expandable}
 					getSubRows={getSubRows}
-					globalFilter={globalFilter}
 					minHeight="100%"
 					onAddFilter={onAddFilter}
-					onGlobalFilterChange={onGlobalFilterChange}
 					onRowAction={onRowAction}
 					onRowClick={onRowClick}
 					renderSubRow={renderSubRow}

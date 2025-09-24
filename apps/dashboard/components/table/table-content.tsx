@@ -3,10 +3,12 @@ import {
 	ArrowsDownUpIcon,
 	ArrowUpIcon,
 	DatabaseIcon,
-	MagnifyingGlassIcon,
-	XIcon,
 } from '@phosphor-icons/react';
-import { flexRender, type Table } from '@tanstack/react-table';
+import {
+	flexRender,
+	type SortDirection,
+	type Table,
+} from '@tanstack/react-table';
 import { Fragment, useCallback, useState } from 'react';
 import {
 	TableBody,
@@ -18,7 +20,6 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
-// Row percentage thresholds for gradient colors
 const PERCENTAGE_THRESHOLDS = {
 	HIGH: 50,
 	MEDIUM: 25,
@@ -34,7 +35,19 @@ function getRowPercentage(row: PercentageRow): number {
 	return value !== undefined ? Number.parseFloat(String(value)) || 0 : 0;
 }
 
-// Color schemes for different percentage ranges
+function getSortAriaLabel(
+	headerText: string,
+	sortDirection: SortDirection | false
+): string {
+	if (sortDirection === 'asc') {
+		return `${headerText}: sorted ascending, click to sort descending`;
+	}
+	if (sortDirection === 'desc') {
+		return `${headerText}: sorted descending, click to remove sort`;
+	}
+	return `${headerText}: click to sort ascending`;
+}
+
 const GRADIENT_COLORS = {
 	high: {
 		rgb: '34, 197, 94',
@@ -69,8 +82,8 @@ const GRADIENT_COLORS = {
 	default: {
 		rgb: '107, 114, 128',
 		opacity: {
-			background: 0.06,
-			hover: 0.1,
+			background: 0.08,
+			hover: 0.12,
 			border: 0.2,
 			accent: 0.7,
 			glow: 0.15,
@@ -80,7 +93,13 @@ const GRADIENT_COLORS = {
 
 function createGradient(
 	rgb: string,
-	opacity: typeof GRADIENT_COLORS.high.opacity,
+	opacity: {
+		background: number;
+		hover: number;
+		border: number;
+		accent: number;
+		glow: number;
+	},
 	percentage: number
 ) {
 	const {
@@ -146,8 +165,6 @@ interface TableContentProps<TData extends { name: string | number }> {
 	tabs?: any[];
 	activeTab?: string;
 	emptyMessage?: string;
-	globalFilter?: string;
-	onGlobalFilterChange?: (value: string) => void;
 	className?: string;
 }
 
@@ -164,8 +181,6 @@ export function TableContent<TData extends { name: string | number }>({
 	tabs,
 	activeTab,
 	emptyMessage = 'No data available',
-	globalFilter,
-	onGlobalFilterChange,
 	className,
 }: TableContentProps<TData>) {
 	const [expandedRow, setExpandedRow] = useState<string | null>(null);
@@ -177,7 +192,6 @@ export function TableContent<TData extends { name: string | number }>({
 	const displayData = table.getRowModel().rows;
 	const tableData = displayData.map((row) => row.original);
 
-	// Check if any row has percentage data
 	const hasPercentageData = tableData.some((row) => {
 		const percentage = getRowPercentage(row as PercentageRow);
 		return percentage > 0;
@@ -191,31 +205,15 @@ export function TableContent<TData extends { name: string | number }>({
 			>
 				<div className="mb-4">
 					<div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/20">
-						{globalFilter ? (
-							<MagnifyingGlassIcon className="h-7 w-7 text-muted-foreground/50" />
-						) : (
-							<DatabaseIcon className="h-7 w-7 text-muted-foreground/50" />
-						)}
+						<DatabaseIcon className="h-7 w-7 text-muted-foreground/50" />
 					</div>
 				</div>
 				<h4 className="mb-2 font-medium text-base text-foreground">
-					{globalFilter ? 'No results found' : emptyMessage}
+					{emptyMessage}
 				</h4>
 				<p className="mb-4 max-w-sm text-muted-foreground text-sm">
-					{globalFilter
-						? `No data matches your search for "${globalFilter}". Try adjusting your search terms.`
-						: 'Data will appear here when available and ready to display.'}
+					Data will appear here when available and ready to display.
 				</p>
-				{globalFilter && onGlobalFilterChange && (
-					<button
-						className="inline-flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 font-medium text-primary text-sm transition-colors hover:bg-primary/15 hover:text-primary/80"
-						onClick={() => onGlobalFilterChange('')}
-						type="button"
-					>
-						<XIcon className="h-4 w-4" />
-						Clear search
-					</button>
-				)}
 			</div>
 		);
 	}
@@ -238,71 +236,91 @@ export function TableContent<TData extends { name: string | number }>({
 							className="sticky top-0 z-10 border-sidebar-border/30 bg-sidebar-accent"
 							key={headerGroup.id}
 						>
-							{headerGroup.headers.map((header) => (
-								<TableHead
-									aria-sort={
-										header.column.getIsSorted() === 'asc'
-											? 'ascending'
-											: header.column.getIsSorted() === 'desc'
-												? 'descending'
-												: header.column.getCanSort()
-													? 'none'
-													: undefined
-									}
-									className={cn(
-										'h-10 bg-sidebar-accent px-2 font-semibold text-sidebar-foreground/70 text-xs uppercase tracking-wide',
-										(header.column.columnDef.meta as any)?.className,
-										header.column.getCanSort()
-											? 'group cursor-pointer select-none transition-colors hover:text-sidebar-foreground'
-											: 'select-none'
-									)}
-									key={header.id}
-									onClick={header.column.getToggleSortingHandler()}
-									onKeyDown={(e) => {
-										if (
-											header.column.getCanSort() &&
-											(e.key === 'Enter' || e.key === ' ')
-										) {
-											e.preventDefault();
-											header.column.getToggleSortingHandler()?.(e);
+							{headerGroup.headers.map((header) => {
+								const canSort = header.column.getCanSort();
+								const sortDirection = header.column.getIsSorted();
+								const sortHandler = header.column.getToggleSortingHandler();
+
+								return (
+									<TableHead
+										aria-label={
+											canSort
+												? getSortAriaLabel(
+														String(header.column.columnDef.header) || header.id,
+														sortDirection
+													)
+												: undefined
 										}
-									}}
-									role={header.column.getCanSort() ? 'button' : undefined}
-									style={{
-										width:
-											header.getSize() !== 150
-												? `${Math.min(header.getSize(), 300)}px`
-												: undefined,
-										maxWidth: '300px',
-										minWidth: '80px',
-									}}
-									tabIndex={header.column.getCanSort() ? 0 : -1}
-								>
-									<div className="flex items-center gap-1.5">
-										<span className="truncate">
-											{header.isPlaceholder
-												? null
-												: flexRender(
-														header.column.columnDef.header,
-														header.getContext()
-													)}
-										</span>
-										{header.column.getCanSort() && (
-											<div className="flex h-3 w-3 flex-col items-center justify-center">
-												{!header.column.getIsSorted() && (
-													<ArrowsDownUpIcon className="h-3 w-3 text-sidebar-foreground/40 transition-colors group-hover:text-sidebar-foreground/70" />
-												)}
-												{header.column.getIsSorted() === 'asc' && (
-													<ArrowUpIcon className="h-3 w-3 text-sidebar-ring" />
-												)}
-												{header.column.getIsSorted() === 'desc' && (
-													<ArrowDownIcon className="h-3 w-3 text-sidebar-ring" />
-												)}
-											</div>
+										aria-sort={
+											sortDirection === 'asc'
+												? 'ascending'
+												: sortDirection === 'desc'
+													? 'descending'
+													: canSort
+														? 'none'
+														: undefined
+										}
+										className={cn(
+											'h-10 bg-sidebar-accent px-2 font-semibold text-sidebar-foreground/70 text-xs uppercase tracking-wide',
+											(header.column.columnDef.meta as any)?.className,
+											canSort
+												? 'group cursor-pointer select-none transition-colors hover:text-sidebar-foreground focus:outline-none focus:ring-2 focus:ring-sidebar-ring focus:ring-offset-2 active:bg-sidebar-accent/80'
+												: 'select-none'
 										)}
-									</div>
-								</TableHead>
-							))}
+										key={header.id}
+										onClick={canSort ? sortHandler : undefined}
+										onKeyDown={(e) => {
+											if (canSort && (e.key === 'Enter' || e.key === ' ')) {
+												e.preventDefault();
+												sortHandler?.(e);
+											}
+										}}
+										role={canSort ? 'columnheader button' : 'columnheader'}
+										style={{
+											width:
+												header.getSize() !== 150
+													? `${Math.min(header.getSize(), 300)}px`
+													: undefined,
+											maxWidth: '300px',
+											minWidth: '80px',
+										}}
+										tabIndex={canSort ? 0 : -1}
+									>
+										<div className="flex items-center gap-1.5">
+											<span className="truncate">
+												{header.isPlaceholder
+													? null
+													: flexRender(
+															header.column.columnDef.header,
+															header.getContext()
+														)}
+											</span>
+											{canSort && (
+												<div className="flex h-3.5 w-3.5 flex-col items-center justify-center">
+													{sortDirection === 'asc' && (
+														<ArrowUpIcon
+															aria-hidden="true"
+															className="h-3.5 w-3.5 text-sidebar-ring"
+														/>
+													)}
+													{sortDirection === 'desc' && (
+														<ArrowDownIcon
+															aria-hidden="true"
+															className="h-3.5 w-3.5 text-sidebar-ring"
+														/>
+													)}
+													{!sortDirection && (
+														<ArrowsDownUpIcon
+															aria-hidden="true"
+															className="h-3.5 w-3.5 text-sidebar-foreground/40 transition-colors group-hover:text-sidebar-foreground/70"
+														/>
+													)}
+												</div>
+											)}
+										</div>
+									</TableHead>
+								);
+							})}
 						</TableRow>
 					))}
 				</TableHeader>

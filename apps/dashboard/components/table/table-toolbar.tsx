@@ -7,21 +7,21 @@ import { Input } from '@/components/ui/input';
 interface TableToolbarProps {
 	title: string;
 	description?: string;
-	showSearch?: boolean;
-	globalFilter: string;
-	onGlobalFilterChange: (value: string) => void;
 	showFullScreen?: boolean;
 	onFullScreenToggle?: () => void;
+	searchValue?: string;
+	onSearchChange?: (value: string) => void;
+	showSearch?: boolean;
 }
 
 export function TableToolbar({
 	title,
 	description,
-	showSearch = true,
-	globalFilter,
-	onGlobalFilterChange,
 	showFullScreen = true,
 	onFullScreenToggle,
+	searchValue = '',
+	onSearchChange,
+	showSearch = true,
 }: TableToolbarProps) {
 	return (
 		<div className="px-3 pt-3 pb-2">
@@ -37,15 +37,15 @@ export function TableToolbar({
 					)}
 				</div>
 				<div className="flex items-center gap-2">
-					{showSearch && (
-						<div className="relative w-full flex-shrink-0 sm:w-auto">
-							<MagnifyingGlassIcon className="-translate-y-1/2 absolute top-1/2 left-2 h-3 w-3 transform text-sidebar-foreground/50" />
+					{showSearch && onSearchChange && (
+						<div className="relative">
+							<MagnifyingGlassIcon className="-translate-y-1/2 absolute top-1/2 left-2.5 h-4 w-4 text-muted-foreground" />
 							<Input
-								aria-label={`Search ${title}`}
-								className="h-8 w-full border-sidebar-border bg-sidebar-accent/30 pr-2 pl-7 text-sidebar-foreground text-xs sm:w-36"
-								onChange={(event) => onGlobalFilterChange(event.target.value)}
-								placeholder="Filter data..."
-								value={globalFilter ?? ''}
+								className="h-8 w-64 pl-8 text-sm"
+								onChange={(e) => onSearchChange(e.target.value)}
+								placeholder="Search..."
+								type="search"
+								value={searchValue}
 							/>
 						</div>
 					)}

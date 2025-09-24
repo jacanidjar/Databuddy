@@ -43,7 +43,6 @@ interface DataTableProps<TData extends { name: string | number }, TValue> {
 	onAddFilter?: (field: string, value: string, tableTitle?: string) => void;
 	onRowAction?: (row: TData) => void;
 	minHeight?: string | number;
-	showSearch?: boolean;
 	getSubRows?: (row: TData) => TData[] | undefined;
 	renderSubRow?: (
 		subRow: TData,
@@ -95,17 +94,16 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 	className,
 	onRowClick,
 	minHeight = DEFAULT_MIN_HEIGHT,
-	showSearch = true,
 	getSubRows,
 	renderSubRow,
 	expandable = false,
 	onAddFilter,
 	onRowAction,
 }: DataTableProps<TData, TValue>) {
-	const [sorting, setSorting] = useState<SortingState>([]);
-	const [globalFilter, setGlobalFilter] = useState('');
 	const [activeTab, setActiveTab] = useState(tabs?.[0]?.id || '');
 	const [isTransitioning, setIsTransitioning] = useState(false);
+	const [sorting, setSorting] = useState<SortingState>([]);
+	const [globalFilter, setGlobalFilter] = useState('');
 
 	const { fullScreen, setFullScreen, hasMounted, modalRef } = useFullScreen();
 
@@ -131,13 +129,14 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 		},
 		state: {
 			sorting,
-			globalFilter: showSearch ? globalFilter : '',
+			globalFilter,
 		},
 		onSortingChange: setSorting,
 		onGlobalFilterChange: setGlobalFilter,
 		getCoreRowModel: getCoreRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
 		getSortedRowModel: getSortedRowModel(),
+		globalFilterFn: 'includesString',
 	});
 
 	const handleTabChange = (tabId: string) => {
@@ -146,10 +145,10 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 		}
 
 		setIsTransitioning(true);
+		setSorting([]);
+		setGlobalFilter('');
 		setTimeout(() => {
 			setActiveTab(tabId);
-			setGlobalFilter('');
-			setSorting([]);
 			setIsTransitioning(false);
 		}, 150);
 	};
@@ -168,11 +167,6 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 							<Skeleton className="h-5 w-32 rounded" />
 							{description && <Skeleton className="mt-0.5 h-3 w-48 rounded" />}
 						</div>
-						{showSearch && (
-							<div className="flex-shrink-0">
-								<Skeleton className="h-7 w-36 rounded" />
-							</div>
-						)}
 					</div>
 
 					{tabs && tabs.length > 1 && (
@@ -203,10 +197,9 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 				{/* Toolbar */}
 				<TableToolbar
 					description={description}
-					globalFilter={globalFilter}
 					onFullScreenToggle={() => setFullScreen(true)}
-					onGlobalFilterChange={setGlobalFilter}
-					showSearch={showSearch}
+					onSearchChange={setGlobalFilter}
+					searchValue={globalFilter}
 					title={title}
 				/>
 
@@ -242,10 +235,8 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 							emptyMessage={emptyMessage}
 							expandable={expandable}
 							getSubRows={getSubRows}
-							globalFilter={globalFilter}
 							minHeight={minHeight}
 							onAddFilter={onAddFilter}
-							onGlobalFilterChange={setGlobalFilter}
 							onRowAction={onRowAction}
 							onRowClick={onRowClick}
 							renderSubRow={renderSubRow}
@@ -278,15 +269,14 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 								description={description}
 								expandable={expandable}
 								getSubRows={getSubRows}
-								globalFilter={globalFilter}
 								onAddFilter={onAddFilter}
 								onClose={() => setFullScreen(false)}
-								onGlobalFilterChange={setGlobalFilter}
 								onRowAction={onRowAction}
 								onRowClick={onRowClick}
+								onSearchChange={setGlobalFilter}
 								onTabChange={handleTabChange}
 								renderSubRow={renderSubRow}
-								showSearch={showSearch}
+								searchValue={globalFilter}
 								table={table}
 								tabs={tabs}
 								title={title}
