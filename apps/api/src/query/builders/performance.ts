@@ -29,7 +29,7 @@ export const PerformanceBuilders: Record<string, SimpleQueryConfig> = {
 	performance_by_browser: {
 		table: Analytics.events,
 		fields: [
-			"CONCAT(browser_name, ' ', browser_version) as name",
+			'browser_name as name',
 			'COUNT(DISTINCT anonymous_id) as visitors',
 			'AVG(CASE WHEN load_time > 0 THEN load_time ELSE NULL END) as avg_load_time',
 			'quantile(0.50)(CASE WHEN load_time > 0 THEN load_time ELSE NULL END) as p50_load_time',
@@ -41,11 +41,9 @@ export const PerformanceBuilders: Record<string, SimpleQueryConfig> = {
 		where: [
 			"event_name = 'screen_view'",
 			"browser_name != ''",
-			"browser_version != ''",
-			'browser_version IS NOT NULL',
 			'load_time > 0',
 		],
-		groupBy: ['browser_name', 'browser_version'],
+		groupBy: ['browser_name'],
 		orderBy: 'p50_load_time DESC',
 		limit: 100,
 		timeField: 'time',
@@ -174,7 +172,7 @@ export const PerformanceBuilders: Record<string, SimpleQueryConfig> = {
 	web_vitals_by_browser: {
 		table: Analytics.web_vitals,
 		fields: [
-			"CONCAT(browser_name, ' ', browser_version) as name",
+			'browser_name as name',
 			'COUNT(DISTINCT anonymous_id) as visitors',
 			'AVG(CASE WHEN fcp > 0 THEN fcp ELSE NULL END) as avg_fcp',
 			'quantile(0.50)(CASE WHEN fcp > 0 THEN fcp ELSE NULL END) as p50_fcp',
@@ -188,10 +186,8 @@ export const PerformanceBuilders: Record<string, SimpleQueryConfig> = {
 		],
 		where: [
 			"browser_name != ''",
-			"browser_version != ''",
-			'browser_version IS NOT NULL',
 		],
-		groupBy: ['browser_name', 'browser_version'],
+		groupBy: ['browser_name'],
 		orderBy: 'p50_lcp DESC',
 		limit: 100,
 		timeField: 'timestamp',
