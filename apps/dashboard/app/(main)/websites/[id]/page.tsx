@@ -209,7 +209,7 @@ function WebsiteDetailsPage() {
 	}
 
 	return (
-		<div className="p-6">
+		<div className="px-6 pt-0 pb-6 sm:pt-6">
 			<div className="pt-2 space-y-2">
 				<WebsiteOverviewTab {...tabProps} />
 			</div>

@@ -322,7 +322,7 @@ export function AddFilterForm({
 					{buttonText}
 				</Button>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="w-[300px]" side="bottom">
+			<DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] max-w-[300px] sm:w-[300px]" side="bottom">
 				<Suspense fallback={<div>Loading...</div>}>
 					<FilterForm
 						addFilter={addFilter}

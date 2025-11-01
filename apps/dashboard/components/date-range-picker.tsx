@@ -16,6 +16,7 @@ import {
 	formatMonthDay,
 } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DateRangePickerProps {
 	className?: string;
@@ -34,6 +35,7 @@ export function DateRangePicker({
 	maxDate,
 	minDate,
 }: DateRangePickerProps) {
+	const isMobile = useIsMobile();
 	const [isOpen, setIsOpen] = useState(false);
 	const [tempRange, setTempRange] = useState<DateRange | undefined>(value);
 	const [appliedRange, setAppliedRange] = useState<DateRange | undefined>(
@@ -124,7 +126,8 @@ export function DateRangePicker({
 				</PopoverTrigger>
 				<PopoverContent
 					align="end"
-					className="w-auto rounded border p-0 shadow-md"
+					className="w-auto rounded border p-0 shadow-md sm:max-w-none"
+					sideOffset={4}
 				>
 					<div className="border-b bg-muted/20 p-4">
 						<div className="text-muted-foreground text-sm">
@@ -162,7 +165,7 @@ export function DateRangePicker({
 						</div>
 					</div>
 
-					<div className="p-4">
+					<div className="p-2 sm:p-4">
 						<Calendar
 							defaultMonth={tempRange?.from || appliedRange?.from || new Date()}
 							disabled={(date) => {
@@ -176,7 +179,7 @@ export function DateRangePicker({
 							}}
 							initialFocus
 							mode="range"
-							numberOfMonths={2}
+							numberOfMonths={isMobile ? 1 : 2}
 							onSelect={handleTempSelect}
 							selected={tempRange}
 						/>

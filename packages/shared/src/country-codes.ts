@@ -303,10 +303,6 @@ export function getCountryName(countryCode: string): string {
 		return '';
 	}
 
-	if (countryCode === 'PS') {
-		return 'Palestine';
-	}
-
 	for (const [name, code] of Object.entries(COUNTRY_NAME_TO_CODE)) {
 		if (code === countryCode) {
 			return name;
