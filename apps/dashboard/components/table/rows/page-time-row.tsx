@@ -7,7 +7,7 @@ export interface PageTimeEntry {
 	visitors: number;
 	sessions_with_time: number;
 	median_time_on_page: number;
-	percentage_of_sessions: number;
+	percentage: number;
 }
 
 const formatNumber = (value: number | null | undefined): string => {
@@ -80,8 +80,8 @@ export function createPageTimeColumns(): ColumnDef<PageTimeEntry>[] {
 			),
 		},
 		{
-			id: 'percentage_of_sessions',
-			accessorKey: 'percentage_of_sessions',
+			id: 'percentage',
+			accessorKey: 'percentage',
 			header: 'Share',
 			enableSorting: true,
 			cell: (info: CellContext<PageTimeEntry, any>) => {
