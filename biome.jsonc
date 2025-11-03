@@ -42,7 +42,8 @@
       },
       "style": {
         "noNestedTernary": "off",
-        "useFilenamingConvention": "off"
+        "useFilenamingConvention": "off",
+        "noMagicNumbers": "off"
       },
       "complexity": {
         "noExcessiveCognitiveComplexity": "off"

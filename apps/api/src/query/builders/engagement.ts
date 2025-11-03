@@ -1,5 +1,5 @@
 import { Analytics } from "../../types/tables";
-import type { SimpleQueryConfig } from "../types";
+import type { Filter, SimpleQueryConfig, TimeUnit } from "../types";
 
 export const EngagementBuilders: Record<string, SimpleQueryConfig> = {
 	scroll_depth_summary: {
@@ -80,12 +80,12 @@ export const EngagementBuilders: Record<string, SimpleQueryConfig> = {
 		table: Analytics.events,
 		fields: [
 			"CASE " +
-				'WHEN scroll_depth < 0.25 THEN "0-25%" ' +
-				'WHEN scroll_depth < 0.5 THEN "25-50%" ' +
-				'WHEN scroll_depth < 0.75 THEN "50-75%" ' +
-				'WHEN scroll_depth < 1.0 THEN "75-100%" ' +
-				'ELSE "100%" ' +
-				"END as depth_range",
+			'WHEN scroll_depth < 0.25 THEN "0-25%" ' +
+			'WHEN scroll_depth < 0.5 THEN "25-50%" ' +
+			'WHEN scroll_depth < 0.75 THEN "50-75%" ' +
+			'WHEN scroll_depth < 1.0 THEN "75-100%" ' +
+			'ELSE "100%" ' +
+			"END as depth_range",
 			"COUNT(DISTINCT anonymous_id) as visitors",
 			"COUNT(DISTINCT session_id) as sessions",
 			"ROUND((COUNT(DISTINCT session_id) / SUM(COUNT(DISTINCT session_id)) OVER()) * 100, 2) as percentage",
@@ -202,5 +202,340 @@ export const EngagementBuilders: Record<string, SimpleQueryConfig> = {
 		where: ["event_name = 'screen_view'", "interaction_count >= 0"],
 		timeField: "time",
 		customizable: true,
+	},
+
+	retention_cohorts: {
+		meta: {
+			title: "Retention Cohorts",
+			description:
+				"User retention analysis by cohort, showing what percentage of users return over time based on their first visit date.",
+			category: "Engagement",
+			tags: ["retention", "cohorts", "user behavior"],
+			output_fields: [
+				{
+					name: "cohort",
+					type: "string",
+					label: "Cohort",
+					description: "First visit date cohort",
+				},
+				{
+					name: "users",
+					type: "number",
+					label: "Users",
+					description: "Number of users in this cohort",
+				},
+				{
+					name: "week_0_retention",
+					type: "number",
+					label: "Week 0 Retention",
+					description: "Percentage of users in the initial week (always 100%)",
+					unit: "%",
+				},
+				{
+					name: "week_1_retention",
+					type: "number",
+					label: "Week 1 Retention",
+					description: "Percentage of users who returned in week 1",
+					unit: "%",
+				},
+				{
+					name: "week_2_retention",
+					type: "number",
+					label: "Week 2 Retention",
+					description: "Percentage of users who returned in week 2",
+					unit: "%",
+				},
+				{
+					name: "week_3_retention",
+					type: "number",
+					label: "Week 3 Retention",
+					description: "Percentage of users who returned in week 3",
+					unit: "%",
+				},
+				{
+					name: "week_4_retention",
+					type: "number",
+					label: "Week 4 Retention",
+					description: "Percentage of users who returned in week 4",
+					unit: "%",
+				},
+				{
+					name: "week_5_retention",
+					type: "number",
+					label: "Week 5 Retention",
+					description: "Percentage of users who returned in week 5",
+					unit: "%",
+				},
+			],
+			default_visualization: "table",
+			supports_granularity: ["day", "week", "month"],
+			version: "1.0",
+		},
+		customSql: (
+			websiteId: string,
+			startDate: string,
+			endDate: string,
+			_filters?: Filter[],
+			_granularity?: TimeUnit,
+			_limit?: number,
+			_offset?: number,
+			_timezone?: string,
+			filterConditions?: string[],
+			filterParams?: Record<string, Filter["value"]>
+		) => {
+			const combinedWhereClause = filterConditions?.length
+				? `AND ${filterConditions.join(" AND ")}`
+				: "";
+
+			return {
+				sql: `
+                WITH first_visits AS (
+                  SELECT
+                    anonymous_id,
+                    toStartOfWeek(toDate(MIN(time))) as first_visit_week
+                  FROM analytics.events
+                  WHERE
+                    client_id = {websiteId:String}
+                    AND time >= parseDateTimeBestEffort({startDate:String})
+                    AND time <= parseDateTimeBestEffort({endDate:String})
+                    AND anonymous_id != ''
+                    AND event_name = 'screen_view'
+                    ${combinedWhereClause}
+                  GROUP BY anonymous_id
+                ),
+                cohorts AS (
+                  SELECT
+                    fv.first_visit_week as cohort_week,
+                    count(DISTINCT fv.anonymous_id) as total_users
+                  FROM first_visits fv
+                  GROUP BY fv.first_visit_week
+                ),
+                user_visits AS (
+                  SELECT
+                    e.anonymous_id,
+                    toDate(e.time) as visit_date
+                  FROM analytics.events e
+                  WHERE
+                    e.client_id = {websiteId:String}
+                    AND e.time >= parseDateTimeBestEffort({startDate:String})
+                    AND e.time <= parseDateTimeBestEffort({endDate:String})
+                    AND e.anonymous_id != ''
+                    AND e.event_name = 'screen_view'
+                    ${combinedWhereClause}
+                  GROUP BY e.anonymous_id, toDate(e.time)
+                ),
+                retention_calc AS (
+                  SELECT
+                    fv.first_visit_week as cohort,
+                    count(DISTINCT CASE 
+                      WHEN uv.visit_date >= fv.first_visit_week 
+                        AND uv.visit_date < fv.first_visit_week + INTERVAL 7 DAY
+                      THEN fv.anonymous_id 
+                      ELSE NULL 
+                    END) as week_0_returned,
+                    count(DISTINCT CASE 
+                      WHEN uv.visit_date >= fv.first_visit_week + INTERVAL 7 DAY 
+                        AND uv.visit_date < fv.first_visit_week + INTERVAL 14 DAY
+                      THEN fv.anonymous_id 
+                      ELSE NULL 
+                    END) as week_1_returned,
+                    count(DISTINCT CASE 
+                      WHEN uv.visit_date >= fv.first_visit_week + INTERVAL 14 DAY 
+                        AND uv.visit_date < fv.first_visit_week + INTERVAL 21 DAY
+                      THEN fv.anonymous_id 
+                      ELSE NULL 
+                    END) as week_2_returned,
+                    count(DISTINCT CASE 
+                      WHEN uv.visit_date >= fv.first_visit_week + INTERVAL 21 DAY 
+                        AND uv.visit_date < fv.first_visit_week + INTERVAL 28 DAY
+                      THEN fv.anonymous_id 
+                      ELSE NULL 
+                    END) as week_3_returned,
+                    count(DISTINCT CASE 
+                      WHEN uv.visit_date >= fv.first_visit_week + INTERVAL 28 DAY 
+                        AND uv.visit_date < fv.first_visit_week + INTERVAL 35 DAY
+                      THEN fv.anonymous_id 
+                      ELSE NULL 
+                    END) as week_4_returned,
+                    count(DISTINCT CASE 
+                      WHEN uv.visit_date >= fv.first_visit_week + INTERVAL 35 DAY 
+                        AND uv.visit_date < fv.first_visit_week + INTERVAL 42 DAY
+                      THEN fv.anonymous_id 
+                      ELSE NULL 
+                    END) as week_5_returned,
+                    c.total_users
+                  FROM first_visits fv
+                  LEFT JOIN user_visits uv ON fv.anonymous_id = uv.anonymous_id
+                  INNER JOIN cohorts c ON fv.first_visit_week = c.cohort_week
+                  GROUP BY fv.first_visit_week, c.total_users
+                )
+                SELECT
+                  formatDateTime(cohort, '%Y-%m-%d') as cohort,
+                  total_users as users,
+                  100.0 as week_0_retention,
+                  ROUND(CASE 
+                    WHEN total_users > 0 
+                    THEN (week_1_returned / total_users) * 100 
+                    ELSE 0 
+                  END, 2) as week_1_retention,
+                  ROUND(CASE 
+                    WHEN total_users > 0 
+                    THEN (week_2_returned / total_users) * 100 
+                    ELSE 0 
+                  END, 2) as week_2_retention,
+                  ROUND(CASE 
+                    WHEN total_users > 0 
+                    THEN (week_3_returned / total_users) * 100 
+                    ELSE 0 
+                  END, 2) as week_3_retention,
+                  ROUND(CASE 
+                    WHEN total_users > 0 
+                    THEN (week_4_returned / total_users) * 100 
+                    ELSE 0 
+                  END, 2) as week_4_retention,
+                  ROUND(CASE 
+                    WHEN total_users > 0 
+                    THEN (week_5_returned / total_users) * 100 
+                    ELSE 0 
+                  END, 2) as week_5_retention
+                FROM retention_calc
+                GROUP BY cohort, total_users, week_1_returned, week_2_returned, week_3_returned, week_4_returned, week_5_returned
+                ORDER BY cohort DESC
+            `,
+				params: {
+					websiteId,
+					startDate,
+					endDate: `${endDate} 23:59:59`,
+					...filterParams,
+				},
+			};
+		},
+		plugins: {
+			normalizeGeo: true,
+		},
+	},
+
+	retention_rate: {
+		meta: {
+			title: "Retention Rate",
+			description:
+				"Overall user retention metrics showing return visitor rates over time.",
+			category: "Engagement",
+			tags: ["retention", "user behavior", "engagement"],
+			output_fields: [
+				{
+					name: "date",
+					type: "string",
+					label: "Date",
+					description: "Date of the retention calculation",
+				},
+				{
+					name: "new_users",
+					type: "number",
+					label: "New Users",
+					description: "Number of new users (first visit)",
+				},
+				{
+					name: "returning_users",
+					type: "number",
+					label: "Returning Users",
+					description: "Number of returning users",
+				},
+				{
+					name: "retention_rate",
+					type: "number",
+					label: "Retention Rate",
+					description: "Percentage of returning users",
+					unit: "%",
+				},
+			],
+			default_visualization: "line",
+			supports_granularity: ["day", "week", "month"],
+			version: "1.0",
+		},
+		customSql: (
+			websiteId: string,
+			startDate: string,
+			endDate: string,
+			_filters?: Filter[],
+			_granularity?: TimeUnit,
+			_limit?: number,
+			_offset?: number,
+			_timezone?: string,
+			filterConditions?: string[],
+			filterParams?: Record<string, Filter["value"]>
+		) => {
+			const combinedWhereClause = filterConditions?.length
+				? `AND ${filterConditions.join(" AND ")}`
+				: "";
+
+			return {
+				sql: `
+                WITH all_first_visits AS (
+                  SELECT
+                    anonymous_id,
+                    toDate(MIN(time)) as first_visit_date
+                  FROM analytics.events
+                  WHERE
+                    client_id = {websiteId:String}
+                    AND anonymous_id != ''
+                    AND event_name = 'screen_view'
+                  GROUP BY anonymous_id
+                ),
+                daily_visits AS (
+                  SELECT
+                    e.anonymous_id,
+                    toDate(e.time) as visit_date
+                  FROM analytics.events e
+                  WHERE
+                    e.client_id = {websiteId:String}
+                    AND e.time >= parseDateTimeBestEffort({startDate:String})
+                    AND e.time <= parseDateTimeBestEffort({endDate:String})
+                    AND e.anonymous_id != ''
+                    AND e.event_name = 'screen_view'
+                    ${combinedWhereClause}
+                  GROUP BY e.anonymous_id, toDate(e.time)
+                ),
+                daily_stats AS (
+                  SELECT
+                    dv.visit_date as date,
+                    count(DISTINCT CASE 
+                      WHEN afv.first_visit_date = dv.visit_date 
+                      THEN dv.anonymous_id 
+                      ELSE NULL 
+                    END) as new_users,
+                    count(DISTINCT CASE 
+                      WHEN afv.first_visit_date < dv.visit_date 
+                      THEN dv.anonymous_id 
+                      ELSE NULL 
+                    END) as returning_users,
+                    count(DISTINCT dv.anonymous_id) as total_users
+                  FROM daily_visits dv
+                  LEFT JOIN all_first_visits afv ON dv.anonymous_id = afv.anonymous_id
+                  GROUP BY dv.visit_date
+                )
+                SELECT
+                  formatDateTime(date, '%Y-%m-%d') as date,
+                  new_users,
+                  returning_users,
+                  ROUND(CASE 
+                    WHEN total_users > 0 
+                    THEN (returning_users / total_users) * 100 
+                    ELSE 0 
+                  END, 2) as retention_rate
+                FROM daily_stats
+                ORDER BY date ASC
+            `,
+				params: {
+					websiteId,
+					startDate,
+					endDate: `${endDate} 23:59:59`,
+					...filterParams,
+				},
+			};
+		},
+		plugins: {
+			normalizeGeo: true,
+		},
 	},
 };

@@ -30,6 +30,7 @@ import {
 	PlusIcon,
 	PulseIcon,
 	ReceiptIcon,
+	RepeatIcon,
 	RoadHorizonIcon,
 	RobotIcon,
 	ShieldCheckIcon,
@@ -268,6 +269,10 @@ export const websiteNavigation: NavigationSection[] = [
 		createNavItem("Users", UsersThreeIcon, "/users", { rootLevel: false }),
 		createNavItem("Funnels", FunnelIcon, "/funnels", { rootLevel: false }),
 		createNavItem("Goals", TargetIcon, "/goals", { rootLevel: false }),
+		createNavItem("Retention", RepeatIcon, "/retention", {
+			rootLevel: false,
+			alpha: true,
+		}),
 		createNavItem("Feature Flags", FlagIcon, "/flags", {
 			alpha: true,
 			rootLevel: false,
