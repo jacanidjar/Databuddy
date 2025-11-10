@@ -79,8 +79,6 @@ export async function validateRequest(
 				send_event: true,
 			});
 
-			console.log("Autumn data:", data);
-
 			if (data && !(data.allowed || data.overage_allowed)) {
 				await logBlockedTraffic(
 					request,
