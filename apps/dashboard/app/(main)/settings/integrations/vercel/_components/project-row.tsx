@@ -597,7 +597,7 @@ export function ProjectRow({
 																handleSelectAll();
 															}
 														}}
-														type="button"
+														role="button"
 													>
 														<Checkbox
 															checked={

@@ -3,6 +3,7 @@ import { apikeysRouter } from "./routers/apikeys";
 import { assistantRouter } from "./routers/assistant";
 import { autocompleteRouter } from "./routers/autocomplete";
 import { billingRouter } from "./routers/billing";
+import { chatRouter } from "./routers/chat";
 import { dbConnectionsRouter } from "./routers/db-connections";
 import { flagsRouter } from "./routers/flags";
 import { funnelsRouter } from "./routers/funnels";
@@ -26,6 +27,7 @@ export const appRouter = {
 	apikeys: apikeysRouter,
 	flags: flagsRouter,
 	assistant: assistantRouter,
+	chat: chatRouter,
 	organizations: organizationsRouter,
 	dbConnections: dbConnectionsRouter,
 	performance: performanceRouter,
