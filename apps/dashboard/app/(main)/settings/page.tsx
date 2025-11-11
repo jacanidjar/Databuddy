@@ -15,14 +15,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiKeyCreateDialog, ApiKeyList } from "./_components";
 
-const IntegrationsPage = dynamic(
-	() => import("./integrations/page").then((mod) => ({ default: mod.default })),
-	{
-		loading: () => <Skeleton className="h-64 w-full rounded" />,
-		ssr: false,
-	}
-);
-
 const EmailForm = dynamic(
 	() =>
 		import("./_components/email-form").then((mod) => ({
@@ -125,12 +117,7 @@ export default function SettingsPage() {
 			case "api-keys":
 				return {
 					title: "API Keys",
-					description: "Create and manage API keys for integrations",
-				};
-			case "integrations":
-				return {
-					title: "Integrations",
-					description: "Connect your favorite tools and services",
+					description: "Create and manage API keys for your applications",
 				};
 			default:
 				return {
@@ -264,7 +251,6 @@ export default function SettingsPage() {
 						</CardContent>
 					</Card>
 				)}
-				{activeTab === "integrations" && <IntegrationsSection />}
 				{activeTab === "notifications" && (
 					<div className="flex h-full items-center justify-center">
 						<div className="text-center">
@@ -320,8 +306,4 @@ function ApiKeysSection() {
 			/>
 		</div>
 	);
-}
-
-function IntegrationsSection() {
-	return <IntegrationsPage />;
 }

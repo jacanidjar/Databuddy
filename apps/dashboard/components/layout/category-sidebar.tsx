@@ -12,13 +12,10 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useDbConnections } from "@/hooks/use-db-connections";
 import { useWebsites } from "@/hooks/use-websites";
 import { cn } from "@/lib/utils";
 import {
 	categoryConfig,
-	createDatabasesNavigation,
-	createLoadingDatabasesNavigation,
 	createLoadingWebsitesNavigation,
 	createWebsitesNavigation,
 	filterCategoriesForRoute,
@@ -47,8 +44,6 @@ export function CategorySidebar({
 }: CategorySidebarProps) {
 	const pathname = usePathname();
 	const { websites, isLoading: isLoadingWebsites } = useWebsites();
-	const { connections: databases, isLoading: isLoadingDatabases } =
-		useDbConnections();
 	const [helpOpen, setHelpOpen] = useState(false);
 
 	const { categories, defaultCategory } = useMemo(() => {
@@ -62,9 +57,6 @@ export function CategorySidebar({
 							websites: isLoadingWebsites
 								? createLoadingWebsitesNavigation()
 								: createWebsitesNavigation(websites),
-							observability: isLoadingDatabases
-								? createLoadingDatabasesNavigation()
-								: createDatabasesNavigation(databases),
 						},
 					}
 				: baseConfig;
@@ -76,7 +68,7 @@ export function CategorySidebar({
 		);
 
 		return { categories: filteredCategories, defaultCategory: defaultCat };
-	}, [pathname, websites, isLoadingWebsites, databases, isLoadingDatabases]);
+	}, [pathname, websites, isLoadingWebsites]);
 
 	const activeCategory = selectedCategory || defaultCategory;
 

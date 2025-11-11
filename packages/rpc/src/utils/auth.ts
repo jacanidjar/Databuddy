@@ -3,9 +3,32 @@ import { db, dbConnections, eq, websites } from "@databuddy/db";
 import { cacheable } from "@databuddy/redis";
 import { logger } from "@databuddy/shared/utils/discord-webhook";
 import { ORPCError } from "@orpc/server";
-import type { Context } from "../orpc";
+import type { BaseContext, Context } from "../orpc";
 
 type Permission = "read" | "update" | "delete" | "transfer";
+
+function isAuthenticatedContext(ctx: BaseContext | Context): ctx is Context {
+	return "user" in ctx && ctx.user !== undefined;
+}
+
+async function checkOrganizationPermission(
+	ctx: Context,
+	permission: Permission
+): Promise<boolean> {
+	const { success } = await websitesApi.hasPermission({
+		headers: ctx.headers,
+		body: { permissions: { website: [permission] } },
+	});
+	return success;
+}
+
+function requireAuthentication(ctx: BaseContext | Context): asserts ctx is Context {
+	if (!isAuthenticatedContext(ctx)) {
+		throw new ORPCError("UNAUTHORIZED", {
+			message: "Authentication is required for this action.",
+		});
+	}
+}
 
 const getWebsiteById = cacheable(
 	async (id: string) => {
@@ -59,7 +82,7 @@ const getDbConnectionById = async (id: string) => {
  * @throws {ORPCError} if the user is not authorized.
  */
 export async function authorizeWebsiteAccess(
-	ctx: Context,
+	ctx: BaseContext | Context,
 	websiteId: string,
 	permission: Permission
 ) {
@@ -73,22 +96,15 @@ export async function authorizeWebsiteAccess(
 		return website;
 	}
 
-	if (!ctx.user) {
-		throw new ORPCError("UNAUTHORIZED", {
-			message: "Authentication is required for this action.",
-		});
-	}
+	requireAuthentication(ctx);
 
 	if (ctx.user.role === "ADMIN") {
 		return website;
 	}
 
 	if (website.organizationId) {
-		const { success } = await websitesApi.hasPermission({
-			headers: ctx.headers,
-			body: { permissions: { website: [permission] } },
-		});
-		if (!success) {
+		const hasPermission = await checkOrganizationPermission(ctx, permission);
+		if (!hasPermission) {
 			throw new ORPCError("FORBIDDEN", {
 				message: "You do not have permission to perform this action.",
 			});
@@ -110,7 +126,7 @@ export async function authorizeWebsiteAccess(
  * @throws {ORPCError} if the user is not authorized.
  */
 export async function authorizeDbConnectionAccess(
-	ctx: Context,
+	ctx: BaseContext | Context,
 	connectionId: string,
 	permission: Permission
 ) {
@@ -122,22 +138,15 @@ export async function authorizeDbConnectionAccess(
 		});
 	}
 
-	if (!ctx.user) {
-		throw new ORPCError("UNAUTHORIZED", {
-			message: "Authentication is required for this action.",
-		});
-	}
+	requireAuthentication(ctx);
 
 	if (ctx.user.role === "ADMIN") {
 		return connection;
 	}
 
 	if (connection.organizationId) {
-		const { success } = await websitesApi.hasPermission({
-			headers: ctx.headers,
-			body: { permissions: { website: [permission] } },
-		});
-		if (!success) {
+		const hasPermission = await checkOrganizationPermission(ctx, permission);
+		if (!hasPermission) {
 			throw new ORPCError("FORBIDDEN", {
 				message: "You do not have permission to perform this action.",
 			});

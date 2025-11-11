@@ -6,14 +6,14 @@ import type { useAccordionStates } from "@/hooks/use-persistent-state";
 import { NavigationItem } from "./navigation-item";
 import type { NavigationSection as NavigationSectionType } from "./types";
 
-interface NavigationSectionProps {
+type NavigationSectionProps = {
 	title: string;
 	icon: NavigationSectionType["icon"];
 	items: NavigationSectionType["items"];
 	pathname: string;
 	currentWebsiteId?: string | null;
 	accordionStates: ReturnType<typeof useAccordionStates>;
-}
+};
 
 const buildCurrentUrl = (
 	pathname: string,

@@ -2,36 +2,39 @@ import { auth, type User } from "@databuddy/auth";
 import { db } from "@databuddy/db";
 import { os as createOS, ORPCError } from "@orpc/server";
 
-export const createRPCContext = async (opts: { headers: Headers }) => {
-    const session = await auth.api.getSession({
-        headers: opts.headers,
-    });
+export const createRPCContext = (opts: { headers: Headers }) => ({
+    db,
+    auth,
+    headers: opts.headers,
+});
 
-    return {
-        db,
-        auth,
-        session: session?.session,
-        user: session?.user as User | undefined,
-        ...opts,
-    };
+export type BaseContext = ReturnType<typeof createRPCContext>;
+
+type SessionData = Awaited<ReturnType<typeof auth.api.getSession>>;
+
+export type Context = BaseContext & {
+    session: NonNullable<SessionData>["session"];
+    user: User;
 };
 
-export type Context = Awaited<ReturnType<typeof createRPCContext>>;
-
-const os = createOS.$context<Context>();
+const os = createOS.$context<BaseContext>();
 
 export const publicProcedure = os;
 
-export const protectedProcedure = os.use(({ context, next }) => {
-    if (!(context.user && context.session)) {
+export const protectedProcedure = os.use(async ({ context, next }) => {
+    const sessionData = await auth.api.getSession({
+        headers: context.headers,
+    });
+
+    if (!(sessionData?.session && sessionData?.user)) {
         throw new ORPCError("UNAUTHORIZED");
     }
 
     return next({
         context: {
             ...context,
-            session: context.session,
-            user: context.user,
+            session: sessionData.session,
+            user: sessionData.user,
         },
     });
 });
@@ -43,13 +46,7 @@ export const adminProcedure = protectedProcedure.use(({ context, next }) => {
         });
     }
 
-    return next({
-        context: {
-            ...context,
-            session: context.session,
-            user: context.user,
-        },
-    });
+    return next({ context });
 });
 
 export { os };

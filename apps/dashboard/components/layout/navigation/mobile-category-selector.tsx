@@ -10,13 +10,10 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useDbConnections } from "@/hooks/use-db-connections";
 import { useWebsites } from "@/hooks/use-websites";
 import { cn } from "@/lib/utils";
 import {
 	categoryConfig,
-	createDatabasesNavigation,
-	createLoadingDatabasesNavigation,
 	createLoadingWebsitesNavigation,
 	createWebsitesNavigation,
 	filterCategoriesForRoute,
@@ -24,10 +21,10 @@ import {
 	getDefaultCategory,
 } from "./navigation-config";
 
-interface MobileCategorySelectorProps {
+type MobileCategorySelectorProps = {
 	onCategoryChange?: (categoryId: string) => void;
 	selectedCategory?: string;
-}
+};
 
 export function MobileCategorySelector({
 	onCategoryChange,
@@ -35,8 +32,6 @@ export function MobileCategorySelector({
 }: MobileCategorySelectorProps) {
 	const pathname = usePathname();
 	const { websites, isLoading: isLoadingWebsites } = useWebsites();
-	const { connections: databases, isLoading: isLoadingDatabases } =
-		useDbConnections();
 
 	const { categories, defaultCategory } = useMemo(() => {
 		const baseConfig = getContextConfig(pathname);
@@ -49,9 +44,6 @@ export function MobileCategorySelector({
 							websites: isLoadingWebsites
 								? createLoadingWebsitesNavigation()
 								: createWebsitesNavigation(websites),
-							observability: isLoadingDatabases
-								? createLoadingDatabasesNavigation()
-								: createDatabasesNavigation(databases),
 						},
 					}
 				: baseConfig;
@@ -63,7 +55,7 @@ export function MobileCategorySelector({
 		);
 
 		return { categories: filteredCategories, defaultCategory: defaultCat };
-	}, [pathname, websites, isLoadingWebsites, databases, isLoadingDatabases]);
+	}, [pathname, websites, isLoadingWebsites]);
 
 	const activeCategory = selectedCategory || defaultCategory;
 	const currentCategory = categories.find((cat) => cat.id === activeCategory);

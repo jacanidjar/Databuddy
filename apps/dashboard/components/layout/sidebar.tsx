@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useDbConnections } from "@/hooks/use-db-connections";
 import {
 	useAccordionStates,
 	usePersistentState,
@@ -15,12 +14,9 @@ import {
 import { useWebsites } from "@/hooks/use-websites";
 import { cn } from "@/lib/utils";
 import { CategorySidebar } from "./category-sidebar";
-import { DatabaseHeader } from "./navigation/database-header";
 import { MobileCategorySelector } from "./navigation/mobile-category-selector";
 import {
 	categoryConfig,
-	createDatabasesNavigation,
-	createLoadingDatabasesNavigation,
 	createLoadingWebsitesNavigation,
 	createWebsitesNavigation,
 	getContextConfig,
@@ -45,8 +41,6 @@ export function Sidebar() {
 		string | undefined
 	>("sidebar-selected-category", undefined);
 	const { websites, isLoading: isLoadingWebsites } = useWebsites();
-	const { connections: databases, isLoading: isLoadingDatabases } =
-		useDbConnections();
 	const accordionStates = useAccordionStates();
 	const sidebarRef = useRef<HTMLDivElement>(null);
 	const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -54,29 +48,15 @@ export function Sidebar() {
 	const isDemo = pathname.startsWith("/demo");
 	const isSandbox = pathname.startsWith("/sandbox");
 	const isWebsite = pathname.startsWith("/websites/");
-	const isDatabase =
-		pathname.startsWith("/observability/database/") &&
-		pathname !== "/observability/database" &&
-		pathname !== "/observability/database/";
 
 	const websiteId = useMemo(
 		() => (isDemo || isWebsite ? pathname.split("/")[2] : null),
 		[isDemo, isWebsite, pathname]
 	);
 
-	const databaseId = useMemo(
-		() => (isDatabase ? pathname.split("/")[3] : null),
-		[isDatabase, pathname]
-	);
-
 	const currentWebsite = useMemo(
 		() => (websiteId ? websites?.find((site) => site.id === websiteId) : null),
 		[websiteId, websites]
-	);
-
-	const currentDatabase = useMemo(
-		() => (databaseId ? databases?.find((db) => db.id === databaseId) : null),
-		[databaseId, databases]
 	);
 
 	const closeSidebar = useCallback(() => {
@@ -108,9 +88,6 @@ export function Sidebar() {
 							websites: isLoadingWebsites
 								? createLoadingWebsitesNavigation()
 								: createWebsitesNavigation(websites),
-							observability: isLoadingDatabases
-								? createLoadingDatabasesNavigation()
-								: createDatabasesNavigation(databases),
 						},
 					}
 				: baseConfig;
@@ -134,9 +111,6 @@ export function Sidebar() {
 				<WebsiteHeader showBackButton={!isDemo} website={currentWebsite} />
 			);
 			currentId = websiteId;
-		} else if (isDatabase) {
-			headerComponent = <DatabaseHeader database={currentDatabase} />;
-			currentId = databaseId;
 		} else if (isSandbox) {
 			headerComponent = <SandboxHeader />;
 			currentId = "sandbox";
@@ -155,16 +129,11 @@ export function Sidebar() {
 		selectedCategory,
 		isWebsite,
 		isDemo,
-		isDatabase,
 		isSandbox,
 		websiteId,
-		databaseId,
 		currentWebsite,
-		currentDatabase,
 		websites,
-		databases,
 		isLoadingWebsites,
-		isLoadingDatabases,
 	]);
 
 	useEffect(() => {
