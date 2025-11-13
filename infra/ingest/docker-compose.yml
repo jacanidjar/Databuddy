@@ -17,7 +17,7 @@ services:
       REDPANDA_PASSWORD: ${REDPANDA_PASSWORD}
       VECTOR_KAFKA_USER: ${VECTOR_KAFKA_USER}
       VECTOR_KAFKA_PASSWORD: ${VECTOR_KAFKA_PASSWORD}
-    entrypoint: ["/bin/bash", "-c"]
+    entrypoint: [ "/bin/bash", "-c" ]
     command:
       - |
         if [ -z "$$REDPANDA_ADVERTISED_HOST" ]; then
@@ -66,11 +66,7 @@ services:
     networks:
       - databuddy
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          'rpk cluster health -X user="$$REDPANDA_USER" -X pass="$$REDPANDA_PASSWORD" -X sasl.mechanism=SCRAM-SHA-256 | grep -q ''Healthy:.*true'' && rpk topic list -X user="$$REDPANDA_USER" -X pass="$$REDPANDA_PASSWORD" -X sasl.mechanism=SCRAM-SHA-256',
-        ]
+      test: [ "CMD-SHELL", 'rpk cluster health -X user="$$REDPANDA_USER" -X pass="$$REDPANDA_PASSWORD" -X sasl.mechanism=SCRAM-SHA-256 | grep -q ''Healthy:.*true'' && rpk topic list -X user="$$REDPANDA_USER" -X pass="$$REDPANDA_PASSWORD" -X sasl.mechanism=SCRAM-SHA-256' ]
       interval: 10s
       timeout: 10s
       retries: 10
@@ -121,7 +117,7 @@ services:
         condition: service_healthy
         restart: true
     healthcheck:
-      test: ["CMD", "vector", "validate", "/etc/vector/vector.yaml"]
+      test: [ "CMD", "vector", "validate", "/etc/vector/vector.yaml" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -129,6 +125,7 @@ services:
 
 volumes:
   redpanda_data:
+
 
 networks:
   databuddy:
