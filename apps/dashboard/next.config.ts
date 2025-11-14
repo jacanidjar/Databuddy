@@ -31,7 +31,8 @@ const nextConfig: NextConfig = {
 			},
 		],
 	},
-	serverExternalPackages: ["pg", "pg-pool"],
+	serverExternalPackages: ["pg", "pg-pool", "pino", "pino-pretty", "@axiomhq/pino", "thread-stream"],
+	transpilePackages: [],
 	output: "standalone",
 };
 
