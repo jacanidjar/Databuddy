@@ -275,13 +275,16 @@ export const flagsRouter = {
 
 			await flagsCache.invalidateByTables(["flags"]);
 
-			logger.info("Flag created", {
-				flagId: newFlag.id,
-				key: input.key,
-				websiteId: input.websiteId,
-				organizationId: input.organizationId,
-				userId: context.user.id,
-			});
+			logger.info(
+				{
+					flagId: newFlag.id,
+					key: input.key,
+					websiteId: input.websiteId,
+					organizationId: input.organizationId,
+					userId: context.user.id,
+				},
+				"Flag created"
+			);
 
 			return newFlag;
 		} catch (error) {
@@ -291,13 +294,16 @@ export const flagsRouter = {
 				});
 			}
 
-			logger.error("Failed to create flag", {
-				error: error instanceof Error ? error.message : "Unknown error",
-				key: input.key,
-				websiteId: input.websiteId,
-				organizationId: input.organizationId,
-				userId: context.user.id,
-			});
+			logger.error(
+				{
+					error,
+					key: input.key,
+					websiteId: input.websiteId,
+					organizationId: input.organizationId,
+					userId: context.user.id,
+				},
+				"Failed to create flag"
+			);
 
 			throw new ORPCError("INTERNAL_SERVER_ERROR", {
 				message: "Failed to create flag",
@@ -356,12 +362,15 @@ export const flagsRouter = {
 				flagsCache.invalidateByKey(`byId:${id}:${scope}`),
 			]);
 
-			logger.info("Flag updated", {
-				flagId: id,
-				websiteId: flag.websiteId,
-				organizationId: flag.organizationId,
-				userId: context.user.id,
-			});
+			logger.info(
+				{
+					flagId: id,
+					websiteId: flag.websiteId,
+					organizationId: flag.organizationId,
+					userId: context.user.id,
+				},
+				"Flag updated"
+			);
 
 			return updatedFlag;
 		} catch (error) {
@@ -369,11 +378,14 @@ export const flagsRouter = {
 				throw error;
 			}
 
-			logger.error("Failed to update flag", {
-				error: error instanceof Error ? error.message : "Unknown error",
-				flagId: input.id,
-				userId: context.user.id,
-			});
+			logger.error(
+				{
+					error,
+					flagId: input.id,
+					userId: context.user.id,
+				},
+				"Failed to update flag"
+			);
 
 			throw new ORPCError("INTERNAL_SERVER_ERROR", {
 				message: "Failed to update flag",
@@ -434,12 +446,15 @@ export const flagsRouter = {
 					flagsCache.invalidateByKey(`byId:${input.id}:${scope}`),
 				]);
 
-				logger.info("Flag deleted", {
-					flagId: input.id,
-					websiteId: flag.websiteId,
-					organizationId: flag.organizationId,
-					userId: context.user.id,
-				});
+				logger.info(
+					{
+						flagId: input.id,
+						websiteId: flag.websiteId,
+						organizationId: flag.organizationId,
+						userId: context.user.id,
+					},
+					"Flag deleted"
+				);
 
 				return { success: true };
 			} catch (error) {
@@ -447,11 +462,14 @@ export const flagsRouter = {
 					throw error;
 				}
 
-				logger.error("Failed to delete flag", {
-					error: error instanceof Error ? error.message : "Unknown error",
-					flagId: input.id,
-					userId: context.user.id,
-				});
+				logger.error(
+					{
+						error,
+						flagId: input.id,
+						userId: context.user.id,
+					},
+					"Failed to delete flag"
+				);
 
 				throw new ORPCError("INTERNAL_SERVER_ERROR", {
 					message: "Failed to delete flag",
