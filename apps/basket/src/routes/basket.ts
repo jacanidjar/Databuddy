@@ -22,6 +22,34 @@ import {
 import { logger } from "../lib/logger";
 import { checkForBot, validateRequest } from "../lib/request-validation";
 import { getDailySalt, saltAnonymousId } from "../lib/security";
+
+function logEventGlimpse(
+	clientId: string,
+	eventType: string,
+	data: any,
+	isBatch = false
+) {
+	const dataSize = JSON.stringify(data).length;
+	const sizeKb = (dataSize / 1024).toFixed(2);
+
+	logger.info(
+		{
+			website_id: clientId,
+			event_type: eventType,
+			size_bytes: dataSize,
+			size_kb: sizeKb,
+			is_batch: isBatch,
+			timestamp: Date.now(),
+			session_id: data.sessionId || data.payload?.sessionId || "unknown",
+			anonymous_id:
+				data.anonymousId?.substring(0, 8) ||
+				data.payload?.anonymousId?.substring(0, 8) ||
+				"unknown",
+		},
+		`Event received: ${eventType}`
+	);
+}
+
 import {
 	analyticsEventSchema,
 	customEventSchema,
@@ -238,8 +266,14 @@ function processCustomEventData(
 	return {
 		id: randomUUID(),
 		client_id: clientId,
-		event_name: sanitizeString(customData.name, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
-		anonymous_id: sanitizeString(customData.anonymousId, VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH),
+		event_name: sanitizeString(
+			customData.name,
+			VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH
+		),
+		anonymous_id: sanitizeString(
+			customData.anonymousId,
+			VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH
+		),
 		session_id: validateSessionId(customData.sessionId),
 		properties: parseProperties(customData.properties),
 		timestamp: parseTimestamp(customData.timestamp),
@@ -289,6 +323,7 @@ const app = new Elysia()
 			}
 
 			const eventType = body.type || "track";
+			logEventGlimpse(clientId, eventType, body);
 
 			if (eventType === "track") {
 				const botError = await checkForBot(
@@ -470,6 +505,17 @@ const app = new Elysia()
 				}
 			}
 
+			logger.info(
+				{
+					website_id: clientId,
+					batch_size: body.length,
+					total_size_bytes: JSON.stringify(body).length,
+					total_size_kb: (JSON.stringify(body).length / 1024).toFixed(2),
+					timestamp: Date.now(),
+				},
+				`Batch event received: ${body.length} events`
+			);
+
 			const trackEvents: AnalyticsEvent[] = [];
 			const errorEvents: ErrorEvent[] = [];
 			const webVitalsEvents: WebVitalsEvent[] = [];
@@ -479,6 +525,7 @@ const app = new Elysia()
 
 			for (const event of body) {
 				const eventType = event.type || "track";
+				logEventGlimpse(clientId, eventType, event, true);
 
 				try {
 					if (eventType === "track") {
