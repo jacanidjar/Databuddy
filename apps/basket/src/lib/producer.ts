@@ -1,5 +1,6 @@
 import type { ClickHouseClient } from "@clickhouse/client";
 import { clickHouse, TABLE_NAMES } from "@databuddy/db";
+import { record, setAttributes } from "@elysiajs/opentelemetry";
 import { Semaphore } from "async-mutex";
 import { CompressionTypes, Kafka, type Producer } from "kafkajs";
 import { logger } from "./logger";
@@ -317,50 +318,77 @@ export class EventProducer {
 		}
 	}
 
-	async send(topic: string, event: unknown, key?: string): Promise<void> {
-		if (this.shuttingDown) {
-			this.toBuffer(topic, event);
-			return;
-		}
+	send(topic: string, event: unknown, key?: string): Promise<void> {
+		return record("kafkaSend", async () => {
+			setAttributes({
+				"kafka.topic": topic,
+				"kafka.has_key": Boolean(key),
+			});
 
-		const [, release] = await this.semaphore.acquire();
-
-		try {
-			if (
-				this.isEnabled() &&
-				(await this.connect()) &&
-				this.producer &&
-				this.connected
-			) {
-				try {
-					await this.producer.send({
-						topic,
-						messages: [
-							{
-								value: JSON.stringify(event),
-								key: key || (event as { client_id?: string }).client_id,
-							},
-						],
-						timeout: this.config.kafkaTimeout,
-						compression: CompressionTypes.GZIP,
-					});
-					this.stats.sent += 1;
-					return;
-				} catch (error) {
-					this.stats.failed += 1;
-					logger.error({ error }, "Redpanda send failed, buffering to ClickHouse");
-					this.failed = true;
-				}
+			if (this.shuttingDown) {
+				this.toBuffer(topic, event);
+				setAttributes({
+					"kafka.buffered": true,
+					"kafka.reason": "shutting_down",
+				});
+				return;
 			}
-			this.toBuffer(topic, event);
-		} catch (error) {
-			this.stats.errors += 1;
-			this.stats.lastErrorTime = Date.now();
-			logger.error({ error }, "Send error");
-			this.toBuffer(topic, event);
-		} finally {
-			release();
-		}
+
+			const [, release] = await this.semaphore.acquire();
+
+			try {
+				if (
+					this.isEnabled() &&
+					(await this.connect()) &&
+					this.producer &&
+					this.connected
+				) {
+					try {
+						await this.producer.send({
+							topic,
+							messages: [
+								{
+									value: JSON.stringify(event),
+									key: key || (event as { client_id?: string }).client_id,
+								},
+							],
+							timeout: this.config.kafkaTimeout,
+							compression: CompressionTypes.GZIP,
+						});
+						this.stats.sent += 1;
+						setAttributes({
+							"kafka.sent": true,
+							"kafka.stats.sent": this.stats.sent,
+						});
+						return;
+					} catch (error) {
+						this.stats.failed += 1;
+						logger.error({ error }, "Redpanda send failed, buffering to ClickHouse");
+						this.failed = true;
+						setAttributes({
+							"kafka.send_failed": true,
+							"kafka.stats.failed": this.stats.failed,
+						});
+					}
+				}
+				this.toBuffer(topic, event);
+				setAttributes({
+					"kafka.buffered": true,
+					"kafka.reason": "not_connected",
+				});
+			} catch (error) {
+				this.stats.errors += 1;
+				this.stats.lastErrorTime = Date.now();
+				logger.error({ error }, "Send error");
+				this.toBuffer(topic, event);
+				setAttributes({
+					"kafka.error": true,
+					"kafka.buffered": true,
+				});
+			} finally {
+				release();
+			}
+		});
 	}
 
 	sendEvent(topic: string, event: unknown, key?: string): void {
@@ -378,59 +406,86 @@ export class EventProducer {
 		await this.send(topic, event, key);
 	}
 
-	async sendEventBatch(topic: string, events: unknown[]): Promise<void> {
-		if (events.length === 0) {
-			return;
-		}
-
-		if (this.shuttingDown) {
-			for (const e of events) {
-				this.toBuffer(topic, e);
+	sendEventBatch(topic: string, events: unknown[]): Promise<void> {
+		return record("kafkaSendBatch", async () => {
+			if (events.length === 0) {
+				return;
 			}
-			return;
-		}
 
-		const [, release] = await this.semaphore.acquire();
+			setAttributes({
+				"kafka.topic": topic,
+				"kafka.batch_size": events.length,
+			});
 
-		try {
-			if (
-				this.isEnabled() &&
-				(await this.connect()) &&
-				this.producer &&
-				this.connected
-			) {
-				try {
-					await this.producer.send({
-						topic,
-						messages: events.map((e) => ({
-							value: JSON.stringify(e),
-							key:
-								(e as { client_id?: string; event_id?: string }).client_id ||
-								(e as { event_id?: string }).event_id,
-						})),
-						timeout: this.config.kafkaTimeout,
-						compression: CompressionTypes.GZIP,
-					});
-					this.stats.sent += events.length;
-					return;
-				} catch (error) {
-					this.stats.failed += events.length;
-					logger.error({ error }, "Redpanda batch failed, buffering to ClickHouse");
-					this.failed = true;
+			if (this.shuttingDown) {
+				for (const e of events) {
+					this.toBuffer(topic, e);
 				}
+				setAttributes({
+					"kafka.buffered": true,
+					"kafka.reason": "shutting_down",
+				});
+				return;
 			}
-			for (const e of events) {
-				this.toBuffer(topic, e);
+
+			const [, release] = await this.semaphore.acquire();
+
+			try {
+				if (
+					this.isEnabled() &&
+					(await this.connect()) &&
+					this.producer &&
+					this.connected
+				) {
+					try {
+						await this.producer.send({
+							topic,
+							messages: events.map((e) => ({
+								value: JSON.stringify(e),
+								key:
+									(e as { client_id?: string; event_id?: string }).client_id ||
+									(e as { event_id?: string }).event_id,
+							})),
+							timeout: this.config.kafkaTimeout,
+							compression: CompressionTypes.GZIP,
+						});
+						this.stats.sent += events.length;
+						setAttributes({
+							"kafka.sent": true,
+							"kafka.stats.sent": this.stats.sent,
+						});
+						return;
+					} catch (error) {
+						this.stats.failed += events.length;
+						logger.error({ error }, "Redpanda batch failed, buffering to ClickHouse");
+						this.failed = true;
+						setAttributes({
+							"kafka.send_failed": true,
+							"kafka.stats.failed": this.stats.failed,
+						});
+					}
+				}
+				for (const e of events) {
+					this.toBuffer(topic, e);
+				}
+				setAttributes({
+					"kafka.buffered": true,
+					"kafka.reason": "not_connected",
+				});
+			} catch (error) {
+				this.stats.errors += 1;
+				logger.error({ error }, "sendEventBatch error");
+				for (const e of events) {
+					this.toBuffer(topic, e);
+				}
+				setAttributes({
+					"kafka.error": true,
+					"kafka.buffered": true,
+				});
+			} finally {
+				release();
 			}
-		} catch (error) {
-			this.stats.errors += 1;
-			logger.error({ error }, "sendEventBatch error");
-			for (const e of events) {
-				this.toBuffer(topic, e);
-			}
-		} finally {
-			release();
-		}
+		});
 	}
 
 	async disconnect(): Promise<void> {

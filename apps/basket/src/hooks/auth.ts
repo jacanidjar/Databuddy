@@ -7,6 +7,7 @@
 
 import { and, db, eq, member, websites } from "@databuddy/db";
 import { cacheable } from "@databuddy/redis";
+import { record, setAttributes } from "@elysiajs/opentelemetry";
 import { logger } from "../lib/logger";
 
 type Website = typeof websites.$inferSelect;
@@ -354,17 +355,39 @@ const getWebsiteByIdWithOwnerCached = cacheable(
 	}
 );
 
-export async function getWebsiteByIdV2(
+export function getWebsiteByIdV2(
 	id: string
 ): Promise<WebsiteWithOwner | null> {
-	console.time("getWebsiteByIdV2");
-	try {
-		const result = await getWebsiteByIdWithOwnerCached(id);
-		console.timeEnd("getWebsiteByIdV2");
-		return result;
-	} catch (error) {
-		logger.error({ error, websiteId: id }, "Failed to get website by ID V2");
-		console.timeEnd("getWebsiteByIdV2");
-		return null;
-	}
+	return record("getWebsiteByIdV2", async () => {
+		console.time("getWebsiteByIdV2");
+		setAttributes({
+			"website.id": id,
+		});
+
+		try {
+			const result = await getWebsiteByIdWithOwnerCached(id);
+			console.timeEnd("getWebsiteByIdV2");
+
+			if (result) {
+				setAttributes({
+					"website.found": true,
+					"website.status": result.status,
+					"website.has_owner": Boolean(result.ownerId),
+				});
+			} else {
+				setAttributes({
+					"website.found": false,
+				});
+			}
+
+			return result;
+		} catch (error) {
+			logger.error({ error, websiteId: id }, "Failed to get website by ID V2");
+			setAttributes({
+				"website.lookup_failed": true,
+			});
+			console.timeEnd("getWebsiteByIdV2");
+			return null;
+		}
+	});
 }

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { cacheable } from "@databuddy/redis";
+import { record, setAttributes } from "@elysiajs/opentelemetry";
 import type { City } from "@maxmind/geoip2-node";
 import {
 	AddressNotFoundError,
@@ -85,34 +86,59 @@ function isValidIp(ip: string): boolean {
 	return Boolean(ip && (ipv4Regex.test(ip) || ipv6Regex.test(ip)));
 }
 
-async function lookupGeoLocation(ip: string) {
-	if (!(reader || isLoading || loadError)) {
+function lookupGeoLocation(ip: string): Promise<{ country: string | undefined; region: string | undefined; city: string | undefined }> {
+	return record("lookupGeoLocation", async () => {
+		if (!(reader || isLoading || loadError)) {
+			try {
+				await loadDatabase();
+			} catch (error) {
+				logger.error({ error }, "Failed to load database for IP lookup");
+				setAttributes({
+					"geo.lookup_failed": true,
+					"geo.error": "database_load_failed",
+				});
+				return { country: undefined, region: undefined, city: undefined };
+			}
+		}
+
+		if (!reader) {
+			setAttributes({
+				"geo.lookup_failed": true,
+				"geo.error": "no_reader",
+			});
+			return { country: undefined, region: undefined, city: undefined };
+		}
+
 		try {
-			await loadDatabase();
+			const response = reader.city(ip);
+			const result = {
+				country: response.country?.names?.en,
+				region: response.subdivisions?.[0]?.names?.en,
+				city: response.city?.names?.en,
+			};
+
+			setAttributes({
+				"geo.country": result.country || "unknown",
+				"geo.region": result.region || "unknown",
+				"geo.city": result.city || "unknown",
+			});
+
+			return result;
 		} catch (error) {
-			logger.error({ error }, "Failed to load database for IP lookup");
+			if (error instanceof AddressNotFoundError || error instanceof BadMethodCallError) {
+				setAttributes({
+					"geo.address_not_found": true,
+				});
+				return { country: undefined, region: undefined, city: undefined };
+			}
+			logger.error({ error }, "Error looking up IP");
+			setAttributes({
+				"geo.lookup_failed": true,
+				"geo.error": "lookup_error",
+			});
 			return { country: undefined, region: undefined, city: undefined };
 		}
-	}
-
-	if (!reader) {
-		return { country: undefined, region: undefined, city: undefined };
-	}
-
-	try {
-		const response = reader.city(ip);
-		return {
-			country: response.country?.names?.en,
-			region: response.subdivisions?.[0]?.names?.en,
-			city: response.city?.names?.en,
-		};
-	} catch (error) {
-		if (error instanceof AddressNotFoundError || error instanceof BadMethodCallError) {
-			return { country: undefined, region: undefined, city: undefined };
-		}
-		logger.error({ error }, "Error looking up IP");
-		return { country: undefined, region: undefined, city: undefined };
-	}
+	});
 }
 
 const getGeoLocation = cacheable(lookupGeoLocation, {

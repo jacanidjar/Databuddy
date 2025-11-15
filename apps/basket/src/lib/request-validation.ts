@@ -1,4 +1,5 @@
 import { cacheable } from "@databuddy/redis";
+import { record, setAttributes } from "@elysiajs/opentelemetry";
 import { Autumn as autumn } from "autumn-js";
 import { getWebsiteByIdV2, isValidOrigin } from "../hooks/auth";
 import { extractIpFromRequest } from "../utils/ip-geo";
@@ -12,7 +13,7 @@ import { logBlockedTraffic } from "./blocked-traffic";
 import { logger } from "./logger";
 
 type ValidationResult = {
-	success: true;
+	success: boolean;
 	clientId: string;
 	userAgent: string;
 	ip: string;
@@ -45,110 +46,160 @@ const checkAutumnCached = cacheable(
 /**
  * Validate incoming request for analytics events
  */
-export async function validateRequest(
+export function validateRequest(
 	body: any,
 	query: any,
 	request: Request
 ): Promise<ValidationResult | ValidationError> {
-	console.time("validateRequest");
-	if (!validatePayloadSize(body, VALIDATION_LIMITS.PAYLOAD_MAX_SIZE)) {
-		logBlockedTraffic(
-			request,
-			body,
-			query,
-			"payload_too_large",
-			"Validation Error"
-		);
-		console.timeEnd("validateRequest");
-		return { error: { status: "error", message: "Payload too large" } };
-	}
+	return record("validateRequest", async () => {
+		console.time("validateRequest");
+		if (!validatePayloadSize(body, VALIDATION_LIMITS.PAYLOAD_MAX_SIZE)) {
+			logBlockedTraffic(
+				request,
+				body,
+				query,
+				"payload_too_large",
+				"Validation Error"
+			);
+			setAttributes({
+				"validation.failed": true,
+				"validation.reason": "payload_too_large",
+			});
+			console.timeEnd("validateRequest");
+			return { error: { status: "error", message: "Payload too large" } };
+		}
 
-	const clientId = sanitizeString(
-		query.client_id,
-		VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH
-	);
-	if (!clientId) {
-		logBlockedTraffic(
-			request,
-			body,
-			query,
-			"missing_client_id",
-			"Validation Error"
+		const clientId = sanitizeString(
+			query.client_id,
+			VALIDATION_LIMITS.SHORT_STRING_MAX_LENGTH
 		);
-		console.timeEnd("validateRequest");
-		return { error: { status: "error", message: "Missing client ID" } };
-	}
+		if (!clientId) {
+			logBlockedTraffic(
+				request,
+				body,
+				query,
+				"missing_client_id",
+				"Validation Error"
+			);
+			setAttributes({
+				"validation.failed": true,
+				"validation.reason": "missing_client_id",
+			});
+			console.timeEnd("validateRequest");
+			return { error: { status: "error", message: "Missing client ID" } };
+		}
 
-	const website = await getWebsiteByIdV2(clientId);
-	if (!website || website.status !== "ACTIVE") {
-		logBlockedTraffic(
-			request,
-			body,
-			query,
-			"invalid_client_id",
-			"Validation Error",
-			undefined,
-			clientId
-		);
+		setAttributes({
+			"client.id": clientId,
+		});
+
+		const website = await getWebsiteByIdV2(clientId);
+		if (!website || website.status !== "ACTIVE") {
+			logBlockedTraffic(
+				request,
+				body,
+				query,
+				"invalid_client_id",
+				"Validation Error",
+				undefined,
+				clientId
+			);
+			setAttributes({
+				"validation.failed": true,
+				"validation.reason": "invalid_client_id",
+				"website.status": website?.status || "not_found",
+			});
+			console.timeEnd("validateRequest");
+			return {
+				error: { status: "error", message: "Invalid or inactive client ID" },
+			};
+		}
+
+		setAttributes({
+			"website.domain": website.domain,
+			"website.status": website.status,
+		});
+
+		if (website.ownerId) {
+			try {
+				const data = await checkAutumnCached(website.ownerId);
+
+				if (data && !(data.allowed || data.overage_allowed)) {
+					logBlockedTraffic(
+						request,
+						body,
+						query,
+						"exceeded_event_limit",
+						"Validation Error",
+						undefined,
+						clientId
+					);
+					setAttributes({
+						"validation.failed": true,
+						"validation.reason": "exceeded_event_limit",
+						"autumn.allowed": false,
+					});
+					console.timeEnd("validateRequest");
+					return {
+						error: { status: "error", message: "Exceeded event limit" },
+					};
+				}
+
+				setAttributes({
+					"autumn.allowed": data?.allowed,
+					"autumn.overage_allowed": data?.overage_allowed,
+				});
+			} catch (error) {
+				logger.error({ error }, "Autumn check failed, allowing event through");
+				setAttributes({
+					"autumn.check_failed": true,
+				});
+			}
+		}
+
+		const origin = request.headers.get("origin");
+		if (origin && !isValidOrigin(origin, website.domain)) {
+			logBlockedTraffic(
+				request,
+				body,
+				query,
+				"origin_not_authorized",
+				"Security Check",
+				undefined,
+				clientId
+			);
+			setAttributes({
+				"validation.failed": true,
+				"validation.reason": "origin_not_authorized",
+				"request.origin": origin,
+			});
+			console.timeEnd("validateRequest");
+			return { error: { status: "error", message: "Origin not authorized" } };
+		}
+
+		const userAgent =
+			sanitizeString(
+				request.headers.get("user-agent"),
+				VALIDATION_LIMITS.STRING_MAX_LENGTH
+			) || "";
+
+		const ip = extractIpFromRequest(request);
+
+		setAttributes({
+			"validation.success": true,
+			"request.has_user_agent": Boolean(userAgent),
+			"request.has_ip": Boolean(ip),
+		});
+
 		console.timeEnd("validateRequest");
 		return {
-			error: { status: "error", message: "Invalid or inactive client ID" },
+			success: true,
+			clientId,
+			userAgent,
+			ip,
+			ownerId: website.ownerId || undefined,
 		};
-	}
-
-	if (website.ownerId) {
-		try {
-			const data = await checkAutumnCached(website.ownerId);
-
-			if (data && !(data.allowed || data.overage_allowed)) {
-				logBlockedTraffic(
-					request,
-					body,
-					query,
-					"exceeded_event_limit",
-					"Validation Error",
-					undefined,
-					clientId
-				);
-				console.timeEnd("validateRequest");
-				return { error: { status: "error", message: "Exceeded event limit" } };
-			}
-		} catch (error) {
-			logger.error({ error }, "Autumn check failed, allowing event through");
-		}
-	}
-
-	const origin = request.headers.get("origin");
-	if (origin && !isValidOrigin(origin, website.domain)) {
-		logBlockedTraffic(
-			request,
-			body,
-			query,
-			"origin_not_authorized",
-			"Security Check",
-			undefined,
-			clientId
-		);
-		console.timeEnd("validateRequest");
-		return { error: { status: "error", message: "Origin not authorized" } };
-	}
-
-	const userAgent =
-		sanitizeString(
-			request.headers.get("user-agent"),
-			VALIDATION_LIMITS.STRING_MAX_LENGTH
-		) || "";
-
-	const ip = extractIpFromRequest(request);
-
-	console.timeEnd("validateRequest");
-	return {
-		success: true,
-		clientId,
-		userAgent,
-		ip,
-		ownerId: website.ownerId || undefined,
-	};
+	});
 }
 
 /**
