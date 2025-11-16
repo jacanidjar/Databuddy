@@ -1,6 +1,7 @@
 import { auth, type User } from "@databuddy/auth";
 import { db } from "@databuddy/db";
 import { os as createOS, ORPCError } from "@orpc/server";
+import { enrichSpanWithContext, recordORPCError, setProcedureAttributes } from "./lib/otel";
 
 export const createRPCContext = async (opts: { headers: Headers }) => {
     const session = await auth.api.getSession({
@@ -20,9 +21,16 @@ export type Context = Awaited<ReturnType<typeof createRPCContext>>;
 
 const os = createOS.$context<Context>();
 
-export const publicProcedure = os;
+export const publicProcedure = os.use(({ context, next }) => {
+    setProcedureAttributes("public");
+    enrichSpanWithContext(context);
+    return next();
+});
 
 export const protectedProcedure = os.use(({ context, next }) => {
+    setProcedureAttributes("protected");
+    enrichSpanWithContext(context);
+
     if (context.user?.role === "ADMIN") {
         return next({
             context: {
@@ -34,6 +42,7 @@ export const protectedProcedure = os.use(({ context, next }) => {
     }
 
     if (!(context.user && context.session)) {
+        recordORPCError({ code: "UNAUTHORIZED" });
         throw new ORPCError("UNAUTHORIZED");
     }
 
@@ -47,7 +56,14 @@ export const protectedProcedure = os.use(({ context, next }) => {
 });
 
 export const adminProcedure = protectedProcedure.use(({ context, next }) => {
+    setProcedureAttributes("admin");
+    enrichSpanWithContext(context);
+
     if (context.user.role !== "ADMIN") {
+        recordORPCError({
+            code: "FORBIDDEN",
+            message: "You do not have permission to access this resource",
+        });
         throw new ORPCError("FORBIDDEN", {
             message: "You do not have permission to access this resource",
         });

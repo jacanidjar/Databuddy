@@ -1,9 +1,9 @@
 import { auth, websitesApi } from "@databuddy/auth";
 import type { StreamingUpdate } from "@databuddy/shared/types/assistant";
-import { record, setAttributes } from "@elysiajs/opentelemetry";
 import { Elysia } from "elysia";
 import { processAssistantRequest } from "../agent/processor";
 import { createStreamingResponse } from "../agent/utils/stream-utils";
+import { record, setAttributes } from "../lib/tracing";
 import { validateWebsite } from "../lib/website-utils";
 import { AssistantRequestSchema } from "../schemas";
 

@@ -2,7 +2,10 @@
 export {
     createAbortSignalInterceptor,
     createORPCInstrumentation,
+    enrichSpanWithContext,
     recordError,
+    recordORPCError,
+    setProcedureAttributes,
     setupUncaughtErrorHandlers,
 } from "./lib/otel";
 export { createRPCContext } from "./orpc";

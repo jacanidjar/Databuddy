@@ -4,11 +4,13 @@ import {
 	appRouter,
 	createAbortSignalInterceptor,
 	createRPCContext,
+	recordORPCError,
 	setupUncaughtErrorHandlers,
 } from "@databuddy/rpc";
 import { logger } from "@databuddy/shared/logger";
 import cors from "@elysiajs/cors";
-import { onError } from "@orpc/server";
+import { context } from "@opentelemetry/api";
+import { ORPCError, onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { autumnHandler } from "autumn-js/elysia";
 import { Elysia } from "elysia";
@@ -39,7 +41,8 @@ const rpcHandler = new RPCHandler(appRouter, {
 
 const app = new Elysia()
 	.state("tracing", {
-		span: null as ReturnType<typeof startRequestSpan> | null,
+		span: null as ReturnType<typeof startRequestSpan>["span"] | null,
+		activeContext: null as ReturnType<typeof context.active> | null | undefined,
 		startTime: 0,
 	})
 	.use(publicApi)
@@ -58,11 +61,19 @@ const app = new Elysia()
 	.onBeforeHandle(function startTrace({ request, path, store }) {
 		const method = request.method;
 		const startTime = Date.now();
-		const span = startRequestSpan(method, request.url, path);
 
-		// Store span and start time in Elysia store
+		// Extract route from path (e.g., "/rpc/websites.list" -> "websites.list")
+		const route = path.startsWith("/rpc/") ? path.slice(5) : path;
+		const { span, activeContext } = startRequestSpan(
+			method,
+			request.url,
+			route
+		);
+
+		// Store span, context, and start time in Elysia store
 		store.tracing = {
 			span,
+			activeContext,
 			startTime,
 		};
 	})
@@ -99,15 +110,35 @@ const app = new Elysia()
 	.use(exportRoute)
 	.all(
 		"/rpc/*",
-		async ({ request }: { request: Request }) => {
+		async ({ request, store }) => {
 			try {
-				const context = await createRPCContext({ headers: request.headers });
-				const { response } = await rpcHandler.handle(request, {
-					prefix: "/rpc",
-					context,
-				});
+				// Run RPC handler within the active trace context if available
+				const handler = async () => {
+					const rpcContext = await createRPCContext({
+						headers: request.headers,
+					});
+					const { response } = await rpcHandler.handle(request, {
+						prefix: "/rpc",
+						context: rpcContext,
+					});
+					return response;
+				};
+
+				const activeContext = store.tracing?.activeContext;
+				const response = activeContext
+					? await context.with(activeContext, handler)
+					: await handler();
+
 				return response ?? new Response("Not Found", { status: 404 });
 			} catch (error) {
+				// Record ORPC errors in OpenTelemetry
+				if (error instanceof ORPCError) {
+					recordORPCError({
+						code: error.code,
+						message: error.message,
+					});
+				}
+
 				logger.error({ error }, "RPC handler failed");
 				return new Response("Internal Server Error", { status: 500 });
 			}

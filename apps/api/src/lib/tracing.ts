@@ -1,6 +1,8 @@
 import { createORPCInstrumentation } from "@databuddy/rpc";
-import { type Span, SpanStatusCode, trace } from "@opentelemetry/api";
+import { context, type Span, SpanStatusCode, trace } from "@opentelemetry/api";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto";
+import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
+import { PgInstrumentation } from "@opentelemetry/instrumentation-pg";
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-node";
@@ -39,7 +41,16 @@ export function initTracing(): void {
             maxExportBatchSize: 512,
             maxQueueSize: 2048,
         }),
-        instrumentations: [createORPCInstrumentation()],
+        instrumentations: [
+            new HttpInstrumentation({
+                ignoreIncomingRequestHook: (req: { url?: string }) => {
+                    // Don't trace health checks
+                    return req.url?.includes("/health") ?? false;
+                },
+            }),
+            new PgInstrumentation(),
+            createORPCInstrumentation(),
+        ],
     });
 
     sdk.start();
@@ -99,15 +110,16 @@ export function setAttributes(
 }
 
 /**
- * Start HTTP request span
+ * Start HTTP request span and set it as active
+ * Returns both the span and the context with the span set as active
  */
 export function startRequestSpan(
     method: string,
     path: string,
     route?: string
-): Span {
+): { span: Span; activeContext: ReturnType<typeof context.active> } {
     const tracer = getTracer();
-    return tracer.startSpan(`${method} ${route ?? path}`, {
+    const span = tracer.startSpan(`${method} ${route ?? path}`, {
         kind: 1, // SERVER
         attributes: {
             "http.method": method,
@@ -115,6 +127,11 @@ export function startRequestSpan(
             "http.target": path,
         },
     });
+
+    // Create context with this span as active
+    const activeContext = trace.setSpan(context.active(), span);
+
+    return { span, activeContext };
 }
 
 /**
