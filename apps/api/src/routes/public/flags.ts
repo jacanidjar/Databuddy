@@ -1,7 +1,7 @@
 import { and, db, eq, flags, isNull, or } from "@databuddy/db";
-import { record, setAttributes } from "@elysiajs/opentelemetry";
 import { Elysia, t } from "elysia";
 import { logger } from "@/lib/logger";
+import { record, setAttributes } from "@/lib/tracing";
 
 const flagQuerySchema = t.Object({
 	key: t.String(),
