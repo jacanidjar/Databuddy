@@ -104,7 +104,7 @@ jobs:
           EMAIL_API_KEY: test-email-api-key
           IP_HASH_SALT: test-ip-hash-salt
           
-        run: bun test
+        run: bun run test
 
       - name: Upload coverage reports
         if: always()
