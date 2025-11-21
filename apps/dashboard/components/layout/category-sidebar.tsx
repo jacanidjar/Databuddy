@@ -83,7 +83,7 @@ export function CategorySidebar({
 					>
 						<Image
 							alt="DataBuddy Logo"
-							className="drop-shadow-sm invert dark:invert-0"
+							className="invert dark:invert-0"
 							height={32}
 							priority
 							src="/logo.svg"
@@ -100,7 +100,7 @@ export function CategorySidebar({
 							<TooltipTrigger asChild>
 								<button
 									className={cn(
-										"flex cursor-pointer items-center justify-center px-3 py-2.5 hover:bg-sidebar-accent",
+										"flex cursor-pointer items-center justify-center px-3 py-2.5 hover:bg-accent",
 										"focus:outline-none",
 										isActive &&
 											"bg-sidebar-accent text-sidebar-accent-foreground"
