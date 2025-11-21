@@ -1,12 +1,10 @@
 import { BaseTracker } from "./core/tracker";
 import type { TrackerOptions } from "./core/types";
 import { generateUUIDv4, getTrackerConfig, isOptedOut } from "./core/utils";
-import {
-    initErrorTracking,
-    initInteractionTracking,
-    initScrollDepthTracking,
-    initWebVitalsTracking,
-} from "./plugins";
+import { initErrorTracking } from "./plugins/errors";
+import { initInteractionTracking } from "./plugins/interactions";
+import { initScrollDepthTracking } from "./plugins/scroll-depth";
+import { initWebVitalsTracking } from "./plugins/vitals";
 
 export class Databuddy extends BaseTracker {
     constructor(options: TrackerOptions) {
@@ -20,7 +18,6 @@ export class Databuddy extends BaseTracker {
             initErrorTracking(this);
         }
 
-        // Initialize standard tracking
         if (!this.isServer()) {
             if (this.options.trackScreenViews) {
                 this.trackScreenViews();
