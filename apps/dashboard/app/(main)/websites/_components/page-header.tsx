@@ -43,7 +43,7 @@ export const PageHeader = memo(
 				</div>
 				<div className="min-w-0 flex-1">
 					<div className="flex items-center gap-2">
-						<h1 className="truncate font-bold text-foreground text-xl tracking-tight sm:text-2xl">
+						<h1 className="truncate font-medium text-foreground text-xl tracking-tight sm:text-2xl">
 							{title}
 						</h1>
 						{count && (

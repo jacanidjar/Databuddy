@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { orpc } from "@/lib/orpc";
-import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 import {
@@ -88,7 +87,10 @@ function GlobalScopesDisplay({ scopes }: { scopes: string[] }) {
 			{scopes.length > 0 ? (
 				<div className="grid grid-cols-1 gap-2 md:grid-cols-2">
 					{scopes.map((s) => (
-						<div className="flex items-center gap-3 rounded border p-3" key={s}>
+						<div
+							className="flex w-fit items-center gap-3 rounded border bg-accent p-3"
+							key={s}
+						>
 							<Checkbox checked disabled />
 							<div className="font-medium text-sm">{s}</div>
 						</div>
@@ -153,7 +155,7 @@ function ResourceAccessDisplay({ access }: { access: ApiKeyDetail["access"] }) {
 					))
 				) : (
 					<div className="rounded border border-dashed p-6 text-center">
-						<div className="text-muted-foreground text-sm">
+						<div className="text-[13px] text-muted-foreground">
 							No resource-specific access configured for this key.
 						</div>
 					</div>
@@ -180,7 +182,7 @@ function ApiKeyActions({
 	onShowSecret: (secret: string) => void;
 }) {
 	return (
-		<div className="flex justify-end gap-3 border-border/50 border-t pt-6">
+		<div className="flex flex-wrap justify-between gap-3 border-border/50 border-t pt-6">
 			<div className="flex gap-2">
 				<Button
 					disabled={!keyId || rotateMutation.isPending}
@@ -357,7 +359,7 @@ export function ApiKeyDetailDialog({
 				className="w-full overflow-y-auto p-4 sm:w-[480px] sm:max-w-[480px]"
 				side="right"
 			>
-				<SheetHeader className="space-y-1 pb-3">
+				<SheetHeader className="pb-3">
 					<SheetTitle className="text-foreground text-lg">
 						Manage API Key
 					</SheetTitle>
@@ -376,19 +378,8 @@ export function ApiKeyDetailDialog({
 									<div className="font-semibold text-base text-foreground">
 										{detail.name}
 									</div>
-									<Badge
-										variant={
-											detail.enabled && !detail.revokedAt
-												? "default"
-												: "secondary"
-										}
-									>
-										{effectiveStatus}
-									</Badge>
 								</div>
-								<code className="block rounded bg-muted px-2 py-1 font-mono text-xs">
-									{detail.prefix}_{detail.start}
-								</code>
+								<Input disabled value={`${detail.prefix}-${detail.start}`} />
 							</div>
 							{/* Configuration Form */}
 							<div className="space-y-3">
@@ -439,7 +430,7 @@ export function ApiKeyDetailDialog({
 											control={form.control}
 											name="enabled"
 											render={({ field }) => (
-												<FormItem className="flex items-center justify-between rounded border p-3">
+												<FormItem className="flex items-center justify-between rounded border bg-accent p-3">
 													<FormLabel className="font-medium text-foreground text-sm">
 														Enabled
 													</FormLabel>
