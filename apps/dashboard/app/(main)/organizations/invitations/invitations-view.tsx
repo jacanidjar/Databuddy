@@ -6,13 +6,15 @@ import {
 	EnvelopeIcon,
 	XIcon,
 } from "@phosphor-icons/react";
+import { useState } from "react";
+import { EmptyState } from "@/components/empty-state";
+import { InviteMemberDialog } from "@/components/organizations/invite-member-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useOrganizationInvitations } from "@/hooks/use-organization-invitations";
 import type {
 	ActiveOrganization,
 	Organization,
 } from "@/hooks/use-organizations";
-import { EmptyState } from "../components/empty-state";
 import { ListSkeleton } from "../components/list-skeleton";
 import { InvitationList } from "./invitation-list";
 
@@ -20,12 +22,22 @@ function InvitationsSkeleton() {
 	return <ListSkeleton count={6} />;
 }
 
-function EmptyInvitationsState() {
+function EmptyInvitationsState({
+	setShowInviteMemberDialog,
+}: {
+	setShowInviteMemberDialog: () => void;
+}) {
 	return (
 		<EmptyState
+			action={{
+				label: "Invite Member",
+				onClick: setShowInviteMemberDialog,
+				size: "sm",
+			}}
 			description="There are no pending invitations for this organization. All invited members have either joined or declined their invitations."
-			icon={EnvelopeIcon}
+			icon={<EnvelopeIcon weight="duotone" />}
 			title="No Pending Invitations"
+			variant="minimal"
 		/>
 	);
 }
@@ -47,6 +59,8 @@ export function InvitationsView({
 		setTab,
 	} = useOrganizationInvitations(organization.id);
 
+	const [showInviteMemberDialog, setShowInviteMemberDialog] = useState(false);
+
 	if (isLoadingInvitations) {
 		return <InvitationsSkeleton />;
 	}
@@ -55,7 +69,18 @@ export function InvitationsView({
 		!filteredInvitations ||
 		(pendingCount === 0 && expiredCount === 0 && acceptedCount === 0)
 	) {
-		return <EmptyInvitationsState />;
+		return (
+			<div className="flex h-full flex-col">
+				<InviteMemberDialog
+					onOpenChange={setShowInviteMemberDialog}
+					open={showInviteMemberDialog}
+					organizationId={organization.id}
+				/>
+				<EmptyInvitationsState
+					setShowInviteMemberDialog={() => setShowInviteMemberDialog(true)}
+				/>
+			</div>
+		);
 	}
 
 	return (
@@ -129,7 +154,12 @@ export function InvitationsView({
 						) : (
 							<EmptyState
 								description="All sent invitations have been responded to or have expired."
-								icon={EnvelopeIcon}
+								icon={
+									<EnvelopeIcon
+										className="size-6 text-accent-foreground"
+										weight="duotone"
+									/>
+								}
 								title="No Pending Invitations"
 							/>
 						)}
@@ -145,9 +175,14 @@ export function InvitationsView({
 						) : (
 							<EmptyState
 								description="Great! You don't have any expired invitations at the moment."
-								icon={ClockIcon}
+								icon={
+									<ClockIcon
+										className="size-6 text-accent-foreground"
+										weight="duotone"
+									/>
+								}
 								title="No Expired Invitations"
-								variant="warning"
+								variant="minimal"
 							/>
 						)}
 					</TabsContent>
@@ -162,9 +197,14 @@ export function InvitationsView({
 						) : (
 							<EmptyState
 								description="When team members accept invitations, they'll appear here."
-								icon={CheckIcon}
+								icon={
+									<CheckIcon
+										className="size-6 text-accent-foreground"
+										weight="duotone"
+									/>
+								}
 								title="No Accepted Invitations Yet"
-								variant="success"
+								variant="minimal"
 							/>
 						)}
 					</TabsContent>

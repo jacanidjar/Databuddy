@@ -97,11 +97,11 @@ export function AccountDeletion() {
 				<div className="flex-1 space-y-2">
 					<div className="flex items-center">
 						<ShieldCheckIcon
-							className="mr-2 size-5 text-red-400"
+							className="mr-2 size-5 text-red-700"
 							size={20}
 							weight="fill"
 						/>
-						<h3 className="font-medium text-base text-red-400">
+						<h3 className="font-medium text-base text-red-700">
 							Account Deletion
 						</h3>
 					</div>

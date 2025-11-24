@@ -1,20 +1,21 @@
 "use client";
 
-import { PlusIcon } from "@phosphor-icons/react";
-import { memo, type ReactNode } from "react";
+import { type IconProps, PlusIcon } from "@phosphor-icons/react";
+import { cloneElement, memo, type ReactElement, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-export interface EmptyStateAction {
+export type EmptyStateAction = {
 	label: string;
 	onClick: () => void;
 	variant?: "default" | "outline" | "secondary";
-}
+	size?: "default" | "sm" | "lg" | "icon";
+};
 
-export interface EmptyStateProps {
+export type EmptyStateProps = {
 	/** Main icon to display */
-	icon: ReactNode;
+	icon: ReactElement<IconProps>;
 	/** Main heading */
 	title: string;
 	/** Description text */
@@ -37,7 +38,7 @@ export interface EmptyStateProps {
 	"aria-label"?: string;
 	/** Whether this is the main content area */
 	isMainContent?: boolean;
-}
+};
 
 export const EmptyState = memo(function EmptyState({
 	icon,
@@ -71,10 +72,16 @@ export const EmptyState = memo(function EmptyState({
 			return (
 				<div
 					aria-hidden="true"
-					className="mb-4 rounded-full border border-muted bg-muted/10 p-6"
+					className="mb-2 flex size-12 items-center justify-center rounded-full bg-accent-foreground"
 					role="img"
 				>
-					{icon}
+					{cloneElement(icon, {
+						...icon.props,
+						className: cn("size-6 text-accent", icon.props.className),
+						"aria-hidden": "true",
+						size: 24,
+						weight: "fill",
+					})}
 				</div>
 			);
 		}
@@ -118,12 +125,12 @@ export const EmptyState = memo(function EmptyState({
 				"rounded-xl border-2 border-dashed bg-gradient-to-br from-background to-muted/10",
 			variant === "simple" && "rounded border-dashed bg-muted/10",
 			variant === "minimal" && "rounded border-none bg-transparent shadow-none",
-			"safe-area-inset-4 sm:safe-area-inset-6 lg:safe-area-inset-8",
+			"safe-area-inset-4 sm:safe-area-inset-6 lg:safe-area-inset-8 h-full",
 			className
 		);
 
 		const contentClasses = cn(
-			"flex flex-col items-center justify-center text-center",
+			"flex flex-1 flex-col items-center justify-center text-center",
 			getPadding(),
 			"px-6 sm:px-8 lg:px-12"
 		);
@@ -179,16 +186,8 @@ export const EmptyState = memo(function EmptyState({
 							>
 								{action && (
 									<Button
-										className={cn(
-											variant === "default" &&
-												"group relative min-h-[44px] cursor-pointer touch-manipulation select-none gap-2 overflow-hidden rounded-lg bg-linear-to-r from-primary to-primary/90 px-8 py-4 font-medium text-base transition-all duration-300 hover:from-primary/90 hover:to-primary hover:shadow-lg focus-visible:shadow-md focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none sm:min-h-[40px]",
-											variant === "simple" &&
-												"min-h-[44px] cursor-pointer touch-manipulation select-none gap-2 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none sm:min-h-[40px]",
-											variant === "minimal" &&
-												"min-h-[44px] cursor-pointer touch-manipulation select-none gap-2 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none sm:min-h-[40px]"
-										)}
 										onClick={action.onClick}
-										size="lg"
+										size={action.size || "default"}
 										type="button"
 										variant={action.variant || "default"}
 									>

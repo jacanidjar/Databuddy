@@ -19,10 +19,10 @@ import type { CancelInvitation, Invitation } from "@/hooks/use-organizations";
 
 dayjs.extend(relativeTime);
 
-interface InvitationToCancel {
+type InvitationToCancel = {
 	id: string;
 	email: string;
-}
+};
 
 export function InvitationList({
 	invitations,

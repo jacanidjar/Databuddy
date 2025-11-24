@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWebsiteTransfer } from "@/hooks/use-website-transfer";
+import { cn } from "@/lib/utils";
 import { WebsiteSelector } from "./website-selector";
 
 export function TransferAssets({ organizationId }: { organizationId: string }) {
@@ -86,7 +87,11 @@ export function TransferAssets({ organizationId }: { organizationId: string }) {
 					<Card>
 						<CardHeader className="pb-3">
 							<CardTitle className="flex items-center gap-2 text-sm">
-								<UserIcon className="text-primary" size={16} weight="duotone" />
+								<UserIcon
+									className="text-accent-foreground"
+									size={16}
+									weight="duotone"
+								/>
 								Your Personal Websites
 							</CardTitle>
 							<CardDescription className="text-xs">
@@ -120,7 +125,7 @@ export function TransferAssets({ organizationId }: { organizationId: string }) {
 						<CardHeader className="pb-3">
 							<CardTitle className="flex items-center gap-2 text-sm">
 								<BuildingsIcon
-									className="text-primary"
+									className="text-accent-foreground"
 									size={16}
 									weight="duotone"
 								/>
@@ -189,13 +194,14 @@ export function TransferAssets({ organizationId }: { organizationId: string }) {
 
 						{/* Transfer Direction Indicator */}
 						<div className="-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2">
-							<div className="flex items-center gap-2 rounded-full bg-primary/20 px-3 py-1 shadow-lg">
+							<div className="flex items-center gap-2 rounded-full bg-primary px-3 py-1 shadow-lg">
 								<ArrowRightIcon
-									className={`text-primary transition-transform duration-1000 ${
+									className={cn(
+										"text-accent transition-transform duration-1000",
 										transferringWebsite.fromSide === "organization"
 											? "rotate-180"
 											: ""
-									}`}
+									)}
 									size={14}
 								/>
 								<span className="font-medium text-primary text-xs">
@@ -209,14 +215,11 @@ export function TransferAssets({ organizationId }: { organizationId: string }) {
 
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_auto_1fr]">
 				{/* Personal Websites */}
-				<Card>
+				<Card className="gap-2 bg-accent-brighter">
 					<CardHeader className="pb-3">
-						<CardTitle className="flex items-center gap-2 text-sm">
-							<UserIcon className="text-primary" size={16} weight="duotone" />
-							Your Personal Websites
-						</CardTitle>
+						<CardTitle className="text-sm">Your Personal Websites</CardTitle>
 						<CardDescription className="text-xs">
-							Transfer these to the organization
+							Select the website you want to transfer to the organization
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="pt-0">
@@ -230,11 +233,9 @@ export function TransferAssets({ organizationId }: { organizationId: string }) {
 
 				<div className="flex items-center justify-center">
 					<Button
-						className="h-8 w-8 rounded border-2 shadow-sm"
 						disabled={!selectedSide || isTransferring}
 						onClick={handleTransfer}
 						size="icon"
-						variant="outline"
 					>
 						{isTransferring ? (
 							<div className="h-3 w-3 animate-spin rounded-full border border-primary/30 border-t-primary" />
@@ -250,14 +251,9 @@ export function TransferAssets({ organizationId }: { organizationId: string }) {
 				</div>
 
 				{/* Organization Websites */}
-				<Card>
+				<Card className="gap-2 bg-accent-brighter">
 					<CardHeader className="pb-3">
 						<CardTitle className="flex items-center gap-2 text-sm">
-							<BuildingsIcon
-								className="text-primary"
-								size={16}
-								weight="duotone"
-							/>
 							Organization Websites
 						</CardTitle>
 						<CardDescription className="text-xs">

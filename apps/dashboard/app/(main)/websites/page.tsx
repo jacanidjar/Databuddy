@@ -165,14 +165,9 @@ export default function WebsitesPage() {
 							onClick: () => setDialogOpen(true),
 						}}
 						description="Start tracking your website analytics by adding your first website. Get insights into visitors, pageviews, and performance."
-						icon={
-							<GlobeIcon
-								className="h-16 w-16 text-primary"
-								size={16}
-								weight="duotone"
-							/>
-						}
+						icon={<GlobeIcon weight="duotone" />}
 						title="No websites yet"
+						variant="minimal"
 					/>
 				)}
 

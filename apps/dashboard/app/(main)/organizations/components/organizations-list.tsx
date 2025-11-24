@@ -122,7 +122,7 @@ export function OrganizationsList({
 							className={cn(
 								"group relative cursor-pointer overflow-hidden transition-all duration-200",
 								isActive
-									? "cursor-default bg-sidebar-accent"
+									? "cursor-default"
 									: isProcessing && "pointer-events-none opacity-70"
 							)}
 							key={org.id}
@@ -147,12 +147,7 @@ export function OrganizationsList({
 								<div className="flex flex-col items-start gap-3 space-y-3 md:flex-row">
 									<Avatar className="size-9 shrink-0">
 										<AvatarImage alt={org.name} src={org.logo || undefined} />
-										<AvatarFallback
-											className={cn(
-												"font-medium text-xs",
-												isActive ? "bg-secondary-brightest" : "bg-accent"
-											)}
-										>
+										<AvatarFallback className="bg-secondary font-medium text-xs">
 											{getOrganizationInitials(org.name)}
 										</AvatarFallback>
 									</Avatar>

@@ -92,7 +92,7 @@ export function DangerZoneSettings({
 				<div className="space-y-8">
 					{/* Transfer Assets Section */}
 					<div className="rounded-lg border bg-card">
-						<div className="border-b p-6">
+						<div className="border-b p-5">
 							<h3 className="font-semibold text-lg">Transfer Assets</h3>
 							<p className="text-muted-foreground text-sm">
 								Move websites between your personal account and organization
@@ -104,52 +104,50 @@ export function DangerZoneSettings({
 					</div>
 
 					{/* Leave/Delete Organization Section */}
-					<div className="rounded-lg border border-destructive/20 bg-destructive/5">
-						<div className="p-6">
-							<div className="space-y-4">
-								<div>
-									<h3 className="font-semibold text-destructive text-lg">
-										{isOwner === null
-											? "Loading..."
-											: isOwner
-												? "Delete Organization"
-												: "Leave Organization"}
-									</h3>
-									<p className="text-destructive/80 text-sm">
-										{isOwner === null
-											? "Checking permissions..."
-											: isOwner
-												? "Once you delete an organization, there is no going back. Please be certain."
-												: "You will lose access to this organization and all its resources."}
-									</p>
-								</div>
+					<div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4">
+						<div className="flex flex-wrap items-center justify-between space-y-4">
+							<div>
+								<h3 className="font-semibold text-destructive text-lg">
+									{isOwner === null
+										? "Loading..."
+										: isOwner
+											? "Delete Organization"
+											: "Leave Organization"}
+								</h3>
+								<p className="text-destructive/80 text-sm">
+									{isOwner === null
+										? "Checking permissions..."
+										: isOwner
+											? "Once you delete an organization, there is no going back. Please be certain."
+											: "You will lose access to this organization and all its resources."}
+								</p>
+							</div>
 
-								<div className="flex justify-end">
-									{isOwner === null ? (
-										<Button disabled size="default" variant="destructive">
-											<div className="mr-2 h-4 w-4 animate-spin rounded-full border border-destructive-foreground/30 border-t-destructive-foreground" />
-											Loading...
-										</Button>
-									) : isOwner ? (
-										<Button
-											onClick={() => setShowDeleteDialog(true)}
-											size="default"
-											variant="destructive"
-										>
-											<TrashIcon className="mr-2 h-4 w-4" size={16} />
-											Delete Organization
-										</Button>
-									) : (
-										<Button
-											onClick={() => setShowLeaveDialog(true)}
-											size="default"
-											variant="destructive"
-										>
-											<SignOutIcon className="mr-2 h-4 w-4" size={16} />
-											Leave Organization
-										</Button>
-									)}
-								</div>
+							<div className="flex">
+								{isOwner === null ? (
+									<Button disabled size="default" variant="destructive">
+										<div className="mr-1 size-4 animate-spin rounded-full border border-destructive-foreground/30 border-t-destructive-foreground" />
+										Loading...
+									</Button>
+								) : isOwner ? (
+									<Button
+										onClick={() => setShowDeleteDialog(true)}
+										size="default"
+										variant="destructive"
+									>
+										<TrashIcon className="size-4" size={16} />
+										Delete Organization
+									</Button>
+								) : (
+									<Button
+										onClick={() => setShowLeaveDialog(true)}
+										size="default"
+										variant="destructive"
+									>
+										<SignOutIcon className="mr-2 h-4 w-4" size={16} />
+										Leave Organization
+									</Button>
+								)}
 							</div>
 						</div>
 					</div>
@@ -168,18 +166,11 @@ export function DangerZoneSettings({
 					<AlertDialogFooter>
 						<AlertDialogCancel>Cancel</AlertDialogCancel>
 						<AlertDialogAction
-							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+							className="bg-destructive text-red-700"
 							disabled={isDeleting}
 							onClick={handleDelete}
 						>
-							{isDeleting ? (
-								<>
-									<div className="mr-2 h-4 w-4 animate-spin rounded-full border border-destructive-foreground/30 border-t-destructive-foreground" />
-									Deleting...
-								</>
-							) : (
-								"Delete Organization"
-							)}
+							{isDeleting ? "Deleting..." : "Delete Organization"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>

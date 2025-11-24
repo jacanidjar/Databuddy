@@ -2,6 +2,7 @@ import { KeyIcon, PlusIcon } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { orpc } from "@/lib/orpc";
+import { EmptyState } from "../empty-state";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
@@ -95,7 +96,7 @@ export function ApiKeyList({
 	const items = (data ?? []) as ApiKeyListItem[];
 
 	return (
-		<div className="space-y-6">
+		<div className="h-full space-y-6">
 			{/* Table Container */}
 			{items.length > 0 && (
 				<div className="overflow-hidden rounded border">
@@ -187,21 +188,16 @@ export function ApiKeyList({
 
 			{/* Empty State */}
 			{items.length === 0 && (
-				<div className="space-y-5 rounded p-8 text-center">
-					<div className="mx-auto flex size-12 items-center justify-center rounded-full bg-accent-foreground">
-						<KeyIcon className="size-6 text-accent" />
-					</div>
-					<div className="flex flex-col space-y-1 text-center">
-						<div className="font-semibold text-foreground">No API keys yet</div>
-						<div className="mx-auto mb-4 max-w-sm text-balance text-muted-foreground text-sm">
-							Create your first API key to start integrating with our platform.
-						</div>
-					</div>
-					<Button onClick={onCreateNew} size="lg" type="button">
-						<PlusIcon className="size-4" />
-						Create Your First API Key
-					</Button>
-				</div>
+				<EmptyState
+					action={{
+						label: "Create Your First API Key",
+						onClick: () => onCreateNew?.(),
+					}}
+					description="Create your first API key to start integrating with our platform."
+					icon={<KeyIcon weight="duotone" />}
+					title="No API keys yet"
+					variant="minimal"
+				/>
 			)}
 		</div>
 	);

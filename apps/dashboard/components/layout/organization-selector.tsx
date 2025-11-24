@@ -80,13 +80,13 @@ function OrganizationSelectorTrigger({
 			<div className="flex w-full items-center justify-between">
 				<div className="flex items-center gap-3">
 					<div className="rounded">
-						<Avatar className="size-7 bg-accent">
+						<Avatar className="size-7">
 							<AvatarImage
 								alt={activeOrganization?.name || "Personal"}
 								className="rounded"
 								src={activeOrganization?.logo || undefined}
 							/>
-							<AvatarFallback className="bg-transparent font-medium text-xs">
+							<AvatarFallback className="bg-secondary font-medium text-xs">
 								{activeOrganization?.name ? (
 									getOrganizationInitials(activeOrganization.name)
 								) : (

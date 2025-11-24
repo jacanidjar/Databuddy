@@ -1,24 +1,20 @@
 "use client";
 
-import {
-	ChartLineIcon,
-	GlobeIcon,
-	PlusIcon,
-	SparkleIcon,
-} from "@phosphor-icons/react";
+import { GlobeIcon } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useState } from "react";
 import { FaviconImage } from "@/components/analytics/favicon-image";
-import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/empty-state";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { WebsiteDialog } from "@/components/website-dialog";
 import type { Organization } from "@/hooks/use-organizations";
 import { orpc } from "@/lib/orpc";
-import { cn } from "@/lib/utils";
 
-interface WebsiteSettingsProps {
+type WebsiteSettingsProps = {
 	organization: Organization;
-}
+};
 
 function WebsiteLoadingSkeleton() {
 	return (
@@ -45,85 +41,18 @@ function WebsiteLoadingSkeleton() {
 	);
 }
 
-function EnhancedEmptyState() {
-	return (
-		<Card className="border-dashed">
-			<CardContent className="flex select-none flex-col items-center justify-center px-6 py-16 text-center">
-				<div className="relative mb-8">
-					<div className="rounded-full border bg-muted/50 p-8">
-						<GlobeIcon
-							aria-hidden="true"
-							className="h-16 w-16 text-muted-foreground"
-							size={64}
-							weight="duotone"
-						/>
-					</div>
-					<div className="-top-2 -right-2 absolute rounded-full border border-accent bg-accent/50 p-2">
-						<ChartLineIcon
-							aria-hidden="true"
-							className="size-6 text-accent-foreground"
-							size={24}
-							weight="fill"
-						/>
-					</div>
-				</div>
-
-				<h3 className="mb-4 font-bold text-xl">No Websites Yet</h3>
-				<p className="mb-8 max-w-md text-muted-foreground text-sm leading-relaxed">
-					This organization doesn't have any websites yet. Add your first
-					website to start tracking analytics and performance metrics.
-				</p>
-
-				<Button
-					asChild
-					className={cn(
-						"gap-2 px-6 py-3 font-medium",
-						"bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary",
-						"group relative overflow-hidden shadow-lg transition-all duration-300 hover:shadow-xl"
-					)}
-					size="lg"
-				>
-					<Link href="/websites">
-						<div className="absolute inset-0 translate-x-[-100%] bg-linear-to-r from-white/0 via-white/20 to-white/0 transition-transform duration-700 group-hover:translate-x-[100%]" />
-						<PlusIcon className="relative z-10 h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
-						<span className="relative z-10">Add Website</span>
-					</Link>
-				</Button>
-
-				<div className="mt-8 max-w-md rounded border bg-muted/50 p-6">
-					<div className="flex items-start gap-3">
-						<div className="rounded-lg bg-primary/10 p-2">
-							<SparkleIcon
-								aria-hidden="true"
-								className="h-4 w-4 text-primary"
-								size={16}
-								weight="fill"
-							/>
-						</div>
-						<div className="text-left">
-							<p className="mb-2 font-semibold text-sm">💡 Quick tip</p>
-							<p className="text-muted-foreground text-xs leading-relaxed">
-								Once you add a website, all organization members will be able to
-								view its analytics and insights.
-							</p>
-						</div>
-					</div>
-				</div>
-			</CardContent>
-		</Card>
-	);
-}
-
 export function WebsiteSettings({ organization }: WebsiteSettingsProps) {
 	const { data: websites, isLoading: isLoadingWebsites } = useQuery({
 		...orpc.websites.list.queryOptions({
 			input: { organizationId: organization.id },
 		}),
 	});
+	const [dialogOpen, setDialogOpen] = useState(false);
 
 	return (
 		<div className="h-full p-4 sm:p-6">
-			<div className="space-y-4 sm:space-y-6">
+			<WebsiteDialog onOpenChange={setDialogOpen} open={dialogOpen} />
+			<div className="h-full space-y-4 sm:space-y-6">
 				{/* Website count indicator */}
 				{!isLoadingWebsites && websites && websites.length > 0 && (
 					<div className="flex items-center gap-2 rounded-lg border border-muted bg-muted/30 px-3 py-2 text-muted-foreground text-sm">
@@ -148,7 +77,16 @@ export function WebsiteSettings({ organization }: WebsiteSettingsProps) {
 
 				{/* Empty state */}
 				{!isLoadingWebsites && websites && websites.length === 0 && (
-					<EnhancedEmptyState />
+					<EmptyState
+						action={{
+							label: "Create Your First Website",
+							onClick: () => setDialogOpen(true),
+						}}
+						description="Start tracking your website analytics by adding your first website. Get insights into visitors, pageviews, and performance."
+						icon={<GlobeIcon weight="duotone" />}
+						title="No websites yet"
+						variant="minimal"
+					/>
 				)}
 
 				{/* Website grid */}
