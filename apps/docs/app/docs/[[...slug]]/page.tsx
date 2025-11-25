@@ -21,7 +21,7 @@ export default async function Page(props: {
 				owner: "databuddy-analytics",
 				repo: "databuddy",
 				sha: "main",
-				path: `/docs/content/docs/${page.file.path}`,
+				path: `/apps/docs/content/docs/${page.file.path}`,
 			}}
 			footer={{
 				component: <DocsFooter />,
