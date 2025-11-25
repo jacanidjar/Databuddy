@@ -456,6 +456,40 @@ export const PricingCard = ({
 	);
 };
 
+interface PricingTier {
+	to: number | "inf";
+	amount: number;
+}
+
+function formatTierPricingSummary(tiers: PricingTier[]): string {
+	if (!tiers?.length) return "";
+
+	const firstTier = tiers[0];
+	const lastTier = tiers.at(-1);
+
+	if (tiers.length === 1) {
+		if (firstTier.amount === 0) return "Included in plan";
+		return `$${firstTier.amount.toFixed(6)}/event`;
+	}
+
+	const hasFreeTier = firstTier.amount === 0;
+	const minPrice = Math.min(...tiers.map((t) => t.amount));
+	const maxPrice = Math.max(...tiers.map((t) => t.amount));
+
+	if (hasFreeTier && lastTier) {
+		const firstPaidTier = tiers.find((t) => t.amount > 0);
+		if (firstPaidTier) {
+			return `then $${firstPaidTier.amount.toFixed(6)}/event`;
+		}
+	}
+
+	if (minPrice === maxPrice) {
+		return `$${minPrice.toFixed(6)}/event`;
+	}
+
+	return `$${minPrice.toFixed(6)} - $${maxPrice.toFixed(6)}/event`;
+}
+
 export const PricingFeatureList = ({
 	items,
 	showIcon = true,
@@ -474,14 +508,14 @@ export const PricingFeatureList = ({
 		<div className="space-y-3">
 			{items.map((item) => {
 				const featureItem = item as any;
-				let secondaryText = featureItem.display?.secondary_text;
-
 				const hasTiers =
 					featureItem.type === "priced_feature" &&
 					featureItem.tiers?.length > 0;
 
+				let secondaryText = featureItem.display?.secondary_text;
+
 				if (hasTiers) {
-					secondaryText = "Usage-based pricing";
+					secondaryText = formatTierPricingSummary(featureItem.tiers);
 				}
 
 				return (

@@ -2,13 +2,9 @@
 
 import { CreditCardIcon } from "@phosphor-icons/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-	type Customer,
-	type Invoice,
-	useBillingData,
-} from "./hooks/use-billing";
+import { useBillingData } from "./hooks/use-billing";
 
 const OverviewTab = lazy(() =>
 	import("./components/overview-tab").then((m) => ({ default: m.OverviewTab }))
@@ -30,6 +26,25 @@ function ComponentSkeleton() {
 	);
 }
 
+const PAGE_TITLES = {
+	overview: {
+		title: "Usage & Metrics",
+		description: "Monitor your usage and billing metrics",
+	},
+	plans: {
+		title: "Plans & Pricing",
+		description: "Manage your subscription and billing plan",
+	},
+	history: {
+		title: "Payment History",
+		description: "View your billing history and invoices",
+	},
+	default: {
+		title: "Billing & Subscription",
+		description: "Manage your subscription, usage, and billing preferences",
+	},
+} as const;
+
 export default function BillingPage() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -41,43 +56,9 @@ export default function BillingPage() {
 	};
 
 	const { customerData, isLoading } = useBillingData();
-	const [invoices, setInvoices] = useState<Invoice[]>([]);
-	const [hasLoadedInvoices, setHasLoadedInvoices] = useState(false);
 
-	useEffect(() => {
-		if (!isLoading && customerData?.invoices && !hasLoadedInvoices) {
-			setInvoices(customerData.invoices as Invoice[]);
-			setHasLoadedInvoices(true);
-		}
-	}, [customerData?.invoices, isLoading, hasLoadedInvoices]);
-
-	const getPageTitle = () => {
-		switch (activeTab) {
-			case "overview":
-				return {
-					title: "Usage & Metrics",
-					description: "Monitor your usage and billing metrics",
-				};
-			case "plans":
-				return {
-					title: "Plans & Pricing",
-					description: "Manage your subscription and billing plan",
-				};
-			case "history":
-				return {
-					title: "Payment History",
-					description: "View your billing history and invoices",
-				};
-			default:
-				return {
-					title: "Billing & Subscription",
-					description:
-						"Manage your subscription, usage, and billing preferences",
-				};
-		}
-	};
-
-	const { title, description } = getPageTitle();
+	const { title, description } =
+		PAGE_TITLES[activeTab as keyof typeof PAGE_TITLES] ?? PAGE_TITLES.default;
 
 	return (
 		<div className="flex h-full flex-col">
@@ -105,27 +86,33 @@ export default function BillingPage() {
 				</div>
 			</div>
 
-			<main className="flex-1 overflow-y-auto p-4 sm:p-6">
-				{activeTab === "overview" && (
-					<Suspense fallback={<ComponentSkeleton />}>
-						<OverviewTab onNavigateToPlans={navigateToPlans} />
-					</Suspense>
-				)}
-				{activeTab === "plans" && (
-					<Suspense fallback={<ComponentSkeleton />}>
-						<PlansTab selectedPlan={selectedPlan} />
-					</Suspense>
-				)}
-				{activeTab === "history" && (
-					<Suspense fallback={<ComponentSkeleton />}>
-						<HistoryTab
-							customerData={customerData as unknown as Customer}
-							invoices={invoices}
-							isLoading={isLoading && !hasLoadedInvoices}
-						/>
-					</Suspense>
-				)}
-			</main>
+		<main
+			className={
+				activeTab === "overview"
+					? "min-h-0 flex-1 overflow-hidden"
+					: "flex-1 overflow-y-auto p-4 sm:p-6"
+			}
+		>
+			{activeTab === "overview" && (
+				<Suspense fallback={<ComponentSkeleton />}>
+					<OverviewTab onNavigateToPlans={navigateToPlans} />
+				</Suspense>
+			)}
+			{activeTab === "plans" && (
+				<Suspense fallback={<ComponentSkeleton />}>
+					<PlansTab selectedPlan={selectedPlan} />
+				</Suspense>
+			)}
+			{activeTab === "history" && (
+				<Suspense fallback={<ComponentSkeleton />}>
+					<HistoryTab
+						customerData={customerData}
+						invoices={customerData?.invoices ?? []}
+						isLoading={isLoading}
+					/>
+				</Suspense>
+			)}
+		</main>
 		</div>
 	);
 }
