@@ -116,7 +116,7 @@ export function AnalyticsToolbar({
 	);
 
 	return (
-		<div className="flex h-fit flex-col border-b bg-background">
+		<div className="flex h-fit flex-col bg-background">
 			<div className="flex h-12 items-center justify-between border-b pr-4">
 				<div className="flex h-full items-center">
 					<Button
@@ -166,7 +166,7 @@ export function AnalyticsToolbar({
 				</div>
 			</div>
 
-			<div className="flex h-10 items-center overflow-x-auto pr-4">
+			<div className="flex h-10 items-center overflow-x-auto border-b pr-4">
 				{QUICK_RANGES.map((range) => {
 					const isActive = isQuickRangeActive(range);
 					return (
