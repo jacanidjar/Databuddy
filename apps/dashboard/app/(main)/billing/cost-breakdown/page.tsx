@@ -19,21 +19,22 @@ function getDefaultDateRange() {
 }
 
 function calculateOverageInfo(
-	totalEvents: number,
-	rawIncludedUsage: number,
+	balance: number,
+	includedUsage: number,
 	unlimited: boolean
 ): OverageInfo {
-	const includedUsage =
-		rawIncludedUsage > 0 && rawIncludedUsage < 1_000_000_000
-			? rawIncludedUsage
-			: 0;
-
-	if (unlimited || totalEvents <= includedUsage) {
-		return { hasOverage: false, overageEvents: 0, includedEvents: totalEvents };
+	// Balance < 0 = overage
+	// Balance >= 0 = remaining events
+	if (unlimited || balance >= 0) {
+		return {
+			hasOverage: false,
+			overageEvents: 0,
+			includedEvents: includedUsage,
+		};
 	}
 	return {
 		hasOverage: true,
-		overageEvents: totalEvents - includedUsage,
+		overageEvents: Math.abs(balance),
 		includedEvents: includedUsage,
 	};
 }
@@ -59,15 +60,15 @@ export default function CostBreakdownPage() {
 	});
 
 	const overageInfo = useMemo(() => {
-		if (!(orgUsage && usageData)) {
+		if (!orgUsage) {
 			return null;
 		}
 		return calculateOverageInfo(
-			usageData.totalEvents,
-			orgUsage.includedUsage || 0,
+			orgUsage.balance ?? 0,
+			orgUsage.includedUsage ?? 0,
 			orgUsage.unlimited
 		);
-	}, [orgUsage, usageData]);
+	}, [orgUsage]);
 
 	return (
 		<main className="min-h-0 flex-1 overflow-y-auto">
