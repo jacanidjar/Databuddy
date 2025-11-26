@@ -36,11 +36,6 @@ export function OrganizationProvider({
 				title: "Organizations",
 				description: "Manage your organizations and team collaboration",
 				icon: BuildingsIcon,
-				actionButton: {
-					text: "New Organization",
-					icon: PlusIcon,
-					action: () => setShowCreateDialog(true),
-				},
 			};
 		}
 		if (pathname === "/organizations/members") {
@@ -49,11 +44,6 @@ export function OrganizationProvider({
 				description: "Manage team members and their roles",
 				icon: UsersIcon,
 				requiresOrg: true,
-				actionButton: {
-					text: "Invite Member",
-					icon: UserPlusIcon,
-					action: () => setShowInviteMemberDialog(true),
-				},
 			};
 		}
 		if (pathname === "/organizations/invitations") {
@@ -62,11 +52,6 @@ export function OrganizationProvider({
 				description: "View and manage pending team invitations",
 				icon: EnvelopeIcon,
 				requiresOrg: true,
-				actionButton: {
-					text: "Send Invitation",
-					icon: UserPlusIcon,
-					action: () => setShowInviteMemberDialog(true),
-				},
 			};
 		}
 		if (pathname === "/organizations/settings") {
@@ -105,11 +90,6 @@ export function OrganizationProvider({
 			title: "Organizations",
 			description: "Manage your organizations and team collaboration",
 			icon: BuildingsIcon,
-			actionButton: {
-				text: "New Organization",
-				icon: PlusIcon,
-				action: () => setShowCreateDialog(true),
-			},
 		};
 	};
 
@@ -118,7 +98,6 @@ export function OrganizationProvider({
 		description,
 		icon: Icon,
 		requiresOrg,
-		actionButton,
 	} = getPageInfo();
 
 	if (isLoading) {
@@ -172,19 +151,6 @@ export function OrganizationProvider({
 								</div>
 							</div>
 						</div>
-						{actionButton && (
-							<Button
-								className="w-full rounded text-xs sm:w-auto sm:text-sm"
-								onClick={actionButton.action}
-								size="sm"
-							>
-								<actionButton.icon
-									className="mr-2 h-3 w-3 sm:h-4 sm:w-4"
-									size={12}
-								/>
-								{actionButton.text}
-							</Button>
-						)}
 					</div>
 				</div>
 
@@ -243,19 +209,6 @@ export function OrganizationProvider({
 							</div>
 						</div>
 					</div>
-					{actionButton && (
-						<Button
-							className="w-full rounded text-xs sm:w-auto sm:text-sm"
-							onClick={actionButton.action}
-							size="sm"
-						>
-							<actionButton.icon
-								className="mr-2 h-3 w-3 sm:h-4 sm:w-4"
-								size={12}
-							/>
-							{actionButton.text}
-						</Button>
-					)}
 				</div>
 			</div>
 
