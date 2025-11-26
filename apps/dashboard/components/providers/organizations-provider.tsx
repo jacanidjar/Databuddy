@@ -20,6 +20,7 @@ export function OrganizationsProvider({ children }: { children: ReactNode }) {
 	const { data: activeOrganization, isPending: isLoadingActive } =
 		authClient.useActiveOrganization();
 
+
 	const [, setOrganizations] = useAtom(organizationsAtom);
 	const [, setActiveOrganization] = useAtom(activeOrganizationAtom);
 	const [, setIsLoading] = useAtom(isLoadingOrganizationsAtom);
