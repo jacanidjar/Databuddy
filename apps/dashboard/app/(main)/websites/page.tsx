@@ -164,6 +164,7 @@ export default function WebsitesPage() {
 							label: "Create Your First Website",
 							onClick: () => setDialogOpen(true),
 						}}
+						className="h-full"
 						description="Start tracking your website analytics by adding your first website. Get insights into visitors, pageviews, and performance."
 						icon={<GlobeIcon weight="duotone" />}
 						title="No websites yet"

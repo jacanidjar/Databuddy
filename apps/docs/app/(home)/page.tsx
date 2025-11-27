@@ -1,4 +1,3 @@
-import { CHATGPT_PROMPT_URL } from "@/app/util/constants";
 import { Footer } from "@/components/footer";
 import { Description } from "@/components/landing/description";
 import FAQ from "@/components/landing/faq";
@@ -26,19 +25,6 @@ export default function HomePage() {
 				<Section className="overflow-hidden" customPaddings id="hero">
 					<Hero />
 				</Section>
-
-				<div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-					<div className="flex justify-center">
-						<a
-							className="text-muted-foreground text-sm underline underline-offset-4 transition-colors hover:text-foreground"
-							href={CHATGPT_PROMPT_URL}
-							rel="noopener noreferrer"
-							target="_blank"
-						>
-							Don't understand what this does? Ask ChatGPT
-						</a>
-					</div>
-				</div>
 
 				{/* Trusted By Section */}
 				<Section
