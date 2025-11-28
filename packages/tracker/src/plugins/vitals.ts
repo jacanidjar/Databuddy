@@ -1,73 +1,48 @@
 import { type Metric, onCLS, onFCP, onINP, onLCP, onTTFB } from "web-vitals";
 import type { BaseTracker } from "../core/tracker";
-import { generateUUIDv4, logger } from "../core/utils";
+import { logger } from "../core/utils";
+
+type WebVitalMetricName = "FCP" | "LCP" | "CLS" | "INP" | "TTFB";
+
+type WebVitalSpan = {
+	sessionId: string;
+	timestamp: number;
+	path: string;
+	metricName: WebVitalMetricName;
+	metricValue: number;
+};
 
 export function initWebVitalsTracking(tracker: BaseTracker) {
 	if (tracker.isServer()) {
 		return;
 	}
 
-	const metrics: {
-		fcp: number | undefined;
-		lcp: number | undefined;
-		cls: number | undefined;
-		inp: number | undefined;
-		ttfb: number | undefined;
-	} = {
-		fcp: undefined,
-		lcp: undefined,
-		cls: undefined,
-		inp: undefined,
-		ttfb: undefined,
-	};
+	const sentMetrics = new Set<WebVitalMetricName>();
 
-	const sendVitals = () => {
-		if (!Object.values(metrics).some((m) => m !== undefined)) {
+	const sendVitalSpan = (metricName: WebVitalMetricName, metricValue: number) => {
+		if (sentMetrics.has(metricName)) {
 			return;
 		}
+		sentMetrics.add(metricName);
 
-		const clamp = (v: number | undefined) =>
-			typeof v === "number" ? Math.min(60_000, Math.max(0, v)) : v;
-
-		const payload = {
-			eventId: generateUUIDv4(),
-			anonymousId: tracker.anonymousId,
-			sessionId: tracker.sessionId,
+		const span: WebVitalSpan = {
+			sessionId: tracker.sessionId ?? "",
 			timestamp: Date.now(),
-			fcp: clamp(metrics.fcp),
-			lcp: clamp(metrics.lcp),
-			cls: clamp(metrics.cls),
-			inp: metrics.inp,
-			ttfb: clamp(metrics.ttfb),
-			url: window.location.href,
+			path: window.location.pathname,
+			metricName,
+			metricValue,
 		};
 
-		logger.log("Sending web vitals", payload);
-
-		tracker.sendBeacon(payload);
+		logger.log(`Sending web vital span: ${metricName}`, span);
+		tracker.sendBeacon(span);
 	};
 
 	const handleMetric = (metric: Metric) => {
-		switch (metric.name) {
-			case "FCP":
-				metrics.fcp = Math.round(metric.value);
-				break;
-			case "LCP":
-				metrics.lcp = Math.round(metric.value);
-				break;
-			case "CLS":
-				metrics.cls = metric.value; // CLS is a score, not ms, so keep decimals if needed, but usually small
-				break;
-			case "INP":
-				metrics.inp = Math.round(metric.value);
-				break;
-			case "TTFB":
-				metrics.ttfb = Math.round(metric.value);
-				break;
-			default:
-				break;
-		}
-		logger.log(`Web Vitals Metric: ${metric.name}`, metric.value);
+		const name = metric.name as WebVitalMetricName;
+		const value = name === "CLS" ? metric.value : Math.round(metric.value);
+
+		logger.log(`Web Vital captured: ${name}`, value);
+		sendVitalSpan(name, value);
 	};
 
 	onFCP(handleMetric);
@@ -75,32 +50,4 @@ export function initWebVitalsTracking(tracker: BaseTracker) {
 	onCLS(handleMetric);
 	onINP(handleMetric);
 	onTTFB(handleMetric);
-
-	setTimeout(() => {
-		sendVitals();
-	}, 4000);
-
-	const report = () => {
-		sendVitals();
-	};
-
-	let reportTimeout: number | undefined;
-	const debouncedReport = (immediate = false) => {
-		if (reportTimeout) {
-			window.clearTimeout(reportTimeout);
-		}
-		if (immediate) {
-			report();
-		} else {
-			reportTimeout = window.setTimeout(report, 1000);
-		}
-	};
-
-	document.addEventListener("visibilitychange", () => {
-		if (document.visibilityState === "hidden") {
-			debouncedReport(true);
-		}
-	});
-
-	window.addEventListener("pagehide", () => debouncedReport(true));
 }
