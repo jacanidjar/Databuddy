@@ -243,7 +243,6 @@ export function ApiKeyCreateDialog({
 									Key Name
 								</Label>
 								<Input
-									className="h-11"
 									id="name"
 									placeholder="e.g., Production API Key"
 									{...form.register("name")}
@@ -269,13 +268,13 @@ export function ApiKeyCreateDialog({
 								<p className="text-muted-foreground text-xs">
 									These permissions apply to all websites
 								</p>
-								<div className="rounded border bg-accent p-1">
+								<div className="rounded border bg-card p-1">
 									<div className="grid grid-cols-2 gap-1">
 										{SCOPES.map((scope) => {
 											const isSelected = globalScopes.includes(scope.value);
 											return (
 												<button
-													className="flex items-center gap-2 rounded bg-accent px-3 py-2.5 text-left text-sm transition-colors"
+													className="flex items-center gap-2 rounded px-3 py-2.5 text-left text-sm transition-colors"
 													key={scope.value}
 													onClick={() => toggleGlobalScope(scope.value)}
 													type="button"
@@ -289,7 +288,7 @@ export function ApiKeyCreateDialog({
 													>
 														{isSelected && (
 															<CheckIcon
-																className="text-accent-foreground"
+																className="text-white"
 																size={12}
 																weight="bold"
 															/>

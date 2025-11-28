@@ -207,13 +207,13 @@ export function ApiKeyDetailDialog({
 					) : (
 						<div className="flex h-full flex-col">
 							{/* Header */}
-							<SheetHeader className="shrink-0 border-b bg-muted/30 px-6 py-5">
+							<SheetHeader className="shrink-0 pr-5">
 								<div className="flex items-start gap-4">
-									<div className="flex h-12 w-12 items-center justify-center rounded border bg-background">
+									<div className="flex h-11 w-11 items-center justify-center rounded border bg-secondary-brighter">
 										<KeyIcon
-											className="text-muted-foreground"
-											size={24}
-											weight="duotone"
+											className="text-foreground"
+											size={22}
+											weight="fill"
 										/>
 									</div>
 									<div className="min-w-0 flex-1">
@@ -224,14 +224,7 @@ export function ApiKeyDetailDialog({
 											{detail.prefix}_{detail.start}…
 										</SheetDescription>
 									</div>
-									<Badge
-										className={
-											isActive
-												? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-												: "bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400"
-										}
-										variant="secondary"
-									>
+									<Badge variant="secondary">
 										{isActive ? "Active" : "Inactive"}
 									</Badge>
 								</div>
@@ -242,19 +235,28 @@ export function ApiKeyDetailDialog({
 								onSubmit={onSubmit}
 							>
 								{/* Content */}
-								<div className="flex-1 space-y-6 overflow-y-auto p-6">
+								<div className="flex-1 space-y-6 overflow-y-auto p-2">
 									{/* New Secret Alert */}
 									{newSecret && (
-										<div className="rounded border border-green-300 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
-											<p className="mb-2 font-medium text-green-800 text-sm dark:text-green-300">
-												New secret generated — copy it now
-											</p>
-											<div className="relative rounded border border-green-200 bg-white dark:border-green-700 dark:bg-green-950">
+										<div className="rounded border border-green-200 bg-green-50 p-4 dark:border-green-900/50 dark:bg-green-900/20">
+											<div className="mb-3 flex items-center gap-2">
+												<div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40">
+													<CheckCircleIcon
+														className="text-green-600 dark:text-green-400"
+														size={14}
+														weight="fill"
+													/>
+												</div>
+												<p className="font-medium text-green-800 text-sm dark:text-green-300">
+													New secret generated
+												</p>
+											</div>
+											<div className="relative rounded border border-green-200 bg-background dark:border-green-900/50">
 												<code className="block break-all p-3 pr-12 font-mono text-xs">
 													{newSecret}
 												</code>
 												<Button
-													className="absolute top-1.5 right-1.5"
+													className="absolute top-1.5 right-1.5 h-7 w-7 text-muted-foreground hover:text-foreground"
 													onClick={handleCopy}
 													size="icon"
 													variant="ghost"
@@ -262,10 +264,11 @@ export function ApiKeyDetailDialog({
 													{copied ? (
 														<CheckCircleIcon
 															className="text-green-600"
-															size={16}
+															size={14}
+															weight="fill"
 														/>
 													) : (
-														<CopyIcon size={16} />
+														<CopyIcon size={14} />
 													)}
 												</Button>
 											</div>
@@ -274,22 +277,14 @@ export function ApiKeyDetailDialog({
 
 									{/* Settings Section */}
 									<div className="space-y-4">
-										<Label className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-											Settings
-										</Label>
 										<div className="grid gap-4 sm:grid-cols-2">
 											<div className="space-y-2">
 												<Label htmlFor="name">Name</Label>
-												<Input
-													className="h-11"
-													id="name"
-													{...form.register("name")}
-												/>
+												<Input id="name" {...form.register("name")} />
 											</div>
 											<div className="space-y-2">
 												<Label htmlFor="expiresAt">Expires</Label>
 												<Input
-													className="h-11"
 													id="expiresAt"
 													type="date"
 													{...form.register("expiresAt")}
@@ -298,7 +293,7 @@ export function ApiKeyDetailDialog({
 										</div>
 
 										{/* Enabled Toggle */}
-										<div className="flex items-center justify-between rounded border bg-accent p-3">
+										<div className="flex items-center justify-between rounded border bg-card p-2">
 											<div>
 												<p className="font-medium text-foreground text-sm">
 													Enabled
@@ -318,7 +313,7 @@ export function ApiKeyDetailDialog({
 											<Label className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
 												Permissions
 											</Label>
-											<div className="rounded border bg-muted/20 p-1">
+											<div className="rounded border bg-card p-1">
 												<div className="grid grid-cols-2 gap-1">
 													{SCOPES.map((scope) => {
 														const hasScope = detail.scopes.includes(
@@ -326,11 +321,7 @@ export function ApiKeyDetailDialog({
 														);
 														return (
 															<div
-																className={`flex items-center gap-2 rounded px-3 py-2.5 text-sm ${
-																	hasScope
-																		? "bg-primary/10 text-foreground"
-																		: "text-muted-foreground/50"
-																}`}
+																className="flex items-center gap-2 rounded px-3 py-2.5 text-sm transition-colors"
 																key={scope.value}
 															>
 																<div
@@ -341,7 +332,11 @@ export function ApiKeyDetailDialog({
 																	}`}
 																>
 																	{hasScope && (
-																		<CheckIcon size={10} weight="bold" />
+																		<CheckIcon
+																			className="text-white"
+																			size={12}
+																			weight="bold"
+																		/>
 																	)}
 																</div>
 																<span className="truncate">{scope.label}</span>
@@ -353,9 +348,11 @@ export function ApiKeyDetailDialog({
 										</section>
 
 										{/* Meta Section */}
-										<section className="space-y-2 rounded border bg-muted/20 p-4">
+										<section className="space-y-2 rounded border bg-card p-2">
 											<div className="flex items-center justify-between text-sm">
-												<span className="text-muted-foreground">Created</span>
+												<span className="font-medium text-muted-foreground">
+													Created
+												</span>
 												<span>
 													{dayjs(detail.createdAt).format("MMM D, YYYY")}
 												</span>
@@ -379,10 +376,7 @@ export function ApiKeyDetailDialog({
 										</section>
 
 										{/* Danger Zone */}
-										<section className="space-y-3">
-											<Label className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-												Actions
-											</Label>
+										<section className="mt-8 space-y-3">
 											<div className="flex flex-wrap gap-2">
 												<Button
 													className="flex-1"
@@ -394,7 +388,7 @@ export function ApiKeyDetailDialog({
 													type="button"
 													variant="outline"
 												>
-													<ArrowsClockwiseIcon className="mr-1.5" size={14} />
+													<ArrowsClockwiseIcon size={14} />
 													{rotateMutation.isPending
 														? "Rotating…"
 														: "Rotate Secret"}
@@ -409,7 +403,7 @@ export function ApiKeyDetailDialog({
 													type="button"
 													variant="outline"
 												>
-													<ProhibitIcon className="mr-1.5" size={14} />
+													<ProhibitIcon size={14} />
 													{revokeMutation.isPending
 														? "Revoking…"
 														: "Revoke Key"}
@@ -430,7 +424,7 @@ export function ApiKeyDetailDialog({
 								</div>
 
 								{/* Footer */}
-								<div className="flex shrink-0 items-center justify-end gap-3 border-t bg-muted/30 px-6 py-4">
+								<div className="flex shrink-0 items-center justify-end gap-3 border-t px-6 py-4">
 									<Button onClick={handleClose} type="button" variant="ghost">
 										Cancel
 									</Button>
