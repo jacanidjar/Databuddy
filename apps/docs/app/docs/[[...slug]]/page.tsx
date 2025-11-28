@@ -1,10 +1,10 @@
-import defaultMdxComponents from "fumadocs-ui/mdx";
 import { DocsBody, DocsPage, DocsTitle } from "fumadocs-ui/page";
 import { notFound } from "next/navigation";
 import { DocsFooter } from "@/components/docs-footer";
 import { Feedback } from "@/components/feedback";
 import { onRateDocs } from "@/lib/feedback-action";
 import { getPageImage, source } from "@/lib/source";
+import { getMDXComponents } from "@/mdx-components";
 
 export default async function Page(props: {
 	params: Promise<{ slug?: string[] }>;
@@ -37,7 +37,7 @@ export default async function Page(props: {
 		>
 			<DocsTitle>{page.data.title}</DocsTitle>
 			<DocsBody>
-				<MDX components={defaultMdxComponents} />
+				<MDX components={getMDXComponents()} />
 			</DocsBody>
 			<Feedback onRateAction={onRateDocs} />
 		</DocsPage>
