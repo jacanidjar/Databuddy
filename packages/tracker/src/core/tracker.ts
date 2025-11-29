@@ -1,5 +1,5 @@
 import { HttpClient } from "./client";
-import type { BaseEvent, EventContext, TrackerOptions } from "./types";
+import type { BaseEvent, EventContext, TrackerOptions, WebVitalEvent } from "./types";
 import { generateUUIDv4, logger } from "./utils";
 
 const HEADLESS_CHROME_REGEX = /\bHeadlessChrome\b/i;
@@ -33,15 +33,20 @@ export class BaseTracker {
 	batchTimer: Timer | null = null;
 	private isFlushing = false;
 
+	// Vitals Queue
+	vitalsQueue: WebVitalEvent[] = [];
+	vitalsTimer: Timer | null = null;
+	private isFlushingVitals = false;
+
 	constructor(options: TrackerOptions) {
 		this.options = {
 			disabled: false,
 			trackPerformance: true,
 			samplingRate: 1.0,
-			enableRetries: true,
+			enableRetries: false,
 			maxRetries: 3,
 			initialRetryDelay: 500,
-			enableBatching: false,
+			enableBatching: true,
 			batchSize: 10,
 			batchTimeout: 2000,
 			sdk: "web",
@@ -388,6 +393,58 @@ export class BaseTracker {
 			return null;
 		} finally {
 			this.isFlushing = false;
+		}
+	}
+
+	sendVital(event: WebVitalEvent): Promise<void> {
+		if (this.shouldSkipTracking()) {
+			return Promise.resolve();
+		}
+
+		logger.log("Queueing vital", event);
+		return this.addToVitalsQueue(event);
+	}
+
+	addToVitalsQueue(event: WebVitalEvent): Promise<void> {
+		this.vitalsQueue.push(event);
+		if (this.vitalsTimer === null) {
+			this.vitalsTimer = setTimeout(
+				() => this.flushVitals(),
+				this.options.batchTimeout
+			);
+		}
+		if (this.vitalsQueue.length >= 6) {
+			this.flushVitals();
+		}
+		return Promise.resolve();
+	}
+
+	async flushVitals() {
+		if (this.vitalsTimer) {
+			clearTimeout(this.vitalsTimer);
+			this.vitalsTimer = null;
+		}
+		if (this.vitalsQueue.length === 0 || this.isFlushingVitals) {
+			return;
+		}
+
+		this.isFlushingVitals = true;
+		const vitals = [...this.vitalsQueue];
+		this.vitalsQueue = [];
+
+		logger.log("Flushing vitals", vitals.length);
+
+		try {
+			const result = await this.api.fetch("/vitals", vitals, {
+				keepalive: true,
+			});
+			logger.log("Vitals sent", result);
+			return result;
+		} catch (error) {
+			logger.error("Vitals batch failed", error);
+			return null;
+		} finally {
+			this.isFlushingVitals = false;
 		}
 	}
 

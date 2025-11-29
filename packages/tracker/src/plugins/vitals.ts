@@ -1,16 +1,7 @@
 import { type Metric, onCLS, onFCP, onINP, onLCP, onTTFB } from "web-vitals";
 import type { BaseTracker } from "../core/tracker";
+import type { WebVitalMetricName } from "../core/types";
 import { logger } from "../core/utils";
-
-type WebVitalMetricName = "FCP" | "LCP" | "CLS" | "INP" | "TTFB" | "FPS";
-
-type WebVitalSpan = {
-	sessionId: string;
-	timestamp: number;
-	path: string;
-	metricName: WebVitalMetricName;
-	metricValue: number;
-};
 
 type FPSMetric = {
 	name: "FPS";
@@ -49,30 +40,24 @@ export function initWebVitalsTracking(tracker: BaseTracker) {
 
 	const sentMetrics = new Set<WebVitalMetricName>();
 
-	const sendVitalSpan = (metricName: WebVitalMetricName, metricValue: number) => {
-		if (sentMetrics.has(metricName)) {
-			return;
-		}
-		sentMetrics.add(metricName);
-
-		const span: WebVitalSpan = {
-			sessionId: tracker.sessionId ?? "",
-			timestamp: Date.now(),
-			path: window.location.pathname,
-			metricName,
-			metricValue,
-		};
-
-		logger.log(`Sending web vital span: ${metricName}`, span);
-		tracker.sendBeacon(span);
-	};
-
 	const handleMetric = (metric: Metric | FPSMetric) => {
 		const name = metric.name as WebVitalMetricName;
-		const value = name === "CLS" ? metric.value : Math.round(metric.value);
+		if (sentMetrics.has(name)) {
+			return;
+		}
+		sentMetrics.add(name);
 
+		const value = name === "CLS" ? metric.value : Math.round(metric.value);
 		logger.log(`Web Vital captured: ${name}`, value);
-		sendVitalSpan(name, value);
+
+		tracker.sendVital({
+			name: "web_vital",
+			eventId: crypto.randomUUID(),
+			timestamp: Date.now(),
+			path: window.location.pathname,
+			metricName: name,
+			metricValue: value,
+		});
 	};
 
 	onFCP(handleMetric);

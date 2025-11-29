@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-type VitalSpan = {
-	sessionId: string;
+type WebVitalEvent = {
+	name: "web_vital";
+	eventId: string;
 	timestamp: number;
 	path: string;
 	metricName: string;
@@ -25,13 +26,13 @@ test.describe("Web Vitals Tracking", () => {
 		});
 	});
 
-	test("sends each vital as individual span", async ({ page }) => {
-		const vitalsReceived: VitalSpan[] = [];
+	test("batches vitals and sends to /vitals endpoint", async ({ page }) => {
+		const vitalBatches: WebVitalEvent[][] = [];
 
 		page.on("request", (req) => {
 			if (req.url().includes("/basket.databuddy.cc/vitals") && req.method() === "POST") {
-				const payload = req.postDataJSON() as VitalSpan;
-				vitalsReceived.push(payload);
+				const payload = req.postDataJSON() as WebVitalEvent[];
+				vitalBatches.push(payload);
 			}
 		});
 
@@ -46,38 +47,34 @@ test.describe("Web Vitals Tracking", () => {
 		});
 		await page.addScriptTag({ url: "/dist/vitals.js" });
 
-		// Wait for FPS measurement (2 seconds) plus buffer
-		await page.waitForTimeout(3000);
+		// Wait for FPS measurement (2 seconds) + batch timeout (2 seconds) + buffer
+		await page.waitForTimeout(5000);
 
-		// Should have received at least one vital span
-		if (vitalsReceived.length > 0) {
-			const span = vitalsReceived.at(0);
-			expect(span?.metricName).toBeDefined();
-			expect(span?.metricValue).toBeDefined();
-			expect(span?.sessionId).toBeDefined();
-			expect(span?.path).toBeDefined();
-			expect(span?.timestamp).toBeDefined();
+		if (vitalBatches.length > 0) {
+			const allVitals = vitalBatches.flat();
+			expect(allVitals.length).toBeGreaterThan(0);
 
-			// Check metric names are valid
 			const validMetrics = ["FCP", "LCP", "CLS", "INP", "TTFB", "FPS"];
-			for (const vital of vitalsReceived) {
+			for (const vital of allVitals) {
+				expect(vital.name).toBe("web_vital");
+				expect(vital.eventId).toBeDefined();
 				expect(validMetrics).toContain(vital.metricName);
 				expect(typeof vital.metricValue).toBe("number");
 			}
 
-			console.table(vitalsReceived.map((v) => ({ metric: v.metricName, value: v.metricValue })));
+			console.table(allVitals.map((v) => ({ metric: v.metricName, value: v.metricValue })));
 		} else {
 			console.log("No vitals captured - this can happen in test environments");
 		}
 	});
 
 	test("captures FPS metric", async ({ page }) => {
-		const vitalsReceived: VitalSpan[] = [];
+		const vitalBatches: WebVitalEvent[][] = [];
 
 		page.on("request", (req) => {
 			if (req.url().includes("/basket.databuddy.cc/vitals") && req.method() === "POST") {
-				const payload = req.postDataJSON() as VitalSpan;
-				vitalsReceived.push(payload);
+				const payload = req.postDataJSON() as WebVitalEvent[];
+				vitalBatches.push(payload);
 			}
 		});
 
@@ -92,13 +89,14 @@ test.describe("Web Vitals Tracking", () => {
 		});
 		await page.addScriptTag({ url: "/dist/vitals.js" });
 
-		// FPS measurement takes 2 seconds
-		await page.waitForTimeout(3000);
+		// FPS measurement takes 2 seconds + batch timeout
+		await page.waitForTimeout(5000);
 
-		const fpsVital = vitalsReceived.find((v) => v.metricName === "FPS");
+		const allVitals = vitalBatches.flat();
+		const fpsVital = allVitals.find((v) => v.metricName === "FPS");
 		if (fpsVital) {
 			expect(fpsVital.metricValue).toBeGreaterThan(0);
-			expect(fpsVital.metricValue).toBeLessThanOrEqual(120);
+			expect(fpsVital.metricValue).toBeLessThanOrEqual(240); // High refresh rate displays
 			console.log("FPS captured:", fpsVital.metricValue);
 		} else {
 			console.log("FPS not captured - this can happen in headless browsers");
@@ -106,12 +104,12 @@ test.describe("Web Vitals Tracking", () => {
 	});
 
 	test("does not send duplicate metrics", async ({ page }) => {
-		const vitalsReceived: VitalSpan[] = [];
+		const vitalBatches: WebVitalEvent[][] = [];
 
 		page.on("request", (req) => {
 			if (req.url().includes("/basket.databuddy.cc/vitals") && req.method() === "POST") {
-				const payload = req.postDataJSON() as VitalSpan;
-				vitalsReceived.push(payload);
+				const payload = req.postDataJSON() as WebVitalEvent[];
+				vitalBatches.push(payload);
 			}
 		});
 
@@ -126,10 +124,10 @@ test.describe("Web Vitals Tracking", () => {
 		});
 		await page.addScriptTag({ url: "/dist/vitals.js" });
 
-		await page.waitForTimeout(3000);
+		await page.waitForTimeout(5000);
 
-		// Check no duplicate metric names
-		const metricNames = vitalsReceived.map((v) => v.metricName);
+		const allVitals = vitalBatches.flat();
+		const metricNames = allVitals.map((v) => v.metricName);
 		const uniqueNames = [...new Set(metricNames)];
 		expect(metricNames.length).toBe(uniqueNames.length);
 	});

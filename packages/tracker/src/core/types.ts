@@ -66,6 +66,14 @@ export type TrackEvent = BaseEvent & {
 	name: string;
 };
 
+export type WebVitalMetricName = "FCP" | "LCP" | "CLS" | "INP" | "TTFB" | "FPS";
+
+export type WebVitalEvent = BaseEvent & {
+	name: "web_vital";
+	metricName: WebVitalMetricName;
+	metricValue: number;
+};
+
 export type DatabuddyGlobal = {
 	track: (name: string, props?: Record<string, unknown>) => void;
 	screenView: (props?: Record<string, unknown>) => void;
