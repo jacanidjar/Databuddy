@@ -3,12 +3,7 @@
  * Provides type-safe tracking functions
  */
 
-import type {
-	DatabuddyTracker,
-	EventName,
-	PropertiesForEvent,
-	TrackFunction,
-} from "./types";
+import type { DatabuddyTracker } from "./types";
 
 /**
  * Check if the Databuddy tracker is available
@@ -28,29 +23,41 @@ export function getTracker(): DatabuddyTracker | null {
 }
 
 /**
- * Type-safe track function
+ * Track a custom event (lean, goes to custom_event_spans table)
  */
-export const track: TrackFunction = async <T extends EventName>(
-	eventName: T,
-	properties?: PropertiesForEvent<T>
-): Promise<void> => {
+export function trackCustomEvent(
+	name: string,
+	properties?: Record<string, unknown>
+): void {
 	if (typeof window === "undefined") {
 		return;
 	}
 
-	// Try window.db first (shorthand), then window.databuddy
-	const tracker = window.db?.track || window.databuddy?.track;
+	const tracker =
+		window.db?.trackCustomEvent || window.databuddy?.trackCustomEvent;
 
 	if (!tracker) {
 		return;
 	}
 
 	try {
-		await tracker(eventName, properties);
+		tracker(name, properties);
 	} catch (error) {
-		console.error("Databuddy tracking error:", error);
+		console.error("Databuddy trackCustomEvent error:", error);
 	}
-};
+}
+
+/**
+ * Track a custom event (alias for trackCustomEvent)
+ * Goes to the lean custom_event_spans table
+ */
+export function track(
+	eventName: string,
+	properties?: Record<string, unknown>
+): void {
+	trackCustomEvent(eventName, properties);
+}
+
 /**
  * Clear the current session
  */
@@ -106,8 +113,8 @@ export function trackError(
 		error_type?: string;
 		[key: string]: string | number | boolean | null | undefined;
 	}
-): Promise<void> {
-	return track("error", { message, ...properties });
+): void {
+	track("error", { message, ...properties });
 }
 
 /**
@@ -115,7 +122,9 @@ export function trackError(
  * Priority: URL params > tracker instance > localStorage
  */
 export function getAnonymousId(urlParams?: URLSearchParams): string | null {
-	if (typeof window === "undefined") return null;
+	if (typeof window === "undefined") {
+		return null;
+	}
 	return (
 		urlParams?.get("anonId") ||
 		window.databuddy?.anonymousId ||
@@ -129,7 +138,9 @@ export function getAnonymousId(urlParams?: URLSearchParams): string | null {
  * Priority: URL params > tracker instance > sessionStorage
  */
 export function getSessionId(urlParams?: URLSearchParams): string | null {
-	if (typeof window === "undefined") return null;
+	if (typeof window === "undefined") {
+		return null;
+	}
 	return (
 		urlParams?.get("sessionId") ||
 		window.databuddy?.sessionId ||
@@ -159,7 +170,11 @@ export function getTrackingParams(urlParams?: URLSearchParams): string {
 	const anonId = getAnonymousId(urlParams);
 	const sessionId = getSessionId(urlParams);
 	const params = new URLSearchParams();
-	if (anonId) params.set("anonId", anonId);
-	if (sessionId) params.set("sessionId", sessionId);
+	if (anonId) {
+		params.set("anonId", anonId);
+	}
+	if (sessionId) {
+		params.set("sessionId", sessionId);
+	}
 	return params.toString();
 }

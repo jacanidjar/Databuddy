@@ -182,7 +182,7 @@ export class Databuddy extends BaseTracker {
 							properties[key] = attr.value;
 						}
 					}
-					this.track(eventName, properties);
+					this.trackCustomEvent(eventName, properties);
 				}
 			}
 		};

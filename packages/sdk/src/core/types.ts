@@ -318,9 +318,9 @@ export type DatabuddyTracker = {
 	flush(): void;
 
 	/**
-	 * Track a custom event with full type safety
+	 * Track a lean custom event (goes to custom_event_spans table)
 	 */
-	trackCustomEvent(eventName: string, properties?: EventProperties): void;
+	trackCustomEvent(eventName: string, properties?: Record<string, unknown>): void;
 }
 
 /**
