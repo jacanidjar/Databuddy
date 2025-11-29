@@ -30,6 +30,7 @@ export class Databuddy extends BaseTracker {
 			}
 
 			this.trackScreenViews();
+			this.setupPageExitTracking();
 			setTimeout(() => this.screenView(), 0);
 
 			if (this.options.trackOutgoingLinks) {
@@ -126,17 +127,78 @@ export class Databuddy extends BaseTracker {
 				}
 			}
 
+			// Send page_exit for the previous page
 			if (this.lastPath) {
+				this.trackPageExit();
 				this.notifyRouteChange(window.location.pathname);
 			}
 
 			this.lastPath = url;
 			this.pageCount += 1;
+			this.resetPageEngagement();
 			this._trackInternal("screen_view", {
 				page_count: this.pageCount,
 				...props,
 			});
 		}
+	}
+
+	private setupPageExitTracking() {
+		const handlePageExit = () => {
+			this.sendPageExitBeacon();
+		};
+
+		document.addEventListener("visibilitychange", () => {
+			if (document.visibilityState === "hidden") {
+				handlePageExit();
+			}
+		});
+		this.cleanupFns.push(() => document.removeEventListener("visibilitychange", handlePageExit));
+
+		window.addEventListener("beforeunload", handlePageExit);
+		this.cleanupFns.push(() => window.removeEventListener("beforeunload", handlePageExit));
+	}
+
+	private trackPageExit() {
+		const timeOnPage = Math.round((Date.now() - this.pageStartTime) / 1000);
+		const isBounce = this.interactionCount === 0 && timeOnPage < 10 ? 1 : 0;
+
+		this._trackInternal("page_exit", {
+			time_on_page: timeOnPage,
+			scroll_depth: this.maxScrollDepth,
+			interaction_count: this.interactionCount,
+			page_count: this.pageCount,
+			is_bounce: isBounce,
+		});
+	}
+
+	private sendPageExitBeacon() {
+		const timeOnPage = Math.round((Date.now() - this.pageStartTime) / 1000);
+		const isBounce = this.interactionCount === 0 && timeOnPage < 10 ? 1 : 0;
+
+		const event = {
+			eventId: generateUUIDv4(),
+			name: "page_exit",
+			anonymousId: this.anonymousId,
+			sessionId: this.sessionId,
+			timestamp: Date.now(),
+			...this.getBaseContext(),
+			...this.globalProperties,
+			time_on_page: timeOnPage,
+			scroll_depth: this.maxScrollDepth,
+			interaction_count: this.interactionCount,
+			page_count: this.pageCount,
+			is_bounce: isBounce,
+		};
+
+		// Use sendBeacon for reliability on page unload
+		this.sendBatchBeacon([event]);
+	}
+
+	private resetPageEngagement() {
+		this.pageStartTime = Date.now();
+		this.interactionCount = 0;
+		this.maxScrollDepth = 0;
 	}
 
 	trackOutgoingLinks() {
