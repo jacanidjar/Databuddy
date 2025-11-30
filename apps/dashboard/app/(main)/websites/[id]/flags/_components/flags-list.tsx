@@ -65,16 +65,11 @@ export function FlagsList({
 					label: "Create Your First Flag",
 					onClick: onCreateFlagAction,
 				}}
+				className="h-full py-0"
 				description="Create your first feature flag to start controlling feature rollouts and A/B testing across your application."
-				icon={
-					<FlagIcon
-						className="h-16 w-16 text-primary"
-						size={16}
-						weight="duotone"
-					/>
-				}
+				icon={<FlagIcon weight="duotone" />}
 				title="No feature flags yet"
-				variant="default"
+				variant="minimal"
 			/>
 		);
 	}

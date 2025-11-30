@@ -150,8 +150,8 @@ export default function FlagsPage() {
 				websiteId={websiteId}
 				websiteName={website?.name || undefined}
 			/>
-			<div className="space-y-4 p-4">
-				{experimentFlag.isReady && (
+			<div className="space-y-4 p-4 h-full">
+				{experimentFlag.isReady && flags && flags.length > 0 && (
 					<div className="flex items-center gap-2">
 						<FlagIcon
 							className="size-4"

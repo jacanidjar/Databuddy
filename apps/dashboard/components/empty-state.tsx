@@ -46,7 +46,7 @@ export const EmptyState = memo(function EmptyState({
 	description,
 	action,
 	secondaryAction,
-	variant = "default",
+	variant = "minimal",
 	className,
 	showPlusBadge = true,
 	padding = "lg",
