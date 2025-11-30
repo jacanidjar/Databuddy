@@ -116,16 +116,17 @@ declare global {
 		databuddyConfig?: TrackerOptions;
 		databuddyOptOut?: () => void;
 		databuddyOptIn?: () => void;
-		callPhantom?: any;
-		_phantom?: any;
-		selenium?: any;
-		webdriver?: any;
+		callPhantom?: unknown;
+		_phantom?: unknown;
+		selenium?: unknown;
+		webdriver?: unknown;
+	}
+
+	interface Document {
+		prerendering?: boolean;
 	}
 
 	interface Navigator {
-		connection?: any;
-		mozConnection?: any;
-		webkitConnection?: any;
 		webdriver?: boolean;
 	}
 }
