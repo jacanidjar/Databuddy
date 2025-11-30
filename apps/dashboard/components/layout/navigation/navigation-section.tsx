@@ -2,7 +2,7 @@ import { CaretDownIcon } from "@phosphor-icons/react";
 import clsx from "clsx";
 import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
-import { memo } from "react";
+import { memo, Suspense } from "react";
 import type { useAccordionStates } from "@/hooks/use-persistent-state";
 import { NavigationItem } from "./navigation-item";
 import type { NavigationSection as NavigationSectionType } from "./types";
@@ -87,6 +87,54 @@ const getPathInfo = (
 	return { isActive: checkWebsiteMatch(item, pathname, currentWebsiteId) };
 };
 
+type NavigationItemsListProps = {
+	visibleItems: NavigationSectionType["items"];
+	pathname: string;
+	currentWebsiteId?: string | null;
+	title: string;
+};
+
+function NavigationItemsList({
+	visibleItems,
+	pathname,
+	currentWebsiteId,
+	title,
+}: NavigationItemsListProps) {
+	const searchParams = useSearchParams();
+
+	return (
+		<>
+			{visibleItems.map((item) => {
+				const { isActive } = getPathInfo(
+					item,
+					pathname,
+					searchParams,
+					currentWebsiteId
+				);
+
+				return (
+					<div key={item.name}>
+						<NavigationItem
+							alpha={item.alpha}
+							currentWebsiteId={currentWebsiteId}
+							disabled={item.disabled}
+							domain={item.domain}
+							href={item.href}
+							icon={item.icon}
+							isActive={isActive}
+							isExternal={item.external}
+							isRootLevel={!!item.rootLevel}
+							name={item.name}
+							production={item.production}
+							sectionName={title}
+						/>
+					</div>
+				);
+			})}
+		</>
+	);
+}
+
 export const NavigationSection = memo(function NavigationSectionComponent({
 	title,
 	icon: Icon,
@@ -98,7 +146,6 @@ export const NavigationSection = memo(function NavigationSectionComponent({
 }: NavigationSectionProps) {
 	const { getAccordionState, toggleAccordion } = accordionStates;
 	const isExpanded = getAccordionState(title, true); // Default to expanded
-	const searchParams = useSearchParams();
 
 	const visibleItems = items.filter((item) => {
 		if (item.production === false && process.env.NODE_ENV === "production") {
@@ -159,33 +206,14 @@ export const NavigationSection = memo(function NavigationSectionComponent({
 							initial={{ opacity: 0, height: 0 }}
 						>
 							<motion.div className="text-sm">
-								{visibleItems.map((item) => {
-									const { isActive } = getPathInfo(
-										item,
-										pathname,
-										searchParams,
-										currentWebsiteId
-									);
-
-									return (
-										<div key={item.name}>
-											<NavigationItem
-												alpha={item.alpha}
-												currentWebsiteId={currentWebsiteId}
-												disabled={item.disabled}
-												domain={item.domain}
-												href={item.href}
-												icon={item.icon}
-												isActive={isActive}
-												isExternal={item.external}
-												isRootLevel={!!item.rootLevel}
-												name={item.name}
-												production={item.production}
-												sectionName={title}
-											/>
-										</div>
-									);
-								})}
+								<Suspense fallback={null}>
+									<NavigationItemsList
+										currentWebsiteId={currentWebsiteId}
+										pathname={pathname}
+										title={title}
+										visibleItems={visibleItems}
+									/>
+								</Suspense>
 							</motion.div>
 						</motion.div>
 					)}
