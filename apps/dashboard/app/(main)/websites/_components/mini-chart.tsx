@@ -29,7 +29,7 @@ const formatNumber = (num: number) => {
 
 const MiniChart = memo(({ data, id, days = 7 }: MiniChartProps) => (
 	<div className="chart-container rounded">
-		<ResponsiveContainer height={64} width="100%">
+		<ResponsiveContainer height={112} width="100%">
 			<AreaChart
 				aria-label={`Mini chart showing views for the last ${days} days`}
 				data={data}
@@ -62,14 +62,21 @@ const MiniChart = memo(({ data, id, days = 7 }: MiniChartProps) => (
 				<Tooltip
 					content={({ active, payload, label }) =>
 						active && payload?.[0] && typeof payload[0].value === "number" ? (
-							<div className="rounded border bg-background p-2 text-xs shadow-md">
-								<p>{dayjs(label as string).format("MMM D")}</p>
-								<p className="font-medium text-accent-foreground">
+							<div className="rounded border border-border/50 bg-popover/95 px-3 py-2 shadow-lg backdrop-blur-sm">
+								<p className="text-[10px] text-muted-foreground">
+									{dayjs(label as string).format("ddd, MMM D")}
+								</p>
+								<p className="font-semibold text-popover-foreground text-sm tabular-nums">
 									{formatNumber(payload[0].value)} views
 								</p>
 							</div>
 						) : null
 					}
+					cursor={{
+						stroke: "var(--chart-color)",
+						strokeWidth: 1,
+						strokeDasharray: "4 4",
+					}}
 				/>
 				<Area
 					activeDot={{ r: 3 }}

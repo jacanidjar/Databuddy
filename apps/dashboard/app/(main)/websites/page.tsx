@@ -23,24 +23,27 @@ function LoadingSkeleton() {
 	return (
 		<>
 			<Skeleton className="mb-6 h-[38px] w-full rounded" />
-			<div className="grid select-none gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+			<div className="grid select-none gap-6 sm:grid-cols-2 lg:grid-cols-3">
 				{[1, 2, 3, 4, 5, 6].map((num) => (
 					<Card
-						className="h-[189px] animate-pulse overflow-hidden pt-0"
+						className="animate-pulse overflow-hidden pt-0"
 						key={`website-skeleton-${num}`}
 					>
 						<CardHeader className="dotted-bg gap-0! border-b bg-accent-brighter/80 px-3 pt-4 pb-0!">
-							<Skeleton className="mx-auto h-12 w-full rounded sm:h-16" />
+							<Skeleton className="mx-auto h-24 w-full rounded sm:h-28" />
 						</CardHeader>
-						<CardContent className="pb-4">
-							<div className="flex flex-col gap-4">
-								<div className="flex flex-col gap-1.5">
-									<Skeleton className="h-3 w-20 shrink-0" />
-									<Skeleton className="h-3 w-32 rounded" />
-								</div>
-								<div className="flex items-center justify-between pt-1">
-									<Skeleton className="h-4 w-20 rounded" />
-									<Skeleton className="h-4 w-12 rounded" />
+						<CardContent className="px-4 py-3">
+							<div className="flex items-center gap-3">
+								<Skeleton className="size-7 shrink-0 rounded" />
+								<div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+									<div className="flex flex-col gap-1">
+										<Skeleton className="h-3.5 w-24 rounded" />
+										<Skeleton className="h-3 w-32 rounded" />
+									</div>
+									<div className="flex flex-col items-end gap-1">
+										<Skeleton className="h-3 w-12 rounded" />
+										<Skeleton className="h-2.5 w-8 rounded" />
+									</div>
 								</div>
 							</div>
 						</CardContent>
@@ -56,10 +59,6 @@ export default function WebsitesPage() {
 
 	const { websites, chartData, isLoading, isError, isFetching, refetch } =
 		useWebsites();
-
-	const handleRetry = () => {
-		refetch();
-	};
 
 	return (
 		<div className="flex h-full flex-col">
@@ -123,17 +122,19 @@ export default function WebsitesPage() {
 				{isLoading && <LoadingSkeleton />}
 
 				{/* Show error state */}
-				{isError && <EmptyState
-					className="h-full"
-					action={{
-						label: "Try Again",
-						onClick: () => refetch(),
-					}}
+				{isError && (
+					<EmptyState
+						action={{
+							label: "Try Again",
+							onClick: () => refetch(),
+						}}
+						className="h-full"
 						description="There was an issue fetching your websites. Please check your connection and try again."
 						icon={<GlobeIcon />}
-					title="Failed to load your websites"
-					variant="error"
-				/>}
+						title="Failed to load your websites"
+						variant="error"
+					/>
+				)}
 
 				{/* Show empty state */}
 				{!(isLoading || isError) && websites && websites.length === 0 && (
@@ -154,7 +155,7 @@ export default function WebsitesPage() {
 				{!(isLoading || isError) && websites && websites.length > 0 && (
 					<div
 						aria-live="polite"
-						className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+						className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
 					>
 						{websites.map((website) => (
 							<WebsiteCard
