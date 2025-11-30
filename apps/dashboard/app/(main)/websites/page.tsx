@@ -51,35 +51,6 @@ function LoadingSkeleton() {
 	);
 }
 
-function ErrorState({ onRetry }: { onRetry: () => void }) {
-	return (
-		<div className="flex select-none flex-col items-center justify-center px-4 py-16 text-center">
-			<div className="mb-8 rounded-full border border-destructive/20 bg-destructive/10 p-8">
-				<GlobeIcon
-					aria-hidden="true"
-					className="h-16 w-16 text-destructive"
-					size={64}
-					weight="duotone"
-				/>
-			</div>
-			<h3 className="mb-4 font-bold text-2xl">Failed to Load Websites</h3>
-			<p className="mb-8 max-w-md text-muted-foreground leading-relaxed">
-				There was an issue fetching your websites. Please check your connection
-				and try again.
-			</p>
-			<Button
-				data-section="error-state"
-				data-track="websites-retry-load"
-				onClick={onRetry}
-				size="lg"
-				variant="outline"
-			>
-				Try Again
-			</Button>
-		</div>
-	);
-}
-
 export default function WebsitesPage() {
 	const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -152,7 +123,17 @@ export default function WebsitesPage() {
 				{isLoading && <LoadingSkeleton />}
 
 				{/* Show error state */}
-				{isError && <ErrorState onRetry={handleRetry} />}
+				{isError && <EmptyState
+					className="h-full"
+					action={{
+						label: "Try Again",
+						onClick: () => refetch(),
+					}}
+						description="There was an issue fetching your websites. Please check your connection and try again."
+						icon={<GlobeIcon />}
+					title="Failed to load your websites"
+					variant="error"
+				/>}
 
 				{/* Show empty state */}
 				{!(isLoading || isError) && websites && websites.length === 0 && (

@@ -95,15 +95,11 @@ function TransferPageContent() {
 	if (isLoadingWebsite || isLoadingOrganizations || !websiteData) {
 		return (
 			<div className="flex h-full flex-col">
-				<div className="h-[89px] border-b">
-					<div className="flex h-full flex-col justify-center gap-2 px-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
-						<PageHeader
-							description="Move this website to a different organization"
-							icon={<ArrowSquareOutIcon />}
-							title="Transfer Website"
-						/>
-					</div>
-				</div>
+				<PageHeader
+					description="Move this website to a different organization"
+					icon={<ArrowSquareOutIcon />}
+					title="Transfer Website"
+				/>
 				<div className="flex flex-1 items-center justify-center">
 					<div className="flex flex-col items-center gap-3">
 						<div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
@@ -139,15 +135,11 @@ function TransferPageContent() {
 
 	return (
 		<div className="flex h-full flex-col">
-			<div className="h-[89px] border-b">
-				<div className="flex h-full flex-col justify-center gap-2 px-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
-					<PageHeader
-						description="Move this website to a different organization"
-						icon={<ArrowSquareOutIcon />}
-						title="Transfer Website"
-					/>
-				</div>
-			</div>
+			<PageHeader
+				description="Move this website to a different organization"
+				icon={<ArrowSquareOutIcon />}
+				title="Transfer Website"
+			/>
 
 			{/* Content */}
 			<div className="flex min-h-0 flex-1 flex-col">
@@ -225,14 +217,11 @@ function TransferPageContent() {
 						</div>
 
 						{availableOrgs.length === 0 && (
-							<Alert className="border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/20 dark:text-amber-200">
-								<WarningIcon className="h-4 w-4" />
-								<AlertDescription className="text-xs">
-									No other organizations available. You need to create a new
-									organization or be invited to one before you can transfer this
-									website.
-								</AlertDescription>
-							</Alert>
+							<NoticeBanner
+								description="No other organizations available. You need to create a new organization or be invited to one before you can transfer this website."
+								icon={<WarningIcon />}
+								title="No organizations available"
+							/>
 						)}
 					</div>
 				</section>
@@ -416,15 +405,11 @@ export default function TransferPage() {
 		<Suspense
 			fallback={
 				<div className="flex h-full flex-col">
-					<div className="h-[89px] border-b">
-						<div className="flex h-full flex-col justify-center gap-2 px-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
-							<PageHeader
-								description="Move this website to a different organization"
-								icon={<ArrowSquareOutIcon />}
-								title="Transfer Website"
-							/>
-						</div>
-					</div>
+					<PageHeader
+						description="Move this website to a different organization"
+						icon={<ArrowSquareOutIcon />}
+						title="Transfer Website"
+					/>
 					<div className="flex flex-1 items-center justify-center">
 						<div className="flex flex-col items-center gap-3">
 							<div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />

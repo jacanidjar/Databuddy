@@ -64,111 +64,107 @@ export default function GeneralSettingsPage() {
 	return (
 		<div className="flex h-full flex-col">
 			{/* Header */}
-			<div className="h-[89px] border-b">
-				<div className="flex h-full flex-col justify-center gap-2 px-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
-					<PageHeader
-						description="Manage name, domain, and basic settings"
-						icon={<GearIcon />}
-						title="General"
-					/>
-					{/* Right-side actions (optional) */}
-				</div>
+			<PageHeader
+				description="Manage name, domain, and basic settings"
+				icon={<GearIcon />}
+				title="General"
+			/>
+			{/* Right-side actions (optional) */}
 
-				{/* Content */}
-				<div className="flex min-h-0 flex-1 flex-col">
-					{/* Name */}
-					<section className="border-b px-4 py-5 sm:px-6">
-						<div className="flex items-center justify-between gap-3">
-							<div className="min-w-0">
-								<Label className="block font-medium text-sm">Name</Label>
-								<p className="truncate text-muted-foreground text-sm">
-									{websiteData.name || "Not set"}
-								</p>
-							</div>
-							<Button
-								onClick={() => setShowEditDialog(true)}
-								size="sm"
-								variant="secondary"
-							>
-								<PencilSimpleIcon className="size-3.5" /> Edit
-							</Button>
+			{/* Content */}
+			<div className="flex min-h-0 flex-1 flex-col">
+				{/* Name */}
+				<section className="border-b px-4 py-5 sm:px-6">
+					<div className="flex items-center justify-between gap-3">
+						<div className="min-w-0">
+							<Label className="block font-medium text-sm">Name</Label>
+							<p className="truncate text-muted-foreground text-sm">
+								{websiteData.name || "Not set"}
+							</p>
 						</div>
-					</section>
-
-					{/* Domain */}
-					<section className="border-b px-4 py-5 sm:px-6">
-						<div className="flex items-center justify-between gap-3">
-							<div className="min-w-0">
-								<Label className="block font-medium text-sm">Domain</Label>
-								<p className="truncate text-muted-foreground text-sm">
-									{websiteData.domain || "Not set"}
-								</p>
-							</div>
-							<Button
-								onClick={() => setShowEditDialog(true)}
-								size="sm"
+						<Button
+							onClick={() => setShowEditDialog(true)}
+							size="sm"
 							variant="secondary"
-							>
-								<PencilSimpleIcon className="size-3.5" /> Edit
-							</Button>
-						</div>
-					</section>
+						>
+							<PencilSimpleIcon className="size-3.5" /> Edit
+						</Button>
+					</div>
+				</section>
 
-					<section className="border-b px-4 py-5 sm:px-6">
-						<div className="flex items-center justify-between gap-3">
-							<div>
-								<h2 className="font-medium text-sm">Transfer Website</h2>
-								<p className="text-muted-foreground text-sm">
-									Move this website to a different organization
-								</p>
-							</div>
-							<Button
-								onClick={() =>
-									router.push(`/websites/${websiteId}/settings/transfer`)
-								}
-								size="sm"
+				{/* Domain */}
+				<section className="border-b px-4 py-5 sm:px-6">
+					<div className="flex items-center justify-between gap-3">
+						<div className="min-w-0">
+							<Label className="block font-medium text-sm">Domain</Label>
+							<p className="truncate text-muted-foreground text-sm">
+								{websiteData.domain || "Not set"}
+							</p>
+						</div>
+						<Button
+							onClick={() => setShowEditDialog(true)}
+							size="sm"
 							variant="secondary"
-							>
-								<ArrowSquareOutIcon className="size-3.5" /> Transfer
-							</Button>
-						</div>
-					</section>
+						>
+							<PencilSimpleIcon className="size-3.5" /> Edit
+						</Button>
+					</div>
+				</section>
 
-					{/* Danger Zone */}
-					<section className="px-4 py-5 sm:px-6">
-						<div className="flex items-center justify-between gap-3">
-							<div>
-								<h2 className="font-medium text-sm">Danger Zone</h2>
-								<p className="text-muted-foreground text-sm">
-									Permanently delete this website and all its data
-								</p>
-							</div>
-							<Button
-								onClick={() => setShowDeleteDialog(true)}
-								size="sm"
-								variant="destructive"
-							>
-								<TrashIcon className="size-3.5" /> Delete Website
-							</Button>
+				<section className="border-b px-4 py-5 sm:px-6">
+					<div className="flex items-center justify-between gap-3">
+						<div>
+							<h2 className="font-medium text-sm">Transfer Website</h2>
+							<p className="text-muted-foreground text-sm">
+								Move this website to a different organization
+							</p>
 						</div>
-					</section>
-				</div>
+						<Button
+							onClick={() =>
+								router.push(`/websites/${websiteId}/settings/transfer`)
+							}
+							size="sm"
+							variant="secondary"
+						>
+							<ArrowSquareOutIcon className="size-3.5" /> Transfer
+						</Button>
+					</div>
+				</section>
 
-				{/* Dialogs */}
-				<WebsiteDialog
-					onOpenChange={setShowEditDialog}
-					onSave={handleWebsiteUpdated}
-					open={showEditDialog}
-					website={websiteData}
-				/>
-				<DeleteWebsiteDialog
-					isDeleting={deleteWebsiteMutation.isPending}
-					onConfirmDelete={handleDeleteWebsite}
-					onOpenChange={setShowDeleteDialog}
-					open={showDeleteDialog}
-					websiteData={websiteData}
-				/>
+				{/* Danger Zone */}
+				<section className="px-4 py-5 sm:px-6">
+					<div className="flex items-center justify-between gap-3">
+						<div>
+							<h2 className="font-medium text-sm">Danger Zone</h2>
+							<p className="text-muted-foreground text-sm">
+								Permanently delete this website and all its data
+							</p>
+						</div>
+						<Button
+							onClick={() => setShowDeleteDialog(true)}
+							size="sm"
+							variant="destructive"
+						>
+							<TrashIcon className="size-3.5" /> Delete Website
+						</Button>
+					</div>
+				</section>
 			</div>
+
+			{/* Dialogs */}
+			<WebsiteDialog
+				onOpenChange={setShowEditDialog}
+				onSave={handleWebsiteUpdated}
+				open={showEditDialog}
+				website={websiteData}
+			/>
+			<DeleteWebsiteDialog
+				isDeleting={deleteWebsiteMutation.isPending}
+				onConfirmDelete={handleDeleteWebsite}
+				onOpenChange={setShowDeleteDialog}
+				open={showDeleteDialog}
+				websiteData={websiteData}
+			/>
 		</div>
 	);
 }
