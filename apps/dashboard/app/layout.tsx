@@ -133,7 +133,7 @@ export default function RootLayout({
 			/>
 			<body className="flex h-full min-h-screen flex-col bg-background text-foreground antialiased">
 				<Providers>
-					<Suspense fallback={<SpinnerIcon className="h-8 w-8 animate-spin" />}>
+					<Suspense fallback={<div className="flex h-full items-center justify-center p-8"><SpinnerIcon className="h-8 w-8 animate-spin text-primary" /></div>}>
 						<main className="flex-1">{children}</main>
 					</Suspense>
 				</Providers>
