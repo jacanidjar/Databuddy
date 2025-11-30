@@ -41,7 +41,6 @@
         "@databuddy/rpc": "workspace:*",
         "@databuddy/shared": "workspace:*",
         "@elysiajs/cors": "^1.4.0",
-        "@elysiajs/cron": "^1.4.1",
         "@opentelemetry/api": "^1.9.0",
         "@opentelemetry/exporter-trace-otlp-proto": "^0.208.0",
         "@opentelemetry/instrumentation-http": "^0.55.0",
@@ -377,7 +376,6 @@
         "@faker-js/faker": "^9.9.0",
         "@neondatabase/serverless": "^1.0.1",
         "@types/sqlstring": "^2.3.2",
-        "dotenv": "^17.2.1",
         "drizzle-orm": "^0.44.7",
         "pg": "^8.16.3",
         "sqlstring": "^2.3.3",
@@ -736,8 +734,6 @@
     "@drizzle-team/brocli": ["@drizzle-team/brocli@0.10.2", "", {}, "sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w=="],
 
     "@elysiajs/cors": ["@elysiajs/cors@1.4.0", "", { "peerDependencies": { "elysia": ">= 1.4.0" } }, "sha512-pb0SCzBfFbFSYA/U40HHO7R+YrcXBJXOWgL20eSViK33ol1e20ru2/KUaZYo5IMUn63yaTJI/bQERuQ+77ND8g=="],
-
-    "@elysiajs/cron": ["@elysiajs/cron@1.4.1", "", { "dependencies": { "croner": "^6.0.3" }, "peerDependencies": { "elysia": ">= 1.4.0" } }, "sha512-Y+jqXtMJ+m17QzNWlWc09ugd1Fn1Wh7lqE+y9qSW8eiQZEqsRADXWmbLuXRSRaSC5dkfOyRSiwNCp6n8L/yuqA=="],
 
     "@emnapi/core": ["@emnapi/core@1.7.1", "", { "dependencies": { "@emnapi/wasi-threads": "1.1.0", "tslib": "^2.4.0" } }, "sha512-o1uhUASyo921r2XtHYOHy7gdkGLge8ghBEQHMWmyJFoXlpU58kIrhhN3w26lpQb6dspetweapMn2CSNwQ8I4wg=="],
 
@@ -2116,8 +2112,6 @@
     "cors": ["cors@2.8.5", "", { "dependencies": { "object-assign": "^4", "vary": "^1" } }, "sha512-KIHbLJqu73RGr/hnbrO9uBeixNGuvSQjul/jdFvS/KFSIH1hWVd1ng7zOHx+YrEfInLG7q4n6GHQ9cDtxv/P6g=="],
 
     "cose-base": ["cose-base@1.0.3", "", { "dependencies": { "layout-base": "^1.0.0" } }, "sha512-s9whTXInMSgAp/NVXVNuVxVKzGH2qck3aQlVHxDCdAEPgtMKwc4Wq6/QKhgdEdgbLSi9rBTAcPoRa6JpiG4ksg=="],
-
-    "croner": ["croner@6.0.7", "", {}, "sha512-k3Xx3Rcclfr60Yx4TmvsF3Yscuiql8LSvYLaphTsaq5Hk8La4Z/udmUANMOTKpgGGroI2F6/XOr9cU9OFkYluQ=="],
 
     "cross-spawn": ["cross-spawn@7.0.6", "", { "dependencies": { "path-key": "^3.1.0", "shebang-command": "^2.0.0", "which": "^2.0.1" } }, "sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA=="],
 
