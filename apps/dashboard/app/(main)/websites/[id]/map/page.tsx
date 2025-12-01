@@ -6,7 +6,7 @@ import { useAtom } from "jotai";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { Suspense, useCallback, useMemo, useState } from "react";
-import { CountryFlag } from "@/components/analytics/icons/CountryFlag";
+import { CountryFlag } from "@/components/icon";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDateFilters } from "@/hooks/use-date-filters";

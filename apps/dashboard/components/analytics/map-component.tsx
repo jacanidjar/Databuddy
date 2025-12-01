@@ -11,7 +11,7 @@ import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type Country, useCountries } from "@/lib/geo";
-import { CountryFlag } from "./icons/CountryFlag";
+import { CountryFlag } from "@/components/icon";
 
 const MapContainer = dynamic(
 	() => import("react-leaflet").then((mod) => mod.MapContainer),
