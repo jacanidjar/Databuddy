@@ -216,10 +216,6 @@ export function WebsiteAudienceTab({
 		[]
 	);
 
-	const countryColumns = createGeoColumns({ type: "country" });
-
-	const timezoneColumns = createTimezoneColumns();
-
 	const displayNames =
 		typeof window !== "undefined"
 			? new Intl.DisplayNames([navigator.language || "en"], {
@@ -227,11 +223,11 @@ export function WebsiteAudienceTab({
 				})
 			: null;
 
-	const languageColumns = createLanguageColumns(displayNames);
-
+	const countryColumns = createGeoColumns({ type: "country" });
 	const regionColumns = createGeoColumns({ type: "region" });
-
 	const cityColumns = createGeoColumns({ type: "city" });
+	const timezoneColumns = createTimezoneColumns();
+	const languageColumns = createLanguageColumns(displayNames);
 
 	const geographicTabs = useMemo(
 		() => [
@@ -297,6 +293,11 @@ export function WebsiteAudienceTab({
 			geographicData.language,
 			geographicData.timezone,
 			displayNames,
+			countryColumns,
+			regionColumns,
+			cityColumns,
+			timezoneColumns,
+			languageColumns,
 		]
 	);
 
@@ -315,7 +316,6 @@ export function WebsiteAudienceTab({
 						addFilter({ field, operator: "eq" as const, value })
 					}
 					renderSubRow={(subRow: any, parentRow: any) => {
-						// Calculate percentage relative to parent browser (not total visitors)
 						const percentage = Math.round(
 							((subRow.visitors || 0) / (parentRow.visitors || 1)) * 100
 						);
