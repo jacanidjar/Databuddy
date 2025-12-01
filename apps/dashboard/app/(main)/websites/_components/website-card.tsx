@@ -25,6 +25,7 @@ import MiniChart from "./mini-chart";
 type WebsiteCardProps = {
 	website: Website;
 	chartData?: ProcessedMiniChartData;
+	activeUsers?: number;
 	isLoadingChart?: boolean;
 };
 
@@ -81,7 +82,7 @@ const formatNumber = (num: number) => {
 };
 
 export const WebsiteCard = memo(
-	({ website, chartData, isLoadingChart }: WebsiteCardProps) => (
+	({ website, chartData, activeUsers, isLoadingChart }: WebsiteCardProps) => (
 		<Link
 			aria-label={`Open ${website.name} analytics`}
 			className="group block rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
@@ -92,7 +93,16 @@ export const WebsiteCard = memo(
 			href={`/websites/${website.id}`}
 		>
 			<Card className="flex h-full select-none flex-col gap-0 overflow-hidden bg-background p-0 transition-all duration-300 ease-in-out group-hover:border-primary/60 group-hover:shadow-primary/5 group-hover:shadow-xl motion-reduce:transform-none motion-reduce:transition-none">
-				<CardHeader className="dotted-bg gap-0! border-b bg-accent px-0 pt-4 pb-0!">
+				<CardHeader className="dotted-bg relative gap-0! border-b bg-accent px-0 pt-4 pb-0!">
+					{activeUsers !== undefined && activeUsers > 0 && (
+						<div className="absolute top-2 right-2 z-10 flex items-center gap-1.5 rounded-full bg-success/10 px-2 py-0.5 text-success text-xs font-medium tabular-nums backdrop-blur-sm">
+							<span className="relative flex size-1.5">
+								<span className="absolute inline-flex size-full animate-ping rounded-full bg-success opacity-75" />
+								<span className="relative inline-flex size-1.5 rounded-full bg-success" />
+							</span>
+							{activeUsers}
+						</div>
+					)}
 					{isLoadingChart ? (
 						<div className="px-3">
 							<Skeleton className="mx-auto h-24 w-full rounded sm:h-28" />

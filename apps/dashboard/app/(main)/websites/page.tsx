@@ -53,8 +53,15 @@ function LoadingSkeleton() {
 export default function WebsitesPage() {
 	const [dialogOpen, setDialogOpen] = useState(false);
 
-	const { websites, chartData, isLoading, isError, isFetching, refetch } =
-		useWebsites();
+	const {
+		websites,
+		chartData,
+		activeUsers,
+		isLoading,
+		isError,
+		isFetching,
+		refetch,
+	} = useWebsites();
 
 	return (
 		<div className="flex h-full flex-col">
@@ -144,6 +151,7 @@ export default function WebsitesPage() {
 					>
 						{websites.map((website) => (
 							<WebsiteCard
+								activeUsers={activeUsers?.[website.id]}
 								chartData={chartData?.[website.id]}
 								isLoadingChart={isLoading || isFetching}
 								key={website.id}
