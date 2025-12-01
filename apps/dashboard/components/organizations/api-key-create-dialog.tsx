@@ -28,8 +28,10 @@ import {
 } from "../ui/select";
 import {
 	Sheet,
+	SheetBody,
 	SheetContent,
 	SheetDescription,
+	SheetFooter,
 	SheetHeader,
 	SheetTitle,
 } from "../ui/sheet";
@@ -167,10 +169,7 @@ export function ApiKeyCreateDialog({
 	if (created) {
 		return (
 			<Sheet onOpenChange={handleClose} open={open}>
-				<SheetContent
-					className="m-3 h-[calc(100%-1.5rem)] rounded border bg-background p-0 sm:max-w-md"
-					side="right"
-				>
+				<SheetContent side="right" className="sm:max-w-md">
 					<div className="flex h-full flex-col items-center justify-center p-8 text-center">
 						<div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
 							<CheckCircleIcon
@@ -179,7 +178,7 @@ export function ApiKeyCreateDialog({
 								weight="duotone"
 							/>
 						</div>
-						<SheetHeader className="mb-6 text-center">
+						<SheetHeader className="mb-6 border-0 bg-transparent p-0 text-center">
 							<SheetTitle className="text-xl">API Key Created</SheetTitle>
 							<SheetDescription className="text-sm">
 								Copy this secret now — you won't see it again.
@@ -217,36 +216,30 @@ export function ApiKeyCreateDialog({
 	// Create form
 	return (
 		<Sheet onOpenChange={handleClose} open={open}>
-			<SheetContent
-				className="m-3 h-[calc(100%-1.5rem)] rounded border bg-card p-0 sm:max-w-md"
-				side="right"
-			>
-				<div className="flex h-full flex-col gap-6">
-					{/* Header */}
-					<SheetHeader className="shrink-0">
-						<div className="flex items-center gap-4">
-							<div className="flex h-11 w-11 items-center justify-center rounded border bg-secondary-brighter">
-								<KeyIcon
-									className="text-accent-foreground"
-									size={22}
-									weight="fill"
-								/>
-							</div>
-							<div>
-								<SheetTitle className="text-lg">Create API Key</SheetTitle>
-								<SheetDescription>
-									Generate a new key with permissions
-								</SheetDescription>
-							</div>
+			<SheetContent side="right" className="sm:max-w-md">
+				<SheetHeader>
+					<div className="flex items-center gap-4">
+						<div className="flex h-11 w-11 items-center justify-center rounded border bg-secondary-brighter">
+							<KeyIcon
+								className="text-accent-foreground"
+								size={22}
+								weight="fill"
+							/>
 						</div>
-					</SheetHeader>
+						<div>
+							<SheetTitle className="text-lg">Create API Key</SheetTitle>
+							<SheetDescription>
+								Generate a new key with permissions
+							</SheetDescription>
+						</div>
+					</div>
+				</SheetHeader>
 
-					<form
-						className="flex flex-1 flex-col overflow-hidden"
-						onSubmit={onSubmit}
-					>
-						{/* Content */}
-						<div className="flex-1 space-y-6 overflow-y-auto px-2">
+				<form
+					className="flex flex-1 flex-col"
+					onSubmit={onSubmit}
+				>
+					<SheetBody className="space-y-6">
 							{/* Name Section */}
 							<section className="space-y-3">
 								<Label className="font-medium" htmlFor="name">
@@ -434,26 +427,24 @@ export function ApiKeyCreateDialog({
 									)}
 								</section>
 							)}
-						</div>
+					</SheetBody>
 
-						{/* Footer */}
-						<div className="flex shrink-0 items-center justify-end gap-3 border-t px-2 py-4">
-							<Button onClick={handleClose} type="button" variant="ghost">
-								Cancel
-							</Button>
-							<Button disabled={mutation.isPending} type="submit">
-								{mutation.isPending ? (
-									"Creating..."
-								) : (
-									<>
-										<PlusIcon size={16} />
-										Create Key
-									</>
-								)}
-							</Button>
-						</div>
-					</form>
-				</div>
+					<SheetFooter>
+						<Button onClick={handleClose} type="button" variant="ghost">
+							Cancel
+						</Button>
+						<Button disabled={mutation.isPending} type="submit">
+							{mutation.isPending ? (
+								"Creating..."
+							) : (
+								<>
+									<PlusIcon size={16} />
+									Create Key
+								</>
+							)}
+						</Button>
+					</SheetFooter>
+				</form>
 			</SheetContent>
 		</Sheet>
 	);

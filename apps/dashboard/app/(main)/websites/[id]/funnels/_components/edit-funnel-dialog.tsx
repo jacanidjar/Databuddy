@@ -27,8 +27,10 @@ import {
 } from "@/components/ui/select";
 import {
 	Sheet,
+	SheetBody,
 	SheetContent,
 	SheetDescription,
+	SheetFooter,
 	SheetHeader,
 	SheetTitle,
 } from "@/components/ui/sheet";
@@ -254,35 +256,29 @@ export function EditFunnelDialog({
 
 	return (
 		<Sheet onOpenChange={handleClose} open={isOpen}>
-			<SheetContent
-				className="m-3 h-[calc(100%-1.5rem)] rounded border p-0 sm:max-w-lg"
-				side="right"
-			>
-				<div className="flex h-full flex-col">
-					{/* Header */}
-					<SheetHeader className="shrink-0 border-b bg-secondary p-5">
-						<div className="flex items-start gap-4">
-							<div className="flex size-11 items-center justify-center rounded border bg-background">
-								<FunnelIcon className="text-accent-foreground" size={22} weight="fill" />
-							</div>
-							<div className="min-w-0 flex-1">
-								<SheetTitle className="truncate text-lg">
-									{isCreateMode ? "New Funnel" : formData.name || "Edit Funnel"}
-								</SheetTitle>
-								<SheetDescription className="text-xs">
-									{isCreateMode
-										? "Track user conversion journeys"
-										: `${formData.steps.length} steps configured`}
-								</SheetDescription>
-							</div>
-							<Badge variant="secondary">
-								{formData.steps.length} steps
-							</Badge>
+			<SheetContent side="right">
+				<SheetHeader>
+					<div className="flex items-start gap-4">
+						<div className="flex size-11 items-center justify-center rounded border bg-background">
+							<FunnelIcon className="text-accent-foreground" size={22} weight="fill" />
 						</div>
-					</SheetHeader>
+						<div className="min-w-0 flex-1">
+							<SheetTitle className="truncate text-lg">
+								{isCreateMode ? "New Funnel" : formData.name || "Edit Funnel"}
+							</SheetTitle>
+							<SheetDescription className="text-xs">
+								{isCreateMode
+									? "Track user conversion journeys"
+									: `${formData.steps.length} steps configured`}
+							</SheetDescription>
+						</div>
+						<Badge variant="secondary">
+							{formData.steps.length} steps
+						</Badge>
+					</div>
+				</SheetHeader>
 
-					{/* Content */}
-					<div className="flex-1 space-y-6 overflow-y-auto p-5">
+				<SheetBody className="space-y-6">
 						{/* Basic Info */}
 						<div className="grid gap-4 sm:grid-cols-2">
 							<div className="space-y-2">
@@ -520,30 +516,28 @@ export function EditFunnelDialog({
 								Add Filter
 							</Button>
 						</section>
-					</div>
+				</SheetBody>
 
-					{/* Footer */}
-					<div className="angled-rectangle-gradient flex shrink-0 items-center justify-end gap-3 border-t bg-secondary px-5 py-4">
-						<Button variant="ghost" onClick={handleClose}>
-							Cancel
-						</Button>
-						<Button
-							disabled={!isFormValid || (isCreateMode ? isCreating : isUpdating)}
-							onClick={handleSubmit}
-						>
-							{(isCreateMode ? isCreating : isUpdating) ? (
-								<>
-									<div className="size-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
-									{isCreateMode ? "Creating…" : "Saving…"}
-								</>
-							) : isCreateMode ? (
-								"Create Funnel"
-							) : (
-								"Save Changes"
-							)}
-						</Button>
-					</div>
-				</div>
+				<SheetFooter>
+					<Button variant="ghost" onClick={handleClose}>
+						Cancel
+					</Button>
+					<Button
+						disabled={!isFormValid || (isCreateMode ? isCreating : isUpdating)}
+						onClick={handleSubmit}
+					>
+						{(isCreateMode ? isCreating : isUpdating) ? (
+							<>
+								<div className="size-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
+								{isCreateMode ? "Creating…" : "Saving…"}
+							</>
+						) : isCreateMode ? (
+							"Create Funnel"
+						) : (
+							"Save Changes"
+						)}
+					</Button>
+				</SheetFooter>
 			</SheetContent>
 		</Sheet>
 	);
