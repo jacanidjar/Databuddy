@@ -110,7 +110,7 @@ export function ApiKeySettings({ organization }: ApiKeySettingsProps) {
 				{/* Sidebar */}
 				<RightSidebar className="gap-4 p-5">
 					<Button className="w-full" onClick={() => setShowCreateDialog(true)}>
-						<PlusIcon className="mr-2" size={16} />
+						<PlusIcon size={16} />
 						Create New Key
 					</Button>
 					{!isEmpty && (
