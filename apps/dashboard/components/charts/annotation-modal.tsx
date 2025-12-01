@@ -1,17 +1,22 @@
 "use client";
 
 import {
-	CalendarIcon,
 	EyeIcon,
 	EyeSlashIcon,
-	NoteIcon,
-	PencilIcon,
 	PlusIcon,
 	XIcon,
 } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -170,10 +175,6 @@ export function AnnotationModal(props: AnnotationModalProps) {
 		}
 	};
 
-	if (!isOpen) {
-		return null;
-	}
-
 	const getDateRangeText = () => {
 		if (mode === "edit") {
 			const { annotation } = props as EditModeProps;
@@ -198,54 +199,19 @@ export function AnnotationModal(props: AnnotationModalProps) {
 	};
 
 	const isCreate = mode === "create";
-	const HeaderIcon = isCreate ? CalendarIcon : PencilIcon;
-	const SubmitIcon = isCreate ? NoteIcon : PencilIcon;
 	const loading = submitting || isSubmitting;
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-			<button
-				aria-label="Close dialog"
-				className="absolute inset-0 cursor-default"
-				onClick={onClose}
-				type="button"
-			/>
-			<div
-				aria-describedby="annotation-modal-description"
-				aria-labelledby="annotation-modal-title"
-				className="relative z-10 mx-4 w-full max-w-sm overflow-hidden rounded border bg-popover shadow-2xl"
-				role="dialog"
-			>
-				{/* Header */}
-				<div className="flex items-center justify-between border-b bg-accent px-4 py-3">
-					<div className="flex items-center gap-2">
-						<HeaderIcon className="size-4 text-primary" weight="duotone" />
-						<div>
-							<h2
-								className="font-medium text-foreground text-sm"
-								id="annotation-modal-title"
-							>
-								{isCreate ? "New Annotation" : "Edit Annotation"}
-							</h2>
-							<p
-								className="text-muted-foreground text-xs"
-								id="annotation-modal-description"
-							>
-								{getDateRangeText()}
-							</p>
-						</div>
-					</div>
-					<button
-						className="flex size-7 cursor-pointer items-center justify-center rounded text-muted-foreground transition-all hover:bg-background hover:text-foreground active:scale-95"
-						onClick={onClose}
-						type="button"
-					>
-						<XIcon className="size-4" />
-					</button>
-				</div>
+		<Dialog onOpenChange={(open) => !open && onClose()} open={isOpen}>
+			<DialogContent className="w-[95vw] max-w-sm sm:w-full">
+				<DialogHeader>
+					<DialogTitle>
+						{isCreate ? "New Annotation" : "Edit Annotation"}
+					</DialogTitle>
+					<DialogDescription>{getDateRangeText()}</DialogDescription>
+				</DialogHeader>
 
-				{/* Content */}
-				<div className="space-y-4 p-4">
+				<div className="space-y-4">
 					{/* Description */}
 					<div className="space-y-2">
 						<Label
@@ -402,37 +368,29 @@ export function AnnotationModal(props: AnnotationModalProps) {
 							onCheckedChange={setIsPublic}
 						/>
 					</div>
-
-					{/* Actions */}
-					<div className="flex gap-2 pt-1">
-						<Button
-							className="flex-1"
-							disabled={loading}
-							onClick={onClose}
-							variant="outline"
-						>
-							Cancel
-						</Button>
-						<Button
-							className="flex-1 gap-2"
-							disabled={!text.trim() || loading}
-							onClick={handleSubmit}
-						>
-							{loading ? (
-								<>
-									<div className="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-									{isCreate ? "Creating…" : "Saving…"}
-								</>
-							) : (
-								<>
-									<SubmitIcon className="size-4" weight="duotone" />
-									{isCreate ? "Create" : "Save"}
-								</>
-							)}
-						</Button>
-					</div>
 				</div>
-			</div>
-		</div>
+
+				<DialogFooter>
+					<Button
+						className="flex-1 sm:flex-none"
+						disabled={loading}
+						onClick={onClose}
+						variant="outline"
+					>
+						Cancel
+					</Button>
+					<Button
+						className="flex-1 sm:flex-none"
+						disabled={!text.trim() || loading}
+						onClick={handleSubmit}
+					>
+						{loading && (
+							<div className="mr-2 size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+						)}
+						{isCreate ? "Create annotation" : "Save changes"}
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }
