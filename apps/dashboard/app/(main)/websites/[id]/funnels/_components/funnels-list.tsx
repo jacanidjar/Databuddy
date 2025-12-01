@@ -47,10 +47,9 @@ export function FunnelsList({
 	}
 
 	return (
-		<div className="border-t border-border">
+		<div>
 			{funnels.map((funnel, index) => (
 				<FunnelItem
-
 					analytics={analyticsMap?.get(funnel.id)}
 					funnel={funnel}
 					isExpanded={expandedFunnelId === funnel.id}

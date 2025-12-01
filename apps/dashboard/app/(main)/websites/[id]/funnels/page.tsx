@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { useDateFilters } from "@/hooks/use-date-filters";
 import {
 	type CreateFunnelData,
@@ -32,14 +33,6 @@ const EditFunnelDialog = dynamic(
 	() =>
 		import("./_components/edit-funnel-dialog").then((m) => ({
 			default: m.EditFunnelDialog,
-		})),
-	{ ssr: false }
-);
-
-const DeleteFunnelDialog = dynamic(
-	() =>
-		import("./_components/delete-funnel-dialog").then((m) => ({
-			default: m.DeleteFunnelDialog,
 		})),
 	{ ssr: false }
 );
@@ -351,12 +344,15 @@ export default function FunnelsPage() {
 			)}
 
 			{!!deletingFunnelId && (
-				<DeleteFunnelDialog
+				<DeleteDialog
 					isOpen={!!deletingFunnelId}
 					onClose={() => setDeletingFunnelId(null)}
 					onConfirm={() =>
 						deletingFunnelId && handleDeleteFunnel(deletingFunnelId)
 					}
+					title="Delete Funnel"
+					itemName="this funnel"
+					confirmLabel="Delete Funnel"
 				/>
 			)}
 		</div>

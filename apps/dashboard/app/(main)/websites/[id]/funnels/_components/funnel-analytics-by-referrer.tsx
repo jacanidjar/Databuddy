@@ -109,22 +109,24 @@ function SourceCard({
 
 function SourcesSkeleton() {
 	return (
-		<div className="flex gap-2 overflow-hidden">
-			{[1, 2, 3, 4].map((i) => (
-				<div
-					key={i}
-					className="flex min-w-[140px] shrink-0 flex-col gap-2 rounded border border-border bg-card p-3"
-				>
-					<div className="flex items-center gap-2">
-						<Skeleton className="size-5 rounded" />
-						<Skeleton className="h-4 w-16" />
+		<div className="-mx-4 px-4">
+			<div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+				{[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+					<div
+						key={i}
+						className="flex min-w-[140px] max-w-[180px] shrink-0 flex-col gap-2 rounded border border-border bg-card p-3"
+					>
+						<div className="flex items-center gap-2">
+							<Skeleton className="size-5 rounded" />
+							<Skeleton className="h-4 w-16" />
+						</div>
+						<div className="flex items-center justify-between">
+							<Skeleton className="h-3 w-12" />
+							<Skeleton className="h-3 w-8" />
+						</div>
 					</div>
-					<div className="flex items-center justify-between">
-						<Skeleton className="h-3 w-12" />
-						<Skeleton className="h-3 w-8" />
-					</div>
-				</div>
-			))}
+				))}
+			</div>
 		</div>
 	);
 }
