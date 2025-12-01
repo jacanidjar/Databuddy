@@ -160,7 +160,9 @@ export async function performClickHouseBackup(): Promise<BackupResult> {
 
         await ensureBackupTable();
 
-        const s3Url = `${env.R2_ENDPOINT}/${env.R2_BUCKET}/${backupName}/`;
+        // Normalize endpoint (remove trailing slashes) and build path-style URL for Tigris/S3-compatible storage
+        const endpoint = env.R2_ENDPOINT.replace(/\/+$/, '');
+        const s3Url = `${endpoint}/${env.R2_BUCKET}/${backupName}`;
         const lastBackupPath = await getLastBackupPath();
         const isIncremental = lastBackupPath !== null;
 
@@ -192,7 +194,8 @@ export async function performClickHouseBackup(): Promise<BackupResult> {
                 s3_max_put_burst = 50,
                 compression_method = 'zstd',
                 compression_level = 3,
-                max_backup_bandwidth = 104857600${baseBackupSetting}
+                max_backup_bandwidth = 104857600,
+                s3_use_virtual_addressing = false${baseBackupSetting}
         `;
 
         await backupClickHouse.command({ query: backupQuery });
@@ -404,7 +407,8 @@ export async function restoreBackup(
             FROM S3('${backupPath}', '${env.R2_ACCESS_KEY_ID}', '${env.R2_SECRET_ACCESS_KEY}')
             SETTINGS 
                 async = false,
-                s3_max_redirects = 10
+                s3_max_redirects = 10,
+                s3_use_virtual_addressing = false
         `;
 
         await backupClickHouse.command({ query: restoreQuery });
