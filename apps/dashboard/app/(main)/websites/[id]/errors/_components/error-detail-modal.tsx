@@ -1,6 +1,7 @@
 "use client";
 
 import {
+	ArrowSquareOutIcon,
 	CheckIcon,
 	ClockIcon,
 	CodeIcon,
@@ -13,9 +14,11 @@ import {
 } from "@phosphor-icons/react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { BrowserIcon, CountryFlag, OSIcon } from "@/components/icon";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +30,7 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@/components/ui/sheet";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { getDeviceIcon, getErrorTypeIcon } from "./error-icons";
 import type { RecentError } from "./types";
 import {
@@ -50,17 +54,19 @@ const CopyButton = ({
 	section,
 	copiedSection,
 	onCopy,
+	ariaLabel,
 }: {
 	text: string;
 	section: CopiedSection;
 	copiedSection: CopiedSection;
 	onCopy: (text: string, section: CopiedSection) => void;
+	ariaLabel?: string;
 }) => {
 	const isCopied = copiedSection === section;
 
 	return (
 		<Button
-			aria-label={`Copy ${section}`}
+			aria-label={ariaLabel || `Copy ${section}`}
 			className="h-7 w-7 shrink-0"
 			onClick={() => onCopy(text, section)}
 			size="icon"
@@ -116,6 +122,8 @@ export const ErrorDetailModal = ({
 
 	const { type, severity } = getErrorCategory(error.message);
 	const relativeTimeStr = dayjs(error.timestamp).fromNow();
+	const locationLabel = error.country_name || error.country || "Unknown";
+	const locationCode = error.country_code || error.country || "";
 
 	const fullErrorInfo = `Error: ${error.message}
 ${error.stack ? `\nStack Trace:\n${error.stack}` : ""}
@@ -128,7 +136,127 @@ Context:
 • Browser: ${error.browser_name || "Unknown"}
 • OS: ${error.os_name || "Unknown"}
 • Device: ${error.device_type || "Unknown"}
-• Location: ${error.country_name || error.country || "Unknown"}`;
+• Location: ${locationLabel}`;
+
+	type QuickAction = {
+		key: string;
+		node: ReactNode;
+		description: string;
+	};
+
+	const quickActions: QuickAction[] = [];
+
+if (error.path) {
+	quickActions.push({
+		key: "copy-url",
+		description: "Copy full page URL",
+		node: (
+			<Button onClick={() => copyToClipboard(error.path, "url")} size="sm" variant="outline">
+				<LinkIcon className="h-3.5 w-3.5" weight="duotone" />
+				Copy URL
+			</Button>
+		),
+	});
+}
+
+	const isAbsoluteUrl =
+		typeof error.path === "string" &&
+		(error.path.startsWith("http://") || error.path.startsWith("https://"));
+
+if (isAbsoluteUrl) {
+	quickActions.push({
+		key: "open-page",
+		description: "Open this page in a new tab",
+		node: (
+			<Button asChild size="sm" variant="ghost">
+				<a href={error.path} rel="noopener noreferrer" target="_blank">
+					<ArrowSquareOutIcon className="h-3.5 w-3.5" weight="duotone" />
+					Open Page
+				</a>
+			</Button>
+		),
+	});
+}
+
+if (error.session_id) {
+	quickActions.push({
+		key: "copy-session",
+		description: "Copy the session identifier",
+		node: (
+			<Button onClick={() => copyToClipboard(error.session_id ?? "", "session")} size="sm" variant="ghost">
+				<HashIcon className="h-3.5 w-3.5" weight="duotone" />
+				Copy Session
+			</Button>
+		),
+	});
+}
+
+if (error.stack) {
+	quickActions.push({
+		key: "copy-stack",
+		description: "Copy the stack trace",
+		node: (
+			<Button onClick={() => copyToClipboard(error.stack ?? "", "stack")} size="sm" variant="ghost">
+				<StackIcon className="h-3.5 w-3.5" weight="duotone" />
+				Copy Stack
+			</Button>
+		),
+	});
+}
+
+	const contextRows = [
+		{
+			key: "url",
+			label: "Page URL",
+			value: error.path || "—",
+			icon: <LinkIcon className="h-4 w-4 shrink-0 text-muted-foreground" weight="duotone" />,
+			copySection: error.path ? "url" : null,
+			copyValue: error.path,
+		},
+		{
+			key: "session",
+			label: "Session ID",
+			value: error.session_id || "—",
+			icon: <HashIcon className="h-4 w-4 shrink-0 text-muted-foreground" weight="duotone" />,
+			copySection: error.session_id ? "session" : null,
+			copyValue: error.session_id,
+		},
+		{
+			key: "user",
+			label: "User ID",
+			value: error.anonymous_id || "—",
+			icon: <UserIcon className="h-4 w-4 shrink-0 text-muted-foreground" weight="duotone" />,
+			copySection: error.anonymous_id ? "user" : null,
+			copyValue: error.anonymous_id,
+		},
+	];
+
+	const metadataRows = [
+		{
+			key: "event",
+			label: "Event ID",
+			value: error.event_id,
+			icon: <StackIcon className="h-4 w-4 shrink-0 text-muted-foreground" weight="duotone" />,
+		},
+		{
+			key: "client",
+			label: "Client ID",
+			value: error.client_id,
+			icon: <UserIcon className="h-4 w-4 shrink-0 text-muted-foreground" weight="duotone" />,
+		},
+		{
+			key: "ip",
+			label: "IP Address",
+			value: error.ip,
+			icon: <GlobeIcon className="h-4 w-4 shrink-0 text-muted-foreground" />,
+		},
+		{
+			key: "agent",
+			label: "User Agent",
+			value: error.user_agent,
+			icon: <CodeIcon className="h-4 w-4 shrink-0 text-muted-foreground" weight="duotone" />,
+		},
+	].filter((row) => Boolean(row.value));
 
 	return (
 		<Sheet onOpenChange={onClose} open={isOpen}>
@@ -143,18 +271,33 @@ Context:
 								<SheetTitle className="text-lg">{type}</SheetTitle>
 								<Badge className={getSeverityColor(severity)}>{severity}</Badge>
 							</div>
-							<SheetDescription className="flex items-center gap-1.5">
+							<SheetDescription className="flex flex-wrap items-center gap-1.5 text-xs sm:text-sm">
 								<ClockIcon className="h-3.5 w-3.5" weight="duotone" />
 								<span>{relativeTimeStr}</span>
 								<span className="text-muted-foreground/50">•</span>
-								<span className="font-mono text-xs">{formatDateTimeSeconds(error.timestamp)}</span>
+								<span className="font-mono">{formatDateTimeSeconds(error.timestamp)}</span>
 							</SheetDescription>
 						</div>
 					</div>
 				</SheetHeader>
 
 				<SheetBody className="space-y-6">
-					{/* Error Message */}
+					{quickActions.length > 0 && (
+						<section className="space-y-3">
+							<span className="font-medium text-xs uppercase tracking-wide text-muted-foreground">
+								Quick actions
+							</span>
+							<div className="flex flex-wrap gap-2">
+								{quickActions.map((action) => (
+									<Tooltip key={action.key}>
+										<TooltipTrigger asChild>{action.node}</TooltipTrigger>
+										<TooltipContent className="text-xs">{action.description}</TooltipContent>
+									</Tooltip>
+								))}
+							</div>
+						</section>
+					)}
+
 					<section className="space-y-3">
 						<div className="flex items-center justify-between">
 							<div className="flex items-center gap-2">
@@ -162,6 +305,7 @@ Context:
 								<span className="font-medium text-sm">Error Message</span>
 							</div>
 							<CopyButton
+								ariaLabel="Copy error message"
 								copiedSection={copiedSection}
 								onCopy={copyToClipboard}
 								section="message"
@@ -175,30 +319,37 @@ Context:
 						</div>
 					</section>
 
-					{/* Stack Trace */}
 					{error.stack && (
-						<section className="space-y-3">
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-2">
-									<StackIcon className="h-4 w-4 text-chart-2" weight="duotone" />
-									<span className="font-medium text-sm">Stack Trace</span>
-								</div>
+						<section className="space-y-2">
+							<Accordion collapsible defaultValue="stack" type="single">
+								<AccordionItem value="stack">
+									<AccordionTrigger className="px-3">
+										<div className="flex items-center gap-2">
+											<StackIcon className="h-4 w-4 text-chart-2" weight="duotone" />
+											<span className="font-medium text-sm">Stack Trace</span>
+										</div>
+									</AccordionTrigger>
+									<AccordionContent>
+										<div className="rounded border bg-card p-4">
+											<pre className="max-h-56 overflow-auto whitespace-pre-wrap wrap-break-word font-mono text-xs leading-relaxed text-muted-foreground">
+												{error.stack}
+											</pre>
+										</div>
+									</AccordionContent>
+								</AccordionItem>
+							</Accordion>
+							<div className="flex justify-end">
 								<CopyButton
+									ariaLabel="Copy stack trace"
 									copiedSection={copiedSection}
 									onCopy={copyToClipboard}
 									section="stack"
 									text={error.stack}
 								/>
 							</div>
-							<div className="rounded border bg-card p-4">
-								<pre className="max-h-48 overflow-auto whitespace-pre-wrap wrap-break-word font-mono text-xs leading-relaxed text-muted-foreground">
-									{error.stack}
-								</pre>
-							</div>
 						</section>
 					)}
 
-					{/* Source Location */}
 					{(error.filename || error.lineno) && (
 						<section className="space-y-3">
 							<div className="flex items-center gap-2">
@@ -225,78 +376,40 @@ Context:
 						</section>
 					)}
 
-					{/* Context */}
 					<section className="space-y-3">
 						<span className="font-medium text-sm">Context</span>
-						<div className="rounded border bg-card p-1">
-							<div className="grid grid-cols-1 gap-1">
-								{/* Page URL */}
-								<div className="flex items-center justify-between gap-3 rounded px-3 py-2.5">
+						<div className="rounded border bg-card">
+							{contextRows.map((row, index) => (
+								<div
+									className={`flex items-center justify-between gap-3 px-3 py-2.5 ${index > 0 ? "border-t" : ""}`}
+									key={row.key}
+								>
 									<div className="flex min-w-0 items-center gap-3">
-										<LinkIcon className="h-4 w-4 shrink-0 text-muted-foreground" weight="duotone" />
+										{row.icon}
 										<div className="min-w-0">
-											<span className="text-muted-foreground text-xs">Page URL</span>
-											<p className="truncate font-mono text-sm" title={error.path}>
-												{error.path}
+											<span className="text-muted-foreground text-xs">{row.label}</span>
+											<p className="truncate font-mono text-sm" title={row.value}>
+												{row.value}
 											</p>
 										</div>
 									</div>
-									<CopyButton
-										copiedSection={copiedSection}
-										onCopy={copyToClipboard}
-										section="url"
-										text={error.path}
-									/>
-								</div>
-
-								{/* Session ID */}
-								<div className="flex items-center justify-between gap-3 rounded px-3 py-2.5">
-									<div className="flex min-w-0 items-center gap-3">
-										<HashIcon className="h-4 w-4 shrink-0 text-muted-foreground" weight="duotone" />
-										<div className="min-w-0">
-											<span className="text-muted-foreground text-xs">Session ID</span>
-											<p className="truncate font-mono text-sm" title={error.session_id}>
-												{error.session_id || "—"}
-											</p>
-										</div>
-									</div>
-									{error.session_id && (
+									{row.copySection && row.copyValue && (
 										<CopyButton
+											ariaLabel={`Copy ${row.label}`}
 											copiedSection={copiedSection}
 											onCopy={copyToClipboard}
-											section="session"
-											text={error.session_id}
+											section={row.copySection as CopiedSection}
+											text={row.copyValue}
 										/>
 									)}
 								</div>
-
-								{/* User ID */}
-								<div className="flex items-center justify-between gap-3 rounded px-3 py-2.5">
-									<div className="flex min-w-0 items-center gap-3">
-										<UserIcon className="h-4 w-4 shrink-0 text-muted-foreground" weight="duotone" />
-										<div className="min-w-0">
-											<span className="text-muted-foreground text-xs">User ID</span>
-											<p className="truncate font-mono text-sm" title={error.anonymous_id}>
-												{error.anonymous_id}
-											</p>
-										</div>
-									</div>
-									<CopyButton
-										copiedSection={copiedSection}
-										onCopy={copyToClipboard}
-										section="user"
-										text={error.anonymous_id}
-									/>
-								</div>
-							</div>
+							))}
 						</div>
 					</section>
 
-					{/* Environment */}
 					<section className="space-y-3">
 						<span className="font-medium text-sm">Environment</span>
 						<div className="grid grid-cols-2 gap-3">
-							{/* Browser */}
 							<div className="flex flex-col gap-1.5 rounded border bg-card p-3">
 								<span className="text-muted-foreground text-xs">Browser</span>
 								<div className="flex items-center gap-2">
@@ -310,8 +423,6 @@ Context:
 									)}
 								</div>
 							</div>
-
-							{/* OS */}
 							<div className="flex flex-col gap-1.5 rounded border bg-card p-3">
 								<span className="text-muted-foreground text-xs">Operating System</span>
 								<div className="flex items-center gap-2">
@@ -325,8 +436,6 @@ Context:
 									)}
 								</div>
 							</div>
-
-							{/* Device */}
 							<div className="flex flex-col gap-1.5 rounded border bg-card p-3">
 								<span className="text-muted-foreground text-xs">Device</span>
 								<div className="flex items-center gap-2">
@@ -340,20 +449,13 @@ Context:
 									)}
 								</div>
 							</div>
-
-							{/* Location */}
 							<div className="flex flex-col gap-1.5 rounded border bg-card p-3">
 								<span className="text-muted-foreground text-xs">Location</span>
 								<div className="flex items-center gap-2">
-									{error.country_code || error.country ? (
+									{locationLabel !== "Unknown" ? (
 										<>
-											<CountryFlag
-												country={error.country_code || error.country || ""}
-												size={16}
-											/>
-											<span className="text-sm">
-												{error.country_name || error.country}
-											</span>
+											<CountryFlag country={locationCode} size={16} />
+											<span className="text-sm">{locationLabel}</span>
 										</>
 									) : (
 										<>
@@ -364,13 +466,31 @@ Context:
 								</div>
 							</div>
 						</div>
-
-						{/* Severity */}
 						<div className="flex items-center justify-between rounded border bg-card p-3">
 							<span className="text-muted-foreground text-xs">Severity Level</span>
 							<SeverityIndicator severity={severity} />
 						</div>
 					</section>
+
+					{metadataRows.length > 0 && (
+						<section className="space-y-3">
+							<span className="font-medium text-sm">Metadata</span>
+							<div className="rounded border bg-card">
+								{metadataRows.map((row, index) => (
+									<div
+										className={`flex items-start gap-3 px-3 py-2.5 ${index > 0 ? "border-t" : ""}`}
+										key={row.key}
+									>
+										{row.icon}
+										<div className="flex-1">
+											<span className="text-muted-foreground text-xs">{row.label}</span>
+											<p className="wrap-break-word font-mono text-sm text-foreground/90">{row.value}</p>
+										</div>
+									</div>
+								))}
+							</div>
+						</section>
+					)}
 				</SheetBody>
 
 				<SheetFooter>
@@ -394,3 +514,4 @@ Context:
 		</Sheet>
 	);
 };
+

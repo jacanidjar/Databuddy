@@ -166,7 +166,7 @@ export default function GoalsPage() {
 					setEditingGoal(null);
 					setIsDialogOpen(true);
 				}}
-				onRefresh={handleRefresh}
+				onRefreshAction={handleRefresh}
 				subtitle={
 					goalsLoading
 						? undefined

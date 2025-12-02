@@ -82,7 +82,7 @@ export default function WebsiteLayout({ children }: WebsiteLayoutProps) {
 						isDisabled={isToolbarDisabled}
 						isLoading={isToolbarLoading}
 						isRefreshing={isRefreshing}
-						onRefresh={handleRefresh}
+						onRefreshAction={handleRefresh}
 						websiteId={websiteId}
 					/>
 				</div>

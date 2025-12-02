@@ -140,7 +140,7 @@ export default function FlagsPage() {
 				isLoading={isLoading}
 				isRefreshing={isRefreshing}
 				onCreateAction={handleCreateFlag}
-				onRefresh={handleRefresh}
+				onRefreshAction={handleRefresh}
 				subtitle={
 					isLoading
 						? undefined

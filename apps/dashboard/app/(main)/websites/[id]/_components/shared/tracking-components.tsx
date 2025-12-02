@@ -294,10 +294,10 @@ export function TrackingOptionsGrid({
  */
 export function TrackingStatusCard({
 	isSetup,
-	onRefresh,
+	onRefreshAction,
 }: {
 	isSetup: boolean;
-	onRefresh: () => void;
+	onRefreshAction: () => void;
 }) {
 	return (
 		<NoticeBanner
@@ -318,7 +318,7 @@ export function TrackingStatusCard({
 		>
 			<Button
 				className="w-full lg:w-fit"
-				onClick={onRefresh}
+				onClick={onRefreshAction}
 				size="sm"
 				variant="secondary"
 			>

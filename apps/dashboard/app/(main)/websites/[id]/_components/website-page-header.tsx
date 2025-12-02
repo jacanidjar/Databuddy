@@ -28,7 +28,7 @@ type WebsitePageHeaderProps = {
 	hasError?: boolean;
 	errorMessage?: string;
 
-	onRefresh?: () => void;
+	onRefreshAction?: () => void;
 	onCreateAction?: () => void;
 	createActionLabel?: string;
 
@@ -51,7 +51,7 @@ export function WebsitePageHeader({
 	isRefreshing = false,
 	hasError = false,
 	errorMessage,
-	onRefresh,
+	onRefreshAction,
 	onCreateAction,
 	createActionLabel = "Create",
 	subtitle,
@@ -122,11 +122,11 @@ export function WebsitePageHeader({
 							</Link>
 						</Button>
 					)}
-					{onRefresh && (
+					{onRefreshAction && (
 						<Button
 							className="cursor-pointer gap-2 transition-all duration-300 hover:border-primary/50 hover:bg-primary/5"
 							disabled={isRefreshing}
-							onClick={onRefresh}
+							onClick={onRefreshAction}
 							variant="outline"
 						>
 							<ArrowClockwiseIcon
@@ -190,10 +190,10 @@ export function WebsitePageHeader({
 								</Link>
 							</Button>
 						)}
-						{onRefresh && (
+						{onRefreshAction && (
 							<Button
 								disabled={isRefreshing}
-								onClick={onRefresh}
+								onClick={onRefreshAction}
 								variant="secondary"
 							>
 								<ArrowClockwiseIcon
@@ -230,10 +230,10 @@ export function WebsitePageHeader({
 										`There was an issue loading your ${title.toLowerCase()}. Please try refreshing the page.`}
 								</p>
 							</div>
-							{onRefresh && (
+							{onRefreshAction && (
 								<Button
 									className="cursor-pointer select-none gap-2 rounded transition-all duration-300 hover:border-primary/20 hover:bg-primary/10"
-									onClick={onRefresh}
+									onClick={onRefreshAction}
 									size="sm"
 									variant="outline"
 								>

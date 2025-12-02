@@ -78,7 +78,7 @@ export function WebsiteTrackingSetupTab({ websiteId }: TrackingSetupTabProps) {
 			{/* Tracking Status */}
 			<TrackingStatusCard
 				isSetup={trackingSetupData?.tracking_setup ?? false}
-				onRefresh={handleRefresh}
+				onRefreshAction={handleRefresh}
 			/>
 
 			{/* Installation Instructions */}

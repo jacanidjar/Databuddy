@@ -261,7 +261,7 @@ export default function FunnelsPage() {
 					setEditingFunnel(null);
 					setIsDialogOpen(true);
 				}}
-				onRefresh={handleRefresh}
+				onRefreshAction={handleRefresh}
 				subtitle={
 					funnelsLoading
 						? undefined

@@ -45,7 +45,7 @@ type AnalyticsToolbarProps = {
 	isDisabled?: boolean;
 	isLoading?: boolean;
 	isRefreshing: boolean;
-	onRefresh: () => void;
+	onRefreshAction: () => void;
 	websiteId: string;
 };
 
@@ -53,7 +53,7 @@ export function AnalyticsToolbar({
 	isDisabled = false,
 	isLoading = false,
 	isRefreshing,
-	onRefresh,
+	onRefreshAction,
 	websiteId,
 }: AnalyticsToolbarProps) {
 	const {
@@ -156,7 +156,7 @@ export function AnalyticsToolbar({
 						aria-label="Refresh data"
 						className="size-8"
 						disabled={isRefreshing || isDisabled}
-						onClick={onRefresh}
+						onClick={onRefreshAction}
 						variant="secondary"
 					>
 						<ArrowClockwiseIcon
