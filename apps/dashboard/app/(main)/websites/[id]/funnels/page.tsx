@@ -350,13 +350,6 @@ export default function FunnelsPage() {
 					title="Delete Funnel"
 				/>
 			)}
-			<div className="p-5">
-				<Card>
-					<CardContent>
-						<p>Hello</p>
-					</CardContent>
-				</Card>
-			</div>
 		</div>
 	);
 }
