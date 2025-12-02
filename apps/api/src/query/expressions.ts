@@ -635,26 +635,26 @@ export function buildWith(ctes: Array<{ name: string; sql: string }>): string {
 type FieldDefinitionType =
 	| { type: "column"; source: string; alias?: string }
 	| {
-			type: "aggregate";
-			fn: AggregateFn;
-			source?: string;
-			condition?: string;
-			alias: string;
-	  }
+		type: "aggregate";
+		fn: AggregateFn;
+		source?: string;
+		condition?: string;
+		alias: string;
+	}
 	| { type: "expression"; expression: string | SqlExpression; alias: string }
 	| {
-			type: "window";
-			fn: AggregateFn;
-			source?: string;
-			over: { partitionBy?: string[]; orderBy?: string };
-			alias: string;
-	  }
+		type: "window";
+		fn: AggregateFn;
+		source?: string;
+		over: { partitionBy?: string[]; orderBy?: string };
+		alias: string;
+	}
 	| {
-			type: "computed";
-			metric: "bounceRate" | "percentageOfTotal" | "pagesPerSession";
-			inputs: string[];
-			alias: string;
-	  };
+		type: "computed";
+		metric: "bounceRate" | "percentageOfTotal" | "pagesPerSession";
+		inputs: string[];
+		alias: string;
+	};
 
 type AliasedExpressionType = { expression: SqlExpression; alias: string };
 type ConfigFieldType = string | FieldDefinitionType | AliasedExpressionType;
@@ -743,9 +743,12 @@ function compileAggregate(
 			case "quantileIf":
 				// For quantile with condition, source should be "level)(column"
 				// e.g., source = "0.50)(metric_value" produces quantileIf(0.50)(metric_value, condition)
-				return source
-					? `quantileIf(${source}, ${condition})`
-					: `quantileIf(0.50)(1, ${condition})`;
+				if (!source) {
+					throw new Error(
+						"quantileIf aggregate function requires a source column (e.g., '0.50)(metric_value')"
+					);
+				}
+				return `quantileIf(${source}, ${condition})`;
 			default:
 				// For other aggregates, apply condition as WHERE in subquery pattern
 				return source
@@ -780,7 +783,12 @@ function compileAggregate(
 			return `groupArray(${source || "*"})`;
 		case "quantile":
 			// source should be "level)(column" e.g., "0.50)(metric_value"
-			return source ? `quantile(${source})` : "quantile(0.50)(*)";
+			if (!source) {
+				throw new Error(
+					"quantile aggregate function requires a source column (e.g., '0.50)(metric_value')"
+				);
+			}
+			return `quantile(${source})`;
 		// Conditional variants without condition just use base
 		case "countIf":
 			return source ? `count(${source})` : "count()";
@@ -797,7 +805,12 @@ function compileAggregate(
 		case "maxIf":
 			return `max(${source || "*"})`;
 		case "quantileIf":
-			return source ? `quantile(${source})` : "quantile(0.50)(*)";
+			if (!source) {
+				throw new Error(
+					"quantileIf aggregate function requires a source column (e.g., '0.50)(metric_value')"
+				);
+			}
+			return `quantile(${source})`;
 		default:
 			return `${fn}(${source || "*"})`;
 	}

@@ -216,18 +216,28 @@ export function WebsiteAudienceTab({
 		[]
 	);
 
-	const displayNames =
-		typeof window !== "undefined"
-			? new Intl.DisplayNames([navigator.language || "en"], {
-					type: "language",
-				})
-			: null;
+	// Memoize displayNames to prevent recreation on every render
+	const displayNames = useMemo(() => {
+		if (typeof window === "undefined") {
+			return null;
+		}
+		return new Intl.DisplayNames([navigator.language || "en"], {
+			type: "language",
+		});
+	}, []);
 
-	const countryColumns = createGeoColumns({ type: "country" });
-	const regionColumns = createGeoColumns({ type: "region" });
-	const cityColumns = createGeoColumns({ type: "city" });
-	const timezoneColumns = createTimezoneColumns();
-	const languageColumns = createLanguageColumns(displayNames);
+	// Memoize column sets to prevent recreation on every render
+	const countryColumns = useMemo(
+		() => createGeoColumns({ type: "country" }),
+		[]
+	);
+	const regionColumns = useMemo(() => createGeoColumns({ type: "region" }), []);
+	const cityColumns = useMemo(() => createGeoColumns({ type: "city" }), []);
+	const timezoneColumns = useMemo(() => createTimezoneColumns(), []);
+	const languageColumns = useMemo(
+		() => createLanguageColumns(displayNames),
+		[displayNames]
+	);
 
 	const geographicTabs = useMemo(
 		() => [
