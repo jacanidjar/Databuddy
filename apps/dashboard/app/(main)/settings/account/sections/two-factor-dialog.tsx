@@ -566,7 +566,7 @@ export function TwoFactorDialog({
 							</Button>
 							<Button
 								disabled={!isNewPasswordValid || isPending}
-								onClick={() => setPasswordMutation.mutate()}
+    								onClick={() => setPasswordMutation.mutate()}
 							>
 								{setPasswordMutation.isPending && (
 									<CircleNotchIcon className="mr-2 size-4 animate-spin" />
