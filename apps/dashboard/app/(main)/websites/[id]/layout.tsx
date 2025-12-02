@@ -21,10 +21,15 @@ export default function WebsiteLayout({ children }: WebsiteLayoutProps) {
 	const { id } = useParams();
 	const pathname = usePathname();
 	const queryClient = useQueryClient();
+	const {
+		isLoading: isWebsiteLoading,
+		isError: isWebsiteError,
+		data: websiteData,
+	} = useWebsite(id as string);
 	const { isTrackingSetup, isTrackingSetupLoading } = useTrackingSetup(
-		id as string
-	);	
-	const { isLoading: isWebsiteLoading } = useWebsite(id as string);
+		// Only check tracking setup if website exists and loaded successfully
+		websiteData?.id ?? ""
+	);
 	const [isRefreshing, setIsRefreshing] = useAtom(isAnalyticsRefreshingAtom);
 	const toolbarRef = useRef<HTMLDivElement>(null);
 
@@ -42,6 +47,10 @@ export default function WebsiteLayout({ children }: WebsiteLayoutProps) {
 	);
 
 	if (!id) {
+		return <NotFound />;
+	}
+
+	if (!isWebsiteLoading && isWebsiteError) {
 		return <NotFound />;
 	}
 
