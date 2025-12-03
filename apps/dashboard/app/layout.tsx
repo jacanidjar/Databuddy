@@ -5,7 +5,7 @@ import { SpinnerIcon } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 import Providers from "./providers";
 
 const geist = Geist({
@@ -142,7 +142,7 @@ export default function RootLayout({
 						<main className="flex-1">{children}</main>
 					</Suspense>
 				</Providers>
-				<Toaster closeButton duration={1500} position="top-center" richColors />
+				<Toaster />
 			</body>
 		</html>
 	);
