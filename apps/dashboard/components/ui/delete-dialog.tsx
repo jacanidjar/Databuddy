@@ -76,7 +76,7 @@ export function DeleteDialog({
 									weight="duotone"
 								/>
 							</div>
-							<p className="text-muted-foreground text-sm">
+							<p className="text-foreground text-sm">
 								This action cannot be undone.
 							</p>
 						</div>
@@ -90,7 +90,7 @@ export function DeleteDialog({
 								weight="duotone"
 							/>
 						</div>
-						<p className="text-muted-foreground text-sm">
+						<p className="text-foreground text-sm">
 							This action cannot be undone.
 						</p>
 					</div>
