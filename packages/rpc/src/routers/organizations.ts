@@ -260,6 +260,7 @@ export const organizationsRouter = {
 			const unlimited = data.unlimited ?? false;
 			const balance = data.balance ?? 0;
 			const includedUsage = data.included_usage ?? 0;
+			const overageAllowed = data.overage_allowed ?? false;
 
 			const remaining = unlimited ? null : Math.max(0, usageLimit - used);
 
@@ -270,6 +271,7 @@ export const organizationsRouter = {
 				balance,
 				remaining,
 				includedUsage,
+				overageAllowed,
 				isOrganizationUsage: Boolean(orgResult?.activeOrgId),
 				canUserUpgrade:
 					!orgResult?.activeOrgId || orgResult.ownerId === context.user.id,
