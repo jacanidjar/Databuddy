@@ -52,20 +52,17 @@ function getPlanIcon(planId: string) {
 	return PLAN_ICONS[planId] || CrownIcon;
 }
 
-/** Get gated features that are NEW in this plan (not inherited from lower tiers) */
 function getNewFeaturesForPlan(planId: string): GatedFeatureId[] {
 	const plan = planId as PlanId;
 	const planFeatures = PLAN_FEATURES[plan];
 	if (!planFeatures) return [];
 
-	// For free plan, return all enabled features
 	if (plan === PLAN_IDS.FREE) {
 		return Object.entries(planFeatures)
 			.filter(([, enabled]) => enabled)
 			.map(([feature]) => feature as GatedFeatureId);
 	}
 
-	// For other plans, find features that weren't enabled in the previous tier
 	const tierOrder: PlanId[] = [
 		PLAN_IDS.FREE,
 		PLAN_IDS.HOBBY,
@@ -369,11 +366,14 @@ function PricingCard({
 
 			<div className="dotted-bg border-y bg-accent px-5 py-4">
 				{product.id === "hobby" ? (
-					<div className="flex items-baseline gap-2">
-						<span className="text-muted-foreground line-through">$9.99</span>
-						<span className="font-semibold text-2xl text-green-600">$2.00</span>
-						<span className="text-muted-foreground text-sm">/month</span>
-						<Badge variant="secondary">Limited time</Badge>
+					<div className="flex flex-col gap-1">
+						<div className="flex items-baseline gap-1">
+							<span className="font-semibold text-2xl">$2</span>
+							<span className="text-muted-foreground text-sm">first month</span>
+						</div>
+						<span className="text-muted-foreground text-xs">
+							then $10/month
+						</span>
 					</div>
 				) : (
 					<div className="flex items-baseline gap-1">
