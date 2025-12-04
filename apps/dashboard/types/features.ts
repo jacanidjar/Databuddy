@@ -44,7 +44,6 @@ export const GATED_FEATURES = {
     DATA_EXPORT: "data_export",
     API_ACCESS: "api_access",
     // Enterprise
-    SSO: "sso",
     TEAM_ROLES: "team_roles",
 } as const;
 
@@ -65,9 +64,8 @@ export const PLAN_FEATURES: Record<PlanId, Record<GatedFeatureId, boolean>> = {
         [GATED_FEATURES.ERROR_TRACKING]: false,
         [GATED_FEATURES.GEOGRAPHIC]: true,
         [GATED_FEATURES.AI_ASSISTANT]: true,
-        [GATED_FEATURES.DATA_EXPORT]: false,
+        [GATED_FEATURES.DATA_EXPORT]: true,
         [GATED_FEATURES.API_ACCESS]: false,
-        [GATED_FEATURES.SSO]: false,
         [GATED_FEATURES.TEAM_ROLES]: false,
     },
     [PLAN_IDS.HOBBY]: {
@@ -82,7 +80,6 @@ export const PLAN_FEATURES: Record<PlanId, Record<GatedFeatureId, boolean>> = {
         [GATED_FEATURES.AI_ASSISTANT]: true,
         [GATED_FEATURES.DATA_EXPORT]: true,
         [GATED_FEATURES.API_ACCESS]: false,
-        [GATED_FEATURES.SSO]: false,
         [GATED_FEATURES.TEAM_ROLES]: false,
     },
     [PLAN_IDS.PRO]: {
@@ -97,7 +94,6 @@ export const PLAN_FEATURES: Record<PlanId, Record<GatedFeatureId, boolean>> = {
         [GATED_FEATURES.AI_ASSISTANT]: true,
         [GATED_FEATURES.DATA_EXPORT]: true,
         [GATED_FEATURES.API_ACCESS]: true,
-        [GATED_FEATURES.SSO]: false,
         [GATED_FEATURES.TEAM_ROLES]: true,
     },
     [PLAN_IDS.SCALE]: {
@@ -112,7 +108,6 @@ export const PLAN_FEATURES: Record<PlanId, Record<GatedFeatureId, boolean>> = {
         [GATED_FEATURES.AI_ASSISTANT]: true,
         [GATED_FEATURES.DATA_EXPORT]: true,
         [GATED_FEATURES.API_ACCESS]: true,
-        [GATED_FEATURES.SSO]: true,
         [GATED_FEATURES.TEAM_ROLES]: true,
     },
 };
@@ -124,10 +119,8 @@ interface FeatureMeta {
     minPlan?: PlanId;
 }
 
-/** Feature metadata for UI display */
 export const FEATURE_METADATA: Record<FeatureId | GatedFeatureId, FeatureMeta> =
 {
-    // Usage-based
     [FEATURE_IDS.EVENTS]: {
         name: "Events",
         description: "Track pageviews and custom events",
@@ -138,7 +131,6 @@ export const FEATURE_METADATA: Record<FeatureId | GatedFeatureId, FeatureMeta> =
         description: "Chat with your analytics assistant",
         upgradeMessage: "Upgrade for more AI messages",
     },
-    // Product Analytics
     [GATED_FEATURES.FUNNELS]: {
         name: "Funnels",
         description: "Create conversion funnels to track user flows",
@@ -168,7 +160,6 @@ export const FEATURE_METADATA: Record<FeatureId | GatedFeatureId, FeatureMeta> =
         upgradeMessage: "Upgrade to Pro for feature flags",
         minPlan: PLAN_IDS.PRO,
     },
-    // Web Analytics
     [GATED_FEATURES.WEB_VITALS]: {
         name: "Web Vitals",
         description: "Monitor Core Web Vitals and performance",
@@ -177,7 +168,7 @@ export const FEATURE_METADATA: Record<FeatureId | GatedFeatureId, FeatureMeta> =
     [GATED_FEATURES.ERROR_TRACKING]: {
         name: "Error Tracking",
         description: "Capture and analyze JavaScript errors",
-        upgradeMessage: "Error tracking is available on all plans",
+        upgradeMessage: "Upgrade to Hobby for error tracking",
         minPlan: PLAN_IDS.HOBBY,
     },
     [GATED_FEATURES.GEOGRAPHIC]: {
@@ -185,31 +176,21 @@ export const FEATURE_METADATA: Record<FeatureId | GatedFeatureId, FeatureMeta> =
         description: "View visitor locations on a map",
         upgradeMessage: "Geographic is available on all plans",
     },
-    // AI
     [GATED_FEATURES.AI_ASSISTANT]: {
         name: "AI Assistant",
         description: "Chat-based analytics assistant",
         upgradeMessage: "AI Assistant is available on all plans",
     },
-    // Export & API
     [GATED_FEATURES.DATA_EXPORT]: {
         name: "Data Export",
         description: "Export your analytics data to CSV or JSON",
-        upgradeMessage: "Upgrade to Hobby to export data",
-        minPlan: PLAN_IDS.HOBBY,
+        upgradeMessage: "Data Export is available on all plans",
     },
     [GATED_FEATURES.API_ACCESS]: {
         name: "API Access",
         description: "Access your analytics data via REST API",
         upgradeMessage: "Upgrade to Pro for API access",
         minPlan: PLAN_IDS.PRO,
-    },
-    // Enterprise
-    [GATED_FEATURES.SSO]: {
-        name: "Single Sign-On",
-        description: "SAML/OIDC enterprise authentication",
-        upgradeMessage: "Upgrade to Scale for SSO",
-        minPlan: PLAN_IDS.SCALE,
     },
     [GATED_FEATURES.TEAM_ROLES]: {
         name: "Team Roles",
