@@ -1,37 +1,38 @@
 "use client";
 
-import { useMemo, useEffect, useRef } from "react";
-import { useQueryState } from "nuqs";
-import { generateId } from "ai";
-import { useChatActions } from "@ai-sdk-tools/store";
+import { useEffect, useRef } from "react";
+import type { UIMessage } from "ai";
+import { useSetAtom } from "jotai";
+import { agentMessagesAtom, agentStatusAtom } from "./agent-atoms";
 import { AgentPageContent } from "./agent-page-content";
 
 interface AgentPageClientProps {
-	chatId: string | null;
+	chatId: string;
 	websiteId: string;
+	initialMessages?: UIMessage[];
 }
 
-export function AgentPageClient({ chatId, websiteId }: AgentPageClientProps) {
-	const [queryChatId] = useQueryState("chatId");
-	const { reset } = useChatActions();
-	const prevChatIdRef = useRef<string | null>(queryChatId);
-
-	const stableChatId = useMemo(
-		() => queryChatId ?? chatId ?? generateId(),
-		[queryChatId, chatId]
-	);
+export function AgentPageClient({ 
+	chatId, 
+	websiteId,
+	initialMessages = []
+}: AgentPageClientProps) {
+	const setMessages = useSetAtom(agentMessagesAtom);
+	const setStatus = useSetAtom(agentStatusAtom);
+	const prevChatIdRef = useRef<string | null>(null);
 
 	useEffect(() => {
 		const prevChatId = prevChatIdRef.current;
-		if (prevChatId && prevChatId !== queryChatId) {
-			reset();
+		if (prevChatId !== chatId && initialMessages.length > 0) {
+			setMessages(initialMessages);
+			setStatus("idle");
+			prevChatIdRef.current = chatId;
 		}
-		prevChatIdRef.current = queryChatId;
-	}, [queryChatId, reset]);
+	}, [chatId, initialMessages, setMessages, setStatus]);
 
 	return (
 		<div className="relative flex h-full flex-col">
-			<AgentPageContent chatId={stableChatId} websiteId={websiteId} />
+			<AgentPageContent chatId={chatId} websiteId={websiteId} />
 		</div>
 	);
 }

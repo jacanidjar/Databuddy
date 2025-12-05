@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 
 export function AgentNavigation() {
 	const router = useRouter();
-	const { id } = useParams();
+	const { slug } = useParams();
 
 	const handleBack = () => {
-		router.push(`/websites/${id}`);
+		router.push(`/websites/${slug}`);
 	};
 
 	return (

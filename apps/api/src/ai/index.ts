@@ -9,7 +9,7 @@
  */
 
 // Agent exports
-export { analyticsAgent, createAgent, mainAgent, triageAgent } from "./agents";
+export { analyticsAgent, createAgent, mainAgent, reflectionAgent, triageAgent } from "./agents";
 // Config exports
 export {
 	type AppContext,
@@ -24,6 +24,7 @@ export {
 // Prompt exports (for customization/testing)
 export {
 	buildAnalyticsInstructions,
+	buildReflectionInstructions,
 	buildTriageInstructions,
 	CLICKHOUSE_SCHEMA_DOCS,
 	COMMON_AGENT_RULES,

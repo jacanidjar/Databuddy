@@ -3,10 +3,10 @@
 import { useChat, useChatActions } from "@ai-sdk-tools/store";
 import type { UIMessage } from "ai";
 import { DefaultChatTransport } from "ai";
-import { useSetAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { useParams } from "next/navigation";
-import { useCallback, useMemo, useRef } from "react";
-import { agentInputAtom } from "../agent-atoms";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { agentInputAtom, agentMessagesAtom, agentStatusAtom } from "../agent-atoms";
 import { useAgentChatId } from "../agent-chat-context";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -15,7 +15,17 @@ export function useAgentChat() {
     const chatId = useAgentChatId();
     const params = useParams();
     const websiteId = params.id as string;
+    const routeChatId = params.chatId as string | undefined;
     const setInput = useSetAtom(agentInputAtom);
+
+    // Use route chatId if available, otherwise fall back to context chatId
+    const stableChatId = routeChatId ?? chatId;
+
+    // Store stable chatId in ref to prevent useChat from resetting
+    const stableChatIdRef = useRef<string>(stableChatId);
+    if (stableChatIdRef.current !== stableChatId) {
+        stableChatIdRef.current = stableChatId;
+    }
 
     const transport = useMemo(
         () =>
@@ -37,10 +47,27 @@ export function useAgentChat() {
         [websiteId]
     );
 
-    const { messages, status } = useChat<UIMessage>({
-        id: chatId,
+    // Use useChat from SDK but sync to Jotai for persistence
+    const { messages: sdkMessages, status: sdkStatus } = useChat<UIMessage>({
+        id: stableChatIdRef.current,
         transport,
     });
+
+    // Sync SDK messages to Jotai atom for persistence
+    const [jotaiMessages, setJotaiMessages] = useAtom(agentMessagesAtom);
+    const [jotaiStatus, setJotaiStatus] = useAtom(agentStatusAtom);
+
+    useEffect(() => {
+        // Always sync SDK state to Jotai to ensure persistence
+        if (sdkMessages.length > 0) {
+            setJotaiMessages(sdkMessages);
+        }
+        setJotaiStatus(sdkStatus);
+    }, [sdkMessages, sdkStatus, setJotaiMessages, setJotaiStatus]);
+
+    // Use Jotai messages for display (they persist even if SDK resets)
+    const messages = jotaiMessages.length > 0 ? jotaiMessages : sdkMessages;
+    const status = jotaiStatus !== "idle" ? jotaiStatus : sdkStatus;
 
     const {
         sendMessage: sdkSendMessage,
@@ -70,9 +97,11 @@ export function useAgentChat() {
 
     const reset = useCallback(() => {
         sdkReset();
+        setJotaiMessages([]);
+        setJotaiStatus("idle");
         setInput("");
         lastUserMessageRef.current = "";
-    }, [sdkReset, setInput]);
+    }, [sdkReset, setJotaiMessages, setJotaiStatus, setInput]);
 
     const stop = useCallback(() => {
         sdkStop();

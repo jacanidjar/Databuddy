@@ -1,7 +1,7 @@
 import { auth, websitesApi } from "@databuddy/auth";
 import { smoothStream } from "ai";
 import { Elysia, t } from "elysia";
-import { buildAppContext, triageAgent } from "../ai";
+import { buildAppContext, reflectionAgent, triageAgent } from "../ai";
 import { record, setAttributes } from "../lib/tracing";
 import { validateWebsite } from "../lib/website-utils";
 
@@ -133,7 +133,12 @@ export const agent = new Elysia({ prefix: "/v1/agent" })
                         requestHeaders: request.headers,
                     };
 
-                    return triageAgent.toUIMessageStream({
+                    // Use reflectionAgent for complex multi-step reasoning and orchestration
+                    // It can reflect on responses, decide next steps, and coordinate investigations
+                    // Use triageAgent for simple routing-only scenarios
+                    const agent = reflectionAgent;
+
+                    return agent.toUIMessageStream({
                         message,
                         strategy: "auto",
                         maxRounds: 5,

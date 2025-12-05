@@ -18,13 +18,13 @@ export const openrouter = createOpenRouter({
  */
 export const models = {
 	/** Fast, cheap model for routing/triage decisions */
-	triage: openrouter.chat(process.env.AI_TRIAGE_MODEL ?? "openai/gpt-4o-mini"),
+	triage: openrouter.chat(process.env.AI_TRIAGE_MODEL ?? "anthropic/claude-haiku-4.5"),
 
 	/** Balanced model for most analytical tasks */
-	analytics: openrouter.chat(process.env.AI_ANALYTICS_MODEL ?? "openai/gpt-4o"),
+	analytics: openrouter.chat(process.env.AI_ANALYTICS_MODEL ?? "anthropic/claude-haiku-4.5"),
 
-	/** High-capability model for complex reasoning (future use) */
-	advanced: openrouter.chat(process.env.AI_ADVANCED_MODEL ?? "openai/gpt-4o"),
+	/** High-capability model for complex reasoning and reflection */
+	advanced: openrouter.chat(process.env.AI_ADVANCED_MODEL ?? "anthropic/claude-sonnet-4.5"),
 } as const;
 
 export type ModelKey = keyof typeof models;

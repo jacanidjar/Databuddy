@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import { usePathname } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 interface AgentChatContextValue {
 	chatId: string;
@@ -17,12 +17,12 @@ export function AgentChatProvider({
 	chatId: string;
 	children: React.ReactNode;
 }) {
-	const pathname = usePathname();
+	const params = useParams();
+	const router = useRouter();
+	const websiteId = params.id as string;
 
 	const setChatId = (id: string) => {
-		const params = new URLSearchParams(window.location.search);
-		params.set("chatId", id);
-		window.history.pushState({}, "", `${pathname}?${params.toString()}`);
+		router.push(`/websites/${websiteId}/agent/${id}`);
 	};
 
 	return (

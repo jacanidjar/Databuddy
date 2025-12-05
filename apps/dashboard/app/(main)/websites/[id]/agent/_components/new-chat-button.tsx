@@ -15,7 +15,7 @@ export function NewChatButton() {
 		reset();
 		// Navigate to a new chat with a new chatId
 		const newChatId = generateId();
-		router.push(`/websites/${id}/agent?chatId=${newChatId}`);
+		router.push(`/websites/${id}/agent/${newChatId}`);
 	};
 
 	return (
