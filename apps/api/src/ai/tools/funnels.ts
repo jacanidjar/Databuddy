@@ -1,10 +1,9 @@
+import { appRouter, createRPCContext } from "@databuddy/rpc";
+import { ORPCError } from "@orpc/server";
 import { tool } from "ai";
 import { z } from "zod";
 import type { AppContext } from "../config/context";
-import { appRouter, createRPCContext } from "@databuddy/rpc";
-import { ORPCError } from "@orpc/server";
 import { createToolLogger } from "./utils/logger";
-import { cached, cacheOptions } from "../cache";
 
 const stepSchema = z.object({
     type: z.enum(["PAGE_VIEW", "EVENT", "CUSTOM"]),
@@ -93,7 +92,8 @@ async function callRPCProcedure(
                             ? `Invalid request: ${error.message}`
                             : error.code === "FORBIDDEN"
                                 ? "You don't have permission to access this resource."
-                                : error.message || "An error occurred while processing your request.";
+                                : error.message ||
+                                "An error occurred while processing your request.";
 
             throw new Error(userMessage);
         }
@@ -126,7 +126,12 @@ export function createFunnelTools(context: AppContext) {
         }),
         execute: async ({ websiteId }) => {
             try {
-                const result = await callRPCProcedure("funnels", "list", { websiteId }, context);
+                const result = await callRPCProcedure(
+                    "funnels",
+                    "list",
+                    { websiteId },
+                    context
+                );
                 return {
                     funnels: result,
                     count: Array.isArray(result) ? result.length : 0,
@@ -149,7 +154,12 @@ export function createFunnelTools(context: AppContext) {
         }),
         execute: async ({ id, websiteId }) => {
             try {
-                return await callRPCProcedure("funnels", "getById", { id, websiteId }, context);
+                return await callRPCProcedure(
+                    "funnels",
+                    "getById",
+                    { id, websiteId },
+                    context
+                );
             } catch (error) {
                 logger.error("Failed to get funnel by ID", { id, websiteId, error });
                 throw error instanceof Error
@@ -221,7 +231,12 @@ export function createFunnelTools(context: AppContext) {
             "Update an existing funnel. Can update name, description, steps, filters, and active status.",
         inputSchema: z.object({
             id: z.string().describe("The funnel ID to update"),
-            name: z.string().min(1).max(100).optional().describe("Updated funnel name"),
+            name: z
+                .string()
+                .min(1)
+                .max(100)
+                .optional()
+                .describe("Updated funnel name"),
             description: z.string().optional().describe("Updated funnel description"),
             steps: z
                 .array(stepSchema)
@@ -259,7 +274,15 @@ export function createFunnelTools(context: AppContext) {
                 return await callRPCProcedure(
                     "funnels",
                     "update",
-                    { id, name, description, steps, filters, ignoreHistoricData, isActive },
+                    {
+                        id,
+                        name,
+                        description,
+                        steps,
+                        filters,
+                        ignoreHistoricData,
+                        isActive,
+                    },
                     context
                 );
             } catch (error) {
@@ -391,8 +414,8 @@ export function createFunnelTools(context: AppContext) {
 
     return {
         // Read operations - cached for better performance
-        list_funnels: cached(listFunnelsTool, cacheOptions.short),
-        get_funnel_by_id: cached(getFunnelByIdTool, cacheOptions.medium),
+        list_funnels: listFunnelsTool,
+        get_funnel_by_id: getFunnelByIdTool,
 
         // Write operations - not cached
         create_funnel: createFunnelTool,
@@ -400,7 +423,7 @@ export function createFunnelTools(context: AppContext) {
         delete_funnel: deleteFunnelTool,
 
         // Analytics - cached for longer periods (expensive queries)
-        get_funnel_analytics: cached(getFunnelAnalyticsTool, cacheOptions.medium),
-        get_funnel_analytics_by_referrer: cached(getFunnelAnalyticsByReferrerTool, cacheOptions.medium),
+        get_funnel_analytics: getFunnelAnalyticsTool,
+        get_funnel_analytics_by_referrer: getFunnelAnalyticsByReferrerTool,
     } as const;
 }

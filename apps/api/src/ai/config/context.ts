@@ -2,7 +2,7 @@
  * Application context passed to all agents.
  * Contains website and user information needed for queries.
  */
-export interface AppContext {
+export type AppContext = {
 	userId: string;
 	websiteId: string;
 	websiteDomain: string;
