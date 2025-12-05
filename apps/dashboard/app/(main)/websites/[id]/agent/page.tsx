@@ -20,11 +20,13 @@ export default async function AgentPage(props: Props) {
 		: null;
 
 	return (
-		<ChatProvider
-			initialMessages={(chat?.messages ?? []) as UIMessage[]}
-			key={chatId || "home"}
-		>
-			<AgentPageClient chatId={chatId ?? null} websiteId={id} />
-		</ChatProvider>
+		// <FeatureGate feature={GATED_FEATURES.AI_AGENT}>
+			<ChatProvider
+				initialMessages={(chat?.messages ?? []) as UIMessage[]}
+				key={chatId || "home"}
+			>
+				<AgentPageClient chatId={chatId ?? null} websiteId={id} />
+			</ChatProvider>
+		// </FeatureGate>
 	);
 }

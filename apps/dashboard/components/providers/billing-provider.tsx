@@ -7,13 +7,20 @@ import { useParams, usePathname } from "next/navigation";
 import { createContext, type ReactNode, useContext, useMemo } from "react";
 import { orpc } from "@/lib/orpc";
 import {
+	AI_CAPABILITIES,
+	type AiCapabilityId,
 	FEATURE_IDS,
 	FEATURE_METADATA,
 	type FeatureId,
 	GATED_FEATURES,
 	type GatedFeatureId,
+	getMinimumPlanForAiCapability,
 	getMinimumPlanForFeature,
+	getPlanCapabilities as getPlanCapabilitiesForPlan,
+	isPlanAiCapabilityEnabled,
 	isPlanFeatureEnabled,
+	PLAN_CAPABILITIES,
+	type PlanCapabilities,
 	PLAN_IDS,
 	type PlanId,
 } from "@/types/features";
@@ -53,6 +60,9 @@ export interface BillingContextValue {
 	getUpgradeMessage: (
 		featureId: FeatureId | GatedFeatureId | string
 	) => string | null;
+	// AI capabilities
+	isAiCapabilityEnabled: (capability: AiCapabilityId) => boolean;
+	getPlanCapabilities: () => PlanCapabilities;
 	refetch: () => void;
 }
 
@@ -183,6 +193,12 @@ export function BillingProvider({
 			FEATURE_METADATA[id as FeatureId | GatedFeatureId]?.upgradeMessage ??
 			null;
 
+		const isAiCapabilityEnabled = (capability: AiCapabilityId): boolean =>
+			isPlanAiCapabilityEnabled(currentPlanId, capability);
+
+		const getPlanCapabilities = (): PlanCapabilities =>
+			getPlanCapabilitiesForPlan(currentPlanId);
+
 		const refetch = () => {
 			refetchCustomer();
 			refetchBillingContext();
@@ -204,6 +220,8 @@ export function BillingProvider({
 			isFeatureEnabled,
 			getGatedFeatureAccess,
 			getUpgradeMessage,
+			isAiCapabilityEnabled,
+			getPlanCapabilities,
 			refetch,
 		};
 	}, [
@@ -252,10 +270,33 @@ export function useGatedFeature(feature: GatedFeatureId) {
 	};
 }
 
+export function useAiCapability(capability: AiCapabilityId) {
+	const {
+		isAiCapabilityEnabled,
+		currentPlanId,
+		isFree,
+		canUserUpgrade,
+	} = useBillingContext();
+	const isEnabled = isAiCapabilityEnabled(capability);
+	const minPlan = getMinimumPlanForAiCapability(capability);
+
+	return {
+		isEnabled,
+		currentPlanId,
+		isFree,
+		minPlan,
+		canUserUpgrade,
+	};
+}
+
 export {
+	AI_CAPABILITIES,
+	type AiCapabilityId,
 	FEATURE_IDS,
 	FEATURE_METADATA,
 	GATED_FEATURES,
+	PLAN_CAPABILITIES,
+	type PlanCapabilities,
 	PLAN_IDS,
 	type FeatureId,
 	type GatedFeatureId,

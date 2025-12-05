@@ -17,7 +17,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { FEATURE_METADATA, PLAN_IDS } from "@/types/features";
+import {
+	FEATURE_METADATA,
+	getMinimumPlanForFeature,
+	PLAN_IDS,
+} from "@/types/features";
 
 const PLAN_CONFIG: Record<
 	string,
@@ -64,8 +68,11 @@ export function FeatureGate({
 	}
 
 	const metadata = FEATURE_METADATA[feature];
-	const requiredPlan = metadata?.minPlan ?? PLAN_IDS.HOBBY;
-	const planConfig = PLAN_CONFIG[requiredPlan] ?? PLAN_CONFIG[PLAN_IDS.HOBBY];
+	const minPlanFromMatrix = getMinimumPlanForFeature(feature);
+	const requiredPlan =
+		minPlanFromMatrix ?? metadata?.minPlan ?? PLAN_IDS.PRO;
+	const planConfig =
+		PLAN_CONFIG[requiredPlan] ?? PLAN_CONFIG[PLAN_IDS.PRO];
 	const currentConfig =
 		PLAN_CONFIG[currentPlanId ?? PLAN_IDS.FREE] ?? PLAN_CONFIG[PLAN_IDS.FREE];
 	const PlanIcon = planConfig.icon;
@@ -155,7 +162,9 @@ export function useFeatureGate(feature: GatedFeatureId) {
 
 	const access = getGatedFeatureAccess(feature);
 	const metadata = FEATURE_METADATA[feature];
-	const planConfig = metadata?.minPlan ? PLAN_CONFIG[metadata.minPlan] : null;
+	const minPlan =
+		getMinimumPlanForFeature(feature) ?? metadata?.minPlan ?? null;
+	const planConfig = minPlan ? PLAN_CONFIG[minPlan] : null;
 
 	return {
 		isEnabled: isFeatureEnabled(feature),
