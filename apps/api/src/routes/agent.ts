@@ -2,13 +2,12 @@ import { auth, websitesApi } from "@databuddy/auth";
 import { smoothStream } from "ai";
 import { Elysia, t } from "elysia";
 import {
-    type AppContext,
-    buildAppContext,
     type createAgent,
     reflectionAgentHaiku,
     reflectionAgentMax,
     triageAgent,
-} from "../ai";
+} from "../ai/agents";
+import { type AppContext, buildAppContext } from "../ai/config/context";
 import { record, setAttributes } from "../lib/tracing";
 import { validateWebsite } from "../lib/website-utils";
 
