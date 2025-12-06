@@ -1,7 +1,7 @@
 "use client";
 
 import { authClient } from "@databuddy/auth/client";
-import { PaperclipIcon, RobotIcon, WarningIcon } from "@phosphor-icons/react";
+import { PaperclipIcon, WarningIcon } from "@phosphor-icons/react";
 import type { UIMessage } from "ai";
 import Image from "next/image";
 import {
@@ -11,10 +11,9 @@ import {
 } from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
 import { ToolOutput } from "@/components/ai-elements/tool";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { AgentMessageActions } from "./agent-message-actions";
 
 type AgentMessagesProps = {
 	messages: UIMessage[];
@@ -67,7 +66,6 @@ export function AgentMessages({
 				const toolParts = extractToolParts(message.parts);
 				const hasToolErrors = toolParts.some((tool) => tool.errorText);
 				const showError = isLastMessage && hasError && isAssistant;
-				const isMessageFinished = !(isLastMessage && isStreaming);
 
 				return (
 					<div className="group" key={message.id}>
@@ -213,19 +211,6 @@ export function AgentMessages({
 								<AgentMessageAvatar hasError />
 							</Message>
 						)}
-
-						{/* Render message actions for finished assistant messages */}
-						{isAssistant && isMessageFinished && textContent && !showError && (
-							<div className="opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-								<div className="mt-3 flex items-center gap-1">
-									<AgentMessageActions
-										isError={false}
-										isLastMessage={isLastMessage}
-										messageContent={textContent}
-									/>
-								</div>
-							</div>
-						)}
 					</div>
 				);
 			})}
@@ -252,16 +237,14 @@ function UserMessageAvatar() {
 function AgentMessageAvatar({ hasError = false }: { hasError?: boolean }) {
 	return (
 		<Avatar className="size-8 shrink-0 ring-1 ring-border">
+			<AvatarImage alt="Databunny" src="/databunny.webp" />
 			<AvatarFallback
-				className={cn(hasError ? "bg-destructive/10" : "bg-primary/10")}
+				className={cn(
+					"bg-primary/10 font-semibold text-primary",
+					hasError && "bg-destructive/10 text-destructive"
+				)}
 			>
-				<RobotIcon
-					className={cn(
-						"size-4",
-						hasError ? "text-destructive" : "text-primary"
-					)}
-					weight="duotone"
-				/>
+				DB
 			</AvatarFallback>
 		</Avatar>
 	);

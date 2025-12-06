@@ -85,7 +85,9 @@ export function ConversationScrollButton({
 		scrollToBottom();
 	}, [scrollToBottom]);
 
-	if (isAtBottom) return null;
+	if (isAtBottom) {
+		return null;
+	}
 
 	return (
 		<Button

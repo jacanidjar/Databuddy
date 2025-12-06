@@ -1,7 +1,7 @@
 import { models } from "../config";
-import { buildTriageInstructions } from "../prompts";
-import { createAgent } from "./factory";
+import { buildTriageInstructions } from "../prompts/triage";
 import { analyticsAgent } from "./analytics";
+import { createAgent } from "./factory";
 import { funnelsAgent } from "./funnels";
 
 /**
@@ -17,13 +17,11 @@ export const triageAgent = createAgent({
 			type: "tool",
 			toolName: "handoff_to_agent",
 		},
+		failureMode: {
+			maxAttempts: 2,
+		},
 	},
 	instructions: buildTriageInstructions,
 	handoffs: [analyticsAgent, funnelsAgent],
 	maxTurns: 1,
 });
-
-/**
- * @deprecated Use `triageAgent` instead. Kept for backwards compatibility.
- */
-export const mainAgent = triageAgent;

@@ -1,20 +1,14 @@
 "use client";
 
-import {
-	CommandIcon,
-	PaperclipIcon,
-	PaperPlaneRightIcon,
-	StopIcon,
-} from "@phosphor-icons/react";
+import { PaperPlaneRightIcon, StopIcon } from "@phosphor-icons/react";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useEnterSubmit } from "@/hooks/use-enter-submit";
 import { cn } from "@/lib/utils";
+import { useAgentChatId, useSetAgentChatId } from "./agent-chat-context";
 import { AgentCommandMenu } from "./agent-command-menu";
 import { useAgentChat, useAgentCommands } from "./hooks";
-import { useAgentChatId, useSetAgentChatId } from "./agent-chat-context";
-import { RecordButton } from "./record-button";
-import { useEnterSubmit } from "@/hooks/use-enter-submit";
 
 export function AgentInput() {
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -28,8 +22,12 @@ export function AgentInput() {
 
 	const handleSubmit = (e?: React.FormEvent) => {
 		e?.preventDefault();
-		if (!input.trim() || isLoading) return;
-		if (chatId) setChatId(chatId);
+		if (!input.trim() || isLoading) {
+			return;
+		}
+		if (chatId) {
+			setChatId(chatId);
+		}
 		sendMessage(input.trim());
 	};
 
@@ -38,10 +36,10 @@ export function AgentInput() {
 	};
 
 	const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		// First, let command menu handle its own keys
-		if (handleKeyDown(e)) return;
+		if (handleKeyDown(e)) {
+			return;
+		}
 
-		// If commands are not shown, use the enter submit hook
 		if (!showCommands) {
 			handleEnterSubmit(e);
 		}
@@ -58,7 +56,7 @@ export function AgentInput() {
 				<div className="relative">
 					<AgentCommandMenu />
 
-					<form ref={formRef} className="flex gap-2" onSubmit={handleSubmit}>
+					<form className="flex gap-2" onSubmit={handleSubmit} ref={formRef}>
 						<div className="relative flex-1">
 							<Input
 								className={cn(
@@ -74,24 +72,6 @@ export function AgentInput() {
 								ref={inputRef}
 								value={input}
 							/>
-
-							<div className="-translate-y-1/2 absolute top-1/2 right-2 flex items-center gap-1">
-								<Button
-									className="size-8"
-									disabled={isLoading}
-									size="icon"
-									title="Attach file"
-									type="button"
-									variant="ghost"
-								>
-									<PaperclipIcon className="size-4" weight="duotone" />
-								</Button>
-								<RecordButton disabled={isLoading} />
-								<kbd className="hidden items-center gap-1 rounded border border-border/50 bg-accent px-1.5 py-0.5 font-mono text-[10px] text-foreground/70 sm:flex">
-									<CommandIcon className="size-3" />
-									<span>K</span>
-								</kbd>
-							</div>
 						</div>
 
 						{isLoading ? (

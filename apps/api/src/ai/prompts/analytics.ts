@@ -1,6 +1,7 @@
 import type { AppContext } from "../config/context";
 import { formatContextForLLM } from "../config/context";
-import { CLICKHOUSE_SCHEMA_DOCS, COMMON_AGENT_RULES } from "./shared";
+import { CLICKHOUSE_SCHEMA_DOCS } from "../config/schema-docs";
+import { COMMON_AGENT_RULES } from "./shared";
 
 /**
  * Analytics-specific rules for data analysis and presentation.
@@ -12,8 +13,9 @@ const ANALYTICS_RULES = `<agent-specific-rules>
 - Use the execute_sql_query tool for custom analytics queries
 - Always include time context (e.g., "in the last 7 days")
 - Format large numbers with commas for readability
-- CRITICAL: When using execute_sql_query with {websiteId:String} in the SQL, you MUST pass the params object with websiteId set to the website_id from the context above
+- CRITICAL: execute_sql_query must ONLY use SELECT/WITH and parameter placeholders (e.g., {websiteId:String}) with values passed via params. Never interpolate strings.
 - Example: execute_sql_query({ sql: "SELECT ... WHERE client_id = {websiteId:String}", params: { websiteId: "<use website_id from context>" } })
+- Tables must be compact and readable: ≤5 columns, short headers, include units (%, ms, s), no empty columns, align numbers right and text left, no blank rows.
 </agent-specific-rules>`;
 
 /**

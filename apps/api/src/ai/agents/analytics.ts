@@ -1,5 +1,5 @@
 import { models } from "../config";
-import { buildAnalyticsInstructions } from "../prompts";
+import { buildAnalyticsInstructions } from "../prompts/analytics";
 import { analyticsTools } from "../tools";
 import { createAgent } from "./factory";
 
@@ -13,5 +13,10 @@ export const analyticsAgent = createAgent({
 	temperature: 0.3,
 	instructions: buildAnalyticsInstructions,
 	tools: analyticsTools,
+	modelSettings: {
+		failureMode: {
+			maxAttempts: 2,
+		},
+	},
 	maxTurns: 10,
 });

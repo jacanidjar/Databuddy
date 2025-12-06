@@ -7,29 +7,24 @@ import {
 	ClockIcon,
 	LightningIcon,
 	RobotIcon,
-	SidebarIcon,
 	TableIcon,
 } from "@phosphor-icons/react";
-import { useAtom, useSetAtom } from "jotai";
+import { useSetAtom } from "jotai";
 import { useState } from "react";
-import { useHotkeys } from "react-hotkeys-hook";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { agentCanvasOpenAtom, agentInputAtom } from "./agent-atoms";
-import { AgentCanvas } from "./agent-canvas";
+import { agentInputAtom } from "./agent-atoms";
 import { AgentChatProvider } from "./agent-chat-context";
-import { AgentHeader } from "./agent-header";
 import { AgentInput } from "./agent-input";
 import { AgentMessages } from "./agent-messages";
-import { AgentSidebar } from "./agent-sidebar";
-import { AgentStatusIndicator } from "./agent-status-indicator";
 import {
 	Conversation,
 	ConversationContent,
 	ConversationScrollButton,
 } from "./conversation";
 import { useAgentChat } from "./hooks";
+import { NewChatButton } from "./new-chat-button";
 
 type AgentPageContentProps = {
 	chatId: string;
@@ -76,68 +71,44 @@ function AgentPageContentInner({
 	websiteId: string;
 }) {
 	const setInputValue = useSetAtom(agentInputAtom);
-	const [showCanvas, setShowCanvas] = useAtom(agentCanvasOpenAtom);
-	const [showSidebar, setShowSidebar] = useState(false);
+	const [showSidebar] = useState(false);
 	const { messages, isLoading, hasError } = useAgentChat();
-
-	// Keyboard shortcut to toggle sidebar: Cmd+J (or Ctrl+J on Windows)
-	useHotkeys("mod+j", () => setShowSidebar((prev) => !prev), {
-		enableOnFormTags: true,
-		preventDefault: true,
-	});
 
 	const hasMessages = messages.length > 0;
 
 	return (
 		<div className="relative flex flex-1 overflow-hidden">
-			<AgentSidebar
-				isOpen={showSidebar}
-				onClose={() => setShowSidebar(false)}
-			/>
-
-			<div
-				className={cn(
-					"fixed inset-y-0 right-0 z-20 w-full border-l bg-sidebar md:w-[500px] lg:w-[600px]",
-					"transition-transform duration-300 ease-in-out",
-					showCanvas ? "translate-x-0" : "translate-x-full"
-				)}
-			>
-				<AgentCanvas onClose={() => setShowCanvas(false)} />
-			</div>
-
 			<div
 				className={cn(
 					"flex flex-1 flex-col",
 					"transition-all duration-300 ease-in-out",
-					showCanvas && "mr-0 md:mr-[500px] lg:mr-[600px]"
+					false
 				)}
 			>
-				<div className="shrink-0 border-b bg-sidebar/50 backdrop-blur-sm">
-					<div className="flex items-center gap-4 p-4">
-						<div className="flex items-center gap-3">
-							<Avatar className="size-10 border">
-								<AvatarFallback className="bg-primary/10">
-									<RobotIcon className="size-5 text-primary" weight="duotone" />
+				<div className="relative z-10 bg-sidebar-accent">
+					<div className="flex h-12 items-center gap-3 border-b px-3 sm:h-12 sm:px-3">
+						<div className="rounded-lg bg-sidebar/80 p-1.5 shadow-sm ring-1 ring-sidebar-border/50">
+							<Avatar className="size-8">
+								<AvatarImage alt="Databunny avatar" src="/databunny.webp" />
+								<AvatarFallback className="bg-primary/10 font-semibold text-primary">
+									DB
 								</AvatarFallback>
 							</Avatar>
-							<div>
-								<div className="flex items-center gap-2">
-									<h2 className="font-semibold">AI Agent</h2>
-									<span className="rounded border border-border/50 bg-accent px-1.5 py-0.5 text-[10px] text-foreground/60">
-										ALPHA
-									</span>
-								</div>
-								<p className="text-foreground/50 text-sm">
-									Autonomous analytics assistant
-								</p>
+						</div>
+						<div className="min-w-0 flex-1 space-y-0.5">
+							<div className="flex items-center gap-2">
+								<h1 className="truncate font-semibold text-sidebar-accent-foreground text-sm">
+									Databunny
+								</h1>
+								<span className="rounded border border-border/50 bg-accent px-1.5 py-0.5 text-[10px] text-foreground/60 uppercase tracking-wide">
+									Alpha
+								</span>
 							</div>
+							<p className="truncate text-sidebar-accent-foreground/70 text-xs">
+								Analytics co-pilot with instant answers and guided insights.
+							</p>
 						</div>
-
-						<div className="flex-1">
-							<AgentHeader showBackButton={hasMessages} />
-						</div>
-
-						<div className="flex items-center gap-1">
+						<div className="flex shrink-0 items-center gap-1.5">
 							<Button
 								onClick={() => setShowSidebar(!showSidebar)}
 								size="icon"
@@ -146,14 +117,7 @@ function AgentPageContentInner({
 							>
 								<ClockIcon className="size-4" weight="duotone" />
 							</Button>
-							<Button
-								onClick={() => setShowCanvas(!showCanvas)}
-								size="icon"
-								title="Toggle canvas"
-								variant="ghost"
-							>
-								<SidebarIcon className="size-4" weight="duotone" />
-							</Button>
+							<NewChatButton />
 						</div>
 					</div>
 				</div>
@@ -162,14 +126,11 @@ function AgentPageContentInner({
 					<ConversationContent className="pb-[150px]">
 						<div className="mx-auto w-full max-w-2xl">
 							{hasMessages ? (
-								<>
-									<AgentMessages
-										hasError={hasError}
-										isStreaming={isLoading}
-										messages={messages}
-									/>
-									<AgentStatusIndicator />
-								</>
+								<AgentMessages
+									hasError={hasError}
+									isStreaming={isLoading}
+									messages={messages}
+								/>
 							) : (
 								<WelcomeState onPromptSelect={setInputValue} />
 							)}
@@ -195,11 +156,10 @@ function WelcomeState({
 			</div>
 
 			<div className="mb-8 max-w-md text-center">
-				<h3 className="mb-2 font-semibold text-xl">Meet Your AI Agent</h3>
-				<p className="text-foreground/60 text-sm leading-relaxed">
-					Unlike simple assistants, the Agent autonomously explores your
-					analytics data, discovers patterns, and surfaces actionable insights
-					without step-by-step guidance.
+				<h3 className="mb-2 font-semibold text-xl">Meet Databunny</h3>
+				<p className="text-balance text-foreground/60 text-sm leading-relaxed">
+					Databunny explores your analytics, uncovers patterns, and surfaces
+					actionable insights without you babysitting every step.
 				</p>
 			</div>
 

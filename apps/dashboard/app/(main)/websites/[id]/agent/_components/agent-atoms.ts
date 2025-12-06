@@ -1,7 +1,6 @@
 import type { UIMessage } from "ai";
 import { atom } from "jotai";
 
-// Types for UI state (not message state - that comes from SDK)
 export type AgentStatus =
     | "idle"
     | "routing"
@@ -12,20 +11,6 @@ export type AgentStatus =
     | "visualizing"
     | "complete"
     | "error";
-export type ArtifactType = "chart" | "table" | "report" | "insight";
-export type ArtifactStage =
-    | "preparing"
-    | "analyzing"
-    | "generating"
-    | "rendering"
-    | "complete";
-
-export type AgentArtifact = {
-    id: string;
-    type: ArtifactType;
-    title: string;
-    data: unknown;
-};
 
 export type AgentCommand = {
     id: string;
@@ -35,41 +20,30 @@ export type AgentCommand = {
     toolName: string;
     toolParams?: Record<string, unknown>;
     keywords: string[];
-}
+};
 
-// Message state atoms - managed with Jotai for persistence
 export const agentMessagesAtom = atom<UIMessage[]>([]);
 export const agentStatusAtom = atom<
     "idle" | "streaming" | "submitted" | "error"
 >("idle");
 
-// UI state atoms
 export const agentTitleAtom = atom<string | null>(null);
 export const agentInputAtom = atom("");
 export const agentSuggestionsAtom = atom<string[]>([]);
 
-// Canvas/artifact atoms
-export const agentCanvasOpenAtom = atom(false);
-export const currentArtifactAtom = atom<AgentArtifact | null>(null);
-
-// Command menu atoms
 export const showCommandsAtom = atom(false);
 export const commandQueryAtom = atom("");
 export const selectedCommandIndexAtom = atom(0);
 
-// Reset action for UI state
 export const resetAgentUIAtom = atom(null, (_get, set) => {
     set(agentTitleAtom, null);
     set(agentInputAtom, "");
-    set(agentCanvasOpenAtom, false);
-    set(currentArtifactAtom, null);
     set(agentSuggestionsAtom, []);
     set(showCommandsAtom, false);
     set(commandQueryAtom, "");
     set(selectedCommandIndexAtom, 0);
 });
 
-// Reset messages atom
 export const resetAgentMessagesAtom = atom(null, (_get, set) => {
     set(agentMessagesAtom, []);
     set(agentStatusAtom, "idle");

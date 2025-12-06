@@ -1,22 +1,22 @@
 import type { ChatStatus, UIMessage } from "ai";
 import { useMemo } from "react";
-import type { AgentStatus, ArtifactStage, ArtifactType } from "../agent-atoms";
+import type { AgentStatus } from "../agent-atoms";
 import { getStatusMessage, getToolMessage } from "../agent-commands";
 
-interface ChatStatusResult {
+type ChatStatusResult = {
     agentStatus: AgentStatus;
     currentToolCall: string | null;
     toolMessage: string | null;
     statusMessage: string | null;
     displayMessage: string | null;
-    artifactStage: ArtifactStage | null;
-    artifactType: ArtifactType | null;
     hasTextContent: boolean;
     isStreaming: boolean;
 }
 
 function getTextContent(message: UIMessage): string {
-    if (!message.parts) return "";
+    if (!message.parts) {
+        return "";
+    }
     return message.parts
         .filter(
             (part): part is { type: "text"; text: string } => part.type === "text"
@@ -39,8 +39,6 @@ export function useChatStatus(
             toolMessage: null,
             statusMessage: getStatusMessage(agentStatus),
             displayMessage: null,
-            artifactStage: null,
-            artifactType: null,
             hasTextContent: false,
             isStreaming: isLoading,
         };
@@ -55,11 +53,9 @@ export function useChatStatus(
         }
 
         const hasTextContent = Boolean(getTextContent(lastMessage).trim());
-        const currentToolCall = null; // SDK handles tool calls differently
-        const toolMessage = getToolMessage(currentToolCall);
+        const toolMessage = getToolMessage(null);
         const statusMessage = getStatusMessage(agentStatus);
 
-        // Priority: tool message > status message, but hide when text is streaming
         let displayMessage: string | null = null;
         if (!hasTextContent && isLoading) {
             displayMessage = toolMessage ?? statusMessage;
@@ -67,16 +63,14 @@ export function useChatStatus(
 
         return {
             agentStatus,
-            currentToolCall,
+            currentToolCall: null,
             toolMessage,
             statusMessage,
             displayMessage,
-            artifactStage: null,
-            artifactType: null,
             hasTextContent,
             isStreaming: isLoading,
         };
     }, [messages, status]);
 }
 
-export type { AgentStatus, ArtifactStage, ArtifactType };
+export type { AgentStatus };

@@ -2,7 +2,7 @@
 
 import { PlusIcon } from "@phosphor-icons/react";
 import { generateId } from "ai";
-import { useRouter, useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useAgentChat } from "./hooks/use-agent-chat";
 
@@ -13,7 +13,6 @@ export function NewChatButton() {
 
 	const handleNewChat = () => {
 		reset();
-		// Navigate to a new chat with a new chatId
 		const newChatId = generateId();
 		router.push(`/websites/${id}/agent/${newChatId}`);
 	};

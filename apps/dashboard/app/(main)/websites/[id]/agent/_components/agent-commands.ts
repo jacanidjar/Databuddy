@@ -124,7 +124,9 @@ export const AGENT_COMMANDS: AgentCommand[] = [
 ];
 
 export function filterCommands(query: string): AgentCommand[] {
-    if (!query) return AGENT_COMMANDS;
+    if (!query) {
+        return AGENT_COMMANDS;
+    }
 
     const normalizedQuery = query.toLowerCase().trim();
 
@@ -145,7 +147,9 @@ export function filterCommands(query: string): AgentCommand[] {
 }
 
 export function getToolMessage(toolName: string | null): string | null {
-    if (!toolName) return null;
+    if (!toolName) {
+        return null;
+    }
 
     const messages: Record<string, string> = {
         analyze_traffic: "Analyzing traffic patterns...",
@@ -165,7 +169,9 @@ export function getToolMessage(toolName: string | null): string | null {
 }
 
 export function getStatusMessage(status: string | null): string | null {
-    if (!status) return null;
+    if (!status) {
+        return null;
+    }
 
     const messages: Record<string, string> = {
         routing: "Routing request...",

@@ -32,7 +32,9 @@ export function AgentCommandMenu() {
 	const { showCommands, filteredCommands, selectedIndex, executeCommand } =
 		useAgentCommands();
 
-	if (!showCommands || filteredCommands.length === 0) return null;
+	if (!showCommands || filteredCommands.length === 0) {
+		return null;
+	}
 
 	return (
 		<AnimatePresence>

@@ -4,11 +4,11 @@ import { Provider as ChatProvider, createChatStore } from "@ai-sdk-tools/store";
 import type { UIMessage } from "ai";
 import { useMemo } from "react";
 
-interface ChatProviderWrapperProps {
+type ChatProviderWrapperProps = {
 	chatId: string;
 	initialMessages: UIMessage[];
 	children: React.ReactNode;
-}
+};
 
 export function ChatProviderWrapper({
 	chatId,

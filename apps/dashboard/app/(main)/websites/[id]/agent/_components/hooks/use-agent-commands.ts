@@ -70,7 +70,9 @@ export function useAgentCommands() {
 
     const handleKeyDown = useCallback(
         (e: React.KeyboardEvent) => {
-            if (!showCommands || filteredCommands.length === 0) return false;
+            if (!showCommands || filteredCommands.length === 0) {
+                return false;
+            }
 
             switch (e.key) {
                 case "ArrowDown":

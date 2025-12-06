@@ -20,6 +20,11 @@ export const reflectionAgent = createAgent({
     model: models.advanced,
     temperature: 0.2,
     instructions: buildReflectionInstructions,
+    modelSettings: {
+        failureMode: {
+            maxAttempts: 2,
+        },
+    },
     handoffs: [analyticsAgent, funnelsAgent],
     maxTurns: 15,
 });
@@ -33,6 +38,11 @@ export const reflectionAgentHaiku = createAgent({
     model: models.analytics, // Haiku model
     temperature: 0.2,
     instructions: buildReflectionInstructions,
+    modelSettings: {
+        failureMode: {
+            maxAttempts: 2,
+        },
+    },
     handoffs: [analyticsAgent, funnelsAgent],
     maxTurns: 15,
 });
@@ -47,6 +57,11 @@ export const reflectionAgentMax = createAgent({
     model: models.advanced, // Sonnet model
     temperature: 0.2,
     instructions: buildReflectionInstructions,
+    modelSettings: {
+        failureMode: {
+            maxAttempts: 2,
+        },
+    },
     handoffs: [analyticsAgent, funnelsAgent],
     maxTurns: 20, // Increased from 15
 });

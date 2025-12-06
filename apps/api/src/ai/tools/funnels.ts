@@ -1,22 +1,10 @@
 import { appRouter, createRPCContext } from "@databuddy/rpc";
-import { ORPCError } from "@orpc/server";
+import { createRouterClient, ORPCError } from "@orpc/server";
 import { tool } from "ai";
+import dayjs from "dayjs";
 import { z } from "zod";
 import type { AppContext } from "../config/context";
 import { createToolLogger } from "./utils/logger";
-
-const stepSchema = z.object({
-    type: z.enum(["PAGE_VIEW", "EVENT", "CUSTOM"]),
-    target: z.string().min(1),
-    name: z.string().min(1),
-    conditions: z.record(z.string(), z.unknown()).optional(),
-});
-
-const filterSchema = z.object({
-    field: z.string(),
-    operator: z.enum(["equals", "contains", "not_equals", "in", "not_in"]),
-    value: z.union([z.string(), z.array(z.string())]),
-});
 
 const logger = createToolLogger("Funnels Tools");
 
@@ -27,54 +15,28 @@ async function callRPCProcedure(
     context: AppContext
 ) {
     try {
-        const headers = context.requestHeaders || new Headers();
+        const headers = context.requestHeaders ?? new Headers();
         const rpcContext = await createRPCContext({ headers });
 
-        const router = appRouter[routerName as keyof typeof appRouter];
-        if (!router) {
+        const router = appRouter[routerName as keyof typeof appRouter] as
+            | Record<string, unknown>
+            | undefined;
+        if (!router || typeof router !== "object") {
             throw new Error(`Router ${routerName} not found`);
         }
 
-        const procedure = router[method as keyof typeof router];
-        if (!procedure) {
-            throw new Error(`Procedure ${routerName}.${method} not found`);
-        }
+        const client = createRouterClient(router as any, {
+            context: rpcContext,
+        }) as Record<string, (input: unknown) => Promise<unknown>> | undefined;
 
-        // ORPC procedures can be called directly as functions
-        // They accept { context, input } as parameters
-        const procedureFn = procedure as unknown as (args: {
-            context: typeof rpcContext;
-            input: unknown;
-        }) => Promise<unknown>;
-
-        if (typeof procedureFn !== "function") {
-            // Fallback: try accessing .handler if it exists
-            const procedureWithHandler = procedure as {
-                handler?: (args: {
-                    context: typeof rpcContext;
-                    input: unknown;
-                }) => Promise<unknown>;
-            };
-
-            if (procedureWithHandler.handler) {
-                const result = await procedureWithHandler.handler({
-                    context: rpcContext,
-                    input,
-                });
-                return result;
-            }
-
+        const clientFn = client?.[method];
+        if (typeof clientFn !== "function") {
             throw new Error(
-                `Procedure ${routerName}.${method} is not callable. Expected a function or object with handler method.`
+                `Procedure ${routerName}.${method} not found or not callable.`
             );
         }
 
-        const result = await procedureFn({
-            context: rpcContext,
-            input,
-        });
-
-        return result;
+        return await clientFn(input);
     } catch (error) {
         if (error instanceof ORPCError) {
             logger.error("ORPC error", {
@@ -145,6 +107,7 @@ export function createFunnelTools(context: AppContext) {
         },
     });
 
+
     const getFunnelByIdTool = tool({
         description:
             "Get a specific funnel by ID. Returns detailed information including steps, filters, and configuration.",
@@ -169,149 +132,6 @@ export function createFunnelTools(context: AppContext) {
         },
     });
 
-    const createFunnelTool = tool({
-        description:
-            "Create a new funnel. Requires at least 2 steps and can have optional filters and configuration.",
-        inputSchema: z.object({
-            websiteId: z.string().describe("The website ID"),
-            name: z.string().min(1).max(100).describe("Funnel name"),
-            description: z.string().optional().describe("Funnel description"),
-            steps: z
-                .array(stepSchema)
-                .min(2)
-                .max(10)
-                .describe("Array of funnel steps (minimum 2, maximum 10)"),
-            filters: z
-                .array(filterSchema)
-                .optional()
-                .describe("Optional filters to apply to the funnel"),
-            ignoreHistoricData: z
-                .boolean()
-                .optional()
-                .describe("Whether to ignore data before funnel creation"),
-        }),
-        execute: async ({
-            websiteId,
-            name,
-            description,
-            steps,
-            filters,
-            ignoreHistoricData,
-        }) => {
-            try {
-                if (!steps || steps.length < 2) {
-                    throw new Error("A funnel must have at least 2 steps.");
-                }
-                if (steps.length > 10) {
-                    throw new Error("A funnel cannot have more than 10 steps.");
-                }
-
-                return await callRPCProcedure(
-                    "funnels",
-                    "create",
-                    { websiteId, name, description, steps, filters, ignoreHistoricData },
-                    context
-                );
-            } catch (error) {
-                logger.error("Failed to create funnel", {
-                    websiteId,
-                    name,
-                    stepsCount: steps?.length,
-                    error,
-                });
-                throw error instanceof Error
-                    ? error
-                    : new Error("Failed to create funnel. Please try again.");
-            }
-        },
-    });
-
-    const updateFunnelTool = tool({
-        description:
-            "Update an existing funnel. Can update name, description, steps, filters, and active status.",
-        inputSchema: z.object({
-            id: z.string().describe("The funnel ID to update"),
-            name: z
-                .string()
-                .min(1)
-                .max(100)
-                .optional()
-                .describe("Updated funnel name"),
-            description: z.string().optional().describe("Updated funnel description"),
-            steps: z
-                .array(stepSchema)
-                .min(2)
-                .max(10)
-                .optional()
-                .describe("Updated array of funnel steps"),
-            filters: z
-                .array(filterSchema)
-                .optional()
-                .describe("Updated filters to apply to the funnel"),
-            ignoreHistoricData: z
-                .boolean()
-                .optional()
-                .describe("Whether to ignore data before funnel creation"),
-            isActive: z.boolean().optional().describe("Whether the funnel is active"),
-        }),
-        execute: async ({
-            id,
-            name,
-            description,
-            steps,
-            filters,
-            ignoreHistoricData,
-            isActive,
-        }) => {
-            try {
-                if (steps && steps.length < 2) {
-                    throw new Error("A funnel must have at least 2 steps.");
-                }
-                if (steps && steps.length > 10) {
-                    throw new Error("A funnel cannot have more than 10 steps.");
-                }
-
-                return await callRPCProcedure(
-                    "funnels",
-                    "update",
-                    {
-                        id,
-                        name,
-                        description,
-                        steps,
-                        filters,
-                        ignoreHistoricData,
-                        isActive,
-                    },
-                    context
-                );
-            } catch (error) {
-                logger.error("Failed to update funnel", { id, error });
-                throw error instanceof Error
-                    ? error
-                    : new Error("Failed to update funnel. Please try again.");
-            }
-        },
-    });
-
-    const deleteFunnelTool = tool({
-        description:
-            "Delete a funnel by ID. This is a soft delete that marks the funnel as inactive.",
-        inputSchema: z.object({
-            id: z.string().describe("The funnel ID to delete"),
-        }),
-        execute: async ({ id }) => {
-            try {
-                return await callRPCProcedure("funnels", "delete", { id }, context);
-            } catch (error) {
-                logger.error("Failed to delete funnel", { id, error });
-                throw error instanceof Error
-                    ? error
-                    : new Error("Failed to delete funnel. Please try again.");
-            }
-        },
-    });
-
     const getFunnelAnalyticsTool = tool({
         description:
             "Get analytics data for a funnel. Returns conversion rates, drop-off points, and step-by-step metrics.",
@@ -329,12 +149,12 @@ export function createFunnelTools(context: AppContext) {
         }),
         execute: async ({ funnelId, websiteId, startDate, endDate }) => {
             try {
-                if (startDate && !/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+                if (startDate && !dayjs(startDate).isValid()) {
                     throw new Error(
                         "Start date must be in YYYY-MM-DD format (e.g., 2024-01-15)."
                     );
                 }
-                if (endDate && !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+                if (endDate && !dayjs(endDate).isValid()) {
                     throw new Error(
                         "End date must be in YYYY-MM-DD format (e.g., 2024-01-15)."
                     );
@@ -378,12 +198,12 @@ export function createFunnelTools(context: AppContext) {
         }),
         execute: async ({ funnelId, websiteId, startDate, endDate }) => {
             try {
-                if (startDate && !/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+                if (startDate && !dayjs(startDate).isValid()) {
                     throw new Error(
                         "Start date must be in YYYY-MM-DD format (e.g., 2024-01-15)."
                     );
                 }
-                if (endDate && !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+                if (endDate && !dayjs(endDate).isValid()) {
                     throw new Error(
                         "End date must be in YYYY-MM-DD format (e.g., 2024-01-15)."
                     );
@@ -413,16 +233,8 @@ export function createFunnelTools(context: AppContext) {
     });
 
     return {
-        // Read operations - cached for better performance
         list_funnels: listFunnelsTool,
         get_funnel_by_id: getFunnelByIdTool,
-
-        // Write operations - not cached
-        create_funnel: createFunnelTool,
-        update_funnel: updateFunnelTool,
-        delete_funnel: deleteFunnelTool,
-
-        // Analytics - cached for longer periods (expensive queries)
         get_funnel_analytics: getFunnelAnalyticsTool,
         get_funnel_analytics_by_referrer: getFunnelAnalyticsByReferrerTool,
     } as const;
