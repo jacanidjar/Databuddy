@@ -86,7 +86,7 @@ export function MetricsChartWithAnnotations({
 				end_date: dateRange.endDate.toISOString(),
 				granularity: "daily",
 			},
-			metrics: ["pageviews", "visitors", "sessions"],
+			metrics: ["pageviews", "sessions", "visitors"],
 		};
 	}, [dateRange, data]);
 
