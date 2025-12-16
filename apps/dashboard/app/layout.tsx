@@ -3,7 +3,6 @@ import "./globals.css";
 import { Databuddy } from "@databuddy/sdk/react";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
 import { Toaster } from "@/components/ui/sonner";
 import Providers from "./providers";
 
@@ -115,10 +114,6 @@ export default function RootLayout({
 			lang="en"
 			suppressHydrationWarning
 		>
-			<Script
-				crossOrigin="anonymous"
-				src="//unpkg.com/react-scan/dist/auto.global.js"
-			/>
 			<Databuddy
 				apiUrl={
 					isLocalhost ? "http://localhost:4000" : "https://basket.databuddy.cc"
