@@ -57,7 +57,6 @@ For any website, use the script tag method:
   code={`<script
     src="https://cdn.databuddy.cc/databuddy.js"
     data-client-id="your-client-id-here"
-    data-track-screen-views="true"
     data-track-performance="true"
     async
   ></script>`}
@@ -92,10 +91,9 @@ Add the `<Databuddy />` component to your root layout:
         <body>
           <Databuddy
             clientId={process.env.NEXT_PUBLIC_DATABUDDY_CLIENT_ID!}
-            trackScreenViews
             trackPerformance
-            trackWebVitals={true} // Default is false, explicitly enable for quick start
-            trackErrors={true} // Default is false, explicitly enable for quick start
+            trackWebVitals
+            trackErrors
           />
           {children}
         </body>
@@ -132,7 +130,6 @@ Add the script to your HTML before the closing `</body>` tag:
       <script
         src="https://cdn.databuddy.cc/databuddy.js"
         data-client-id="your-client-id-here"
-        data-track-screen-views="true"
         data-track-performance="true"
         data-track-web-vitals="true"
         data-track-errors="true"
@@ -184,15 +181,14 @@ Check that analytics are working correctly:
   code={`<Databuddy
     clientId="your-client-id"
     // Core tracking (recommended for all sites)
-    trackScreenViews={true} // Track page/route changes
-    trackPerformance={true} // Track loading times
-    trackWebVitals={true} // Track Core Web Vitals
-    trackErrors={true} // Track JavaScript errors
+    trackPerformance // Track loading times
+    trackWebVitals // Track Core Web Vitals
+    trackErrors // Track JavaScript errors
     // Optional tracking (enable as needed)
-    trackSessions={true} // Track user sessions
-    trackOutgoingLinks={false} // Track external link clicks
-    trackScrollDepth={false} // Track scroll behavior
-    trackEngagement={false} // Track user engagement
+    trackOutgoingLinks // Track external link clicks
+    trackScrollDepth // Track scroll behavior
+    trackInteractions // Track button clicks and form submissions
+    trackAttributes // Track elements with data-track attributes
   />`}
 />
 
@@ -205,11 +201,9 @@ Check that analytics are working correctly:
   code={`<script
     src="https://cdn.databuddy.cc/databuddy.js"
     data-client-id="your-client-id"
-    data-track-screen-views="true"
     data-track-performance="true"
     data-track-web-vitals="true"
     data-track-errors="true"
-    data-track-sessions="true"
     data-track-outgoing-links="false"
     data-enable-batching="true"
     data-batch-size="10"
@@ -242,7 +236,6 @@ const isProduction = process.env.NODE_ENV === "production";
     clientId={process.env.NEXT_PUBLIC_DATABUDDY_CLIENT_ID!}
     disabled={isDevelopment} // 🚫 No tracking in development
     // Core tracking
-    trackScreenViews
     trackPerformance
     trackWebVitals={isProduction}
     trackErrors={isProduction}

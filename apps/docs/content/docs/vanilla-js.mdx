@@ -44,14 +44,13 @@ Configure the tracker using data attributes on the script tag:
 ## Available Options
 
 <Cards>
-  <Card title="trackScreenViews" description="Auto-track page views on navigation (default: true)" />
   <Card title="trackHashChanges" description="Track hash changes in URL (default: false)" />
   <Card title="trackAttributes" description="Track data-track attributes (default: false)" />
   <Card title="trackOutgoingLinks" description="Track clicks on external links (default: false)" />
-  <Card title="trackSessions" description="Track user sessions (default: true)" />
+  <Card title="trackInteractions" description="Track button clicks and form submissions (default: false)" />
+  <Card title="trackScrollDepth" description="Track scroll depth milestones (default: false)" />
   <Card title="trackPerformance" description="Include performance metrics (default: true)" />
   <Card title="trackWebVitals" description="Track Core Web Vitals (default: false)" />
-  <Card title="trackEngagement" description="Track engagement metrics (default: false)" />
   <Card title="trackErrors" description="Track JavaScript errors (default: false)" />
   <Card title="enableBatching" description="Batch events before sending (default: false)" />
   <Card title="batchSize" description="Events per batch when batching enabled (default: 10)" />
@@ -312,7 +311,6 @@ Opt-out is stored in localStorage and persists across sessions.
   <script
     src="https://cdn.databuddy.cc/databuddy.js"
     data-client-id="your-client-id"
-    data-track-screen-views="true"
     data-track-performance="true"
     data-track-errors="true"
     data-enable-batching="true"

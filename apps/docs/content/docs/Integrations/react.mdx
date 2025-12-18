@@ -33,9 +33,8 @@ function App() {
   return (
     <>
       <Databuddy 
-        clientId="YOUR_SITE_ID" 
-        trackScreenViews={true}
-        trackAttributes={true}
+        clientId="YOUR_CLIENT_ID" 
+        trackAttributes
       />
       <YourAppContent />
     </>
@@ -167,30 +166,28 @@ function ProductCard({ product }) {
 
 ## Configuration Options
 
-### Advanced Provider Setup
+### Advanced Configuration
 
 ```tsx
-import { DatabuddyProvider } from '@databuddy/react';
+import { Databuddy } from '@databuddy/sdk/react';
 
 function App() {
   return (
-    <DatabuddyProvider
-      siteId="YOUR_SITE_ID"
-      config={{
-        trackScreenViews: true,
-        trackHashChanges: true,
-        trackAttributes: true,
-        trackOutgoingLinks: true,
-        trackPerformance: true,
-        trackWebVitals: true,
-        enableBatching: true,
-        batchSize: 10,
-        batchTimeout: 2000
-      }}
-      debug={process.env.NODE_ENV === 'development'}
-    >
+    <>
+      <Databuddy
+        clientId={process.env.REACT_APP_DATABUDDY_CLIENT_ID!}
+        trackHashChanges
+        trackAttributes
+        trackOutgoingLinks
+        trackPerformance
+        trackWebVitals
+        enableBatching
+        batchSize={10}
+        batchTimeout={2000}
+        debug={process.env.NODE_ENV === 'development'}
+      />
       <YourAppContent />
-    </DatabuddyProvider>
+    </>
   );
 }
 ```
@@ -221,12 +218,10 @@ function CallToAction() {
 Track form interactions and submissions:
 
 ```tsx
-import { useDatabuddy } from '@databuddy/react';
+import { track } from '@databuddy/sdk';
 
 function ContactForm() {
-  const { track } = useDatabuddy();
-
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     track('form_submit', {
       form_name: 'contact',
@@ -259,11 +254,10 @@ function ContactForm() {
 ### Purchase Events
 
 ```tsx
-import { useDatabuddy } from '@databuddy/react';
+import { useEffect } from 'react';
+import { track } from '@databuddy/sdk';
 
 function CheckoutSuccess({ order }) {
-  const { track } = useDatabuddy();
-
   useEffect(() => {
     track('purchase', {
       transaction_id: order.id,
@@ -277,7 +271,7 @@ function CheckoutSuccess({ order }) {
         price: item.price
       }))
     });
-  }, [order, track]);
+  }, [order]);
 
   return <div>Thank you for your purchase!</div>;
 }
@@ -286,9 +280,9 @@ function CheckoutSuccess({ order }) {
 ### Cart Events
 
 ```tsx
-function AddToCartButton({ product }) {
-  const { track } = useDatabuddy();
+import { track } from '@databuddy/sdk';
 
+function AddToCartButton({ product }) {
   const handleAddToCart = () => {
     track('add_to_cart', {
       currency: 'USD',
@@ -316,16 +310,14 @@ function AddToCartButton({ product }) {
 ### Error Boundaries
 
 ```tsx
-import { useDatabuddy } from '@databuddy/react';
+import { track } from '@databuddy/sdk';
 
 function ErrorBoundary({ children }) {
-  const { track } = useDatabuddy();
-
   const handleError = (error: Error, errorInfo: any) => {
-    track('exception', {
-      description: error.message,
-      fatal: false,
-      error_stack: error.stack,
+    track('error', {
+      message: error.message,
+      error_type: 'react_error_boundary',
+      stack: error.stack,
       component_stack: errorInfo.componentStack
     });
   };
@@ -346,11 +338,10 @@ function ErrorBoundary({ children }) {
 ### Custom Performance Metrics
 
 ```tsx
-import { useDatabuddy } from '@databuddy/react';
+import { useEffect } from 'react';
+import { track } from '@databuddy/sdk';
 
 function DataDashboard() {
-  const { track } = useDatabuddy();
-
   useEffect(() => {
     const startTime = performance.now();
     
@@ -363,7 +354,7 @@ function DataDashboard() {
         data_size: 'large'
       });
     });
-  }, [track]);
+  }, []);
 
   return <div>Dashboard content</div>;
 }
@@ -374,22 +365,9 @@ function DataDashboard() {
 ### Type-Safe Event Tracking
 
 ```tsx
-import { useDatabuddy } from '@databuddy/react';
-
-interface CustomEvents {
-  button_click: {
-    button_text: string;
-    location: string;
-  };
-  form_submit: {
-    form_name: string;
-    form_location: string;
-  };
-}
+import { track } from '@databuddy/sdk';
 
 function TypedComponent() {
-  const { track } = useDatabuddy<CustomEvents>();
-
   const handleClick = () => {
     // TypeScript will ensure correct event properties
     track('button_click', {
@@ -407,27 +385,28 @@ function TypedComponent() {
 ### 1. Environment-Based Configuration
 
 ```tsx
-const config = {
-  siteId: process.env.REACT_APP_DATABUDDY_SITE_ID,
-  debug: process.env.NODE_ENV === 'development',
-  disabled: process.env.NODE_ENV === 'test'
-};
+<Databuddy
+  clientId={process.env.REACT_APP_DATABUDDY_CLIENT_ID!}
+  debug={process.env.NODE_ENV === 'development'}
+  disabled={process.env.NODE_ENV === 'test'}
+/>
 ```
 
-### 2. Lazy Loading
+### 2. Conditional Loading
 
 ```tsx
-import { lazy, Suspense } from 'react';
-
-const DatabuddyProvider = lazy(() => import('@databuddy/react'));
+import { Databuddy } from '@databuddy/sdk/react';
 
 function App() {
+  const shouldTrack = process.env.NODE_ENV === 'production';
+  
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <DatabuddyProvider siteId="YOUR_SITE_ID">
-        <YourAppContent />
-      </DatabuddyProvider>
-    </Suspense>
+    <>
+      {shouldTrack && (
+        <Databuddy clientId={process.env.REACT_APP_DATABUDDY_CLIENT_ID!} />
+      )}
+      <YourAppContent />
+    </>
   );
 }
 ```
@@ -435,21 +414,23 @@ function App() {
 ### 3. Custom Hook for Analytics
 
 ```tsx
-import { useDatabuddy } from '@databuddy/react';
+import { useCallback } from 'react';
+import { track } from '@databuddy/sdk';
 
 export function useAnalytics() {
-  const { track } = useDatabuddy();
+  const trackButtonClick = useCallback((buttonText: string, location: string) => {
+    track('button_click', { button_text: buttonText, location });
+  }, []);
+  
+  const trackPageView = useCallback((pageName: string, category?: string) => {
+    track('screen_view', { screen_name: pageName, screen_class: category });
+  }, []);
+  
+  const trackError = useCallback((error: Error, context?: string) => {
+    track('error', { message: error.message, error_type: 'custom', context });
+  }, []);
 
-  return {
-    trackButtonClick: (buttonText: string, location: string) =>
-      track('button_click', { button_text: buttonText, location }),
-    
-    trackPageView: (pageName: string, category?: string) =>
-      track('screen_view', { screen_name: pageName, screen_class: category }),
-    
-    trackError: (error: Error, context?: string) =>
-      track('exception', { description: error.message, context })
-  };
+  return { trackButtonClick, trackPageView, trackError };
 }
 ```
 

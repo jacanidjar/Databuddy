@@ -37,9 +37,8 @@ export default function RootLayout({
       <body>
         <Databuddy 
           clientId={process.env.NEXT_PUBLIC_DATABUDDY_CLIENT_ID!}
-          trackScreenViews={true}
-          trackHashChanges={true}
-          trackAttributes={true}
+          trackHashChanges
+          trackAttributes
         />
         {children}
       </body>
@@ -94,7 +93,6 @@ export default function RootLayout({
       <body>
         <Databuddy 
           clientId={process.env.NEXT_PUBLIC_DATABUDDY_CLIENT_ID!}
-          trackScreenViews={true}
         />
         {children}
         <Analytics />
@@ -137,8 +135,7 @@ function MyApp({ Component, pageProps }: AppProps) {
     <>
       <Databuddy 
         clientId={process.env.NEXT_PUBLIC_DATABUDDY_CLIENT_ID!}
-        trackScreenViews={true}
-        trackAttributes={true}
+        trackAttributes
       />
       <Component {...pageProps} />
     </>
@@ -163,7 +160,6 @@ export default function Document() {
         <script
           src="https://cdn.databuddy.cc/databuddy.js"
           data-client-id={process.env.NEXT_PUBLIC_DATABUDDY_CLIENT_ID}
-          data-track-screen-views="true"
           async
         />
       </Head>
@@ -292,21 +288,19 @@ export default function RootLayout({
         <Databuddy 
           clientId={process.env.NEXT_PUBLIC_DATABUDDY_CLIENT_ID!}
           // Core tracking
-          trackScreenViews={true}
-          trackHashChanges={true}
-          trackSessions={true}
+          trackHashChanges
           
           // Interaction tracking
-          trackAttributes={true}
-          trackOutgoingLinks={true}
-          trackInteractions={true}
+          trackAttributes
+          trackOutgoingLinks
+          trackInteractions
           
           // Performance tracking
-          trackPerformance={true}
-          trackWebVitals={true}
+          trackPerformance
+          trackWebVitals
           
           // Optimization
-          enableBatching={true}
+          enableBatching
           batchSize={10}
           batchTimeout={2000}
           
@@ -339,8 +333,7 @@ export default function RootLayout({
         {process.env.NODE_ENV === 'production' && (
           <Databuddy 
             clientId={process.env.NEXT_PUBLIC_DATABUDDY_CLIENT_ID!}
-            trackScreenViews={true}
-            trackAttributes={true}
+            trackAttributes
           />
         )}
         {children}

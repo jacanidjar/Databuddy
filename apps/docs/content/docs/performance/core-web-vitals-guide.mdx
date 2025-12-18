@@ -293,12 +293,13 @@ Monitor actual user experiences:
 
 ```javascript
 // Databuddy provides automatic RUM
-databuddy.init({
-  clientId: 'your-client-id',
-  trackPerformance: true, // Enables Core Web Vitals tracking
-  trackErrors: true,
-  trackScreenViews: true
-});
+// Screen views are tracked automatically
+<Databuddy
+  clientId="your-client-id"
+  trackPerformance // Enables Core Web Vitals tracking
+  trackWebVitals
+  trackErrors
+/>
 ```
 
 ### Lab Testing Tools

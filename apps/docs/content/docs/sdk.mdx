@@ -176,9 +176,7 @@ These features are **enabled by default**:
 
 | Feature | Default | Description |
 |---------|---------|-------------|
-| `trackScreenViews` | `true` | Page views and route changes |
 | `trackPerformance` | `true` | Page load times and navigation timing |
-| `trackSessions` | `true` | User sessions with 30-minute timeout |
 
 ### Optional Features
 
@@ -190,9 +188,9 @@ Enable additional tracking as needed:
 | `trackErrors` | `false` | JavaScript errors and unhandled rejections |
 | `trackOutgoingLinks` | `false` | Clicks on external links |
 | `trackScrollDepth` | `false` | Scroll depth milestones (25%, 50%, 75%, 100%) |
-| `trackEngagement` | `false` | Time on page and interaction counts |
 | `trackInteractions` | `false` | Button clicks and form submissions |
 | `trackAttributes` | `false` | Elements with `data-track` attributes |
+| `trackHashChanges` | `false` | Track hash changes in the URL |
 
 ### Example Configuration
 
@@ -208,7 +206,6 @@ import { Databuddy } from "@databuddy/sdk/react";
   trackErrors
   trackOutgoingLinks
   trackScrollDepth
-  trackEngagement
   enableBatching
   batchSize={20}
   batchTimeout={5000}
@@ -540,7 +537,7 @@ The SDK automatically tracks these events when enabled:
 
 | Event | Trigger | Key Properties |
 |-------|---------|----------------|
-| `screen_view` | `trackScreenViews={true}` | `time_on_page`, `scroll_depth`, `interaction_count`, `has_exit_intent`, `is_bounce` |
+| `screen_view` | Automatic | `time_on_page`, `scroll_depth`, `interaction_count`, `has_exit_intent`, `is_bounce` |
 | `page_exit` | Automatic on page unload | `time_on_page`, `scroll_depth`, `interaction_count`, `has_exit_intent`, `page_count`, `is_bounce` |
 | `button_click` | `trackInteractions={true}` | `button_text`, `button_id`, `button_type`, `element_class` |
 | `form_submit` | `trackInteractions={true}` | `form_id`, `form_name`, `form_type`, `success` |
