@@ -99,11 +99,11 @@ const app = new Elysia()
 				return new Response(
 					JSON.stringify({
 						error: "Missing required headers",
-						details: parsed.error.format()
+						details: parsed.error.format(),
 					}),
 					{
 						status: 400,
-						headers: { "Content-Type": "application/json" }
+						headers: { "Content-Type": "application/json" },
 					}
 				);
 			}
@@ -132,11 +132,11 @@ const app = new Elysia()
 					JSON.stringify({
 						error: "Schedule not found",
 						scheduleId,
-						details: schedule.error
+						details: schedule.error,
 					}),
 					{
 						status: 404,
-						headers: { "Content-Type": "application/json" }
+						headers: { "Content-Type": "application/json" },
 					}
 				);
 			}
@@ -147,7 +147,12 @@ const app = new Elysia()
 				? Number.parseInt(parsed.data["upstash-retried"], 10) + 3
 				: 3;
 
-			const result = await checkUptime(monitorId, schedule.data.url, 1, maxRetries);
+			const result = await checkUptime(
+				monitorId,
+				schedule.data.url,
+				1,
+				maxRetries
+			);
 
 			if (!result.success) {
 				console.error("Uptime check failed:", result.error);

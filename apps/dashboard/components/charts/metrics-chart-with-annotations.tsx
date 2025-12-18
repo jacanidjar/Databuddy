@@ -114,11 +114,9 @@ export function MetricsChartWithAnnotations({
 				? new Date(annotation.xEndValue)
 				: annotationStart;
 
-			return (
-				(annotationStart >= startDate && annotationStart <= endDate) ||
-				(annotationEnd >= startDate && annotationEnd <= endDate) ||
-				(annotationStart <= startDate && annotationEnd >= endDate)
-			);
+			// Check if annotation range overlaps with visible chart range
+			// Two ranges overlap if: annotationStart <= endDate && annotationEnd >= startDate
+			return annotationStart <= endDate && annotationEnd >= startDate;
 		});
 	}, [allAnnotations, dateRange]);
 

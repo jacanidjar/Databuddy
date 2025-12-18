@@ -23,10 +23,7 @@ import {
 	ANNOTATION_STORAGE_KEYS,
 	CHART_ANNOTATION_STYLES,
 } from "@/lib/annotation-constants";
-import {
-	getChartDisplayDate,
-	isSingleDayAnnotation,
-} from "@/lib/annotation-utils";
+import { isSingleDayAnnotation } from "@/lib/annotation-utils";
 import { cn } from "@/lib/utils";
 import {
 	metricVisibilityAtom,
@@ -466,7 +463,7 @@ export function MetricsChart({
 				<div className="flex items-center justify-center p-8">
 					<div className="flex flex-col items-center py-12 text-center">
 						<div className="relative flex size-12 items-center justify-center rounded bg-accent">
-							<ChartLineIcon className="size-6 text-muted-foreground" />
+							<ChartLineIcon className="size-6 text-foreground" />
 						</div>
 						<p className="mt-6 font-medium text-foreground text-lg">
 							No data available
@@ -489,14 +486,14 @@ export function MetricsChart({
 			{annotations.length > 0 && (
 				<div className="flex items-center justify-between border-b bg-accent px-4 py-2">
 					<div className="flex items-center gap-3">
-						<span className="text-muted-foreground text-sm">
+						<span className="text-foreground text-sm">
 							{annotations.length} annotation
 							{annotations.length !== 1 ? "s" : ""} on this chart
 						</span>
 						{onToggleAnnotations !== undefined && (
 							<div className="flex items-center gap-2">
 								<Label
-									className="text-muted-foreground text-xs"
+									className="text-foreground text-xs"
 									htmlFor="show-annotations"
 								>
 									Show annotations
@@ -639,20 +636,69 @@ export function MetricsChart({
 
 							{showAnnotations === true &&
 								annotations.map((annotation, index) => {
-									const startDate = getChartDisplayDate(
-										annotation.xValue,
-										granularity
-									);
+									if (!chartData.length) {
+										return null;
+									}
+
+									const chartFirst = chartData[0];
+									const chartLast = chartData.at(-1);
+									if (!(chartFirst && chartLast)) {
+										return null;
+									}
+
+									const annotationStart = dayjs(annotation.xValue).toDate();
+									const annotationEnd = annotation.xEndValue
+										? dayjs(annotation.xEndValue).toDate()
+										: annotationStart;
+
+									const chartStart = dayjs(
+										(chartFirst as ChartDataRow & { rawDate?: string })
+											.rawDate || chartFirst.date
+									).toDate();
+									const chartEnd = dayjs(
+										(chartLast as ChartDataRow & { rawDate?: string })
+											.rawDate || chartLast.date
+									).toDate();
+
+									if (
+										annotationEnd < chartStart ||
+										annotationStart > chartEnd
+									) {
+										return null;
+									}
+
+									let clampedStart = chartFirst.date;
+									for (const point of chartData) {
+										const pointDate = dayjs(
+											(point as ChartDataRow & { rawDate?: string }).rawDate ||
+												point.date
+										).toDate();
+										if (pointDate >= annotationStart) {
+											clampedStart = point.date;
+											break;
+										}
+									}
+
+									let clampedEnd = chartLast.date;
+									for (let i = chartData.length - 1; i >= 0; i--) {
+										const point = chartData[i];
+										if (!point) {
+											continue;
+										}
+										const pointDate = dayjs(
+											(point as ChartDataRow & { rawDate?: string }).rawDate ||
+												point.date
+										).toDate();
+										if (pointDate <= annotationEnd) {
+											clampedEnd = point.date;
+											break;
+										}
+									}
 
 									if (
 										annotation.annotationType === "range" &&
 										annotation.xEndValue
 									) {
-										const endDate = getChartDisplayDate(
-											annotation.xEndValue,
-											granularity
-										);
-
 										const isSingleDay = isSingleDayAnnotation(annotation);
 
 										if (isSingleDay) {
@@ -672,7 +718,7 @@ export function MetricsChart({
 														CHART_ANNOTATION_STYLES.strokeDasharray
 													}
 													strokeWidth={CHART_ANNOTATION_STYLES.strokeWidth}
-													x={startDate}
+													x={clampedStart}
 												/>
 											);
 										}
@@ -694,13 +740,12 @@ export function MetricsChart({
 												strokeDasharray="3 3"
 												strokeOpacity={CHART_ANNOTATION_STYLES.strokeOpacity}
 												strokeWidth={2}
-												x1={startDate}
-												x2={endDate}
+												x1={clampedStart}
+												x2={clampedEnd}
 											/>
 										);
 									}
 
-									// Point or line annotations
 									return (
 										<ReferenceLine
 											key={annotation.id}
@@ -715,7 +760,7 @@ export function MetricsChart({
 											stroke={annotation.color}
 											strokeDasharray={CHART_ANNOTATION_STYLES.strokeDasharray}
 											strokeWidth={CHART_ANNOTATION_STYLES.strokeWidth}
-											x={startDate}
+											x={clampedStart}
 										/>
 									);
 								})}

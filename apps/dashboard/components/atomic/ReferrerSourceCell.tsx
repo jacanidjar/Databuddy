@@ -3,6 +3,7 @@
 import type React from "react";
 import { cn } from "@/lib/utils";
 import { FaviconImage } from "../analytics/favicon-image";
+import { TruncatedText } from "../ui/truncated-text";
 
 export type ReferrerSourceCellData = {
 	name?: string;
@@ -23,24 +24,24 @@ export const ReferrerSourceCell: React.FC<ReferrerSourceCellProps> = ({
 	className,
 }) => {
 	const displayName = name || referrer || "Direct";
+	const textClassName = className
+		? `${className} font-medium text-sm`
+		: "font-medium text-sm";
 
 	if (displayName === "Direct" || !domain) {
 		return (
-			<span
-				className={
-					className ? `${className} font-medium text-sm` : "font-medium text-sm"
-				}
+			<TruncatedText
+				className={cn("truncate", textClassName)}
 				id={id}
-			>
-				{displayName}
-			</span>
+				text={displayName}
+			/>
 		);
 	}
 
 	return (
 		<a
 			className={cn(
-				"flex cursor-pointer items-center gap-2 font-medium text-sm hover:text-foreground hover:underline",
+				"flex min-w-0 cursor-pointer items-center gap-2 hover:text-foreground hover:underline",
 				className
 			)}
 			href={`https://${domain.trim()}`}
@@ -53,11 +54,14 @@ export const ReferrerSourceCell: React.FC<ReferrerSourceCellProps> = ({
 		>
 			<FaviconImage
 				altText={`${displayName} favicon`}
-				className="rounded-sm"
+				className="shrink-0 rounded-sm"
 				domain={domain}
 				size={16}
 			/>
-			{displayName}
+			<TruncatedText
+				className={cn("min-w-0 truncate", textClassName)}
+				text={displayName}
+			/>
 		</a>
 	);
 };

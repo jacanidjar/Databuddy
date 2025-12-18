@@ -7,9 +7,13 @@ const timestampSchema = z
 	.gte(MIN_TIMESTAMP)
 	.nullable()
 	.optional()
-	.refine((val) => val == null || val <= Date.now() + MAX_FUTURE_MS, {
-		message: "Timestamp too far in the future (max 1 hour ahead)",
-	});
+	.refine(
+		(val) =>
+			val === null || val === undefined || val <= Date.now() + MAX_FUTURE_MS,
+		{
+			message: "Timestamp too far in the future (max 1 hour ahead)",
+		}
+	);
 
 // Old format (v1.x): aggregated vitals in payload
 export const webVitalsEventSchema = z.object({

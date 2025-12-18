@@ -54,7 +54,7 @@ export function AnnotationsPanel({
 		<>
 			<Sheet onOpenChange={setIsOpen} open={isOpen}>
 				<SheetTrigger asChild>
-					<Button className="gap-2" size="sm" variant="outline">
+					<Button className="gap-2" size="sm" variant="secondary">
 						<NoteIcon className="size-4" weight="duotone" />
 						Annotations ({annotations.length})
 					</Button>
@@ -230,7 +230,7 @@ export function AnnotationsPanel({
 				onConfirm={handleDelete}
 				title="Delete Annotation"
 			>
-				{annotationToDelete && (
+				{annotationToDelete ? (
 					<div className="rounded border bg-card p-3">
 						<div className="flex items-start gap-3">
 							<div
@@ -253,7 +253,7 @@ export function AnnotationsPanel({
 							</div>
 						</div>
 					</div>
-				)}
+				) : null}
 			</DeleteDialog>
 		</>
 	);

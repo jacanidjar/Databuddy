@@ -1,15 +1,16 @@
 import type { CellContext, ColumnDef } from "@tanstack/react-table";
 import { PercentageBadge } from "@/components/ui/percentage-badge";
+import { TruncatedText } from "@/components/ui/truncated-text";
 
-export interface PageEntry {
+export type PageEntry = {
 	name: string;
 	visitors: number;
 	pageviews: number;
 	percentage: number;
-}
+};
 
 const formatNumber = (value: number | null | undefined): string => {
-	if (value == null || Number.isNaN(value)) {
+	if (value === null || value === undefined || Number.isNaN(value)) {
 		return "0";
 	}
 	return Intl.NumberFormat(undefined, {
@@ -27,9 +28,10 @@ export function createPageColumns(): ColumnDef<PageEntry>[] {
 			cell: ({ getValue }: CellContext<PageEntry, any>) => {
 				const name = (getValue() as string) || "";
 				return (
-					<span className="font-medium text-foreground" title={name}>
-						{name}
-					</span>
+					<TruncatedText
+						className="truncate font-medium text-foreground"
+						text={name}
+					/>
 				);
 			},
 		},

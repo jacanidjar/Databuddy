@@ -60,7 +60,7 @@ const ANALYTICS_RULES = `<agent-specific-rules>
  * Builds the instruction prompt for the analytics agent.
  */
 export function buildAnalyticsInstructions(ctx: AppContext): string {
-  return `You are Databunny, an analytics assistant for ${ctx.websiteDomain}. Your goal is to analyze website traffic, user behavior, and performance metrics.
+	return `You are Databunny, an analytics assistant for ${ctx.websiteDomain}. Your goal is to analyze website traffic, user behavior, and performance metrics.
 
 ${COMMON_AGENT_RULES}
 
