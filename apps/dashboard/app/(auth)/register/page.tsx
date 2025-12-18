@@ -533,16 +533,16 @@ function RegisterPageContent() {
 				<div className="mt-4 text-center">
 					<p className="text-muted-foreground text-sm">
 						Already have an account?{" "}
-					<Link
-						className="h-auto flex-1 cursor-pointer p-0 text-right font-medium text-[13px] text-accent-foreground duration-200 hover:text-accent-foreground/60"
-						href={
-							callback
-								? `/login?callback=${encodeURIComponent(callback)}`
-								: "/login"
-						}
-					>
-						Sign in
-					</Link>
+						<Link
+							className="h-auto flex-1 cursor-pointer p-0 text-right font-medium text-[13px] text-accent-foreground duration-200 hover:text-accent-foreground/60"
+							href={
+								callback
+									? `/login?callback=${encodeURIComponent(callback)}`
+									: "/login"
+							}
+						>
+							Sign in
+						</Link>
 					</p>
 				</div>
 			)}

@@ -62,7 +62,10 @@ async function createQStashSchedule(
 		scheduleId,
 		destination: UPTIME_URL_GROUP,
 		cron: CRON_GRANULARITIES[granularity],
-		headers: { "Content-Type": "application/json", "X-Schedule-Id": scheduleId },
+		headers: {
+			"Content-Type": "application/json",
+			"X-Schedule-Id": scheduleId,
+		},
 	});
 }
 
@@ -70,9 +73,14 @@ function triggerInitialCheck(scheduleId: string) {
 	client
 		.publish({
 			urlGroup: UPTIME_URL_GROUP,
-			headers: { "Content-Type": "application/json", "X-Schedule-Id": scheduleId },
+			headers: {
+				"Content-Type": "application/json",
+				"X-Schedule-Id": scheduleId,
+			},
 		})
-		.catch((error) => logger.error({ scheduleId, error }, "Initial check failed"));
+		.catch((error) =>
+			logger.error({ scheduleId, error }, "Initial check failed")
+		);
 }
 
 export const uptimeRouter = {
@@ -175,7 +183,9 @@ export const uptimeRouter = {
 			try {
 				await createQStashSchedule(scheduleId, input.granularity);
 			} catch (error) {
-				await db.delete(uptimeSchedules).where(eq(uptimeSchedules.id, scheduleId));
+				await db
+					.delete(uptimeSchedules)
+					.where(eq(uptimeSchedules.id, scheduleId));
 				logger.error({ scheduleId, error }, "QStash failed, rolled back");
 				throw new ORPCError("INTERNAL_SERVER_ERROR", {
 					message: "Failed to create monitor",
@@ -227,7 +237,9 @@ export const uptimeRouter = {
 
 			await Promise.all([
 				client.schedules.delete(input.scheduleId),
-				db.delete(uptimeSchedules).where(eq(uptimeSchedules.id, input.scheduleId)),
+				db
+					.delete(uptimeSchedules)
+					.where(eq(uptimeSchedules.id, input.scheduleId)),
 			]);
 
 			logger.info({ scheduleId: input.scheduleId }, "Schedule deleted");
@@ -296,7 +308,10 @@ export const uptimeRouter = {
 						.where(eq(uptimeSchedules.id, input.scheduleId)),
 				]);
 			} catch (error) {
-				logger.error({ scheduleId: input.scheduleId, error }, "Failed to pause");
+				logger.error(
+					{ scheduleId: input.scheduleId, error },
+					"Failed to pause"
+				);
 				throw new ORPCError("INTERNAL_SERVER_ERROR", {
 					message: "Failed to pause monitor",
 				});
@@ -326,7 +341,10 @@ export const uptimeRouter = {
 						.where(eq(uptimeSchedules.id, input.scheduleId)),
 				]);
 			} catch (error) {
-				logger.error({ scheduleId: input.scheduleId, error }, "Failed to resume");
+				logger.error(
+					{ scheduleId: input.scheduleId, error },
+					"Failed to resume"
+				);
 				throw new ORPCError("INTERNAL_SERVER_ERROR", {
 					message: "Failed to resume monitor",
 				});

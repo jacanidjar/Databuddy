@@ -147,8 +147,8 @@ function generatePageTitle(path: string): string {
 			downlink: undefined,
 			time_on_page: isPageExit
 				? Math.round(
-					faker.number.float({ min: 5, max: 600, fractionDigits: 1 })
-				)
+						faker.number.float({ min: 5, max: 600, fractionDigits: 1 })
+					)
 				: undefined,
 			scroll_depth: isPageExit
 				? faker.number.float({ min: 10, max: 100, fractionDigits: 1 })

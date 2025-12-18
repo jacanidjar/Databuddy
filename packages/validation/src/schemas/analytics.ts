@@ -50,9 +50,13 @@ const timestampSchema = z
 	.gte(MIN_TIMESTAMP)
 	.nullable()
 	.optional()
-	.refine((val) => val == null || val <= Date.now() + MAX_FUTURE_MS, {
-		message: "Timestamp too far in the future (max 1 hour ahead)",
-	});
+	.refine(
+		(val) =>
+			val === null || val === undefined || val <= Date.now() + MAX_FUTURE_MS,
+		{
+			message: "Timestamp too far in the future (max 1 hour ahead)",
+		}
+	);
 
 export const analyticsEventSchema = z.object({
 	eventId: z.string().max(VALIDATION_LIMITS.EVENT_ID_MAX_LENGTH),

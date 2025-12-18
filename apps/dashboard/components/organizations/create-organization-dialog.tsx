@@ -63,11 +63,8 @@ export function CreateOrganizationDialog({
 	isOpen,
 	onClose,
 }: CreateOrganizationDialogProps) {
-	const {
-		createOrganization,
-		isCreatingOrganization,
-		setActiveOrganization,
-	} = useOrganizations();
+	const { createOrganization, isCreatingOrganization, setActiveOrganization } =
+		useOrganizations();
 	// const router = useRouter();
 
 	// Form state

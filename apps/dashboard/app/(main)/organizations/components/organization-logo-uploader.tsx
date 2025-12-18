@@ -252,9 +252,7 @@ export function OrganizationLogoUploader({
 							Cancel
 						</Button>
 						<Button
-							disabled={
-								isUpdatingOrganization || !imageSrc || !completedCrop
-							}
+							disabled={isUpdatingOrganization || !imageSrc || !completedCrop}
 							onClick={handleUpload}
 						>
 							{isUpdatingOrganization ? (
