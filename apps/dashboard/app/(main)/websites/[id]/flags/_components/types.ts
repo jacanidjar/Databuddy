@@ -84,17 +84,3 @@ export type UserRulesBuilderProps = {
 	rules: UserRule[];
 	onChange: (rules: UserRule[]) => void;
 };
-
-export type FlagRowProps = {
-	flag: Flag;
-	onEditAction: () => void;
-	isExpanded?: boolean;
-	onToggleAction?: (flagId: string) => void;
-	children?: React.ReactNode;
-};
-
-export type FlagActionsProps = {
-	flag: Flag;
-	onEditAction: () => void;
-	onDeletedAction?: () => void;
-};
