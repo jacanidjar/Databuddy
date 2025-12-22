@@ -117,7 +117,7 @@ export const EmptyState = memo(function EmptyState({
 				{showPlusBadge && (
 					<button
 						aria-label="Create new item"
-						className="-top-2 -right-2 absolute cursor-pointer select-none rounded-full border-2 border-primary/10 bg-background p-2"
+						className="absolute -top-2 -right-2 cursor-pointer select-none rounded-full border-2 border-primary/10 bg-background p-2"
 						onClick={(e) => {
 							e.stopPropagation();
 							action?.onClick();

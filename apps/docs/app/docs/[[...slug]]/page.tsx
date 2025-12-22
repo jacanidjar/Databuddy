@@ -16,7 +16,7 @@ export default async function Page(props: {
 		notFound();
 	}
 
-	const MDX = await page.data.body
+	const MDX = await page.data.body;
 
 	return (
 		<DocsPage

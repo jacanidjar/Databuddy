@@ -32,14 +32,14 @@ export type Flag = {
 export type UserRule = {
 	type: "user_id" | "email" | "property";
 	operator:
-	| "equals"
-	| "contains"
-	| "starts_with"
-	| "ends_with"
-	| "in"
-	| "not_in"
-	| "exists"
-	| "not_exists";
+		| "equals"
+		| "contains"
+		| "starts_with"
+		| "ends_with"
+		| "in"
+		| "not_in"
+		| "exists"
+		| "not_exists";
 	field?: string;
 	value?: string;
 	values?: string[];

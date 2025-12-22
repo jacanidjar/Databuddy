@@ -242,7 +242,9 @@ export class CoreFlagsManager implements FlagsManager {
 				isReady: false,
 			};
 		}
-		this.getFlag(key).catch((err) => logger.error(`Background fetch error for ${key}:`, err));
+		this.getFlag(key).catch((err) =>
+			logger.error(`Background fetch error for ${key}:`, err)
+		);
 		return {
 			enabled: false,
 			isLoading: true,

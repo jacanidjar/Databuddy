@@ -260,7 +260,9 @@ export function selectVariant(
 	const hash = hashString(`${flag.key}:variant:${identifier}`);
 	const percentage = hash % 100;
 
-	const hasAnyWeight = flag.variants.some((v: Variant) => typeof v?.weight === "number");
+	const hasAnyWeight = flag.variants.some(
+		(v: Variant) => typeof v?.weight === "number"
+	);
 
 	if (!hasAnyWeight) {
 		const idx = hash % flag.variants.length;
@@ -288,7 +290,10 @@ export function selectVariant(
 	return { value: lastVariant.value, variant: lastVariant.key };
 }
 
-export function evaluateFlag(flag: EvaluableFlag, context: UserContext): FlagResult {
+export function evaluateFlag(
+	flag: EvaluableFlag,
+	context: UserContext
+): FlagResult {
 	if (flag.rules && Array.isArray(flag.rules) && flag.rules.length > 0) {
 		for (const rule of flag.rules as FlagRule[]) {
 			if (evaluateRule(rule, context)) {
@@ -302,7 +307,11 @@ export function evaluateFlag(flag: EvaluableFlag, context: UserContext): FlagRes
 		}
 	}
 
-	if (flag.type === "multivariant" && flag.variants && flag.variants.length > 0) {
+	if (
+		flag.type === "multivariant" &&
+		flag.variants &&
+		flag.variants.length > 0
+	) {
 		const { value, variant } = selectVariant(flag, context);
 		return {
 			enabled: true, // Variants are always "enabled"
@@ -345,7 +354,6 @@ export const flagsRoute = new Elysia({ prefix: "/v1/flags" })
 		"/evaluate",
 		function evaluateFlagEndpoint({ query, set }) {
 			return record("evaluateFlag", async (): Promise<FlagResult> => {
-
 				setAttributes({
 					"flag.key": query.key || "missing",
 					"flag.client_id": query.clientId || "missing",
@@ -383,7 +391,11 @@ export const flagsRoute = new Elysia({ prefix: "/v1/flags" })
 						"Flag evaluation request"
 					);
 
-					const flag = await getCachedFlag(query.key, query.clientId, query.environment);
+					const flag = await getCachedFlag(
+						query.key,
+						query.clientId,
+						query.environment
+					);
 
 					if (!flag) {
 						setAttributes({ "flag.found": false });
@@ -395,16 +407,19 @@ export const flagsRoute = new Elysia({ prefix: "/v1/flags" })
 						};
 					}
 
-					const result = evaluateFlag({
-						defaultValue: flag.defaultValue,
-						key: flag.key,
-						type: flag.type,
-						status: flag.status,
-						rolloutPercentage: flag.rolloutPercentage,
-						rules: flag.rules,
-						variants: flag.variants as Variant[],
-						payload: flag.payload,
-					}, context);
+					const result = evaluateFlag(
+						{
+							defaultValue: flag.defaultValue,
+							key: flag.key,
+							type: flag.type,
+							status: flag.status,
+							rolloutPercentage: flag.rolloutPercentage,
+							rules: flag.rules,
+							variants: flag.variants as Variant[],
+							payload: flag.payload,
+						},
+						context
+					);
 					setAttributes({
 						"flag.found": true,
 						"flag.type": flag.type,
@@ -461,7 +476,10 @@ export const flagsRoute = new Elysia({ prefix: "/v1/flags" })
 						properties: parseProperties(query.properties),
 					};
 
-					const allFlags = await getCachedFlagsForClient(query.clientId, query.environment);
+					const allFlags = await getCachedFlagsForClient(
+						query.clientId,
+						query.environment
+					);
 
 					setAttributes({
 						"flag.total_flags": allFlags.length,
@@ -470,7 +488,10 @@ export const flagsRoute = new Elysia({ prefix: "/v1/flags" })
 					const enabledFlags: Record<string, FlagResult> = {};
 
 					for (const flag of allFlags) {
-						const result = evaluateFlag(flag as unknown as EvaluableFlag, context);
+						const result = evaluateFlag(
+							flag as unknown as EvaluableFlag,
+							context
+						);
 						if (result.enabled) {
 							enabledFlags[flag.key] = result;
 						}

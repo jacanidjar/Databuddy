@@ -658,7 +658,11 @@ export const dbPermissionLevel = pgEnum("db_permission_level", [
 	"admin",
 ]);
 
-export const flagType = pgEnum("flag_type", ["boolean", "rollout", "multivariant"]);
+export const flagType = pgEnum("flag_type", [
+	"boolean",
+	"rollout",
+	"multivariant",
+]);
 
 export const flagStatus = pgEnum("flag_status", [
 	"active",
@@ -672,7 +676,12 @@ export const flagScheduleActionType = pgEnum("flag_schedule_type", [
 ]);
 export type RolloutStep =
 	| { scheduledAt: string; action: "enable" | "disable"; executedAt?: string }
-	| { scheduledAt: string; action: "set_percentage"; value: number; executedAt?: string };
+	| {
+			scheduledAt: string;
+			action: "set_percentage";
+			value: number;
+			executedAt?: string;
+	  };
 export const annotationType = pgEnum("annotation_type", [
 	"point",
 	"line",
@@ -757,9 +766,14 @@ export const flagSchedules = pgTable(
 		id: text().primaryKey().notNull(),
 		flagId: text("flag_id").notNull(),
 		scheduledAt: timestamp("scheduled_at"),
-		rolloutSteps: jsonb("rollout_steps").$type<
-			{ scheduledAt: string; value: number | "enable" | "disable", executedAt?: string }[]
-		>(),
+		rolloutSteps:
+			jsonb("rollout_steps").$type<
+				{
+					scheduledAt: string;
+					value: number | "enable" | "disable";
+					executedAt?: string;
+				}[]
+			>(),
 		type: flagScheduleActionType().notNull(),
 		isEnabled: boolean("is_enabled").default(false).notNull(),
 		qstashScheduleIds: text("qstash_schedule_ids").array(),

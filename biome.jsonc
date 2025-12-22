@@ -3,9 +3,10 @@
   "extends": ["ultracite/react", "ultracite/next", "ultracite/core"],
   "files": {
     "includes": [
-      "**",
       "!**/*.mdx",
       "!**/*.css",
+      "!**/*.test.ts",
+      "!**/*.spec.ts",
       "!**/countries.json",
       "!**/subdivisions.json",
       "!**/databuddy.js",

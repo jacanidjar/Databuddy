@@ -537,7 +537,10 @@ export const flagsRouter = {
 
 			// Handle cascading status changes for dependent flags
 			if (flag.status !== updatedFlag.status) {
-				await handleFlagUpdateDependencyCascading({ updatedFlag, userId: context.user.id })
+				await handleFlagUpdateDependencyCascading({
+					updatedFlag,
+					userId: context.user.id,
+				});
 			}
 			return updatedFlag;
 		}),
