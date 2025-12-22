@@ -5,17 +5,17 @@
     "": {
       "name": "databuddy",
       "devDependencies": {
-        "@biomejs/biome": "^2.3.8",
+        "@biomejs/biome": "^2.3.10",
         "@types/bun": "latest",
         "@types/dockerode": "^3.3.47",
-        "@types/node": "^24.10.3",
+        "@types/node": "^24.10.4",
         "chalk": "^5.6.2",
         "dockerode": "^4.0.9",
         "dotenv-cli": "^10.0.0",
-        "knip": "^5.73.4",
-        "turbo": "^2.6.3",
+        "knip": "^5.76.3",
+        "turbo": "^2.7.1",
         "typescript": "^5.9.3",
-        "ultracite": "^6.4.0",
+        "ultracite": "^6.5.0",
       },
     },
     "apps/api": {
@@ -568,6 +568,7 @@
         "nanoid": "catalog:",
         "pino": "^10.1.0",
         "pino-pretty": "^13.1.2",
+        "zod": "catalog:",
       },
     },
     "packages/tracker": {
