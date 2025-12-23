@@ -20,6 +20,7 @@
     "@ai-sdk-tools/artifacts": "^1.2.0",
     "@ai-sdk-tools/memory": "^1.2.0",
     "@ai-sdk/openai": "^2.0.86",
+    "@ai-sdk/provider": "^3.0.0",
     "@databuddy/auth": "workspace:*",
     "@databuddy/db": "workspace:*",
     "@databuddy/redis": "workspace:*",
@@ -38,11 +39,11 @@
     "@orpc/server": "^1.12.3",
     "ai": "^5.0.113",
     "autumn-js": "^0.1.48",
+    "bullmq": "^5.34.0",
     "dayjs": "^1.11.19",
     "elysia": "^1.4.19",
     "jszip": "^3.10.1",
     "keypal": "^0.1.11",
-    "bullmq": "^5.34.0",
     "zod": "catalog:"
   }
 }

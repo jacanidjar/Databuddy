@@ -10,17 +10,17 @@ import {
 import { logBlockedTraffic } from "./blocked-traffic";
 import { captureError, record, setAttributes } from "./tracing";
 
-type ValidationResult = {
+interface ValidationResult {
 	success: boolean;
 	clientId: string;
 	userAgent: string;
 	ip: string;
 	ownerId?: string;
-};
+}
 
-type ValidationError = {
+interface ValidationError {
 	error: Response;
-};
+}
 
 /**
  * Validate incoming request for analytics events

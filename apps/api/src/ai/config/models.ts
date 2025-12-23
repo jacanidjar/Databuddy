@@ -1,3 +1,4 @@
+import { databuddyLLM } from "@databuddy/sdk/ai/vercel";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 
 const apiKey = process.env.AI_API_KEY;
@@ -12,6 +13,16 @@ export const openrouter = createOpenRouter({
 	headers,
 });
 
+// Create Databuddy LLM instance with transport
+const aiLogsApiUrl = process.env.AI_LOGS_API_URL;
+const { track } = databuddyLLM(
+	aiLogsApiUrl
+		? {
+			apiUrl: aiLogsApiUrl,
+		}
+		: {}
+);
+
 /**
  * Model configurations for different agent types.
  * Centralized here for easy switching and environment-based overrides.
@@ -21,27 +32,27 @@ export const openrouter = createOpenRouter({
 const overrideModel: string | null = null;
 
 const modelNames = {
-	triage: overrideModel || "anthropic/claude-haiku-4.5",
-	analytics: overrideModel || "anthropic/claude-haiku-4.5",
+	triage: overrideModel ?? "anthropic/claude-haiku-4.5",
+	analytics: overrideModel ?? "anthropic/claude-haiku-4.5",
 	// triage: "z-ai/glm-4.6",
 	// analytics: "z-ai/glm-4.6",
-	advanced: overrideModel || "anthropic/claude-sonnet-4.5",
+	advanced: overrideModel ?? "anthropic/claude-sonnet-4.5",
 	// advanced: "z-ai/glm-4.6",
 	perplexity: "perplexity/sonar-pro",
 } as const;
 
 export const models = {
 	/** Fast, cheap model for routing/triage decisions */
-	triage: openrouter.chat(modelNames.triage),
+	triage: track(openrouter.chat(modelNames.triage)),
 
 	/** Balanced model for most analytical tasks */
-	analytics: openrouter.chat(modelNames.analytics),
+	analytics: track(openrouter.chat(modelNames.analytics)),
 
 	/** High-capability model for complex reasoning and reflection */
-	advanced: openrouter.chat(modelNames.advanced),
+	advanced: track(openrouter.chat(modelNames.advanced)),
 
 	/** Perplexity model for real-time web search and competitor analysis */
-	perplexity: openrouter.chat(modelNames.perplexity),
+	perplexity: track(openrouter.chat(modelNames.perplexity)),
 } as const;
 
 export type ModelKey = keyof typeof models;

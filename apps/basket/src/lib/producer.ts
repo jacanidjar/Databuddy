@@ -13,12 +13,12 @@ function stringifyEvent(event: unknown): string {
 	);
 }
 
-type BufferedEvent = {
+interface BufferedEvent {
 	table: string;
 	event: unknown;
-};
+}
 
-type ProducerStats = {
+interface ProducerStats {
 	sent: number;
 	failed: number;
 	buffered: number;
@@ -28,7 +28,7 @@ type ProducerStats = {
 	lastErrorTime: number | null;
 };
 
-type ProducerConfig = {
+interface ProducerConfig {
 	broker?: string;
 	username?: string;
 	password?: string;
@@ -42,9 +42,9 @@ type ProducerConfig = {
 	bufferHardMax?: number;
 	chunkSize?: number;
 	flushTimeout?: number;
-};
+}
 
-type RequiredProducerConfig = {
+interface RequiredProducerConfig {
 	broker?: string;
 	username?: string;
 	password?: string;
@@ -58,9 +58,9 @@ type RequiredProducerConfig = {
 	bufferHardMax: number;
 	chunkSize: number;
 	flushTimeout: number;
-};
+}
 
-type ProducerDependencies = {
+interface ProducerDependencies {
 	clickHouse: ClickHouseClient;
 	topicMap: Record<string, string>;
 	onError?: (error: Error) => void;
@@ -549,10 +549,11 @@ function getDefaultProducer(): EventProducer {
 			clickHouse,
 			topicMap: {
 				"analytics-events": TABLE_NAMES.events,
-				"analytics-errors": TABLE_NAMES.errors,
-				"analytics-web-vitals": TABLE_NAMES.web_vitals,
-				"analytics-custom-events": TABLE_NAMES.custom_events,
 				"analytics-outgoing-links": TABLE_NAMES.outgoing_links,
+				"analytics-error-spans": TABLE_NAMES.error_spans,
+				"analytics-vitals-spans": TABLE_NAMES.web_vitals_spans,
+				"analytics-custom-event-spans": TABLE_NAMES.custom_event_spans,
+				"analytics-ai-call-spans": TABLE_NAMES.ai_call_spans,
 			},
 		});
 	}

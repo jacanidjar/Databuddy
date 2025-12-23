@@ -3,86 +3,336 @@ import type {
 	LanguageModelV2Middleware,
 } from "@ai-sdk/provider";
 import { wrapLanguageModel } from "ai";
-import { computeCostUSD } from "tokenlens";
-import type { Databuddy } from "@/node";
+import type {
+	AICall,
+	DatabuddyLLMOptions,
+	TokenCost,
+	ToolCallInfo,
+	TrackOptions,
+	Transport,
+} from "./types";
 
-export type TrackProperties = {
-	inputTokens?: number;
-	outputTokens?: number;
-	totalTokens?: number;
-	cachedInputTokens?: number;
-	finishReason?: string;
-	toolCallCount?: number;
-	toolResultCount?: number;
-	toolCallNames?: string[];
-	inputTokenCostUSD?: number;
-	outputTokenCostUSD?: number;
-	totalTokenCostUSD?: number;
+const extractToolInfo = (
+	content: Array<{ type: string; toolName?: string }>
+): ToolCallInfo => {
+	const toolCalls = content.filter((part) => part.type === "tool-call");
+	const toolResults = content.filter((part) => part.type === "tool-result");
+	const toolCallNames = [
+		...new Set(
+			toolCalls
+				.map((c) => c.toolName)
+				.filter((name): name is string => Boolean(name))
+		),
+	];
+
+	return {
+		toolCallCount: toolCalls.length,
+		toolResultCount: toolResults.length,
+		toolCallNames,
+	};
 };
 
-const buddyWare = (buddy: Databuddy): LanguageModelV2Middleware => {
+const computeCosts = async (
+	modelId: string,
+	provider: string,
+	usage: { inputTokens: number; outputTokens: number }
+): Promise<TokenCost> => {
+	try {
+		const { computeCostUSD } = await import("tokenlens");
+		const result = await computeCostUSD({
+			modelId,
+			provider,
+			usage: {
+				input_tokens: usage.inputTokens,
+				output_tokens: usage.outputTokens,
+			},
+		});
+		return {
+			inputTokenCostUSD: result.inputTokenCostUSD,
+			outputTokenCostUSD: result.outputTokenCostUSD,
+			totalTokenCostUSD: result.totalTokenCostUSD,
+		};
+	} catch {
+		return {};
+	}
+};
+
+const createDefaultTransport = (apiUrl: string, apiKey?: string): Transport => {
+	return async (call) => {
+		const headers: HeadersInit = {
+			"Content-Type": "application/json",
+		};
+
+		if (apiKey) {
+			headers.Authorization = `Bearer ${apiKey}`;
+		}
+
+		const response = await fetch(apiUrl, {
+			method: "POST",
+			headers,
+			body: JSON.stringify(call),
+		});
+
+		if (!response.ok) {
+			throw new Error(
+				`Failed to send AI log: ${response.status} ${response.statusText}`
+			);
+		}
+	};
+};
+
+const createMiddleware = (
+	transport: Transport,
+	options: TrackOptions = {}
+): LanguageModelV2Middleware => {
+	const { computeCosts: shouldComputeCosts = true } = options;
+
 	return {
 		wrapGenerate: async ({ doGenerate, model }) => {
-			const result = await doGenerate();
+			const startTime = Date.now();
 
-			const isToolCall = (
-				part: (typeof result.content)[number]
-			): part is Extract<
-				(typeof result.content)[number],
-				{ type: "tool-call" }
-			> => part.type === "tool-call";
+			try {
+				const result = await doGenerate();
+				const durationMs = Date.now() - startTime;
 
-			const isToolResult = (
-				part: (typeof result.content)[number]
-			): part is Extract<
-				(typeof result.content)[number],
-				{ type: "tool-result" }
-			> => part.type === "tool-result";
+				const tools = extractToolInfo(
+					result.content as Array<{ type: string; toolName?: string }>
+				);
 
-			const toolCalls = result.content.filter(isToolCall);
-			const toolResults = result.content.filter(isToolResult);
-			const toolCallNames = Array.from(
-				new Set(toolCalls.map((c) => c.toolName))
-			);
+				const inputTokens = result.usage.inputTokens ?? 0;
+				const outputTokens = result.usage.outputTokens ?? 0;
+				const totalTokens =
+					result.usage.totalTokens ?? inputTokens + outputTokens;
+				const cachedInputTokens = result.usage.cachedInputTokens;
 
-			const costs = await computeCostUSD({
-				modelId: model.modelId,
-				provider: model.provider,
-				usage: result.usage,
-			});
+				const cost: TokenCost =
+					shouldComputeCosts && (inputTokens > 0 || outputTokens > 0)
+						? await computeCosts(model.modelId, model.provider, {
+							inputTokens,
+							outputTokens,
+						})
+						: {};
 
-			const payload: TrackProperties = {
-				inputTokens: result.usage.inputTokens,
-				outputTokens: result.usage.outputTokens,
-				totalTokens: result.usage.totalTokens,
-				cachedInputTokens: result.usage.cachedInputTokens,
-				finishReason: result.finishReason,
-				toolCallCount: toolCalls.length,
-				toolResultCount: toolResults.length,
-				inputTokenCostUSD: costs.inputTokenCostUSD,
-				outputTokenCostUSD: costs.outputTokenCostUSD,
-				totalTokenCostUSD: costs.totalTokenCostUSD,
-				toolCallNames,
-			};
-			console.log("payload", payload);
-			// buddy.track({name: 'ai.generate', properties: payload});
+				const call: AICall = {
+					timestamp: new Date(),
+					type: "generate",
+					model: model.modelId,
+					provider: model.provider,
+					finishReason: result.finishReason,
+					usage: {
+						inputTokens,
+						outputTokens,
+						totalTokens,
+						cachedInputTokens,
+					},
+					cost,
+					tools,
+					durationMs,
+				};
 
-			return result;
+				const effectiveTransport = options.transport ?? transport;
+				const transportResult = effectiveTransport(call);
+				if (transportResult instanceof Promise) {
+					transportResult.catch(() => {
+						// Silently fail - logging should not affect main flow
+					});
+				}
+				options.onSuccess?.(call);
+
+				return result;
+			} catch (error) {
+				const durationMs = Date.now() - startTime;
+
+				const call: AICall = {
+					timestamp: new Date(),
+					type: "generate",
+					model: model.modelId,
+					provider: model.provider,
+					usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+					cost: {},
+					tools: { toolCallCount: 0, toolResultCount: 0, toolCallNames: [] },
+					durationMs,
+					error: {
+						name: error instanceof Error ? error.name : "UnknownError",
+						message: error instanceof Error ? error.message : String(error),
+						stack: error instanceof Error ? error.stack : undefined,
+					},
+				};
+
+				const effectiveTransport = options.transport ?? transport;
+				const transportResult = effectiveTransport(call);
+				if (transportResult instanceof Promise) {
+					transportResult.catch(() => {
+						// Silently fail - logging should not affect main flow
+					});
+				}
+				options.onError?.(call);
+
+				throw error;
+			}
+		},
+
+		wrapStream: async ({ doStream, model }) => {
+			const startTime = Date.now();
+
+			try {
+				const { stream, ...rest } = await doStream();
+				const durationMs = Date.now() - startTime;
+
+				// Streams don't have usage info until completion
+				// We'll log the stream start, but usage will be tracked separately
+				const call: AICall = {
+					timestamp: new Date(),
+					type: "stream",
+					model: model.modelId,
+					provider: model.provider,
+					usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+					cost: {},
+					tools: { toolCallCount: 0, toolResultCount: 0, toolCallNames: [] },
+					durationMs,
+				};
+
+				const effectiveTransport = options.transport ?? transport;
+				const transportResult = effectiveTransport(call);
+				if (transportResult instanceof Promise) {
+					transportResult.catch(() => {
+						// Silently fail - logging should not affect main flow
+					});
+				}
+				options.onSuccess?.(call);
+
+				return { stream, ...rest };
+			} catch (error) {
+				const durationMs = Date.now() - startTime;
+
+				const call: AICall = {
+					timestamp: new Date(),
+					type: "stream",
+					model: model.modelId,
+					provider: model.provider,
+					usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+					cost: {},
+					tools: { toolCallCount: 0, toolResultCount: 0, toolCallNames: [] },
+					durationMs,
+					error: {
+						name: error instanceof Error ? error.name : "UnknownError",
+						message: error instanceof Error ? error.message : String(error),
+						stack: error instanceof Error ? error.stack : undefined,
+					},
+				};
+
+				const effectiveTransport = options.transport ?? transport;
+				const transportResult = effectiveTransport(call);
+				if (transportResult instanceof Promise) {
+					transportResult.catch(() => {
+						// Silently fail - logging should not affect main flow
+					});
+				}
+				options.onError?.(call);
+
+				throw error;
+			}
 		},
 	};
 };
 
 /**
- * Wrap a Vercel language model with Databuddy middleware
- * @param model - The Vercel language model to wrap, if you are using the Vercel AI Gateway, please use the LanguageModelV2 type e.g. gateway('xai/grok-3') instead of the string type e.g. 'xai/grok-3'
- * @param buddy - The Databuddy instance to use
- * @returns The wrapped language model, can be used in e.g. generateText from the ai package
+ * Create a Databuddy LLM tracking instance
+ *
+ * @example
+ * ```ts
+ * import { databuddyLLM } from "@databuddy/sdk/ai/vercel";
+ *
+ * const { track } = databuddyLLM({
+ *   apiUrl: "https://api.databuddy.cc/ai-logs",
+ *   apiKey: "your-api-key",
+ * });
+ *
+ * // Track a model
+ * const model = track(openai("gpt-4"));
+ *
+ * // Or with custom transport
+ * const { track } = databuddyLLM({
+ *   transport: async (call) => console.log(call),
+ * });
+ * ```
  */
-export const wrapVercelLanguageModel = (
-	model: LanguageModelV2,
-	buddy: Databuddy
-) =>
-	wrapLanguageModel({
-		model,
-		middleware: buddyWare(buddy),
-	});
+export const databuddyLLM = (options: DatabuddyLLMOptions = {}) => {
+	const {
+		apiUrl,
+		apiKey,
+		transport: customTransport,
+		computeCosts: defaultComputeCosts = true,
+		onSuccess: defaultOnSuccess,
+		onError: defaultOnError,
+	} = options;
+
+	// Determine transport
+	let transport: Transport;
+	if (customTransport) {
+		transport = customTransport;
+	} else {
+		const endpoint =
+			apiUrl ??
+			(process.env.DATABUDDY_BASKET_URL
+				? `${process.env.DATABUDDY_BASKET_URL}/llm`
+				: process.env.DATABUDDY_API_URL
+					? `${process.env.DATABUDDY_API_URL}/llm`
+					: "https://basket.databuddy.cc/llm");
+		const key = apiKey ?? process.env.DATABUDDY_API_KEY;
+		transport = createDefaultTransport(endpoint, key);
+	}
+
+	/**
+	 * Track AI model calls with automatic logging, cost tracking, and error handling
+	 */
+	const track = (model: LanguageModelV2, trackOptions: TrackOptions = {}) => {
+		return wrapLanguageModel({
+			model,
+			middleware: createMiddleware(transport, {
+				computeCosts: trackOptions.computeCosts ?? defaultComputeCosts,
+				onSuccess: trackOptions.onSuccess ?? defaultOnSuccess,
+				onError: trackOptions.onError ?? defaultOnError,
+				transport: trackOptions.transport,
+			}),
+		});
+	};
+
+	return { track };
+};
+
+/**
+ * Create an HTTP transport that sends logs to an API endpoint
+ *
+ * @example
+ * ```ts
+ * import { databuddyLLM, httpTransport } from "@databuddy/sdk/ai/vercel";
+ *
+ * const { track } = databuddyLLM({
+ *   transport: httpTransport("https://api.example.com/ai-logs"),
+ * });
+ * ```
+ */
+export const httpTransport = (url: string, apiKey?: string): Transport => {
+	return async (call) => {
+		const headers: HeadersInit = {
+			"Content-Type": "application/json",
+		};
+
+		if (apiKey) {
+			headers.Authorization = `Bearer ${apiKey}`;
+		}
+
+		const response = await fetch(url, {
+			method: "POST",
+			headers,
+			body: JSON.stringify(call),
+		});
+
+		if (!response.ok) {
+			throw new Error(
+				`Failed to send AI log: ${response.status} ${response.statusText}`
+			);
+		}
+	};
+};

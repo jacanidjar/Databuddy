@@ -11,6 +11,7 @@ import {
 } from "./lib/tracing";
 import basketRouter from "./routes/basket";
 import emailRouter from "./routes/email";
+import llmRouter from "./routes/llm";
 import { closeGeoIPReader } from "./utils/ip-geo";
 
 initTracing();
@@ -122,6 +123,7 @@ const app = new Elysia()
 	.options("*", () => new Response(null, { status: 204 }))
 	.use(basketRouter)
 	.use(emailRouter)
+	.use(llmRouter)
 	.get("/health", function healthCheck() {
 		return new Response(
 			JSON.stringify({

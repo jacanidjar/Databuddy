@@ -8,15 +8,13 @@ export { createClient } from "@clickhouse/client";
  */
 export const TABLE_NAMES = {
 	events: "analytics.events",
-	errors: "analytics.errors",
 	outgoing_links: "analytics.outgoing_links",
-	custom_events: "analytics.custom_events",
-	web_vitals: "analytics.web_vitals",
-	stripe_payment_intents: "analytics.stripe_payment_intents",
-	stripe_charges: "analytics.stripe_charges",
-	stripe_refunds: "analytics.stripe_refunds",
 	blocked_traffic: "analytics.blocked_traffic",
 	email_events: "analytics.email_events",
+	error_spans: "analytics.error_spans",
+	web_vitals_spans: "analytics.web_vitals_spans",
+	custom_event_spans: "analytics.custom_event_spans",
+	ai_call_spans: "analytics.ai_call_spans",
 };
 
 const logger = console;

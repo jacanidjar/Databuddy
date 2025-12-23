@@ -358,6 +358,51 @@ ORDER BY (client_id, timestamp, id)
 SETTINGS index_granularity = 8192
 `;
 
+/**
+ * Lean AI call spans table - stores individual AI model calls
+ */
+const CREATE_AI_CALL_SPANS_TABLE = `
+CREATE TABLE IF NOT EXISTS ${ANALYTICS_DATABASE}.ai_call_spans (
+  website_id String CODEC(ZSTD(1)),
+  user_id Nullable(String) CODEC(ZSTD(1)),
+  
+  timestamp DateTime64(3, 'UTC') CODEC(Delta(8), ZSTD(1)),
+  
+  type LowCardinality(String) CODEC(ZSTD(1)),
+  model String CODEC(ZSTD(1)),
+  provider LowCardinality(String) CODEC(ZSTD(1)),
+  finish_reason Nullable(LowCardinality(String)) CODEC(ZSTD(1)),
+  
+  input_tokens UInt32 CODEC(ZSTD(1)),
+  output_tokens UInt32 CODEC(ZSTD(1)),
+  total_tokens UInt32 CODEC(ZSTD(1)),
+  cached_input_tokens Nullable(UInt32) CODEC(ZSTD(1)),
+  
+  input_token_cost_usd Nullable(Float64) CODEC(Gorilla, ZSTD(1)),
+  output_token_cost_usd Nullable(Float64) CODEC(Gorilla, ZSTD(1)),
+  total_token_cost_usd Nullable(Float64) CODEC(Gorilla, ZSTD(1)),
+  
+  tool_call_count UInt16 CODEC(ZSTD(1)),
+  tool_result_count UInt16 CODEC(ZSTD(1)),
+  tool_call_names Array(String) CODEC(ZSTD(1)),
+  
+  duration_ms UInt32 CODEC(ZSTD(1)),
+  
+  error_name Nullable(LowCardinality(String)) CODEC(ZSTD(1)),
+  error_message Nullable(String) CODEC(ZSTD(1)),
+  error_stack Nullable(String) CODEC(ZSTD(1)),
+  
+  INDEX idx_website_id website_id TYPE bloom_filter(0.01) GRANULARITY 1,
+  INDEX idx_model model TYPE bloom_filter(0.01) GRANULARITY 1,
+  INDEX idx_provider provider TYPE bloom_filter(0.01) GRANULARITY 1,
+  INDEX idx_error_name error_name TYPE bloom_filter(0.01) GRANULARITY 1
+) ENGINE = MergeTree
+PARTITION BY toDate(timestamp)
+ORDER BY (website_id, provider, model, timestamp)
+SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1
+`;
+
+
 const CREATE_UPTIME_TABLE = `
 CREATE TABLE IF NOT EXISTS ${UPTIME_DATABASE}.uptime_monitor (
     site_id String CODEC(ZSTD(1)),
@@ -393,7 +438,7 @@ SETTINGS index_granularity = 8192
 /**
  * Lean error span type
  */
-export type ErrorSpanRow = {
+export interface ErrorSpanRow {
 	client_id: string;
 	anonymous_id: string;
 	session_id: string;
@@ -405,12 +450,12 @@ export type ErrorSpanRow = {
 	colno?: number;
 	stack?: string;
 	error_type: string;
-};
+}
 
 /**
  * Error hourly aggregate type
  */
-export type ErrorHourlyAggregate = {
+export interface ErrorHourlyAggregate {
 	client_id: string;
 	path: string;
 	error_type: string;
@@ -420,7 +465,7 @@ export type ErrorHourlyAggregate = {
 	affected_users: number;
 	affected_sessions: number;
 	sample_message: string;
-};
+}
 
 /**
  * Web Vitals metric names
@@ -432,7 +477,7 @@ export type WebVitalMetricName = "FCP" | "LCP" | "CLS" | "INP" | "TTFB" | "FPS";
  * Spans-oriented Web Vitals
  * Each row = single metric measurement
  */
-export type WebVitalsSpan = {
+export interface WebVitalsSpan {
 	client_id: string;
 	anonymous_id: string;
 	session_id: string;
@@ -440,12 +485,12 @@ export type WebVitalsSpan = {
 	path: string;
 	metric_name: WebVitalMetricName;
 	metric_value: number;
-};
+}
 
 /**
  * Web Vitals hourly aggregate type
  */
-export type WebVitalsHourlyAggregate = {
+export interface WebVitalsHourlyAggregate {
 	client_id: string;
 	path: string;
 	metric_name: WebVitalMetricName;
@@ -456,9 +501,9 @@ export type WebVitalsHourlyAggregate = {
 	avg_value: number;
 	min_value: number;
 	max_value: number;
-};
+}
 
-export type BlockedTraffic = {
+export interface BlockedTraffic {
 	id: string;
 	client_id?: string;
 	timestamp: number;
@@ -484,9 +529,9 @@ export type BlockedTraffic = {
 	device_type?: string;
 	payload_size?: number;
 	created_at: number;
-};
+}
 
-export type EmailEvent = {
+export interface EmailEvent {
 	event_id: string;
 	email_hash: string;
 	domain: string;
@@ -495,12 +540,12 @@ export type EmailEvent = {
 	received_at: number;
 	ingestion_time: number;
 	metadata_json: string;
-};
+}
 
 /**
  * Lean custom event span
  */
-export type CustomEventSpan = {
+export interface CustomEventSpan {
 	client_id: string;
 	anonymous_id: string;
 	session_id: string;
@@ -508,12 +553,12 @@ export type CustomEventSpan = {
 	path: string;
 	event_name: string;
 	properties: Record<string, unknown>;
-};
+}
 
 /**
  * Custom events hourly aggregate type
  */
-export type CustomEventsHourlyAggregate = {
+export interface CustomEventsHourlyAggregate {
 	client_id: string;
 	path: string;
 	event_name: string;
@@ -521,9 +566,9 @@ export type CustomEventsHourlyAggregate = {
 	event_count: number;
 	unique_users: number;
 	unique_sessions: number;
-};
+}
 
-export type CustomOutgoingLink = {
+export interface CustomOutgoingLink {
 	id: string;
 	client_id: string;
 	anonymous_id: string;
@@ -532,9 +577,9 @@ export type CustomOutgoingLink = {
 	text?: string;
 	properties: string;
 	timestamp: number;
-};
+}
 
-export type UptimeMonitor = {
+export interface UptimeMonitor {
 	site_id: string;
 	url: string;
 	timestamp: number;
@@ -555,9 +600,36 @@ export type UptimeMonitor = {
 	check_type: string;
 	user_agent: string;
 	error: string;
-};
+}
 
-export type AnalyticsEvent = {
+/**
+ * AI call span type
+ */
+export interface AICallSpan {
+	website_id: string;
+	user_id?: string;
+	timestamp: number;
+	type: "generate" | "stream";
+	model: string;
+	provider: string;
+	finish_reason?: string;
+	input_tokens: number;
+	output_tokens: number;
+	total_tokens: number;
+	cached_input_tokens?: number;
+	input_token_cost_usd?: number;
+	output_token_cost_usd?: number;
+	total_token_cost_usd?: number;
+	tool_call_count: number;
+	tool_result_count: number;
+	tool_call_names: string[];
+	duration_ms: number;
+	error_name?: string;
+	error_message?: string;
+	error_stack?: string;
+}
+
+export interface AnalyticsEvent {
 	id: string;
 	client_id: string;
 	event_name: string;
@@ -654,6 +726,7 @@ export async function initClickHouseSchema() {
 			{ name: "blocked_traffic", query: CREATE_BLOCKED_TRAFFIC_TABLE },
 			{ name: "email_events", query: CREATE_EMAIL_EVENTS_TABLE },
 			{ name: "outgoing_links", query: CREATE_CUSTOM_OUTGOING_LINKS_TABLE },
+			{ name: "ai_call_spans", query: CREATE_AI_CALL_SPANS_TABLE },
 		];
 
 		// Materialized views (must be created after target tables)
