@@ -9,9 +9,9 @@ import { Logo } from "./logo";
 import { NavLink } from "./nav-link";
 import { contents } from "./sidebar-content";
 
-export type DocsNavbarProps = {
+export interface DocsNavbarProps {
 	stars?: number | null;
-};
+}
 
 export const DocsNavbar = ({ stars }: DocsNavbarProps) => {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -26,7 +26,7 @@ export const DocsNavbar = ({ stars }: DocsNavbarProps) => {
 	};
 
 	return (
-		<div className="sticky top-0 z-30 flex flex-col border-border border-b backdrop-blur-md">
+		<div className="fixed top-0 right-0 left-0 z-30 flex flex-col border-border border-b bg-background/95 backdrop-blur-md">
 			<nav>
 				<div className="mx-auto w-full px-2 sm:px-2 md:px-6 lg:px-8">
 					<div className="flex h-16 items-center justify-between">
@@ -187,10 +187,12 @@ export const DocsNavbar = ({ stars }: DocsNavbarProps) => {
 																	}}
 																>
 																	<div className="flex items-center gap-2">
-																		<item.icon
-																			className="size-4 shrink-0"
-																			weight="duotone"
-																		/>
+																		{item.icon ? (
+																			<item.icon
+																				className="size-4 shrink-0"
+																				weight="duotone"
+																			/>
+																		) : null}
 																		<span>{item.title}</span>
 																		{item.isNew && (
 																			<span className="rounded border border-border/40 bg-muted/40 px-1.5 py-0.5 text-foreground/80 text-xs">

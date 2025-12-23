@@ -626,6 +626,33 @@ body {
   padding-top: 0px !important;
 }
 
+/* Add padding to docs layout to account for fixed navbar and sidebar */
+#nd-docs-layout {
+  padding-top: 64px; /* Account for fixed navbar (h-16 = 64px) */
+}
+
+#nd-docs-layout main,
+#nd-docs-layout [role="main"],
+#nd-docs-layout > div > main {
+  padding-left: 0;
+}
+
+@media (min-width: 768px) {
+  #nd-docs-layout main,
+  #nd-docs-layout [role="main"],
+  #nd-docs-layout > div > main {
+    padding-left: 268px;
+  }
+}
+
+@media (min-width: 1024px) {
+  #nd-docs-layout main,
+  #nd-docs-layout [role="main"],
+  #nd-docs-layout > div > main {
+    padding-left: 286px;
+  }
+}
+
 @keyframes borderGlitch {
   0% {
     border-color: rgb(41 37 36); /* stone-800 */

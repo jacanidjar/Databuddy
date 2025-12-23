@@ -8,7 +8,9 @@ import { SciFiButton } from "./landing/scifi-btn";
 
 export function DocsFooter() {
 	const handleGetStarted = () => {
-		if (typeof window === "undefined") return;
+		if (typeof window === "undefined") {
+			return;
+		}
 
 		const trackingParams = getTrackingParams();
 		const url = trackingParams
@@ -20,7 +22,7 @@ export function DocsFooter() {
 
 	return (
 		<footer className="border-border border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-			<div className="mx-auto max-w-6xl px-4 pt-8 sm:px-6 lg:px-8">
+			<div className="mx-auto max-w-6xl px-4 pt-8 pb-8 sm:px-6 lg:px-8">
 				{/* CTA Section */}
 				<div className="mb-10 text-center">
 					<h2 className="mb-4 font-medium text-xl leading-tight sm:text-2xl">

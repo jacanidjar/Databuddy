@@ -1,3 +1,4 @@
+import type { DocData, DocMethods } from "fumadocs-mdx/runtime/types";
 import { DocsBody, DocsPage, DocsTitle } from "fumadocs-ui/page";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -6,6 +7,12 @@ import { Feedback } from "@/components/feedback";
 import { onRateDocs } from "@/lib/feedback-action";
 import { getPageImage, source } from "@/lib/source";
 import { getMDXComponents } from "@/mdx-components";
+
+type AsyncPageData = DocMethods & {
+	title?: string;
+	description?: string;
+	load: () => Promise<DocData>;
+};
 
 export default async function Page(props: {
 	params: Promise<{ slug?: string[] }>;
@@ -16,7 +23,8 @@ export default async function Page(props: {
 		notFound();
 	}
 
-	const MDX = await page.data.body;
+	const pageData = page.data as AsyncPageData;
+	const { body: MDX, toc } = await pageData.load();
 
 	return (
 		<DocsPage
@@ -30,11 +38,10 @@ export default async function Page(props: {
 				component: <DocsFooter />,
 				enabled: true,
 			}}
-			full={page.data.full}
 			tableOfContent={{
 				style: "clerk",
 			}}
-			toc={page.data.toc}
+			toc={toc}
 		>
 			<DocsTitle>{page.data.title}</DocsTitle>
 			<DocsBody>
@@ -58,15 +65,16 @@ export async function generateMetadata(props: {
 		notFound();
 	}
 
+	const pageTitle = page.data.title ?? "Documentation";
 	const url = `https://www.databuddy.cc${page.url}`;
-	const title = `${page.data.title} | Databuddy Documentation`;
+	const title = `${pageTitle} | Databuddy Documentation`;
 	const description =
-		page.data.description ||
-		`Learn about ${page.data.title} in Databuddy's privacy-first analytics platform. Complete guides and API documentation.`;
+		page.data.description ??
+		`Learn about ${pageTitle} in Databuddy's privacy-first analytics platform. Complete guides and API documentation.`;
 	const ogImage = `https://www.databuddy.cc${getPageImage(page).url}`;
 
 	const baseKeywords = [
-		page.data.title.toLowerCase(),
+		pageTitle.toLowerCase(),
 		"databuddy",
 		"analytics",
 		"privacy-first",
@@ -125,7 +133,7 @@ export async function generateMetadata(props: {
 					url: ogImage,
 					width: 1200,
 					height: 630,
-					alt: `${page.data.title} - Databuddy Documentation`,
+					alt: `${pageTitle} - Databuddy Documentation`,
 				},
 			],
 		},
@@ -156,7 +164,7 @@ export async function generateMetadata(props: {
 		},
 		other: {
 			"article:section": "Documentation",
-			"article:tag": page.data.title,
+			"article:tag": pageTitle,
 			"article:author": "Databuddy Team",
 			"og:site_name": "Databuddy Documentation",
 		},
