@@ -25,8 +25,7 @@ WORKDIR /app/apps/basket
 
 RUN bun build \
 	--compile \
-	--minify-whitespace \
-	--minify-syntax \
+	--minify \
 	--target bun \
 	--outfile /app/server \
 	--sourcemap \
