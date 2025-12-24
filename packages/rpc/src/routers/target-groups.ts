@@ -1,5 +1,12 @@
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, isNull, targetGroups } from "@databuddy/db";
+import {
+    and,
+    desc,
+    eq,
+    flagsToTargetGroups,
+    isNull,
+    targetGroups,
+} from "@databuddy/db";
 import { createDrizzleCache, redis } from "@databuddy/redis";
 import { userRuleSchema } from "@databuddy/shared/flags";
 import { ORPCError } from "@orpc/server";
@@ -10,6 +17,10 @@ import { authorizeWebsiteAccess, isFullyAuthorized } from "../utils/auth";
 const targetGroupsCache = createDrizzleCache({
     redis,
     namespace: "targetGroups",
+});
+const flagsCache = createDrizzleCache({
+    redis,
+    namespace: "flags",
 });
 const CACHE_DURATION = 60;
 
@@ -224,6 +235,11 @@ export const targetGroupsRouter = {
 
             await authorizeWebsiteAccess(context, group.websiteId, "delete");
 
+            // Remove all flag associations before soft-deleting the group
+            await context.db
+                .delete(flagsToTargetGroups)
+                .where(eq(flagsToTargetGroups.targetGroupId, input.id));
+
             await context.db
                 .update(targetGroups)
                 .set({
@@ -233,7 +249,13 @@ export const targetGroupsRouter = {
                     and(eq(targetGroups.id, input.id), isNull(targetGroups.deletedAt))
                 );
 
+            // Invalidate both target groups and flags cache since flags may have been affected
             await targetGroupsCache.invalidateByTables(["target_groups"]);
+            // Also invalidate flags cache to ensure flags reflect the removed group associations
+            await flagsCache.invalidateByTables([
+                "flags",
+                "flags_to_target_groups",
+            ]);
 
             return { success: true };
         }),
