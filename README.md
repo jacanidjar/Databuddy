@@ -3,12 +3,12 @@
 <div align="center">
 
 [![License: AGPL](https://img.shields.io/badge/License-AGPL-red.svg)](LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-15.3-black.svg)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19.0-blue.svg)](https://reactjs.org/)
-[![Turborepo](https://img.shields.io/badge/Turborepo-1.12-blue.svg)](https://turbo.build/repo)
-[![Bun](https://img.shields.io/badge/Bun-1.2-blue.svg)](https://bun.sh/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-blue.svg)](https://tailwindcss.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.1-black.svg)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.2-blue.svg)](https://reactjs.org/)
+[![Turborepo](https://img.shields.io/badge/Turborepo-2.7-blue.svg)](https://turbo.build/repo)
+[![Bun](https://img.shields.io/badge/Bun-1.3-blue.svg)](https://bun.sh/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1-blue.svg)](https://tailwindcss.com/)
 
 [![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/databuddy-analytics/Databuddy?utm_source=oss&utm_medium=github&utm_campaign=databuddy-analytics%2FDatabuddy&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)](https://coderabbit.ai)
 [![Code Coverage](https://img.shields.io/badge/coverage-85%25-green.svg)](https://github.com/databuddy-analytics/Databuddy/actions/workflows/coverage.yml)
@@ -104,27 +104,4 @@ See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
 
 This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0). See the [LICENSE](LICENSE) file for details.
 
-Copyright (c) 2025 Databuddy
-
-## 🙏 Acknowledgments
-
-See [ACKNOWLEDGMENTS.md](ACKNOWLEDGMENTS.md) for credits.
-
-## ⚠️ Coding Standards & Rules
-
-- **Bun is required** for all development and scripts. Do not use npm, pnpm, or Node.js CLI for install, run, or dev.
-- **Zod v4** (from `zod/v4`) is required everywhere. Do not use Zod v3.
-- **Use only Phosphor icons** (not Lucide).
-- **Use Dayjs** for date handling (never date-fns).
-- **Use Tanstack Query** for hooks (never SWR).
-- **Use rounded** for border radius (never rounded-xl or rounded-md).
-- **Never add placeholders or mock data.**
-- **Always ensure type-safety** and use shared types where possible.
-- **Never throw errors in server actions;** use try/catch and return errors to the client.
-- **Always use error boundaries properly.**
-- **Console usage:** Use `console.error`, `console.time`, `console.json`, `console.table`, etc. appropriately.
-- **Almost never use useEffect** unless critical.
-- **Use Ultracite** for linting and formatting.
-- **Use Prettier** for code formatting.
-
-See `.cursor/rules/` for the full enforced ruleset.
+Copyright (c) 2025 Databuddy Analytics, Inc.
