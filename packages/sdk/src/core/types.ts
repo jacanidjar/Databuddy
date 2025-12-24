@@ -13,7 +13,7 @@
  * />
  * ```
  */
-export type DatabuddyConfig = {
+export interface DatabuddyConfig {
 	/**
 	 * Your Databuddy project client ID.
 	 * If not provided, will automatically detect from NEXT_PUBLIC_DATABUDDY_CLIENT_ID environment variable.
@@ -188,12 +188,12 @@ export type DatabuddyConfig = {
 
 	/** Array of glob patterns to mask sensitive paths (e.g., ['/users/*']) */
 	maskPatterns?: string[];
-};
+}
 
 /**
  * Base event properties that can be attached to any event
  */
-export type BaseEventProperties = {
+export interface BaseEventProperties {
 	/** Page URL */
 	__path?: string;
 	/** Page title */
@@ -220,7 +220,7 @@ export type BaseEventProperties = {
 	utm_campaign?: string;
 	utm_term?: string;
 	utm_content?: string;
-};
+}
 
 /**
  * Custom event properties that can be attached to any event
@@ -233,7 +233,7 @@ export interface EventProperties extends BaseEventProperties {
 /**
  * Pre-defined event types with their specific properties
  */
-export type EventTypeMap = {
+export interface EventTypeMap {
 	// Core events
 	screen_view: {
 		time_on_page?: number;
@@ -298,7 +298,7 @@ export type EventTypeMap = {
 
 	// Custom events (catch-all)
 	[eventName: string]: EventProperties;
-};
+}
 
 /**
  * Available event names
@@ -310,8 +310,8 @@ export type EventName = keyof EventTypeMap;
  */
 export type PropertiesForEvent<T extends EventName> =
 	T extends keyof EventTypeMap
-		? EventTypeMap[T] & EventProperties
-		: EventProperties;
+	? EventTypeMap[T] & EventProperties
+	: EventProperties;
 
 /**
  * The global tracker instance available at `window.databuddy` or `window.db`.
@@ -326,7 +326,7 @@ export type PropertiesForEvent<T extends EventName> =
  * const options = window.databuddy.options;
  * ```
  */
-export type DatabuddyTracker = {
+export interface DatabuddyTracker {
 	/**
 	 * Track a custom event.
 	 * @param eventName - Name of the event (e.g., "purchase", "signup")
@@ -370,7 +370,7 @@ export type DatabuddyTracker = {
 	 * Current tracker configuration options.
 	 */
 	options: DatabuddyConfig;
-};
+}
 
 /**
  * Global window interface extensions
@@ -416,7 +416,7 @@ declare global {
  * </a>
  * ```
  */
-export type DataAttributes = {
+export interface DataAttributes {
 	/** Event name to track when element is clicked */
 	"data-track": string;
 	/** Additional data attributes (auto-converted from kebab-case to camelCase) */

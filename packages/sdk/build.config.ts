@@ -15,12 +15,17 @@ export default defineBuildConfig({
 		"react",
 		"react-dom",
 		"vue",
-		"jotai",
 		"@ai-sdk/provider",
 		"ai",
 		"tokenlens",
 		"msw",
 	],
+	rollup: {
+		emitCJS: false,
+		esbuild: {
+			minify: false,
+		},
+	},
 	declaration: true,
 	alias: {
 		"@": resolve(__dirname, "src"),
