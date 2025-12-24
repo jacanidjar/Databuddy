@@ -1,4 +1,15 @@
 import { logger } from "@/logger";
+import {
+	buildQueryParams,
+	type CacheEntry,
+	createCacheEntry,
+	DEFAULT_RESULT,
+	fetchAllFlags as fetchAllFlagsApi,
+	getCacheKey,
+	isCacheStale,
+	isCacheValid,
+	RequestBatcher,
+} from "./shared";
 import type {
 	FlagResult,
 	FlagState,
@@ -6,30 +17,56 @@ import type {
 	FlagsManager,
 	FlagsManagerOptions,
 	StorageInterface,
+	UserContext,
 } from "./types";
 
+/**
+ * Core flags manager - lightweight API client with best practices:
+ * - Stale-while-revalidate caching
+ * - Request batching (multiple flags → single request)
+ * - Request deduplication
+ * - Visibility API awareness (pause when hidden)
+ * - Optimistic storage hydration
+ */
 export class CoreFlagsManager implements FlagsManager {
 	private config: FlagsConfig;
-	private storage?: StorageInterface;
-	private onFlagsUpdate?: (flags: Record<string, FlagResult>) => void;
-	private onConfigUpdate?: (config: FlagsConfig) => void;
-	private memoryFlags: Record<string, FlagResult> = {};
-	private pendingFlags: Set<string> = new Set();
+	private readonly storage?: StorageInterface;
+	private readonly onFlagsUpdate?: (flags: Record<string, FlagResult>) => void;
+	private readonly onConfigUpdate?: (config: FlagsConfig) => void;
+	private readonly onReady?: () => void;
+
+	/** In-memory cache with stale tracking */
+	private readonly cache = new Map<string, CacheEntry>();
+
+	/** In-flight requests for deduplication */
+	private readonly inFlight = new Map<string, Promise<FlagResult>>();
+
+	/** Request batcher for batching multiple flag requests */
+	private batcher: RequestBatcher | null = null;
+
+	/** Ready state */
+	private ready = false;
+
+	/** Visibility state */
+	private isVisible = true;
+
+	/** Visibility listener cleanup */
+	private visibilityCleanup?: () => void;
 
 	constructor(options: FlagsManagerOptions) {
 		this.config = this.withDefaults(options.config);
 		this.storage = options.storage;
 		this.onFlagsUpdate = options.onFlagsUpdate;
 		this.onConfigUpdate = options.onConfigUpdate;
+		this.onReady = options.onReady;
 
 		logger.setDebug(this.config.debug ?? false);
-		logger.debug("CoreFlagsManager initialized with config:", {
+		logger.debug("FlagsManager initialized", {
 			clientId: this.config.clientId,
-			debug: this.config.debug,
-			isPending: this.config.isPending,
-			hasUser: !!this.config.user,
+			hasUser: Boolean(this.config.user),
 		});
 
+		this.setupVisibilityListener();
 		this.initialize();
 	}
 
@@ -43,208 +80,276 @@ export class CoreFlagsManager implements FlagsManager {
 			skipStorage: config.skipStorage ?? false,
 			isPending: config.isPending,
 			autoFetch: config.autoFetch !== false,
+			environment: config.environment,
+			cacheTtl: config.cacheTtl ?? 60_000, // 1 minute
+			staleTime: config.staleTime ?? 30_000, // 30 seconds - revalidate after this
+		};
+	}
+
+	private setupVisibilityListener(): void {
+		if (typeof document === "undefined") {
+			return;
+		}
+
+		const handleVisibility = (): void => {
+			this.isVisible = document.visibilityState === "visible";
+
+			// Revalidate stale entries when becoming visible
+			if (this.isVisible) {
+				this.revalidateStale();
+			}
+		};
+
+		document.addEventListener("visibilitychange", handleVisibility);
+		this.visibilityCleanup = () => {
+			document.removeEventListener("visibilitychange", handleVisibility);
 		};
 	}
 
 	private async initialize(): Promise<void> {
+		// Load from persistent storage first (instant hydration)
 		if (!this.config.skipStorage && this.storage) {
-			this.loadCachedFlags();
-			this.storage.cleanupExpired();
+			this.loadFromStorage();
 		}
 
+		// Auto-fetch if enabled and not pending
 		if (this.config.autoFetch && !this.config.isPending) {
 			await this.fetchAllFlags();
 		}
+
+		this.ready = true;
+		this.onReady?.();
 	}
 
-	private loadCachedFlags(): void {
+	private loadFromStorage(): void {
+		if (!this.storage) {
+			return;
+		}
+
+		try {
+			const stored = this.storage.getAll();
+			const ttl = this.config.cacheTtl ?? 60_000;
+			const staleTime = this.config.staleTime ?? ttl / 2;
+
+			for (const [key, value] of Object.entries(stored)) {
+				if (value && typeof value === "object") {
+					this.cache.set(key, createCacheEntry(value as FlagResult, ttl, staleTime));
+				}
+			}
+
+			if (this.cache.size > 0) {
+				logger.debug(`Loaded ${this.cache.size} flags from storage`);
+				this.notifyUpdate();
+			}
+		} catch (err) {
+			logger.warn("Failed to load from storage:", err);
+		}
+	}
+
+	private saveToStorage(): void {
 		if (!this.storage || this.config.skipStorage) {
 			return;
 		}
 
 		try {
-			const cachedFlags = this.storage.getAll();
-			if (Object.keys(cachedFlags).length > 0) {
-				this.memoryFlags = cachedFlags as Record<string, FlagResult>;
-				this.notifyFlagsUpdate();
-				logger.debug("Loaded cached flags:", Object.keys(cachedFlags));
+			const flags: Record<string, FlagResult> = {};
+			for (const [key, entry] of this.cache) {
+				flags[key] = entry.result;
 			}
+			this.storage.setAll(flags);
 		} catch (err) {
-			logger.warn("Error loading cached flags:", err);
+			logger.warn("Failed to save to storage:", err);
 		}
 	}
 
-	async fetchAllFlags(): Promise<void> {
+	private getFromCache(key: string): CacheEntry | null {
+		const cached = this.cache.get(key);
+		if (isCacheValid(cached)) {
+			return cached;
+		}
+		if (cached) {
+			this.cache.delete(key);
+		}
+		return null;
+	}
+
+	private getBatcher(): RequestBatcher {
+		if (!this.batcher) {
+			const apiUrl = this.config.apiUrl ?? "https://api.databuddy.cc";
+			const params = buildQueryParams(this.config);
+			this.batcher = new RequestBatcher(apiUrl, params);
+		}
+		return this.batcher;
+	}
+
+	/**
+	 * Revalidate stale entries in background
+	 */
+	private revalidateStale(): void {
+		const staleKeys: string[] = [];
+
+		for (const [key, entry] of this.cache) {
+			if (isCacheStale(entry)) {
+				staleKeys.push(key.split(":")[0]); // Get original flag key
+			}
+		}
+
+		if (staleKeys.length > 0) {
+			logger.debug(`Revalidating ${staleKeys.length} stale flags`);
+			this.fetchAllFlags().catch((err) =>
+				logger.error("Revalidation error:", err)
+			);
+		}
+	}
+
+	/**
+	 * Fetch a single flag from API with deduplication and batching
+	 */
+	async getFlag(key: string, user?: UserContext): Promise<FlagResult> {
+		if (this.config.disabled) {
+			return DEFAULT_RESULT;
+		}
+
 		if (this.config.isPending) {
-			logger.debug("Session pending, skipping bulk fetch");
+			return { ...DEFAULT_RESULT, reason: "SESSION_PENDING" };
+		}
+
+		const cacheKey = getCacheKey(key, user ?? this.config.user);
+
+		// Check cache first - stale-while-revalidate
+		const cached = this.getFromCache(cacheKey);
+		if (cached) {
+			// Return immediately, but revalidate if stale
+			if (isCacheStale(cached) && this.isVisible) {
+				this.revalidateFlag(key, cacheKey);
+			}
+			return cached.result;
+		}
+
+		// Deduplicate in-flight requests
+		const existing = this.inFlight.get(cacheKey);
+		if (existing) {
+			logger.debug(`Deduplicating request: ${key}`);
+			return existing;
+		}
+
+		// Use batcher for efficient batching of multiple simultaneous requests
+		const promise = this.getBatcher().request(key);
+		this.inFlight.set(cacheKey, promise);
+
+		try {
+			const result = await promise;
+			const ttl = this.config.cacheTtl ?? 60_000;
+			const staleTime = this.config.staleTime ?? ttl / 2;
+			this.cache.set(cacheKey, createCacheEntry(result, ttl, staleTime));
+			this.notifyUpdate();
+			this.saveToStorage();
+			return result;
+		} finally {
+			this.inFlight.delete(cacheKey);
+		}
+	}
+
+	private async revalidateFlag(key: string, cacheKey: string): Promise<void> {
+		// Skip if already in-flight
+		if (this.inFlight.has(cacheKey)) {
 			return;
 		}
 
-		const params = new URLSearchParams();
-		params.set("clientId", this.config.clientId);
-		if (this.config.user?.userId) {
-			params.set("userId", this.config.user.userId);
-		}
-		if (this.config.user?.email) {
-			params.set("email", this.config.user.email);
-		}
-		if (this.config.user?.properties) {
-			params.set("properties", JSON.stringify(this.config.user.properties));
-		}
-
-		const url = `${this.config.apiUrl}/public/v1/flags/bulk?${params.toString()}`;
+		const promise = this.getBatcher().request(key);
+		this.inFlight.set(cacheKey, promise);
 
 		try {
-			const response = await fetch(url);
-			if (!response.ok) {
-				throw new Error(`HTTP ${response.status}`);
+			const result = await promise;
+			const ttl = this.config.cacheTtl ?? 60_000;
+			const staleTime = this.config.staleTime ?? ttl / 2;
+			this.cache.set(cacheKey, createCacheEntry(result, ttl, staleTime));
+			this.notifyUpdate();
+			this.saveToStorage();
+			logger.debug(`Revalidated flag: ${key}`);
+		} catch (err) {
+			logger.error(`Revalidation error: ${key}`, err);
+		} finally {
+			this.inFlight.delete(cacheKey);
+		}
+	}
+
+	/**
+	 * Fetch all flags for current user
+	 */
+	async fetchAllFlags(user?: UserContext): Promise<void> {
+		if (this.config.disabled || this.config.isPending) {
+			return;
+		}
+
+		// Skip if not visible (battery/bandwidth saving)
+		if (!this.isVisible && this.cache.size > 0) {
+			logger.debug("Skipping fetch - tab hidden");
+			return;
+		}
+
+		const apiUrl = this.config.apiUrl ?? "https://api.databuddy.cc";
+		const params = buildQueryParams(this.config, user);
+
+		try {
+			const flags = await fetchAllFlagsApi(apiUrl, params);
+
+			// Update cache with all flags
+			const ttl = this.config.cacheTtl ?? 60_000;
+			const staleTime = this.config.staleTime ?? ttl / 2;
+
+			for (const [key, result] of Object.entries(flags)) {
+				const cacheKey = getCacheKey(key, user ?? this.config.user);
+				this.cache.set(cacheKey, createCacheEntry(result, ttl, staleTime));
 			}
 
-			const result = await response.json();
+			this.ready = true;
+			this.notifyUpdate();
+			this.saveToStorage();
 
-			logger.debug("Bulk fetch response:", result);
-
-			if (result.flags) {
-				this.memoryFlags = result.flags;
-				this.notifyFlagsUpdate();
-
-				if (!this.config.skipStorage && this.storage) {
-					try {
-						this.storage.setAll(result.flags);
-						logger.debug("Bulk flags synced to cache");
-					} catch (err) {
-						logger.warn("Bulk storage error:", err);
-					}
-				}
-			}
+			logger.debug(`Fetched ${Object.keys(flags).length} flags`);
 		} catch (err) {
 			logger.error("Bulk fetch error:", err);
 		}
 	}
 
-	async getFlag(key: string): Promise<FlagResult> {
-		logger.debug(`Getting: ${key}`);
-
-		if (this.config.isPending) {
-			logger.debug(`Session pending for: ${key}`);
-			return {
-				enabled: false,
-				value: false,
-				payload: null,
-				reason: "SESSION_PENDING",
-			};
-		}
-
-		if (this.memoryFlags[key]) {
-			logger.debug(`Memory: ${key}`);
-			return this.memoryFlags[key];
-		}
-
-		if (this.pendingFlags.has(key)) {
-			logger.debug(`Pending: ${key}`);
-			return {
-				enabled: false,
-				value: false,
-				payload: null,
-				reason: "FETCHING",
-			};
-		}
-
-		if (!this.config.skipStorage && this.storage) {
-			try {
-				const cached = await this.storage.get(key);
-				if (cached) {
-					logger.debug(`Cache: ${key}`);
-					this.memoryFlags[key] = cached;
-					this.notifyFlagsUpdate();
-					return cached;
-				}
-			} catch (err) {
-				logger.warn(`Storage error: ${key}`, err);
-			}
-		}
-
-		return this.fetchFlag(key);
-	}
-
-	private async fetchFlag(key: string): Promise<FlagResult> {
-		this.pendingFlags.add(key);
-
-		const params = new URLSearchParams();
-		params.set("key", key);
-		params.set("clientId", this.config.clientId);
-		if (this.config.user?.userId) {
-			params.set("userId", this.config.user.userId);
-		}
-		if (this.config.user?.email) {
-			params.set("email", this.config.user.email);
-		}
-		if (this.config.user?.properties) {
-			params.set("properties", JSON.stringify(this.config.user.properties));
-		}
-
-		const url = `${this.config.apiUrl}/public/v1/flags/evaluate?${params.toString()}`;
-
-		logger.debug(`Fetching: ${key}`);
-
-		try {
-			const response = await fetch(url);
-			if (!response.ok) {
-				throw new Error(`HTTP ${response.status}`);
-			}
-
-			const result: FlagResult = await response.json();
-
-			logger.debug(`Response for ${key}:`, result);
-
-			this.memoryFlags[key] = result;
-			this.notifyFlagsUpdate();
-
-			if (!this.config.skipStorage && this.storage) {
-				try {
-					this.storage.set(key, result);
-					logger.debug(`Cached: ${key}`);
-				} catch (err) {
-					logger.warn(`Cache error: ${key}`, err);
-				}
-			}
-
-			return result;
-		} catch (err) {
-			logger.error(`Fetch error: ${key}`, err);
-
-			const fallback = {
-				enabled: false,
-				value: false,
-				payload: null,
-				reason: "ERROR",
-			};
-			this.memoryFlags[key] = fallback;
-			this.notifyFlagsUpdate();
-			return fallback;
-		} finally {
-			this.pendingFlags.delete(key);
-		}
-	}
-
+	/**
+	 * Check if flag is enabled (synchronous, returns cached value)
+	 * Uses stale-while-revalidate pattern
+	 */
 	isEnabled(key: string): FlagState {
-		if (this.memoryFlags[key]) {
+		const cacheKey = getCacheKey(key, this.config.user);
+		const cached = this.getFromCache(cacheKey);
+
+		if (cached) {
+			// Trigger background revalidation if stale
+			if (isCacheStale(cached) && this.isVisible) {
+				this.revalidateFlag(key, cacheKey);
+			}
+
 			return {
-				enabled: this.memoryFlags[key].enabled,
+				enabled: cached.result.enabled,
+				value: cached.result.value,
+				variant: cached.result.variant,
 				isLoading: false,
 				isReady: true,
 			};
 		}
-		if (this.pendingFlags.has(key)) {
+
+		// Check if request is in flight
+		if (this.inFlight.has(cacheKey)) {
 			return {
 				enabled: false,
 				isLoading: true,
 				isReady: false,
 			};
 		}
+
+		// Trigger background fetch
 		this.getFlag(key).catch((err) =>
-			logger.error(`Background fetch error for ${key}:`, err)
+			logger.error(`Background fetch error: ${key}`, err)
 		);
+
 		return {
 			enabled: false,
 			isLoading: true,
@@ -252,54 +357,114 @@ export class CoreFlagsManager implements FlagsManager {
 		};
 	}
 
-	refresh(forceClear = false): void {
-		logger.debug("Refreshing", { forceClear });
+	/**
+	 * Get flag value with type (synchronous, returns cached or default)
+	 */
+	getValue<T = boolean | string | number>(key: string, defaultValue?: T): T {
+		const cacheKey = getCacheKey(key, this.config.user);
+		const cached = this.getFromCache(cacheKey);
 
-		if (forceClear) {
-			this.memoryFlags = {};
-			this.notifyFlagsUpdate();
-			if (!this.config.skipStorage && this.storage) {
-				try {
-					this.storage.clear();
-					logger.debug("Storage cleared");
-				} catch (err) {
-					logger.warn("Storage clear error:", err);
-				}
+		if (cached) {
+			// Trigger background revalidation if stale
+			if (isCacheStale(cached) && this.isVisible) {
+				this.revalidateFlag(key, cacheKey);
 			}
+			return cached.result.value as T;
 		}
 
-		this.fetchAllFlags();
+		// Trigger background fetch
+		if (!this.inFlight.has(cacheKey)) {
+			this.getFlag(key).catch((err) =>
+				logger.error(`Background fetch error: ${key}`, err)
+			);
+		}
+
+		return (defaultValue ?? false) as T;
 	}
 
-	updateUser(user: FlagsConfig["user"]): void {
+	/**
+	 * Update user context and refresh flags
+	 */
+	updateUser(user: UserContext): void {
 		this.config = { ...this.config, user };
+
+		// Recreate batcher with new user params
+		this.batcher?.destroy();
+		this.batcher = null;
+
 		this.onConfigUpdate?.(this.config);
-		this.refresh();
+		this.refresh().catch((err) => logger.error("Refresh error:", err));
 	}
 
+	/**
+	 * Refresh all flags
+	 */
+	async refresh(forceClear = false): Promise<void> {
+		if (forceClear) {
+			this.cache.clear();
+			this.storage?.clear();
+			this.notifyUpdate();
+		}
+
+		await this.fetchAllFlags();
+	}
+
+	/**
+	 * Update configuration
+	 */
 	updateConfig(config: FlagsConfig): void {
+		const wasDisabled = this.config.disabled;
+		const wasPending = this.config.isPending;
+
 		this.config = this.withDefaults(config);
+
+		// Recreate batcher with new config
+		this.batcher?.destroy();
+		this.batcher = null;
+
 		this.onConfigUpdate?.(this.config);
 
-		if (!this.config.skipStorage && this.storage) {
-			this.loadCachedFlags();
-			this.storage.cleanupExpired();
-		}
-
-		if (this.config.autoFetch && !this.config.isPending) {
-			this.fetchAllFlags();
+		// Fetch if we went from disabled/pending to enabled
+		if (
+			(wasDisabled || wasPending) &&
+			!this.config.disabled &&
+			!this.config.isPending
+		) {
+			this.fetchAllFlags().catch((err) => logger.error("Fetch error:", err));
 		}
 	}
 
+	/**
+	 * Get all cached flags
+	 */
 	getMemoryFlags(): Record<string, FlagResult> {
-		return { ...this.memoryFlags };
+		const flags: Record<string, FlagResult> = {};
+		for (const [key, entry] of this.cache) {
+			// Extract just the flag key (remove user suffix)
+			const flagKey = key.split(":")[0];
+			flags[flagKey] = entry.result;
+		}
+		return flags;
 	}
 
-	getPendingFlags(): Set<string> {
-		return new Set(this.pendingFlags);
+	/**
+	 * Check if manager is ready
+	 */
+	isReady(): boolean {
+		return this.ready;
 	}
 
-	private notifyFlagsUpdate(): void {
+	/**
+	 * Cleanup resources
+	 */
+	destroy(): void {
+		this.batcher?.destroy();
+		this.visibilityCleanup?.();
+		this.cache.clear();
+		this.inFlight.clear();
+	}
+
+	private notifyUpdate(): void {
 		this.onFlagsUpdate?.(this.getMemoryFlags());
 	}
 }

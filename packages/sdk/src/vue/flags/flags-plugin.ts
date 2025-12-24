@@ -1,6 +1,7 @@
 import { type App, reactive } from "vue";
-import type { FlagResult, FlagState, FlagsConfig } from "@/core/flags";
-import { BrowserFlagStorage, CoreFlagsManager } from "@/core/flags";
+import { BrowserFlagStorage } from "@/core/flags/browser-storage";
+import { CoreFlagsManager } from "@/core/flags/flags-manager";
+import type { FlagResult, FlagState, FlagsConfig } from "@/core/flags/types";
 
 const FLAGS_SYMBOL = Symbol("flags");
 
@@ -12,7 +13,7 @@ interface VueFlagsState {
 let globalState: VueFlagsState | null = null;
 let globalManager: CoreFlagsManager | null = null;
 
-export interface FlagsPluginOptions extends FlagsConfig {}
+export interface FlagsPluginOptions extends FlagsConfig { }
 
 export function createFlagsPlugin(options: FlagsPluginOptions) {
 	return {
@@ -63,7 +64,9 @@ export function useFlags() {
 	const fetchAllFlags = () => manager.fetchAllFlags();
 
 	const updateUser = (user: FlagsConfig["user"]) => {
-		manager.updateUser(user);
+		if (user) {
+			manager.updateUser(user);
+		}
 	};
 
 	const refresh = (forceClear = false): void => {

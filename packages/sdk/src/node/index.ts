@@ -1,3 +1,5 @@
+/** biome-ignore-all lint/performance/noBarrelFile: im a big fan of barrels */
+
 import { createLogger, createNoopLogger, type Logger } from "./logger";
 import { EventQueue } from "./queue";
 import type {
@@ -29,18 +31,18 @@ const DEFAULT_MAX_DEDUPLICATION_CACHE_SIZE = 10_000;
 
 export class Databuddy {
 	private readonly clientId: string;
-	private apiUrl: string;
-	private logger: Logger;
-	private enableBatching: boolean;
-	private batchSize: number;
-	private batchTimeout: number;
-	private queue: EventQueue;
+	private readonly apiUrl: string;
+	private readonly logger: Logger;
+	private readonly enableBatching: boolean;
+	private readonly batchSize: number;
+	private readonly batchTimeout: number;
+	private readonly queue: EventQueue;
 	private flushTimer: ReturnType<typeof setTimeout> | null = null;
 	private globalProperties: GlobalProperties = {};
 	private middleware: Middleware[] = [];
-	private enableDeduplication: boolean;
-	private deduplicationCache: Set<string> = new Set();
-	private maxDeduplicationCacheSize: number;
+	private readonly enableDeduplication: boolean;
+	private readonly deduplicationCache: Set<string> = new Set();
+	private readonly maxDeduplicationCacheSize: number;
 
 	constructor(config: DatabuddyConfig) {
 		if (!config.clientId || typeof config.clientId !== "string") {
@@ -244,7 +246,7 @@ export class Databuddy {
 
 		this.logger.info("Flushing events", { count: events.length });
 
-		return this.batch(events);
+		return await this.batch(events);
 	}
 
 	/**
@@ -535,4 +537,5 @@ export class Databuddy {
  * Shorthand alias for Databuddy
  */
 export { Databuddy as db };
+
 export * from "./flags";

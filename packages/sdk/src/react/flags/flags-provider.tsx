@@ -1,126 +1,208 @@
-import { atom, createStore, Provider, useAtom } from "jotai";
-import type { ReactNode } from "react";
-import { createElement, useEffect, useRef } from "react";
-import type { FlagResult, FlagState, FlagsConfig } from "@/core/flags";
-import { BrowserFlagStorage, CoreFlagsManager } from "@/core/flags";
+/** biome-ignore-all lint/correctness/noUnusedImports: we need to import React to use the createContext function */
+import React, {
+	createContext,
+	type ReactNode,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useSyncExternalStore,
+} from "react";
+import { BrowserFlagStorage } from "@/core/flags/browser-storage";
+import { CoreFlagsManager } from "@/core/flags/flags-manager";
+import type {
+	FlagResult,
+	FlagState,
+	FlagsConfig,
+	FlagsContext,
+	UserContext,
+} from "@/core/flags/types";
 import { logger } from "@/logger";
 
-const flagsStore = createStore();
+/** Internal store for flags state */
+interface FlagsStore {
+	flags: Record<string, FlagResult>;
+	isReady: boolean;
+}
 
-const managerAtom = atom<CoreFlagsManager | null>(null);
-const memoryFlagsAtom = atom<Record<string, FlagResult>>({});
+const FlagsReactContext = createContext<FlagsContext | null>(null);
 
 export interface FlagsProviderProps extends FlagsConfig {
 	children: ReactNode;
 }
 
+/**
+ * Flags provider component
+ * Creates a manager instance and provides flag methods to children
+ */
 export function FlagsProvider({ children, ...config }: FlagsProviderProps) {
-	const managerRef = useRef<CoreFlagsManager | null>(null);
+	// Use ref to hold mutable state that doesn't trigger re-renders
+	const storeRef = useRef<FlagsStore>({ flags: {}, isReady: false });
+	const listenersRef = useRef<Set<() => void>>(new Set());
 
-	useEffect(() => {
-		// Create storage instance only if not skipping storage
+	// Create manager once (stable reference)
+	const manager = useMemo(() => {
 		const storage = config.skipStorage ? undefined : new BrowserFlagStorage();
 
-		// Create new manager instance
-		const manager = new CoreFlagsManager({
+		return new CoreFlagsManager({
 			config,
 			storage,
 			onFlagsUpdate: (flags) => {
-				flagsStore.set(memoryFlagsAtom, flags);
+				storeRef.current = { ...storeRef.current, flags };
+				// Notify all subscribers
+				for (const listener of listenersRef.current) {
+					listener();
+				}
+			},
+			onReady: () => {
+				storeRef.current = { ...storeRef.current, isReady: true };
+				for (const listener of listenersRef.current) {
+					listener();
+				}
 			},
 		});
+	}, [config.clientId]); // Only recreate if clientId changes
 
-		managerRef.current = manager;
-		flagsStore.set(managerAtom, manager);
-
-		// Cleanup function
-		return () => {
-			managerRef.current = null;
-			flagsStore.set(managerAtom, null);
-		};
-	}, [
-		config.clientId,
-		config.apiUrl,
-		config.user?.userId,
-		config.user?.email,
-		config.disabled,
-		config.debug,
-		config.skipStorage,
-		config.isPending,
-		config.autoFetch,
-	]);
-
-	// Update manager config when props change
+	// Update config when props change (isPending, user, etc.)
+	// Use a ref to track previous config and avoid unnecessary updates
+	const prevConfigRef = useRef(config);
 	useEffect(() => {
-		if (managerRef.current) {
-			managerRef.current.updateConfig(config);
-		}
-	}, [
-		config.clientId,
-		config.apiUrl,
-		config.user?.userId,
-		config.user?.email,
-		config.disabled,
-		config.debug,
-		config.skipStorage,
-		config.isPending,
-		config.autoFetch,
-	]);
+		const prevConfig = prevConfigRef.current;
+		// Check if config actually changed
+		const configChanged =
+			prevConfig.apiUrl !== config.apiUrl ||
+			prevConfig.isPending !== config.isPending ||
+			prevConfig.user?.userId !== config.user?.userId ||
+			prevConfig.user?.email !== config.user?.email ||
+			prevConfig.environment !== config.environment ||
+			prevConfig.disabled !== config.disabled ||
+			prevConfig.autoFetch !== config.autoFetch ||
+			prevConfig.cacheTtl !== config.cacheTtl ||
+			prevConfig.staleTime !== config.staleTime;
 
-	return createElement(Provider, { store: flagsStore }, children);
+		if (configChanged) {
+			prevConfigRef.current = config;
+			manager.updateConfig(config);
+		}
+	}, [manager, config]);
+
+	useEffect(() => {
+		return () => {
+			manager.destroy();
+		};
+	}, [manager]);
+
+	// Subscribe function for useSyncExternalStore
+	const subscribe = useMemo(
+		() => (callback: () => void) => {
+			listenersRef.current.add(callback);
+			return () => {
+				listenersRef.current.delete(callback);
+			};
+		},
+		[]
+	);
+
+	// Get current snapshot
+	const getSnapshot = useMemo(() => () => storeRef.current, []);
+
+	// Subscribe to store updates
+	const store = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+
+	// Build context value
+	const contextValue = useMemo<FlagsContext>(
+		() => ({
+			isEnabled: (key: string): FlagState => {
+				const result = store.flags[key];
+				if (result) {
+					return {
+						enabled: result.enabled,
+						value: result.value,
+						variant: result.variant,
+						isLoading: false,
+						isReady: true,
+					};
+				}
+				return manager.isEnabled(key);
+			},
+
+			getValue: <T extends boolean | string | number>(
+				key: string,
+				defaultValue?: T
+			): T => {
+				const result = store.flags[key];
+				if (result) {
+					return result.value as T;
+				}
+				return manager.getValue(key, defaultValue);
+			},
+
+			getFlag: (key: string) => manager.getFlag(key),
+
+			fetchAllFlags: () => manager.fetchAllFlags(),
+
+			updateUser: (user: UserContext) => manager.updateUser(user),
+
+			refresh: (forceClear = false) => manager.refresh(forceClear),
+
+			isReady: store.isReady,
+		}),
+		[manager, store]
+	);
+
+	return (
+		<FlagsReactContext.Provider value={contextValue}>
+			{children}
+		</FlagsReactContext.Provider>
+	);
 }
 
-export function useFlags() {
-	const [manager] = useAtom(managerAtom, { store: flagsStore });
-	const [memoryFlags] = useAtom(memoryFlagsAtom, {
-		store: flagsStore,
-	});
+/**
+ * Hook to access flags context
+ */
+export function useFlags(): FlagsContext {
+	const context = useContext(FlagsReactContext);
 
-	logger.debug("useFlags called with manager:", {
-		hasManager: !!manager,
-		memoryFlagsCount: Object.keys(memoryFlags).length,
-		memoryFlags: Object.keys(memoryFlags),
-	});
-
-	const isEnabled = (key: string): FlagState => {
-		if (!manager) {
-			return {
+	if (!context) {
+		logger.warn("useFlags called outside FlagsProvider");
+		// Return a no-op context for safety
+		return {
+			isEnabled: () => ({ enabled: false, isLoading: false, isReady: false }),
+			getValue: <T extends boolean | string | number = boolean>(
+				_key: string,
+				defaultValue?: T
+			) => (defaultValue ?? false) as T,
+			getFlag: async () => ({
 				enabled: false,
-				isLoading: false,
-				isReady: false,
-			};
-		}
-		return manager.isEnabled(key);
-	};
+				value: false,
+				payload: null,
+				reason: "NO_PROVIDER",
+			}),
+			fetchAllFlags: async () => {},
+			updateUser: () => {},
+			refresh: async () => {},
+			isReady: false,
+		};
+	}
 
-	const fetchAllFlags = () => {
-		if (!manager) {
-			logger.warn("No manager for bulk fetch");
-			return;
-		}
-		return manager.fetchAllFlags();
-	};
+	return context;
+}
 
-	const updateUser = (user: FlagsConfig["user"]) => {
-		if (!manager) {
-			logger.warn("No manager for user update");
-			return;
-		}
-		manager.updateUser(user);
-	};
+/**
+ * Hook to get a specific flag's state
+ */
+export function useFlag(key: string): FlagState {
+	const { isEnabled } = useFlags();
+	return isEnabled(key);
+}
 
-	const refresh = (forceClear = false): void => {
-		if (!manager) {
-			logger.warn("No manager for refresh");
-			return;
-		}
-		manager.refresh(forceClear);
-	};
-
-	return {
-		isEnabled,
-		fetchAllFlags,
-		updateUser,
-		refresh,
-	};
+/**
+ * Hook to get a flag's value with type safety
+ */
+export function useFlagValue<T extends boolean | string | number = boolean>(
+	key: string,
+	defaultValue?: T
+): T {
+	const { getValue } = useFlags();
+	return getValue(key, defaultValue);
 }

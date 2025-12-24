@@ -1,7 +1,7 @@
-import type { StorageInterface } from "./types";
+import type { FlagResult, StorageInterface } from "./types";
 
 export class BrowserFlagStorage implements StorageInterface {
-	private ttl = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+	private readonly ttl = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 	get(key: string) {
 		return this.getFromLocalStorage(key);
@@ -11,8 +11,8 @@ export class BrowserFlagStorage implements StorageInterface {
 		this.setToLocalStorage(key, value);
 	}
 
-	getAll(): Record<string, unknown> {
-		const result: Record<string, unknown> = {};
+	getAll(): Record<string, FlagResult> {
+		const result: Record<string, FlagResult> = {};
 		const now = Date.now();
 
 		const keys = Object.keys(localStorage).filter((key) =>
@@ -28,10 +28,10 @@ export class BrowserFlagStorage implements StorageInterface {
 					if (parsed.expiresAt && now > parsed.expiresAt) {
 						localStorage.removeItem(key);
 					} else {
-						result[flagKey] = parsed.value || parsed; // Support both new and old format
+						result[flagKey] = (parsed.value || parsed) as FlagResult;
 					}
 				}
-			} catch {}
+			} catch { }
 		}
 		return result;
 	}
@@ -76,7 +76,7 @@ export class BrowserFlagStorage implements StorageInterface {
 				expiresAt: Date.now() + this.ttl,
 			};
 			localStorage.setItem(`db-flag-${key}`, JSON.stringify(item));
-		} catch {}
+		} catch { }
 	}
 
 	private isExpired(expiresAt?: number): boolean {
@@ -96,7 +96,7 @@ export class BrowserFlagStorage implements StorageInterface {
 		}
 	}
 
-	setAll(flags: Record<string, unknown>): void {
+	setAll(flags: Record<string, FlagResult>): void {
 		const currentFlags = this.getAll();
 		const currentKeys = Object.keys(currentFlags);
 		const newKeys = Object.keys(flags);

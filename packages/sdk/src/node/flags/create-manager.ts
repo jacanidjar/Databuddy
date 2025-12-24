@@ -12,7 +12,7 @@ import { ServerFlagsManager } from "./flags-manager";
  *   clientId: process.env.DATABUDDY_CLIENT_ID!,
  * });
  *
- * await manager.waitForInitialization();
+ * await manager.waitForInit();
  * const flag = await manager.getFlag('my-feature');
  * ```
  */
@@ -35,7 +35,7 @@ export function createServerFlagsManager(
  *   clientId: process.env.DATABUDDY_CLIENT_ID!,
  * });
  *
- * await manager.waitForInitialization();
+ * await manager.waitForInit();
  * const flag = await manager.getFlag('my-feature');
  * ```
  */
