@@ -17,25 +17,36 @@ type Event = Record<string, unknown> & {
 type ErrorLog = Record<string, unknown> & {
 	id: string;
 	client_id: string;
+	anonymous_id: string;
+	session_id: string;
 	timestamp: string;
+	path: string;
 	message: string;
+	filename?: string;
+	lineno?: number;
+	colno?: number;
+	stack?: string;
+	error_type: string;
 };
 
 type WebVital = Record<string, unknown> & {
 	id: string;
 	client_id: string;
+	anonymous_id: string;
+	session_id: string;
 	timestamp: string;
-	name: string;
-	value: number;
+	path: string;
+	metric_name: string;
+	metric_value: number;
 };
 
-type ExportData = {
+interface ExportData {
 	events: Event[];
 	errors: ErrorLog[];
 	webVitals: WebVital[];
-};
+}
 
-export type ExportMetadata = {
+export interface ExportMetadata {
 	websiteId: string;
 	format: ExportFormat;
 	exportDate: string;
@@ -47,23 +58,23 @@ export type ExportMetadata = {
 	};
 	totalRecords: number;
 	fileSize: number;
-};
+}
 
-export type GenerateExportResult = {
+export interface GenerateExportResult {
 	filename: string;
 	buffer: Buffer;
 	meta: ExportMetadata;
-};
+}
 
-export type ValidatedExportDates = {
+export interface ValidatedExportDates {
 	startDate?: string;
 	endDate?: string;
-};
+}
 
-export type ValidateExportDateRangeResult = {
+export interface ValidateExportDateRangeResult {
 	dates: ValidatedExportDates;
 	error?: string;
-};
+}
 
 const MAX_HISTORY_DAYS = 365 * 2;
 const MAX_RANGE_DAYS = 365;
@@ -239,33 +250,49 @@ async function fetchExportData(
 	startDate?: string,
 	endDate?: string
 ): Promise<ExportData> {
-	const { filter, params } = buildDateFilter(startDate, endDate);
-	const queryParams = { websiteId, ...params };
+	const eventsFilter = buildDateFilter(startDate, endDate, "time");
+	const errorsFilter = buildDateFilter(startDate, endDate, "timestamp");
+	const webVitalsFilter = buildDateFilter(startDate, endDate, "timestamp");
+
+	const queryParams = { websiteId, ...eventsFilter.params };
 
 	const [events, errors, webVitals] = await Promise.all([
-		chQuery<Event>(getEventsQuery(filter), queryParams),
-		chQuery<ErrorLog>(getErrorsQuery(filter), queryParams),
-		chQuery<WebVital>(getWebVitalsQuery(filter), queryParams),
+		chQuery<Event>(getEventsQuery(eventsFilter.filter), queryParams),
+		chQuery<ErrorLog>(getErrorsQuery(errorsFilter.filter), queryParams),
+		chQuery<WebVital>(getWebVitalsQuery(webVitalsFilter.filter), queryParams),
 	]);
 
-	return { events, errors, webVitals };
+	return {
+		events,
+		errors: errors.map((error) => ({
+			...error,
+			id: `${error.client_id}_${error.timestamp}_${error.session_id}`,
+		})),
+		webVitals: webVitals.map((vital) => ({
+			...vital,
+			id: `${vital.client_id}_${vital.timestamp}_${vital.session_id}`,
+			name: vital.metric_name,
+			value: vital.metric_value,
+		})),
+	};
 }
 
 function buildDateFilter(
 	startDate?: string,
-	endDate?: string
+	endDate?: string,
+	dateColumn = "time"
 ): { filter: string; params: Record<string, string> } {
 	const params: Record<string, string> = {};
 	const conditions: string[] = [];
 
 	if (startDate) {
 		params.startDate = startDate;
-		conditions.push("time >= {startDate:String}");
+		conditions.push(`${dateColumn} >= {startDate:String}`);
 	}
 
 	if (endDate) {
 		params.endDate = endDate;
-		conditions.push("time <= {endDate:String}");
+		conditions.push(`${dateColumn} <= {endDate:String}`);
 	}
 
 	const filter = conditions.length > 0 ? `AND ${conditions.join(" AND ")}` : "";
@@ -278,29 +305,42 @@ function getEventsQuery(dateFilter: string): string {
 		FROM analytics.events 
 		WHERE client_id = {websiteId:String} ${dateFilter}
 		ORDER BY time DESC
-		LIMIT 100000
 	`;
 }
 
 function getErrorsQuery(dateFilter: string): string {
-	const errorDateFilter = dateFilter.replace(/\btime\b/g, "timestamp");
 	return `
-		SELECT * EXCEPT(ip, user_agent)
-		FROM analytics.errors 
-		WHERE client_id = {websiteId:String} ${errorDateFilter}
+		SELECT 
+			client_id,
+			anonymous_id,
+			session_id,
+			timestamp,
+			path,
+			message,
+			filename,
+			lineno,
+			colno,
+			stack,
+			error_type
+		FROM analytics.error_spans 
+		WHERE client_id = {websiteId:String} ${dateFilter}
 		ORDER BY timestamp DESC
-		LIMIT 50000
 	`;
 }
 
 function getWebVitalsQuery(dateFilter: string): string {
-	const vitalsDateFilter = dateFilter.replace(/\btime\b/g, "timestamp");
 	return `
-		SELECT * EXCEPT(ip, user_agent)
-		FROM analytics.web_vitals 
-		WHERE client_id = {websiteId:String} ${vitalsDateFilter}
+		SELECT 
+			client_id,
+			anonymous_id,
+			session_id,
+			timestamp,
+			path,
+			metric_name,
+			metric_value
+		FROM analytics.web_vitals_spans 
+		WHERE client_id = {websiteId:String} ${dateFilter}
 		ORDER BY timestamp DESC
-		LIMIT 25000
 	`;
 }
 
