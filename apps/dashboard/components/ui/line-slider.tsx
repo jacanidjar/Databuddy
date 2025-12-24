@@ -53,9 +53,25 @@ export function LineSlider({
 			setLineCount(count);
 		};
 
+		// Initial update
 		updateLineCount();
+
+		// Use ResizeObserver for better detection of size changes
+		const resizeObserver = new ResizeObserver(() => {
+			updateLineCount();
+		});
+
+		if (sliderRef.current) {
+			resizeObserver.observe(sliderRef.current);
+		}
+
+		// Fallback to window resize
 		window.addEventListener("resize", updateLineCount);
-		return () => window.removeEventListener("resize", updateLineCount);
+		
+		return () => {
+			resizeObserver.disconnect();
+			window.removeEventListener("resize", updateLineCount);
+		};
 	}, []);
 
 	const updateValue = (clientX: number) => {
@@ -96,7 +112,7 @@ export function LineSlider({
 			onPointerUp={handlePointerUp}
 			onLostPointerCapture={handlePointerUp}
 			className={cn(
-				"flex items-stretch justify-center gap-[2px] bg-gray-2 border border-gray-3 h-8 py-1 cursor-ew-resize select-none touch-none",
+				"flex items-stretch justify-center gap-[2px]  border rounded h-8 py-1 px-1 cursor-ew-resize select-none touch-none w-full",
 				className,
 			)}
 		>
@@ -108,8 +124,9 @@ export function LineSlider({
 						initial={false}
 						animate={{
 							backgroundColor: isActive
-								? "var(--accent-foreground)"
-								: "var(--border)",
+								? "var(--foreground)"
+								: "var(--muted-foreground)",
+							opacity: isActive ? 1 : 0.4,
 							scaleY: isActive ? 1 : 0.7,
 						}}
 						transition={{
