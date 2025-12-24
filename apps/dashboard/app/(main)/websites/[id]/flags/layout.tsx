@@ -1,11 +1,18 @@
 "use client";
 
-import { FlagIcon, UsersThreeIcon } from "@phosphor-icons/react";
+import { useFlags } from "@databuddy/sdk/react";
+import { FlagIcon, InfoIcon, UsersThreeIcon } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useCallback } from "react";
+import { Badge } from "@/components/ui/badge";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useWebsite } from "@/hooks/use-websites";
 import { orpc } from "@/lib/orpc";
 import { cn } from "@/lib/utils";
@@ -48,6 +55,9 @@ export default function FlagsLayout({
 
 	const isGroupsPage = pathname?.includes("/groups");
 	const isLoading = isGroupsPage ? groupsLoading : flagsLoading;
+
+	const { isEnabled } = useFlags();
+	const experimentFlag = isEnabled("experiment-50");
 
 	const handleRefresh = useCallback(async () => {
 		setIsRefreshing(true);
@@ -171,6 +181,48 @@ export default function FlagsLayout({
 					)}
 				</Link>
 			</div>
+
+			{/* Experiment Flag Banner */}
+			{experimentFlag.isReady && flags && (
+				<div className="flex h-10 items-center border-border border-b bg-accent px-4">
+					<div className="flex items-center gap-3">
+						<div className="flex items-center gap-2">
+							{experimentFlag.enabled ? (
+								<FlagIcon className="size-4 text-destructive" weight="fill" />
+							) : (
+								<FlagIcon className="size-4 text-blue-600" weight="fill" />
+							)}
+							{experimentFlag.enabled ? (
+								<Badge variant="destructive">Red Team</Badge>
+							) : (
+								<Badge variant="blue">Blue Team</Badge>
+							)}
+						</div>
+						<Tooltip delayDuration={500}>
+							<TooltipTrigger asChild>
+								<button
+									className="flex items-center gap-1.5 text-foreground text-sm hover:text-foreground/80"
+									type="button"
+								>
+									<InfoIcon className="size-4" weight="duotone" />
+									<span className="hidden sm:inline">A/B Test Experiment</span>
+								</button>
+							</TooltipTrigger>
+							<TooltipContent className="max-w-xs">
+								<div className="space-y-2">
+									<p className="font-medium">A/B Test Experiment</p>
+									<p className="text-xs leading-relaxed">
+										This is a proof-of-concept feature flag demonstrating A/B
+										testing capabilities. Approximately 50% of users are
+										randomly assigned to the "Red Team" experience, while the
+										other 50% see the "Blue Team" experience.
+									</p>
+								</div>
+							</TooltipContent>
+						</Tooltip>
+					</div>
+				</div>
+			)}
 
 			{/* Page Content */}
 			<div className="min-h-0 flex-1 overflow-hidden">{children}</div>
