@@ -71,6 +71,11 @@ export interface DatabuddyLLMOptions {
      */
     apiKey?: string;
     /**
+     * Client/Website ID for tracking
+     * @default process.env.DATABUDDY_CLIENT_ID
+     */
+    clientId?: string;
+    /**
      * Custom transport function to send log entries
      * If provided, overrides default HTTP transport
      */

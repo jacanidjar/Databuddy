@@ -57,7 +57,7 @@ const computeCosts = async (
 	}
 };
 
-const createDefaultTransport = (apiUrl: string, apiKey?: string): Transport => {
+const createDefaultTransport = (apiUrl: string, clientId?: string, apiKey?: string): Transport => {
 	return async (call) => {
 		const headers: HeadersInit = {
 			"Content-Type": "application/json",
@@ -65,6 +65,10 @@ const createDefaultTransport = (apiUrl: string, apiKey?: string): Transport => {
 
 		if (apiKey) {
 			headers.Authorization = `Bearer ${apiKey}`;
+		}
+
+		if (clientId) {
+			headers["databuddy-client-id"] = clientId;
 		}
 
 		const response = await fetch(apiUrl, {
@@ -245,12 +249,14 @@ const createMiddleware = (
  *
  * // Use default endpoint (basket.databuddy.cc/llm)
  * const { track } = databuddyLLM({
+ *   clientId: "your-website-id",
  *   apiKey: "your-api-key",
  * });
  *
  * // Or override with custom endpoint
  * const { track } = databuddyLLM({
  *   apiUrl: "https://custom.example.com/llm",
+ *   clientId: "your-website-id",
  *   apiKey: "your-api-key",
  * });
  *
@@ -267,6 +273,7 @@ export const databuddyLLM = (options: DatabuddyLLMOptions = {}) => {
 	const {
 		apiUrl,
 		apiKey,
+		clientId,
 		transport: customTransport,
 		computeCosts: defaultComputeCosts = true,
 		onSuccess: defaultOnSuccess,
@@ -278,9 +285,11 @@ export const databuddyLLM = (options: DatabuddyLLMOptions = {}) => {
 	if (customTransport) {
 		transport = customTransport;
 	} else {
+		// Priority: prop → env → default
 		const endpoint = apiUrl ?? process.env.DATABUDDY_API_URL ?? "https://basket.databuddy.cc/llm";
+		const client = clientId ?? process.env.DATABUDDY_CLIENT_ID;
 		const key = apiKey ?? process.env.DATABUDDY_API_KEY;
-		transport = createDefaultTransport(endpoint, key);
+		transport = createDefaultTransport(endpoint, client, key);
 	}
 
 	/**
@@ -309,11 +318,11 @@ export const databuddyLLM = (options: DatabuddyLLMOptions = {}) => {
  * import { databuddyLLM, httpTransport } from "@databuddy/sdk/ai/vercel";
  *
  * const { track } = databuddyLLM({
- *   transport: httpTransport("https://api.example.com/ai-logs"),
+ *   transport: httpTransport("https://api.example.com/ai-logs", "client-id", "api-key"),
  * });
  * ```
  */
-export const httpTransport = (url: string, apiKey?: string): Transport => {
+export const httpTransport = (url: string, clientId?: string, apiKey?: string): Transport => {
 	return async (call) => {
 		const headers: HeadersInit = {
 			"Content-Type": "application/json",
@@ -321,6 +330,10 @@ export const httpTransport = (url: string, apiKey?: string): Transport => {
 
 		if (apiKey) {
 			headers.Authorization = `Bearer ${apiKey}`;
+		}
+
+		if (clientId) {
+			headers["databuddy-client-id"] = clientId;
 		}
 
 		const response = await fetch(url, {

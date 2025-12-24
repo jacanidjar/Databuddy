@@ -1,4 +1,3 @@
-import { databuddyLLM } from "@databuddy/sdk/ai/vercel";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 
 const apiKey = process.env.AI_API_KEY;
@@ -14,9 +13,10 @@ export const openrouter = createOpenRouter({
 });
 
 // Create Databuddy LLM instance with transport
-const { track } = databuddyLLM({
-	apiUrl: "https://staging-basket.databuddy.cc/llm",
-});
+// const { track } = databuddyLLM({
+// 	apiUrl: "https://staging-basket.databuddy.cc/llm",
+// 	clientId: "OXmNQsViBT-FOS_wZCTHc",
+// });
 
 /**
  * Model configurations for different agent types.
@@ -38,16 +38,16 @@ const modelNames = {
 
 export const models = {
 	/** Fast, cheap model for routing/triage decisions */
-	triage: track(openrouter.chat(modelNames.triage)),
+	triage: openrouter.chat(modelNames.triage),
 
 	/** Balanced model for most analytical tasks */
-	analytics: track(openrouter.chat(modelNames.analytics)),
+	analytics: openrouter.chat(modelNames.analytics),
 
 	/** High-capability model for complex reasoning and reflection */
-	advanced: track(openrouter.chat(modelNames.advanced)),
+	advanced: openrouter.chat(modelNames.advanced),
 
 	/** Perplexity model for real-time web search and competitor analysis */
-	perplexity: track(openrouter.chat(modelNames.perplexity)),
+	perplexity: openrouter.chat(modelNames.perplexity),
 } as const;
 
 export type ModelKey = keyof typeof models;
