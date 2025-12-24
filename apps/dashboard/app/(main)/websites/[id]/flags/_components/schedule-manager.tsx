@@ -8,6 +8,7 @@ import {
 	PlusIcon,
 	PowerIcon,
 	TrashIcon,
+	XIcon,
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ function DateTimePicker({
 			<PopoverTrigger asChild>
 				<Button
 					className={cn(
-						"h-8 w-full justify-start gap-2 text-left font-normal",
+						"h-9 w-full justify-start gap-2 text-left font-normal",
 						!value && "text-muted-foreground"
 					)}
 					type="button"
@@ -47,7 +48,7 @@ function DateTimePicker({
 					<CalendarIcon size={14} />
 					{value
 						? formatDate(new Date(value), DATE_FORMATS.DATE_TIME_12H)
-						: "Pick date…"}
+						: "Select date & time…"}
 				</Button>
 			</PopoverTrigger>
 			<PopoverContent align="start" className="w-auto p-0">
@@ -101,7 +102,7 @@ export function ScheduleManager({ form, flagId }: ScheduleManagerProps) {
 			form.setValue("schedule.rolloutSteps", [
 				{
 					scheduledAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-					value: 0,
+					value: 25,
 				},
 			]);
 		}
@@ -151,49 +152,53 @@ export function ScheduleManager({ form, flagId }: ScheduleManagerProps) {
 	if (!scheduleEnabled) {
 		return (
 			<div className="space-y-2">
-				<button
-					className="flex w-full items-center gap-3 rounded py-2 text-left transition-colors hover:bg-accent/50"
-					onClick={() => enableSchedule("enable")}
-					type="button"
-				>
-					<PowerIcon className="text-green-500" size={16} weight="fill" />
-					<div>
-						<p className="font-medium text-sm">Enable on schedule</p>
-						<p className="text-muted-foreground text-xs">
-							Automatically enable this flag
-						</p>
-					</div>
-				</button>
+				<div className="grid gap-2 sm:grid-cols-2">
+					<button
+						className="flex items-center gap-3 rounded border border-transparent bg-secondary p-3 text-left transition-all hover:border-green-500/30 hover:bg-green-500/5"
+						onClick={() => enableSchedule("enable")}
+						type="button"
+					>
+						<div className="flex size-8 items-center justify-center rounded bg-green-500/10">
+							<PowerIcon className="text-green-500" size={16} weight="fill" />
+						</div>
+						<div>
+							<p className="font-medium text-sm">Enable</p>
+							<p className="text-muted-foreground text-xs">At a set time</p>
+						</div>
+					</button>
 
-				<button
-					className="flex w-full items-center gap-3 rounded py-2 text-left transition-colors hover:bg-accent/50"
-					onClick={() => enableSchedule("disable")}
-					type="button"
-				>
-					<PowerIcon
-						className="rotate-180 text-red-500"
-						size={16}
-						weight="fill"
-					/>
-					<div>
-						<p className="font-medium text-sm">Disable on schedule</p>
-						<p className="text-muted-foreground text-xs">
-							Automatically disable this flag
-						</p>
-					</div>
-				</button>
+					<button
+						className="flex items-center gap-3 rounded border border-transparent bg-secondary p-3 text-left transition-all hover:border-red-500/30 hover:bg-red-500/5"
+						onClick={() => enableSchedule("disable")}
+						type="button"
+					>
+						<div className="flex size-8 items-center justify-center rounded bg-red-500/10">
+							<PowerIcon
+								className="rotate-180 text-red-500"
+								size={16}
+								weight="fill"
+							/>
+						</div>
+						<div>
+							<p className="font-medium text-sm">Disable</p>
+							<p className="text-muted-foreground text-xs">At a set time</p>
+						</div>
+					</button>
+				</div>
 
 				{isRolloutFlag && (
 					<button
-						className="flex w-full items-center gap-3 rounded py-2 text-left transition-colors hover:bg-accent/50"
+						className="flex w-full items-center gap-3 rounded border border-transparent bg-secondary p-3 text-left transition-all hover:border-primary/30 hover:bg-primary/5"
 						onClick={() => enableSchedule("update_rollout")}
 						type="button"
 					>
-						<LightningIcon className="text-primary" size={16} weight="fill" />
+						<div className="flex size-8 items-center justify-center rounded bg-primary/10">
+							<LightningIcon className="text-primary" size={16} weight="fill" />
+						</div>
 						<div>
 							<p className="font-medium text-sm">Gradual rollout</p>
 							<p className="text-muted-foreground text-xs">
-								Schedule percentage increases
+								Increase percentage over time
 							</p>
 						</div>
 					</button>
@@ -207,21 +212,35 @@ export function ScheduleManager({ form, flagId }: ScheduleManagerProps) {
 		<div className="space-y-4">
 			{/* Header */}
 			<div className="flex items-center justify-between">
-				<span className="font-medium text-sm">
-					{scheduleType === "enable"
-						? "Enable on schedule"
-						: scheduleType === "disable"
-							? "Disable on schedule"
-							: "Gradual rollout"}
-				</span>
-				<Button
+				<div className="flex items-center gap-2">
+					{scheduleType === "enable" && (
+						<PowerIcon className="text-green-500" size={16} weight="fill" />
+					)}
+					{scheduleType === "disable" && (
+						<PowerIcon
+							className="rotate-180 text-red-500"
+							size={16}
+							weight="fill"
+						/>
+					)}
+					{scheduleType === "update_rollout" && (
+						<LightningIcon className="text-primary" size={16} weight="fill" />
+					)}
+					<span className="font-medium text-sm">
+						{scheduleType === "enable"
+							? "Enable on schedule"
+							: scheduleType === "disable"
+								? "Disable on schedule"
+								: "Gradual rollout"}
+					</span>
+				</div>
+				<button
+					className="flex size-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
 					onClick={disableSchedule}
-					size="sm"
 					type="button"
-					variant="ghost"
 				>
-					Cancel
-				</Button>
+					<XIcon size={14} />
+				</button>
 			</div>
 
 			{/* Simple enable/disable */}
@@ -239,31 +258,26 @@ export function ScheduleManager({ form, flagId }: ScheduleManagerProps) {
 
 			{/* Rollout steps */}
 			{scheduleType === "update_rollout" && (
-				<div className="space-y-2">
+				<div className="space-y-3">
 					<AnimatePresence mode="popLayout">
 						{rolloutSteps.map((step, index) => (
 							<motion.div
 								animate={{ opacity: 1, y: 0 }}
-								className="flex items-center gap-2"
+								className="grid grid-cols-[1fr_auto_auto] items-center gap-2"
 								exit={{ opacity: 0, y: -10 }}
 								initial={{ opacity: 0, y: 10 }}
 								key={index}
 								layout
 							>
-								<span className="w-5 shrink-0 text-center text-muted-foreground text-xs">
-									{index + 1}.
-								</span>
-								<div className="flex-1">
-									<DateTimePicker
-										onChange={(date) =>
-											updateRolloutStep(index, "scheduledAt", date)
-										}
-										value={step.scheduledAt}
-									/>
-								</div>
+								<DateTimePicker
+									onChange={(date) =>
+										updateRolloutStep(index, "scheduledAt", date)
+									}
+									value={step.scheduledAt}
+								/>
 								<div className="flex items-center gap-1">
 									<Input
-										className="h-8 w-16"
+										className="h-9 w-16 text-center"
 										max={100}
 										min={0}
 										onChange={(e) =>
@@ -272,27 +286,25 @@ export function ScheduleManager({ form, flagId }: ScheduleManagerProps) {
 										type="number"
 										value={step.value}
 									/>
-									<span className="text-muted-foreground text-xs">%</span>
+									<span className="text-muted-foreground text-sm">%</span>
 								</div>
-								<Button
-									className="h-8 w-8 shrink-0"
+								<button
+									className="flex size-9 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
 									onClick={() => removeRolloutStep(index)}
-									size="icon"
 									type="button"
-									variant="ghost"
 								>
-									<TrashIcon className="text-destructive" size={14} />
-								</Button>
+									<TrashIcon size={14} />
+								</button>
 							</motion.div>
 						))}
 					</AnimatePresence>
 
 					<Button
-						className="w-full"
+						className="w-full text-muted-foreground"
 						onClick={addRolloutStep}
 						size="sm"
 						type="button"
-						variant="ghost"
+						variant="outline"
 					>
 						<PlusIcon size={14} />
 						Add step

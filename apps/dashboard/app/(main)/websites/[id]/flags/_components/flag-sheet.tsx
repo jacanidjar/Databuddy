@@ -446,35 +446,32 @@ export function FlagSheet({
 								/>
 							</div>
 
+							{/* Separator */}
+							<div className="h-px bg-border" />
+
 							{/* Type & Value */}
 							<div className="space-y-4">
-								<div className="flex items-center gap-3">
-									<span className="font-medium text-sm">Type</span>
-									<div className="flex rounded bg-secondary p-1">
-										<button
-											className={cn(
-												"rounded px-3 py-1.5 font-medium text-sm transition-colors",
-												isRollout
-													? "text-muted-foreground hover:text-foreground"
-													: "bg-background shadow-sm"
-											)}
-											onClick={() => form.setValue("flag.type", "boolean")}
-											type="button"
-										>
-											Boolean
-										</button>
-										<button
-											className={cn(
-												"rounded px-3 py-1.5 font-medium text-sm transition-colors",
-												isRollout
-													? "bg-background shadow-sm"
-													: "text-muted-foreground hover:text-foreground"
-											)}
-											onClick={() => form.setValue("flag.type", "rollout")}
-											type="button"
-										>
-											Rollout
-										</button>
+								<div className="space-y-2">
+									<span className="text-muted-foreground text-xs">Type</span>
+									<div className="flex gap-2">
+										{(["boolean", "rollout"] as const).map((type) => {
+											const isSelected = watchedType === type;
+											return (
+												<button
+													className={cn(
+														"flex-1 rounded border py-2.5 text-center font-medium text-sm capitalize transition-all",
+														isSelected
+															? "border-primary bg-primary/5 text-foreground"
+															: "border-transparent bg-secondary text-muted-foreground hover:text-foreground"
+													)}
+													key={type}
+													onClick={() => form.setValue("flag.type", type)}
+													type="button"
+												>
+													{type}
+												</button>
+											);
+										})}
 									</div>
 								</div>
 
@@ -511,10 +508,10 @@ export function FlagSheet({
 															{[0, 25, 50, 75, 100].map((preset) => (
 																<button
 																	className={cn(
-																		"flex-1 rounded py-1 font-medium text-xs transition-colors",
+																		"flex-1 rounded border py-1.5 font-medium text-xs transition-all",
 																		Number(field.value) === preset
-																			? "bg-primary text-primary-foreground"
-																			: "bg-secondary text-muted-foreground hover:text-foreground"
+																			? "border-primary bg-primary text-primary-foreground"
+																			: "border-transparent bg-secondary text-muted-foreground hover:text-foreground"
 																	)}
 																	key={preset}
 																	onClick={() => field.onChange(preset)}
@@ -590,31 +587,34 @@ export function FlagSheet({
 									const canBeActive = inactiveDeps.length === 0;
 
 									return (
-										<div className="flex items-center justify-between">
-											<div>
-												<span className="font-medium text-sm">Status</span>
+										<div className="space-y-2">
+											<div className="flex items-center justify-between">
+												<span className="text-muted-foreground text-xs">
+													Status
+												</span>
 												{!canBeActive && (
-													<p className="text-amber-600 text-xs">
+													<span className="text-amber-600 text-xs">
 														Dependencies must be active first
-													</p>
+													</span>
 												)}
 											</div>
-											<div className="flex gap-1">
+											<div className="flex gap-2">
 												{(["active", "inactive", "archived"] as const).map(
 													(status) => {
 														const isDisabled =
 															status === "active" && !canBeActive;
+														const isSelected = field.value === status;
 														return (
 															<button
 																className={cn(
-																	"rounded px-3 py-1.5 font-medium text-xs capitalize transition-colors",
-																	field.value === status
+																	"flex-1 rounded border py-2 font-medium text-sm capitalize transition-all",
+																	isSelected
 																		? status === "active"
-																			? "bg-green-500/15 text-green-600"
+																			? "border-green-500/50 bg-green-500/10 text-green-600"
 																			: status === "inactive"
-																				? "bg-amber-500/15 text-amber-600"
-																				: "bg-muted text-muted-foreground"
-																		: "text-muted-foreground hover:bg-secondary",
+																				? "border-amber-500/50 bg-amber-500/10 text-amber-600"
+																				: "border-border bg-secondary text-foreground"
+																		: "border-transparent bg-secondary text-muted-foreground hover:text-foreground",
 																	isDisabled && "cursor-not-allowed opacity-50"
 																)}
 																disabled={isDisabled}
@@ -634,7 +634,7 @@ export function FlagSheet({
 							/>
 
 							{/* Divider */}
-							<div className="border-t" />
+							<div className="h-px bg-border" />
 
 							{/* Advanced Options */}
 							<div className="space-y-1">
