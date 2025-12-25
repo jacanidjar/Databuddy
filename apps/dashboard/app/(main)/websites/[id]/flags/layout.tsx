@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
 	Tooltip,
 	TooltipContent,
@@ -186,8 +187,16 @@ export default function FlagsLayout({
 			</div>
 
 			{/* Experiment Flag Banner */}
-			{!experimentLoading && flags && (
-				<div className="flex h-10 items-center border-border border-b bg-accent px-4">
+			<div className="flex h-10 items-center border-border border-b bg-accent px-4">
+				{experimentLoading || !flags ? (
+					<div className="flex items-center gap-3">
+						<div className="flex items-center gap-2">
+							<Skeleton className="size-4 rounded" />
+							<Skeleton className="h-5 w-20 rounded" />
+						</div>
+						<Skeleton className="h-4 w-32 rounded sm:w-40" />
+					</div>
+				) : (
 					<div className="flex items-center gap-3">
 						<div className="flex items-center gap-2">
 							{isExperimentOn ? (
@@ -224,8 +233,8 @@ export default function FlagsLayout({
 							</TooltipContent>
 						</Tooltip>
 					</div>
-				</div>
-			)}
+				)}
+			</div>
 
 			{/* Page Content */}
 			<div className="min-h-0 flex-1 overflow-hidden">{children}</div>
