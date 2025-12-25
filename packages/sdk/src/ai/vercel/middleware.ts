@@ -249,14 +249,20 @@ const createMiddleware = (
  *
  * // Use default endpoint (basket.databuddy.cc/llm)
  * const { track } = databuddyLLM({
+<<<<<<< HEAD
  *   clientId: "your-website-id",
+=======
+>>>>>>> 2bdb04aa (model api)
  *   apiKey: "your-api-key",
  * });
  *
  * // Or override with custom endpoint
  * const { track } = databuddyLLM({
  *   apiUrl: "https://custom.example.com/llm",
+<<<<<<< HEAD
  *   clientId: "your-website-id",
+=======
+>>>>>>> 2bdb04aa (model api)
  *   apiKey: "your-api-key",
  * });
  *
@@ -285,9 +291,13 @@ export const databuddyLLM = (options: DatabuddyLLMOptions = {}) => {
 	if (customTransport) {
 		transport = customTransport;
 	} else {
+<<<<<<< HEAD
 		// Priority: prop → env → default
 		const endpoint = apiUrl ?? process.env.DATABUDDY_API_URL ?? "https://basket.databuddy.cc/llm";
 		const client = clientId ?? process.env.DATABUDDY_CLIENT_ID;
+=======
+		const endpoint = apiUrl ?? process.env.DATABUDDY_API_URL ?? "https://basket.databuddy.cc/llm";
+>>>>>>> 2bdb04aa (model api)
 		const key = apiKey ?? process.env.DATABUDDY_API_KEY;
 		transport = createDefaultTransport(endpoint, client, key);
 	}

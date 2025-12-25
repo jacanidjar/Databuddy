@@ -4,20 +4,23 @@ import dayjs from "dayjs";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import AttachDialog from "@/components/autumn/attach-dialog";
+import { trackCancelFeedbackAction } from "../actions/cancel-feedback-action";
+import type { CancelFeedback } from "../components/cancel-subscription-dialog";
 import {
 	calculateFeatureUsage,
 	type FeatureUsage,
 	type PricingTier,
 } from "../utils/feature-usage";
 
-export type Usage = { features: FeatureUsage[] };
-export type CancelTarget = {
+export interface Usage { features: FeatureUsage[] }
+export interface CancelTarget {
 	id: string;
 	name: string;
-	currentPeriodEnd?: number;
-};
+	currentPeriodEnd?: number
+}
 
 export type { Customer, CustomerInvoice as Invoice } from "autumn-js";
+export type { CancelFeedback } from "../components/cancel-subscription-dialog";
 export type { CustomerWithPaymentMethod } from "../types/billing";
 
 export function useBilling(refetch?: () => void) {
@@ -84,9 +87,17 @@ export function useBilling(refetch?: () => void) {
 		onCancel: handleCancel,
 		onCancelClick: (id: string, name: string, currentPeriodEnd?: number) =>
 			setCancelTarget({ id, name, currentPeriodEnd }),
-		onCancelConfirm: async (immediate: boolean) => {
+		onCancelConfirm: async (immediate: boolean, feedback?: CancelFeedback) => {
 			if (!cancelTarget) {
 				return;
+			}
+			if (feedback) {
+				trackCancelFeedbackAction({
+					feedback,
+					planId: cancelTarget.id,
+					planName: cancelTarget.name,
+					immediate,
+				});
 			}
 			await handleCancel(cancelTarget.id, immediate);
 			setCancelTarget(null);
@@ -145,12 +156,12 @@ export function useBillingData() {
 	const usage: Usage = {
 		features: customer?.features
 			? Object.values(customer.features).map((f) =>
-					calculateFeatureUsage(
-						f,
-						featureConfig.limits[f.id],
-						featureConfig.tiers[f.id]
-					)
+				calculateFeatureUsage(
+					f,
+					featureConfig.limits[f.id],
+					featureConfig.tiers[f.id]
 				)
+			)
 			: [],
 	};
 
