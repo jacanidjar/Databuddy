@@ -73,7 +73,7 @@ function RegisterPageContent() {
 	const getCallbackUrl = () => {
 		if (selectedPlan) {
 			localStorage.setItem("pendingPlanSelection", selectedPlan);
-			return `/billing?tab=plans&plan=${selectedPlan}`;
+			return `/billing/plans?plan=${selectedPlan}`;
 		}
 		return callback;
 	};
