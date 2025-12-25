@@ -25,6 +25,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 		ref
 	) => {
 		const [isFocused, setIsFocused] = useState(false);
+		const hasError = props['aria-invalid'] === true || props['aria-invalid'] === 'true';
 
 		const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
 			setIsFocused(true);
@@ -47,43 +48,45 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 					wrapperClassName
 				)}
 			>
-				<input
-					ref={ref}
-					className={cn(
-						'peer flex h-9 cursor-text text-[13px] placeholder:text-[13px] w-full min-w-0 rounded-sm border border-accent-brighter px-3 py-1 text-sm outline-none transition-all selection:bg-primary selection:text-primary-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:font-medium file:text-foreground file:text-sm placeholder:text-muted disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
-						'bg-input dark:bg-input/80',
-						'focus-visible:bg-background focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:blue-angled-rectangle-gradient',
-						'aria-invalid:border-destructive aria-invalid:ring-destructive/20 aria-invalid:red-angled-rectangle-gradient dark:aria-invalid:ring-destructive/40',
-						variant === 'ghost' &&
-							'border-transparent bg-transparent hover:bg-accent/30 focus-visible:bg-accent/50',
-						className
-					)}
-					data-slot="input"
-					type={type}
-					onFocus={handleFocus}
-					onBlur={handleBlur}
-					{...props}
-				/>
-				{showFocusIndicator && (
-					<motion.span
-						className={cn(
-							'absolute bottom-0 h-[2px] bg-primary pointer-events-none',
-							hasRoundedLeft ? 'left-0 rounded-r-full' : 'left-1 rounded-l-full',
-							hasRoundedRight ? 'right-0 rounded-l-full' : 'right-1 rounded-r-full'
-						)}
-						initial={false}
-						animate={{
-							scaleX: isFocused ? 1 : 0,
-							opacity: isFocused ? 1 : 0,
-						}}
-						transition={{
-							type: 'spring',
-							stiffness: 500,
-							damping: 35,
-						}}
-						style={{ originX: 0.5 }}
-					/>
+			<input
+				ref={ref}
+				className={cn(
+					'peer flex h-9 cursor-text text-[13px] placeholder:text-[13px] w-full min-w-0 rounded-sm border border-accent-brighter px-3 py-1 text-sm outline-none transition-all selection:bg-primary selection:text-primary-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:font-medium file:text-foreground file:text-sm placeholder:text-muted disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
+					'bg-input dark:bg-input/80',
+					'focus-visible:bg-background focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:blue-angled-rectangle-gradient',
+					'aria-invalid:border-destructive/60 aria-invalid:bg-destructive/5 dark:aria-invalid:border-destructive/50 dark:aria-invalid:bg-destructive/10',
+					'aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:ring-destructive/20 dark:aria-invalid:focus-visible:ring-destructive/30',
+					variant === 'ghost' &&
+						'border-transparent bg-transparent hover:bg-accent/30 focus-visible:bg-accent/50',
+					className
 				)}
+				data-slot="input"
+				type={type}
+				onFocus={handleFocus}
+				onBlur={handleBlur}
+				{...props}
+			/>
+			{showFocusIndicator && (
+				<motion.span
+					className={cn(
+						'absolute bottom-0 h-[2px] pointer-events-none',
+						hasError ? 'bg-destructive' : 'bg-primary',
+						hasRoundedLeft ? 'left-0 rounded-r-full' : 'left-1 rounded-l-full',
+						hasRoundedRight ? 'right-0 rounded-l-full' : 'right-1 rounded-r-full'
+					)}
+					initial={false}
+					animate={{
+						scaleX: isFocused ? 1 : 0,
+						opacity: isFocused ? 1 : 0,
+					}}
+					transition={{
+						type: 'spring',
+						stiffness: 500,
+						damping: 35,
+					}}
+					style={{ originX: 0.5 }}
+				/>
+			)}
 			</div>
 		);
 	}
