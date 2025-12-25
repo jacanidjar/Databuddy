@@ -1,5 +1,6 @@
 import { and, desc, eq, goals, inArray, isNull } from "@databuddy/db";
 import { createDrizzleCache, redis } from "@databuddy/redis";
+import { GATED_FEATURES } from "@databuddy/shared/types/features";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import {
@@ -8,6 +9,7 @@ import {
 	processGoalAnalytics,
 } from "../lib/analytics-utils";
 import { protectedProcedure, publicProcedure } from "../orpc";
+import { requireFeature, requireUsageWithinLimit } from "../types/billing";
 import { authorizeWebsiteAccess } from "../utils/auth";
 
 const cache = createDrizzleCache({ redis, namespace: "goals" });
@@ -36,7 +38,9 @@ const getEffectiveStartDate = (
 	createdAt: Date | null,
 	ignoreHistoricData: boolean
 ): string => {
-	if (!(ignoreHistoricData && createdAt)) return requestedStartDate;
+	if (!(ignoreHistoricData && createdAt)) {
+		return requestedStartDate;
+	}
 
 	const createdDate = new Date(createdAt).toISOString().split("T")[0];
 	return new Date(requestedStartDate) > new Date(createdDate)
@@ -116,6 +120,24 @@ export const goalsRouter = {
 		)
 		.handler(async ({ context, input }) => {
 			await authorizeWebsiteAccess(context, input.websiteId, "update");
+
+			// Check if goals feature is available on the plan
+			requireFeature(context.billing?.planId, GATED_FEATURES.GOALS);
+
+			// Check current goal count against plan limit
+			const existingGoals = await context.db
+				.select({ id: goals.id })
+				.from(goals)
+				.where(
+					and(eq(goals.websiteId, input.websiteId), isNull(goals.deletedAt))
+				);
+
+			// Enforce plan limit before creating new goal
+			requireUsageWithinLimit(
+				context.billing?.planId,
+				GATED_FEATURES.GOALS,
+				existingGoals.length
+			);
 
 			const [newGoal] = await context.db
 				.insert(goals)
@@ -329,10 +351,10 @@ export const goalsRouter = {
 					const filters = (goal.filters as Filter[]) || [];
 					const totalUsers = goal.ignoreHistoricData
 						? await getTotalWebsiteUsers(
-								input.websiteId,
-								effectiveStartDate,
-								endDate
-							)
+							input.websiteId,
+							effectiveStartDate,
+							endDate
+						)
 						: baseTotalUsers;
 
 					try {

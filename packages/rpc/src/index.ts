@@ -8,7 +8,7 @@ export {
 	setProcedureAttributes,
 	setupUncaughtErrorHandlers,
 } from "./lib/otel";
-export { createRPCContext } from "./orpc";
+export { type Context, createRPCContext } from "./orpc";
 export { type AppRouter, appRouter } from "./root";
 export {
 	type ExportFormat,
@@ -17,4 +17,18 @@ export {
 	generateExport,
 	validateExportDateRange,
 } from "./services/export-service";
+export {
+	type BillingContext,
+	canAccessAiCapability,
+	canAccessFeature,
+	getFeatureLimit,
+	getUsageRemaining,
+	getUserCapabilities,
+	hasPlan,
+	isFreePlan,
+	isUsageWithinLimit,
+	requireAiCapability,
+	requireFeature,
+	requireUsageWithinLimit,
+} from "./types/billing";
 export { authorizeWebsiteAccess } from "./utils/auth";

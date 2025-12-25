@@ -1,5 +1,6 @@
 import { and, desc, eq, funnelDefinitions, isNull, sql } from "@databuddy/db";
 import { createDrizzleCache, redis } from "@databuddy/redis";
+import { GATED_FEATURES } from "@databuddy/shared/types/features";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import {
@@ -8,6 +9,7 @@ import {
 	processFunnelAnalyticsByReferrer,
 } from "../lib/analytics-utils";
 import { protectedProcedure, publicProcedure } from "../orpc";
+import { requireFeature, requireUsageWithinLimit } from "../types/billing";
 import { authorizeWebsiteAccess } from "../utils/auth";
 
 const cache = createDrizzleCache({ redis, namespace: "funnels" });
@@ -147,6 +149,25 @@ export const funnelsRouter = {
 		)
 		.handler(async ({ context, input }) => {
 			await authorizeWebsiteAccess(context, input.websiteId, "update");
+
+			requireFeature(context.billing?.planId, GATED_FEATURES.FUNNELS);
+
+			const existingFunnels = await context.db
+				.select({ id: funnelDefinitions.id })
+				.from(funnelDefinitions)
+				.where(
+					and(
+						eq(funnelDefinitions.websiteId, input.websiteId),
+						isNull(funnelDefinitions.deletedAt)
+					)
+				);
+
+			// Enforce plan limit before creating new funnel
+			requireUsageWithinLimit(
+				context.billing?.planId,
+				GATED_FEATURES.FUNNELS,
+				existingFunnels.length
+			);
 
 			const [newFunnel] = await context.db
 				.insert(funnelDefinitions)
