@@ -17,6 +17,7 @@
     "./types/assistant": "./src/types/assistant.ts",
     "./types/billing": "./src/types/billing.ts",
     "./types/errors": "./src/types/errors.ts",
+    "./types/features": "./src/types/features.ts",
     "./types/journey": "./src/types/journey.ts",
     "./types/metrics": "./src/types/metrics.ts",
     "./types/pages": "./src/types/pages.ts",

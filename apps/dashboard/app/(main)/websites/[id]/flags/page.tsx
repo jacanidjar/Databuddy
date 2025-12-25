@@ -1,12 +1,12 @@
 "use client";
 
+import { GATED_FEATURES } from "@databuddy/shared/types/features";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import { useParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { FeatureGate } from "@/components/feature-gate";
-import { GATED_FEATURES } from "@/components/providers/billing-provider";
 import { orpc } from "@/lib/orpc";
 import { isFlagSheetOpenAtom } from "@/stores/jotai/flagsAtoms";
 import { FlagSheet } from "./_components/flag-sheet";

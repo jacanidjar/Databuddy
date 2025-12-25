@@ -1,7 +1,7 @@
+import type { GatedFeatureId } from "@databuddy/shared/types/features";
 import type { Icon } from "@phosphor-icons/react";
-import type { GatedFeatureId } from "@/types/features";
 
-export type NavigationItem = {
+export interface NavigationItem {
 	name: string;
 	icon: Icon;
 	href: string;
@@ -26,7 +26,7 @@ export type NavigationItem = {
 	flag?: string;
 };
 
-export type NavigationSection = {
+export interface NavigationSection {
 	title: string;
 	icon: Icon;
 	items: NavigationItem[];
@@ -34,7 +34,7 @@ export type NavigationSection = {
 	flag?: string;
 };
 
-export type Category = {
+export interface Category {
 	id: string;
 	name: string;
 	icon: Icon;

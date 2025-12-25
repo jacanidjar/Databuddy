@@ -5,6 +5,7 @@ export * from "./api";
 export * from "./assistant";
 export * from "./billing";
 export * from "./errors";
+export * from "./features";
 export * from "./journey";
 export * from "./metrics";
 export * from "./pages";

@@ -1,12 +1,12 @@
 "use client";
 
+import { GATED_FEATURES } from "@databuddy/shared/types/features";
 import { FunnelIcon, TrendDownIcon } from "@phosphor-icons/react";
 import { useAtom } from "jotai";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { FeatureGate } from "@/components/feature-gate";
-import { GATED_FEATURES } from "@/components/providers/billing-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { useDateFilters } from "@/hooks/use-date-filters";

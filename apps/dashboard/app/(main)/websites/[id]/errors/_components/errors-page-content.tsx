@@ -1,10 +1,10 @@
 "use client";
 
+import { GATED_FEATURES } from "@databuddy/shared/types/features";
 import { BugIcon } from "@phosphor-icons/react";
 import { useAtom } from "jotai";
 import { use, useCallback, useEffect } from "react";
 import { FeatureGate } from "@/components/feature-gate";
-import { GATED_FEATURES } from "@/components/providers/billing-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDateFilters } from "@/hooks/use-date-filters";
 import { useEnhancedErrorData } from "@/hooks/use-dynamic-query";

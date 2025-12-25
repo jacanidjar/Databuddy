@@ -1,29 +1,25 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import type { Customer, CustomerFeature, Product } from "autumn-js";
-import { useCustomer, usePricingTable } from "autumn-js/react";
-import { useParams, usePathname } from "next/navigation";
-import { createContext, type ReactNode, useContext, useMemo } from "react";
-import { orpc } from "@/lib/orpc";
 import {
-	AI_CAPABILITIES,
 	type AiCapabilityId,
-	FEATURE_IDS,
 	FEATURE_METADATA,
 	type FeatureId,
-	GATED_FEATURES,
 	type GatedFeatureId,
 	getMinimumPlanForAiCapability,
 	getMinimumPlanForFeature,
 	getPlanCapabilities as getPlanCapabilitiesForPlan,
 	isPlanAiCapabilityEnabled,
 	isPlanFeatureEnabled,
-	PLAN_CAPABILITIES,
 	PLAN_IDS,
 	type PlanCapabilities,
 	type PlanId,
-} from "@/types/features";
+} from "@databuddy/shared/types/features";
+import { useQuery } from "@tanstack/react-query";
+import type { Customer, CustomerFeature, Product } from "autumn-js";
+import { useCustomer, usePricingTable } from "autumn-js/react";
+import { useParams, usePathname } from "next/navigation";
+import { createContext, type ReactNode, useContext, useMemo } from "react";
+import { orpc } from "@/lib/orpc";
 
 export interface FeatureAccess {
 	allowed: boolean;
@@ -82,7 +78,9 @@ export function BillingProvider({
 	const pathname = usePathname();
 
 	const websiteId = useMemo(() => {
-		if (propWebsiteId) return propWebsiteId;
+		if (propWebsiteId) {
+			return propWebsiteId;
+		}
 
 		const isDemoRoute = pathname?.startsWith("/demo/");
 
@@ -137,8 +135,12 @@ export function BillingProvider({
 
 		const canUse = (id: FeatureId | string): boolean => {
 			const feature = customer?.features?.[id];
-			if (!feature) return false;
-			if (feature.unlimited) return true;
+			if (!feature) {
+				return false;
+			}
+			if (feature.unlimited) {
+				return true;
+			}
 			return (feature.balance ?? 0) > 0;
 		};
 
@@ -202,7 +204,9 @@ export function BillingProvider({
 		const refetch = () => {
 			refetchCustomer();
 			refetchBillingContext();
-			if (typeof refetchProducts === "function") refetchProducts();
+			if (typeof refetchProducts === "function") {
+				refetchProducts();
+			}
 		};
 
 		return {
@@ -285,17 +289,3 @@ export function useAiCapability(capability: AiCapabilityId) {
 		canUserUpgrade,
 	};
 }
-
-export {
-	AI_CAPABILITIES,
-	type AiCapabilityId,
-	FEATURE_IDS,
-	FEATURE_METADATA,
-	GATED_FEATURES,
-	PLAN_CAPABILITIES,
-	type PlanCapabilities,
-	PLAN_IDS,
-	type FeatureId,
-	type GatedFeatureId,
-	type PlanId,
-};

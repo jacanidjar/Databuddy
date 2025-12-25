@@ -1,3 +1,4 @@
+import { GATED_FEATURES } from "@databuddy/shared/types/features";
 import {
 	ActivityIcon,
 	ArrowSquareOutIcon,
@@ -38,7 +39,6 @@ import {
 	UsersThreeIcon,
 	WarningIcon,
 } from "@phosphor-icons/react";
-import { GATED_FEATURES } from "@/types/features";
 import type { Category, NavigationSection } from "./types";
 
 const createNavItem = (
@@ -305,7 +305,6 @@ export const websiteSettingsNavigation: NavigationSection[] = [
 		),
 		createNavItem("Data Export", FileArrowDownIcon, "/settings/export", {
 			rootLevel: false,
-			gatedFeature: GATED_FEATURES.DATA_EXPORT,
 		}),
 	]),
 ];

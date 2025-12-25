@@ -1,6 +1,7 @@
 "use client";
 
 import { authClient } from "@databuddy/auth/client";
+import { PLAN_IDS, type PlanId } from "@databuddy/shared/types/features";
 import {
 	CaretDownIcon,
 	CheckIcon,
@@ -29,7 +30,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { PLAN_IDS, type PlanId } from "@/types/features";
 
 const getOrganizationInitials = (name: string) =>
 	name
@@ -78,7 +78,7 @@ function filterOrganizations<T extends { name: string; slug?: string | null }>(
 	);
 }
 
-type OrganizationSelectorTriggerProps = {
+interface OrganizationSelectorTriggerProps {
 	activeOrganization: {
 		name: string;
 		slug?: string | null;
@@ -87,7 +87,7 @@ type OrganizationSelectorTriggerProps = {
 	isOpen: boolean;
 	isSettingActiveOrganization: boolean;
 	currentPlanId: PlanId | null;
-};
+}
 
 function OrganizationSelectorTrigger({
 	activeOrganization,

@@ -1,6 +1,15 @@
 "use client";
 
 import {
+	FEATURE_METADATA,
+	type FeatureLimit,
+	type GatedFeatureId,
+	HIDDEN_PRICING_FEATURES,
+	PLAN_FEATURE_LIMITS,
+	PLAN_IDS,
+	type PlanId,
+} from "@databuddy/shared/types/features";
+import {
 	ArrowDownIcon,
 	CheckIcon,
 	CircleNotchIcon,
@@ -32,13 +41,6 @@ import {
 } from "@/components/ui/dialog";
 import { getPricingTableContent } from "@/lib/autumn/pricing-table-content";
 import { cn } from "@/lib/utils";
-import {
-	FEATURE_METADATA,
-	type GatedFeatureId,
-	PLAN_FEATURES,
-	PLAN_IDS,
-	type PlanId,
-} from "@/types/features";
 
 const PLAN_ICONS: Record<string, typeof CrownIcon> = {
 	free: SparkleIcon,
@@ -52,17 +54,31 @@ function getPlanIcon(planId: string) {
 	return PLAN_ICONS[planId] || CrownIcon;
 }
 
-function getNewFeaturesForPlan(planId: string): GatedFeatureId[] {
+function getNewFeaturesForPlan(planId: string): Array<{
+	feature: GatedFeatureId;
+	limit: FeatureLimit;
+	isNew: boolean;
+}> {
 	const plan = planId as PlanId;
-	const planFeatures = PLAN_FEATURES[plan];
-	if (!planFeatures) {
+	const planLimits = PLAN_FEATURE_LIMITS[plan];
+	if (!planLimits) {
 		return [];
 	}
 
 	if (plan === PLAN_IDS.FREE) {
-		return Object.entries(planFeatures)
-			.filter(([, enabled]) => enabled)
-			.map(([feature]) => feature as GatedFeatureId);
+		return Object.entries(planLimits)
+			.filter(([feature, limit]) => {
+				// Filter out hidden features
+				if (HIDDEN_PRICING_FEATURES.includes(feature as GatedFeatureId)) {
+					return false;
+				}
+				return limit !== false;
+			})
+			.map(([feature, limit]) => ({
+				feature: feature as GatedFeatureId,
+				limit,
+				isNew: true,
+			}));
 	}
 
 	const tierOrder: PlanId[] = [
@@ -73,14 +89,41 @@ function getNewFeaturesForPlan(planId: string): GatedFeatureId[] {
 	];
 	const currentIndex = tierOrder.indexOf(plan);
 	const previousPlan = tierOrder[currentIndex - 1];
-	const previousFeatures = PLAN_FEATURES[previousPlan] ?? {};
+	const previousLimits = PLAN_FEATURE_LIMITS[previousPlan] ?? {};
 
-	return Object.entries(planFeatures)
-		.filter(
-			([feature, enabled]) =>
-				enabled && !previousFeatures[feature as GatedFeatureId]
-		)
-		.map(([feature]) => feature as GatedFeatureId);
+	return Object.entries(planLimits)
+		.filter(([feature, limit]) => {
+			// Filter out hidden features
+			if (HIDDEN_PRICING_FEATURES.includes(feature as GatedFeatureId)) {
+				return false;
+			}
+			if (limit === false) {
+				return false;
+			}
+			const previousLimit = previousLimits[feature as GatedFeatureId];
+			// Show if: newly enabled, or limit increased
+			if (previousLimit === false) {
+				return true;
+			}
+			if (limit === "unlimited" && previousLimit !== "unlimited") {
+				return true;
+			}
+			if (
+				typeof limit === "number" &&
+				typeof previousLimit === "number" &&
+				limit > previousLimit
+			) {
+				return true;
+			}
+			return false;
+		})
+		.map(([feature, limit]) => ({
+			feature: feature as GatedFeatureId,
+			limit,
+			isNew:
+				previousLimits[feature as GatedFeatureId] === false ||
+				previousLimits[feature as GatedFeatureId] === undefined,
+		}));
 }
 
 function PricingTableSkeleton() {
@@ -271,7 +314,9 @@ function PricingCard({
 	const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
 	const product = products.find((p) => p.id === productId);
 
-	if (!product) return null;
+	if (!product) {
+		return null;
+	}
 
 	const { name, display: productDisplay } = product;
 	const { buttonText: defaultButtonText } = getPricingTableContent(product);
@@ -409,12 +454,14 @@ function PricingCard({
 						<span className="text-muted-foreground text-xs uppercase">
 							Features Included
 						</span>
-						{newGatedFeatures.map((featureId) => {
-							const meta = FEATURE_METADATA[featureId];
+						{newGatedFeatures.map(({ feature, limit }) => {
+							const meta = FEATURE_METADATA[feature];
 							return (
 								<GatedFeatureItem
-									key={featureId}
-									name={meta?.name ?? featureId}
+									key={feature}
+									limit={limit}
+									name={meta?.name ?? feature}
+									unit={meta?.unit}
 								/>
 							);
 						})}
@@ -493,14 +540,43 @@ function FeatureItem({ item }: { item: ProductItem }) {
 	);
 }
 
-function GatedFeatureItem({ name }: { name: string }) {
+function GatedFeatureItem({
+	name,
+	limit,
+	unit,
+}: {
+	name: string;
+	limit: FeatureLimit;
+	unit?: string;
+	isNew?: boolean;
+}) {
+	const getLimitText = () => {
+		if (limit === "unlimited") {
+			return "Unlimited";
+		}
+		if (typeof limit === "number") {
+			if (unit) {
+				return `Up to ${limit.toLocaleString()} ${unit}`;
+			}
+			return `Up to ${limit.toLocaleString()}`;
+		}
+		return null;
+	};
+
+	const limitText = getLimitText();
+
 	return (
-		<div className="flex items-center gap-2 text-sm">
+		<div className="flex items-start gap-2 text-sm">
 			<CheckIcon
-				className="size-4 shrink-0 text-accent-foreground"
+				className="mt-0.5 size-4 shrink-0 text-accent-foreground"
 				weight="bold"
 			/>
-			<span>{name}</span>
+			<div className="flex flex-col">
+				<span>{name}</span>
+				{limitText && (
+					<span className="text-muted-foreground text-xs">{limitText}</span>
+				)}
+			</div>
 		</div>
 	);
 }

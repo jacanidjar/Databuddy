@@ -1,6 +1,12 @@
 "use client";
 
 import {
+	FEATURE_METADATA,
+	type GatedFeatureId,
+	getMinimumPlanForFeature,
+	PLAN_IDS,
+} from "@databuddy/shared/types/features";
+import {
 	ArrowRightIcon,
 	CrownIcon,
 	LockSimpleIcon,
@@ -10,18 +16,10 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import {
-	type GatedFeatureId,
-	useBillingContext,
-} from "@/components/providers/billing-provider";
+import { useBillingContext } from "@/components/providers/billing-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import {
-	FEATURE_METADATA,
-	getMinimumPlanForFeature,
-	PLAN_IDS,
-} from "@/types/features";
 
 const PLAN_CONFIG: Record<
 	string,
