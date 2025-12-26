@@ -25,21 +25,21 @@ import type { NavigationSection as NavigationSectionType } from "./navigation/ty
 import { WebsiteHeader } from "./navigation/website-header";
 import { OrganizationSelector } from "./organization-selector";
 
-type NavigationConfig = {
+interface NavigationConfig {
 	navigation: NavigationSectionType[];
 	header: React.ReactNode;
 	currentWebsiteId?: string | null;
-};
+}
 
-type User = {
+interface User {
 	name?: string | null;
 	email?: string | null;
 	image?: string | null;
-};
+}
 
-type SidebarProps = {
+interface SidebarProps {
 	user: User;
-};
+}
 
 export function Sidebar({ user }: SidebarProps) {
 	const pathname = usePathname();
