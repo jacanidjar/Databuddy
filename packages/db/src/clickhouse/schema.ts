@@ -403,7 +403,6 @@ ORDER BY (website_id, provider, model, timestamp)
 SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1
 `;
 
-
 const CREATE_UPTIME_TABLE = `
 CREATE TABLE IF NOT EXISTS ${UPTIME_DATABASE}.uptime_monitor (
     site_id String CODEC(ZSTD(1)),
@@ -693,7 +692,7 @@ export interface AnalyticsEvent {
 	properties: string;
 
 	created_at: number;
-};
+}
 
 /**
  * Initialize the ClickHouse schema by creating necessary database and tables

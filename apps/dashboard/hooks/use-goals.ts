@@ -57,7 +57,8 @@ export function useGoals(websiteId: string, enabled = true) {
 			toast.success("Goal created successfully");
 		},
 		onError: (error) => {
-			const message = error instanceof Error ? error.message : "Failed to create goal";
+			const message =
+				error instanceof Error ? error.message : "Failed to create goal";
 			toast.error(message);
 		},
 	});
@@ -74,7 +75,8 @@ export function useGoals(websiteId: string, enabled = true) {
 			toast.success("Goal updated successfully");
 		},
 		onError: (error) => {
-			const message = error instanceof Error ? error.message : "Failed to update goal";
+			const message =
+				error instanceof Error ? error.message : "Failed to update goal";
 			toast.error(message);
 		},
 	});
@@ -94,7 +96,8 @@ export function useGoals(websiteId: string, enabled = true) {
 			toast.success("Goal deleted successfully");
 		},
 		onError: (error) => {
-			const message = error instanceof Error ? error.message : "Failed to delete goal";
+			const message =
+				error instanceof Error ? error.message : "Failed to delete goal";
 			toast.error(message);
 		},
 	});

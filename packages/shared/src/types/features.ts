@@ -136,7 +136,10 @@ export const PLAN_FEATURE_LIMITS: Record<
  * Generate PLAN_FEATURES from PLAN_FEATURE_LIMITS
  * Maps each plan/feature: if limit === false then feature is false, otherwise true
  */
-function generatePlanFeatures(): Record<PlanId, Record<GatedFeatureId, boolean>> {
+function generatePlanFeatures(): Record<
+	PlanId,
+	Record<GatedFeatureId, boolean>
+> {
 	const result = {} as Record<PlanId, Record<GatedFeatureId, boolean>>;
 
 	for (const planId of PLAN_HIERARCHY) {
@@ -157,8 +160,10 @@ function generatePlanFeatures(): Record<PlanId, Record<GatedFeatureId, boolean>>
  * Legacy boolean feature matrix for backward compatibility
  * Auto-generated from PLAN_FEATURE_LIMITS to prevent drift
  */
-export const PLAN_FEATURES: Record<PlanId, Record<GatedFeatureId, boolean>> =
-	generatePlanFeatures();
+export const PLAN_FEATURES: Record<
+	PlanId,
+	Record<GatedFeatureId, boolean>
+> = generatePlanFeatures();
 
 /** AI capability identifiers */
 export const AI_CAPABILITIES = {
@@ -251,86 +256,86 @@ interface FeatureMeta {
 }
 
 export const FEATURE_METADATA: Record<FeatureId | GatedFeatureId, FeatureMeta> =
-{
-	[FEATURE_IDS.EVENTS]: {
-		name: "Events",
-		description: "Track pageviews and custom events",
-		upgradeMessage: "Upgrade to track more events",
-	},
-	[FEATURE_IDS.ASSISTANT_MESSAGES]: {
-		name: "AI Messages",
-		description: "Chat with your analytics assistant",
-		upgradeMessage: "Upgrade for more AI messages",
-	},
-	[GATED_FEATURES.FUNNELS]: {
-		name: "Funnels",
-		description: "Create conversion funnels to track user flows",
-		upgradeMessage: "Upgrade for more funnels",
-		unit: "funnels",
-	},
-	[GATED_FEATURES.GOALS]: {
-		name: "Goals",
-		description: "Set and track conversion goals",
-		upgradeMessage: "Upgrade for more goals",
-		unit: "goals",
-	},
-	[GATED_FEATURES.RETENTION]: {
-		name: "Retention",
-		description: "Analyze user retention over time",
-		upgradeMessage: "Upgrade to Hobby for retention analysis",
-		minPlan: PLAN_IDS.HOBBY,
-	},
-	[GATED_FEATURES.USERS]: {
-		name: "Users",
-		description: "Track individual user behavior and sessions",
-		upgradeMessage: "Users is available on all plans",
-	},
-	[GATED_FEATURES.FEATURE_FLAGS]: {
-		name: "Feature Flags",
-		description: "Control feature rollouts with targeting rules",
-		upgradeMessage: "Upgrade for more feature flags",
-		unit: "flags",
-	},
-	[GATED_FEATURES.TARGET_GROUPS]: {
-		name: "Target Groups",
-		description: "Create target groups to target your users",
-		upgradeMessage: "Upgrade for more target groups",
-		unit: "groups",
-	},
-	[GATED_FEATURES.WEB_VITALS]: {
-		name: "Web Vitals",
-		description: "Monitor Core Web Vitals and performance",
-		upgradeMessage: "Web Vitals is available on all plans",
-	},
-	[GATED_FEATURES.ERROR_TRACKING]: {
-		name: "Error Tracking",
-		description: "Capture and analyze JavaScript errors",
-		upgradeMessage: "Upgrade to Hobby for error tracking",
-		minPlan: PLAN_IDS.HOBBY,
-	},
-	[GATED_FEATURES.GEOGRAPHIC]: {
-		name: "Geographic",
-		description: "View visitor locations on a map",
-		upgradeMessage: "Geographic is available on all plans",
-	},
-	[GATED_FEATURES.AI_ASSISTANT]: {
-		name: "AI Assistant",
-		description: "Chat-based analytics assistant",
-		upgradeMessage: "AI Assistant is available on all plans",
-	},
-	[GATED_FEATURES.AI_AGENT]: {
-		name: "AI Agent",
-		description: "Autonomous AI agent for advanced analytics insights",
-		upgradeMessage: "Upgrade to Pro for AI Agent access",
-		minPlan: PLAN_IDS.PRO,
-	},
-	[GATED_FEATURES.TEAM_ROLES]: {
-		name: "Team Roles",
-		description: "Assign roles and permissions to team members",
-		upgradeMessage: "Upgrade for more team members",
-		unit: "members",
-	},
-};
+	{
+		[FEATURE_IDS.EVENTS]: {
+			name: "Events",
+			description: "Track pageviews and custom events",
+			upgradeMessage: "Upgrade to track more events",
+		},
+		[FEATURE_IDS.ASSISTANT_MESSAGES]: {
+			name: "AI Messages",
+			description: "Chat with your analytics assistant",
+			upgradeMessage: "Upgrade for more AI messages",
+		},
+		[GATED_FEATURES.FUNNELS]: {
+			name: "Funnels",
+			description: "Create conversion funnels to track user flows",
+			upgradeMessage: "Upgrade for more funnels",
+			unit: "funnels",
+		},
+		[GATED_FEATURES.GOALS]: {
+			name: "Goals",
+			description: "Set and track conversion goals",
+			upgradeMessage: "Upgrade for more goals",
+			unit: "goals",
+		},
+		[GATED_FEATURES.RETENTION]: {
+			name: "Retention",
+			description: "Analyze user retention over time",
+			upgradeMessage: "Upgrade to Hobby for retention analysis",
+			minPlan: PLAN_IDS.HOBBY,
+		},
+		[GATED_FEATURES.USERS]: {
+			name: "Users",
+			description: "Track individual user behavior and sessions",
+			upgradeMessage: "Users is available on all plans",
+		},
+		[GATED_FEATURES.FEATURE_FLAGS]: {
+			name: "Feature Flags",
+			description: "Control feature rollouts with targeting rules",
+			upgradeMessage: "Upgrade for more feature flags",
+			unit: "flags",
+		},
+		[GATED_FEATURES.TARGET_GROUPS]: {
+			name: "Target Groups",
+			description: "Create target groups to target your users",
+			upgradeMessage: "Upgrade for more target groups",
+			unit: "groups",
+		},
+		[GATED_FEATURES.WEB_VITALS]: {
+			name: "Web Vitals",
+			description: "Monitor Core Web Vitals and performance",
+			upgradeMessage: "Web Vitals is available on all plans",
+		},
+		[GATED_FEATURES.ERROR_TRACKING]: {
+			name: "Error Tracking",
+			description: "Capture and analyze JavaScript errors",
+			upgradeMessage: "Upgrade to Hobby for error tracking",
+			minPlan: PLAN_IDS.HOBBY,
+		},
+		[GATED_FEATURES.GEOGRAPHIC]: {
+			name: "Geographic",
+			description: "View visitor locations on a map",
+			upgradeMessage: "Geographic is available on all plans",
+		},
+		[GATED_FEATURES.AI_ASSISTANT]: {
+			name: "AI Assistant",
+			description: "Chat-based analytics assistant",
+			upgradeMessage: "AI Assistant is available on all plans",
+		},
+		[GATED_FEATURES.AI_AGENT]: {
+			name: "AI Agent",
+			description: "Autonomous AI agent for advanced analytics insights",
+			upgradeMessage: "Upgrade to Pro for AI Agent access",
+			minPlan: PLAN_IDS.PRO,
+		},
+		[GATED_FEATURES.TEAM_ROLES]: {
+			name: "Team Roles",
+			description: "Assign roles and permissions to team members",
+			upgradeMessage: "Upgrade for more team members",
+			unit: "members",
+		},
+	};
 
 /** Check if a plan has access to a gated feature */
 export function isPlanFeatureEnabled(

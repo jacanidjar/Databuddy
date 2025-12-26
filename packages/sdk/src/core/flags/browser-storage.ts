@@ -31,7 +31,7 @@ export class BrowserFlagStorage implements StorageInterface {
 						result[flagKey] = (parsed.value || parsed) as FlagResult;
 					}
 				}
-			} catch { }
+			} catch {}
 		}
 		return result;
 	}
@@ -76,7 +76,7 @@ export class BrowserFlagStorage implements StorageInterface {
 				expiresAt: Date.now() + this.ttl,
 			};
 			localStorage.setItem(`db-flag-${key}`, JSON.stringify(item));
-		} catch { }
+		} catch {}
 	}
 
 	private isExpired(expiresAt?: number): boolean {

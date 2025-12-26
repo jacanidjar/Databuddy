@@ -1,21 +1,21 @@
 import type {
-    AiCapabilityId,
-    FeatureLimit,
-    GatedFeatureId,
-    PlanId,
+	AiCapabilityId,
+	FeatureLimit,
+	GatedFeatureId,
+	PlanId,
 } from "@databuddy/shared/types/features";
 import {
-    getMinimumPlanForAiCapability,
-    getNextPlanForFeature,
-    getPlanCapabilities,
-    getPlanFeatureLimit,
-    getRemainingUsage,
-    isFeatureAvailable,
-    isPlanAiCapabilityEnabled,
-    isPlanFeatureEnabled,
-    isWithinLimit,
-    PLAN_HIERARCHY,
-    PLAN_IDS,
+	getMinimumPlanForAiCapability,
+	getNextPlanForFeature,
+	getPlanCapabilities,
+	getPlanFeatureLimit,
+	getRemainingUsage,
+	isFeatureAvailable,
+	isPlanAiCapabilityEnabled,
+	isPlanFeatureEnabled,
+	isWithinLimit,
+	PLAN_HIERARCHY,
+	PLAN_IDS,
 } from "@databuddy/shared/types/features";
 import { ORPCError } from "@orpc/server";
 
@@ -24,14 +24,14 @@ import { ORPCError } from "@orpc/server";
  * This is automatically populated when a user is authenticated
  */
 export interface BillingContext {
-    /** The customer ID for billing (user ID or org owner ID) */
-    customerId: string;
-    /** Whether the billing is based on an organization */
-    isOrganization: boolean;
-    /** Whether the current user can upgrade the plan */
-    canUserUpgrade: boolean;
-    /** The current plan ID (e.g., 'free', 'hobby', 'pro', 'scale') */
-    planId: string;
+	/** The customer ID for billing (user ID or org owner ID) */
+	customerId: string;
+	/** Whether the billing is based on an organization */
+	isOrganization: boolean;
+	/** Whether the current user can upgrade the plan */
+	canUserUpgrade: boolean;
+	/** The current plan ID (e.g., 'free', 'hobby', 'pro', 'scale') */
+	planId: string;
 }
 
 /**
@@ -45,21 +45,21 @@ export interface BillingContext {
  * ```
  */
 export function hasPlan(
-    currentPlan: string | undefined,
-    requiredPlan: PlanId
+	currentPlan: string | undefined,
+	requiredPlan: PlanId
 ): boolean {
-    if (!currentPlan) {
-        return requiredPlan === PLAN_IDS.FREE;
-    }
+	if (!currentPlan) {
+		return requiredPlan === PLAN_IDS.FREE;
+	}
 
-    const currentIndex = PLAN_HIERARCHY.indexOf(currentPlan as PlanId);
-    const requiredIndex = PLAN_HIERARCHY.indexOf(requiredPlan);
+	const currentIndex = PLAN_HIERARCHY.indexOf(currentPlan as PlanId);
+	const requiredIndex = PLAN_HIERARCHY.indexOf(requiredPlan);
 
-    if (currentIndex === -1) {
-        return false;
-    }
+	if (currentIndex === -1) {
+		return false;
+	}
 
-    return currentIndex >= requiredIndex;
+	return currentIndex >= requiredIndex;
 }
 
 /**
@@ -73,7 +73,7 @@ export function hasPlan(
  * ```
  */
 export function isFreePlan(planId: string | undefined): boolean {
-    return !planId || planId.toLowerCase() === PLAN_IDS.FREE;
+	return !planId || planId.toLowerCase() === PLAN_IDS.FREE;
 }
 
 /**
@@ -87,10 +87,10 @@ export function isFreePlan(planId: string | undefined): boolean {
  * ```
  */
 export function canAccessFeature(
-    planId: string | undefined,
-    feature: GatedFeatureId
+	planId: string | undefined,
+	feature: GatedFeatureId
 ): boolean {
-    return isPlanFeatureEnabled(planId ?? null, feature);
+	return isPlanFeatureEnabled(planId ?? null, feature);
 }
 
 /**
@@ -104,10 +104,10 @@ export function canAccessFeature(
  * ```
  */
 export function canAccessAiCapability(
-    planId: string | undefined,
-    capability: AiCapabilityId
+	planId: string | undefined,
+	capability: AiCapabilityId
 ): boolean {
-    return isPlanAiCapabilityEnabled(planId ?? null, capability);
+	return isPlanAiCapabilityEnabled(planId ?? null, capability);
 }
 
 /**
@@ -122,10 +122,10 @@ export function canAccessAiCapability(
  * ```
  */
 export function getFeatureLimit(
-    planId: string | undefined,
-    feature: GatedFeatureId
+	planId: string | undefined,
+	feature: GatedFeatureId
 ): FeatureLimit {
-    return getPlanFeatureLimit(planId ?? null, feature);
+	return getPlanFeatureLimit(planId ?? null, feature);
 }
 
 /**
@@ -143,11 +143,11 @@ export function getFeatureLimit(
  * ```
  */
 export function isUsageWithinLimit(
-    planId: string | undefined,
-    feature: GatedFeatureId,
-    currentUsage: number
+	planId: string | undefined,
+	feature: GatedFeatureId,
+	currentUsage: number
 ): boolean {
-    return isWithinLimit(planId ?? null, feature, currentUsage);
+	return isWithinLimit(planId ?? null, feature, currentUsage);
 }
 
 /**
@@ -162,11 +162,11 @@ export function isUsageWithinLimit(
  * ```
  */
 export function getUsageRemaining(
-    planId: string | undefined,
-    feature: GatedFeatureId,
-    currentUsage: number
+	planId: string | undefined,
+	feature: GatedFeatureId,
+	currentUsage: number
 ): number | "unlimited" {
-    return getRemainingUsage(planId ?? null, feature, currentUsage);
+	return getRemainingUsage(planId ?? null, feature, currentUsage);
 }
 
 /**
@@ -179,17 +179,17 @@ export function getUsageRemaining(
  * ```
  */
 export function requireFeature(
-    planId: string | undefined,
-    feature: GatedFeatureId
+	planId: string | undefined,
+	feature: GatedFeatureId
 ): void {
-    if (!isFeatureAvailable(planId ?? null, feature)) {
-        const nextPlan = getNextPlanForFeature(planId ?? null, feature);
-        throw new ORPCError("FORBIDDEN", {
-            message: nextPlan
-                ? `This feature requires ${nextPlan} plan or higher`
-                : "This feature is not available on your plan",
-        });
-    }
+	if (!isFeatureAvailable(planId ?? null, feature)) {
+		const nextPlan = getNextPlanForFeature(planId ?? null, feature);
+		throw new ORPCError("FORBIDDEN", {
+			message: nextPlan
+				? `This feature requires ${nextPlan} plan or higher`
+				: "This feature is not available on your plan",
+		});
+	}
 }
 
 /**
@@ -202,28 +202,28 @@ export function requireFeature(
  * ```
  */
 export function requireUsageWithinLimit(
-    planId: string | undefined,
-    feature: GatedFeatureId,
-    currentUsage: number
+	planId: string | undefined,
+	feature: GatedFeatureId,
+	currentUsage: number
 ): void {
-    if (!isWithinLimit(planId ?? null, feature, currentUsage)) {
-        const limit = getPlanFeatureLimit(planId ?? null, feature);
-        const nextPlan = getNextPlanForFeature(planId ?? null, feature);
+	if (!isWithinLimit(planId ?? null, feature, currentUsage)) {
+		const limit = getPlanFeatureLimit(planId ?? null, feature);
+		const nextPlan = getNextPlanForFeature(planId ?? null, feature);
 
-        if (limit === false) {
-            throw new ORPCError("FORBIDDEN", {
-                message: nextPlan
-                    ? `This feature requires ${nextPlan} plan or higher`
-                    : "This feature is not available on your plan",
-            });
-        }
+		if (limit === false) {
+			throw new ORPCError("FORBIDDEN", {
+				message: nextPlan
+					? `This feature requires ${nextPlan} plan or higher`
+					: "This feature is not available on your plan",
+			});
+		}
 
-        throw new ORPCError("FORBIDDEN", {
-            message: nextPlan
-                ? `Limit of ${limit} reached. Upgrade to ${nextPlan} for more.`
-                : `Limit of ${limit} reached`,
-        });
-    }
+		throw new ORPCError("FORBIDDEN", {
+			message: nextPlan
+				? `Limit of ${limit} reached. Upgrade to ${nextPlan} for more.`
+				: `Limit of ${limit} reached`,
+		});
+	}
 }
 
 /**
@@ -236,7 +236,7 @@ export function requireUsageWithinLimit(
  * ```
  */
 export function getUserCapabilities(planId: string | undefined) {
-    return getPlanCapabilities(planId ?? null);
+	return getPlanCapabilities(planId ?? null);
 }
 
 /**
@@ -248,15 +248,15 @@ export function getUserCapabilities(planId: string | undefined) {
  * ```
  */
 export function requireAiCapability(
-    planId: string | undefined,
-    capability: AiCapabilityId
+	planId: string | undefined,
+	capability: AiCapabilityId
 ): void {
-    if (!isPlanAiCapabilityEnabled(planId ?? null, capability)) {
-        const minPlan = getMinimumPlanForAiCapability(capability);
-        throw new ORPCError("FORBIDDEN", {
-            message: minPlan
-                ? `This AI capability is not available on your plan; upgrade to ${minPlan} to access it`
-                : "This AI capability is not available on your plan",
-        });
-    }
+	if (!isPlanAiCapabilityEnabled(planId ?? null, capability)) {
+		const minPlan = getMinimumPlanForAiCapability(capability);
+		throw new ORPCError("FORBIDDEN", {
+			message: minPlan
+				? `This AI capability is not available on your plan; upgrade to ${minPlan} to access it`
+				: "This AI capability is not available on your plan",
+		});
+	}
 }

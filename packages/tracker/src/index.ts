@@ -342,7 +342,7 @@ export class Databuddy extends BaseTracker {
 				sessionStorage.removeItem("did_session");
 				sessionStorage.removeItem("did_session_timestamp");
 				sessionStorage.removeItem("did_session_start");
-			} catch { }
+			} catch {}
 		}
 		this.anonymousId = this.generateAnonymousId();
 		this.sessionId = this.generateSessionId();
@@ -387,11 +387,11 @@ function initializeDatabuddy() {
 
 	if (isOptedOut()) {
 		window.databuddy = {
-			track: () => { },
-			screenView: () => { },
-			clear: () => { },
-			flush: () => { },
-			setGlobalProperties: () => { },
+			track: () => {},
+			screenView: () => {},
+			clear: () => {},
+			flush: () => {},
+			setGlobalProperties: () => {},
 			options: { clientId: "", disabled: true },
 		};
 		window.db = window.databuddy;
@@ -411,7 +411,7 @@ if (typeof window !== "undefined") {
 		try {
 			localStorage.setItem("databuddy_opt_out", "true");
 			localStorage.setItem("databuddy_disabled", "true");
-		} catch { }
+		} catch {}
 		window.databuddyOptedOut = true;
 		window.databuddyDisabled = true;
 		if (window.databuddy) {
@@ -423,7 +423,7 @@ if (typeof window !== "undefined") {
 		try {
 			localStorage.removeItem("databuddy_opt_out");
 			localStorage.removeItem("databuddy_disabled");
-		} catch { }
+		} catch {}
 		window.databuddyOptedOut = false;
 		window.databuddyDisabled = false;
 	};

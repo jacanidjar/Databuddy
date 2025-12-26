@@ -13,7 +13,7 @@ interface UserPreferences {
 	timezone: string;
 	dateFormat: string;
 	timeFormat: string;
-};
+}
 
 const defaultPreferences: UserPreferences = {
 	timezone: "auto",

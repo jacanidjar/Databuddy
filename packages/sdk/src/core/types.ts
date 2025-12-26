@@ -310,8 +310,8 @@ export type EventName = keyof EventTypeMap;
  */
 export type PropertiesForEvent<T extends EventName> =
 	T extends keyof EventTypeMap
-	? EventTypeMap[T] & EventProperties
-	: EventProperties;
+		? EventTypeMap[T] & EventProperties
+		: EventProperties;
 
 /**
  * The global tracker instance available at `window.databuddy` or `window.db`.
@@ -421,7 +421,7 @@ export interface DataAttributes {
 	"data-track": string;
 	/** Additional data attributes (auto-converted from kebab-case to camelCase) */
 	[key: `data-${string}`]: string;
-};
+}
 
 /**
  * Utility types for creating typed event tracking functions

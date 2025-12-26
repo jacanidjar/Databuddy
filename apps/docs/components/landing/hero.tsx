@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { CHATGPT_PROMPT_URL } from "@/app/util/constants";
-import { YCLogo } from "@/components/icons/yc-logo";
+// import { YCLogo } from "@/components/icons/yc-logo";
 import DemoContainer from "./demo";
 import { SciFiButton } from "./scifi-btn";
 import { Spotlight } from "./spotlight";
@@ -21,13 +21,13 @@ export default function Hero() {
 				<div className="grid grid-cols-1 items-center gap-8 pt-16 pb-10 sm:pt-20 sm:pb-12 lg:grid-cols-2 lg:gap-12 lg:pt-28 lg:pb-16 xl:gap-16">
 					{/* Text Content */}
 					<div className="order-2 flex flex-col items-center gap-8 text-center lg:order-1 lg:items-start lg:gap-10 lg:text-left">
-						<div className="fade-in slide-in-from-bottom-4 animate-in self-center duration-700 lg:self-start">
+						{/* <div className="fade-in slide-in-from-bottom-4 animate-in self-center duration-700 lg:self-start">
 							<div className="group inline-flex cursor-default items-center rounded-full border border-border/50 bg-background/60 px-4 py-1.5 font-medium text-muted-foreground text-xs shadow-sm backdrop-blur-md hover:bg-background/80 hover:text-foreground">
 								<span className="mr-1.5 opacity-70">Rejected by</span>
 								<YCLogo className="mr-1.5 inline-block h-3.5 w-3.5 align-[-2px] grayscale transition-all group-hover:grayscale-0" />
 								<span className="font-semibold tracking-tight">Combinator</span>
 							</div>
-						</div>
+						</div> */}
 
 						<h1 className="fade-in slide-in-from-bottom-6 animate-in text-balance font-bold text-4xl leading-[1.1] tracking-tight delay-100 duration-700 sm:text-6xl md:text-7xl lg:text-7xl xl:text-[80px]">
 							<span className="block whitespace-normal">

@@ -57,7 +57,11 @@ const computeCosts = async (
 	}
 };
 
-const createDefaultTransport = (apiUrl: string, clientId?: string, apiKey?: string): Transport => {
+const createDefaultTransport = (
+	apiUrl: string,
+	clientId?: string,
+	apiKey?: string
+): Transport => {
 	return async (call) => {
 		const headers: HeadersInit = {
 			"Content-Type": "application/json",
@@ -112,9 +116,9 @@ const createMiddleware = (
 				const cost: TokenCost =
 					shouldComputeCosts && (inputTokens > 0 || outputTokens > 0)
 						? await computeCosts(model.modelId, model.provider, {
-							inputTokens,
-							outputTokens,
-						})
+								inputTokens,
+								outputTokens,
+							})
 						: {};
 
 				const call: AICall = {
@@ -284,7 +288,10 @@ export const databuddyLLM = (options: DatabuddyLLMOptions = {}) => {
 		transport = customTransport;
 	} else {
 		// Priority: prop → env → default
-		const endpoint = apiUrl ?? process.env.DATABUDDY_API_URL ?? "https://basket.databuddy.cc/llm";
+		const endpoint =
+			apiUrl ??
+			process.env.DATABUDDY_API_URL ??
+			"https://basket.databuddy.cc/llm";
 		const client = clientId ?? process.env.DATABUDDY_CLIENT_ID;
 		const key = apiKey ?? process.env.DATABUDDY_API_KEY;
 		transport = createDefaultTransport(endpoint, client, key);
@@ -320,7 +327,11 @@ export const databuddyLLM = (options: DatabuddyLLMOptions = {}) => {
  * });
  * ```
  */
-export const httpTransport = (url: string, clientId?: string, apiKey?: string): Transport => {
+export const httpTransport = (
+	url: string,
+	clientId?: string,
+	apiKey?: string
+): Transport => {
 	return async (call) => {
 		const headers: HeadersInit = {
 			"Content-Type": "application/json",

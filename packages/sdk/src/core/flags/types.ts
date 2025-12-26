@@ -84,7 +84,10 @@ export interface FlagsContext {
 	/** Get a flag's full state */
 	getFlag: (key: string) => FlagState;
 	/** Get a flag's value with type safety */
-	getValue: <T extends boolean | string | number = boolean>(key: string, defaultValue?: T) => T;
+	getValue: <T extends boolean | string | number = boolean>(
+		key: string,
+		defaultValue?: T
+	) => T;
 	/** Check if a flag is on (simple boolean) */
 	isOn: (key: string) => boolean;
 	/** Async fetch a specific flag */

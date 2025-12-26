@@ -24,7 +24,7 @@ export interface NavigationItem {
 	gatedFeature?: GatedFeatureId;
 	/** Feature flag key - if set, item will only show when the flag is enabled */
 	flag?: string;
-};
+}
 
 export interface NavigationSection {
 	title: string;
@@ -32,7 +32,7 @@ export interface NavigationSection {
 	items: NavigationItem[];
 	/** Feature flag key - if set, section will only show when the flag is enabled */
 	flag?: string;
-};
+}
 
 export interface Category {
 	id: string;
@@ -42,4 +42,4 @@ export interface Category {
 	hideFromDemo?: boolean;
 	/** Feature flag key - if set, category will only show when the flag is enabled */
 	flag?: string;
-};
+}

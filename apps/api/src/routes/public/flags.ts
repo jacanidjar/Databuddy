@@ -25,7 +25,7 @@ interface UserContext {
 	userId?: string;
 	email?: string;
 	properties?: Record<string, unknown>;
-};
+}
 
 interface FlagRule {
 	type: "user_id" | "email" | "property";
@@ -36,7 +36,7 @@ interface FlagRule {
 	enabled: boolean;
 	batch: boolean;
 	batchValues?: string[];
-};
+}
 
 interface FlagResult {
 	enabled: boolean;
@@ -44,7 +44,7 @@ interface FlagResult {
 	payload: unknown;
 	reason: string;
 	variant?: string;
-};
+}
 
 interface Variant {
 	key: string;
@@ -52,12 +52,12 @@ interface Variant {
 	weight?: number;
 	description?: string;
 	type: "string" | "number";
-};
+}
 
 interface TargetGroupData {
 	id: string;
 	rules: FlagRule[];
-};
+}
 
 /** Flag type for evaluation - includes database fields not in the form schema */
 interface EvaluableFlag {
@@ -71,7 +71,7 @@ interface EvaluableFlag {
 	payload?: unknown;
 	targetGroupIds?: string[];
 	resolvedTargetGroups?: TargetGroupData[];
-};
+}
 
 const getCachedFlag = cacheable(
 	async (key: string, clientId: string, environment?: string) => {

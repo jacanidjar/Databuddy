@@ -21,7 +21,7 @@ interface ListAnnotationsInput {
 		metrics?: string[];
 		tabId?: string;
 	};
-};
+}
 
 export function useAnnotations(input: ListAnnotationsInput) {
 	const {
@@ -39,7 +39,8 @@ export function useAnnotations(input: ListAnnotationsInput) {
 			toast.success("Annotation created successfully");
 		},
 		onError: (error) => {
-			const message = error instanceof Error ? error.message : "Failed to create annotation";
+			const message =
+				error instanceof Error ? error.message : "Failed to create annotation";
 			toast.error(message);
 		},
 	});
@@ -50,7 +51,8 @@ export function useAnnotations(input: ListAnnotationsInput) {
 			toast.success("Annotation updated successfully");
 		},
 		onError: (error) => {
-			const message = error instanceof Error ? error.message : "Failed to update annotation";
+			const message =
+				error instanceof Error ? error.message : "Failed to update annotation";
 			toast.error(message);
 		},
 	});
@@ -61,7 +63,8 @@ export function useAnnotations(input: ListAnnotationsInput) {
 			toast.success("Annotation deleted successfully");
 		},
 		onError: (error) => {
-			const message = error instanceof Error ? error.message : "Failed to delete annotation";
+			const message =
+				error instanceof Error ? error.message : "Failed to delete annotation";
 			toast.error(message);
 		},
 	});

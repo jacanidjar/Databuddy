@@ -42,7 +42,7 @@ interface IncomingMessage {
 	content?: string;
 	parts?: Array<{ type: string; text?: string }>;
 	text?: string;
-};
+}
 
 function toUIMessage(msg: IncomingMessage): UIMessage {
 	if (msg.parts && msg.parts.length > 0) {

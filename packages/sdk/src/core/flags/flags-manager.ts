@@ -133,7 +133,10 @@ export class CoreFlagsManager implements FlagsManager {
 
 			for (const [key, value] of Object.entries(stored)) {
 				if (value && typeof value === "object") {
-					this.cache.set(key, createCacheEntry(value as FlagResult, ttl, staleTime));
+					this.cache.set(
+						key,
+						createCacheEntry(value as FlagResult, ttl, staleTime)
+					);
 				}
 			}
 

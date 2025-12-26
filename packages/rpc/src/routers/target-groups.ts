@@ -1,16 +1,16 @@
 import {
-    and,
-    desc,
-    eq,
-    flagsToTargetGroups,
-    isNull,
-    targetGroups,
+	and,
+	desc,
+	eq,
+	flagsToTargetGroups,
+	isNull,
+	targetGroups,
 } from "@databuddy/db";
 import {
-    createDrizzleCache,
-    invalidateCacheablePattern,
-    invalidateCacheableWithArgs,
-    redis,
+	createDrizzleCache,
+	invalidateCacheablePattern,
+	invalidateCacheableWithArgs,
+	redis,
 } from "@databuddy/redis";
 import { userRuleSchema } from "@databuddy/shared/flags";
 import { GATED_FEATURES } from "@databuddy/shared/types/features";
@@ -22,50 +22,50 @@ import { requireFeature, requireUsageWithinLimit } from "../types/billing";
 import { authorizeWebsiteAccess, isFullyAuthorized } from "../utils/auth";
 
 const targetGroupsCache = createDrizzleCache({
-    redis,
-    namespace: "targetGroups",
+	redis,
+	namespace: "targetGroups",
 });
 const flagsCache = createDrizzleCache({
-    redis,
-    namespace: "flags",
+	redis,
+	namespace: "flags",
 });
 const CACHE_DURATION = 60;
 
 const listSchema = z.object({
-    websiteId: z.string(),
+	websiteId: z.string(),
 });
 
 const getByIdSchema = z.object({
-    id: z.string(),
-    websiteId: z.string(),
+	id: z.string(),
+	websiteId: z.string(),
 });
 
 const createSchema = z.object({
-    websiteId: z.string(),
-    name: z.string().min(1).max(100),
-    description: z.string().max(500).optional(),
-    color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
-    rules: z.array(userRuleSchema),
+	websiteId: z.string(),
+	name: z.string().min(1).max(100),
+	description: z.string().max(500).optional(),
+	color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+	rules: z.array(userRuleSchema),
 });
 
 const updateSchema = z.object({
-    id: z.string(),
-    name: z.string().min(1).max(100).optional(),
-    description: z.string().max(500).optional(),
-    color: z
-        .string()
-        .regex(/^#[0-9A-Fa-f]{6}$/)
-        .optional(),
-    rules: z.array(userRuleSchema).optional(),
+	id: z.string(),
+	name: z.string().min(1).max(100).optional(),
+	description: z.string().max(500).optional(),
+	color: z
+		.string()
+		.regex(/^#[0-9A-Fa-f]{6}$/)
+		.optional(),
+	rules: z.array(userRuleSchema).optional(),
 });
 
 const deleteSchema = z.object({
-    id: z.string(),
+	id: z.string(),
 });
 
 interface TargetGroupWithRules {
-    rules?: unknown;
-    [key: string]: unknown;
+	rules?: unknown;
+	[key: string]: unknown;
 }
 
 /**
@@ -73,216 +73,216 @@ interface TargetGroupWithRules {
  * Only keeps aggregate numbers like rule count.
  */
 function sanitizeGroupForDemo<T extends TargetGroupWithRules>(group: T): T {
-    return {
-        ...group,
-        rules:
-            Array.isArray(group.rules) && group.rules.length > 0 ? [] : group.rules,
-    };
+	return {
+		...group,
+		rules:
+			Array.isArray(group.rules) && group.rules.length > 0 ? [] : group.rules,
+	};
 }
 
 export const targetGroupsRouter = {
-    list: publicProcedure.input(listSchema).handler(({ context, input }) => {
-        const cacheKey = `list:website:${input.websiteId}`;
+	list: publicProcedure.input(listSchema).handler(({ context, input }) => {
+		const cacheKey = `list:website:${input.websiteId}`;
 
-        return targetGroupsCache.withCache({
-            key: cacheKey,
-            ttl: CACHE_DURATION,
-            tables: ["target_groups"],
-            queryFn: async () => {
-                await authorizeWebsiteAccess(context, input.websiteId, "read");
+		return targetGroupsCache.withCache({
+			key: cacheKey,
+			ttl: CACHE_DURATION,
+			tables: ["target_groups"],
+			queryFn: async () => {
+				await authorizeWebsiteAccess(context, input.websiteId, "read");
 
-                const groupsList = await context.db
-                    .select()
-                    .from(targetGroups)
-                    .where(
-                        and(
-                            eq(targetGroups.websiteId, input.websiteId),
-                            isNull(targetGroups.deletedAt)
-                        )
-                    )
-                    .orderBy(desc(targetGroups.createdAt));
+				const groupsList = await context.db
+					.select()
+					.from(targetGroups)
+					.where(
+						and(
+							eq(targetGroups.websiteId, input.websiteId),
+							isNull(targetGroups.deletedAt)
+						)
+					)
+					.orderBy(desc(targetGroups.createdAt));
 
-                // Check if user is fully authorized
-                const isAuthorized = await isFullyAuthorized(context, input.websiteId);
+				// Check if user is fully authorized
+				const isAuthorized = await isFullyAuthorized(context, input.websiteId);
 
-                // Sanitize data for unauthorized/demo users
-                if (!isAuthorized) {
-                    return groupsList.map((group) => sanitizeGroupForDemo(group));
-                }
+				// Sanitize data for unauthorized/demo users
+				if (!isAuthorized) {
+					return groupsList.map((group) => sanitizeGroupForDemo(group));
+				}
 
-                return groupsList;
-            },
-        });
-    }),
+				return groupsList;
+			},
+		});
+	}),
 
-    getById: publicProcedure
-        .input(getByIdSchema)
-        .handler(async ({ context, input }) => {
-            await authorizeWebsiteAccess(context, input.websiteId, "read");
+	getById: publicProcedure
+		.input(getByIdSchema)
+		.handler(async ({ context, input }) => {
+			await authorizeWebsiteAccess(context, input.websiteId, "read");
 
-            const cacheKey = `byId:${input.id}:website:${input.websiteId}`;
+			const cacheKey = `byId:${input.id}:website:${input.websiteId}`;
 
-            return targetGroupsCache.withCache({
-                key: cacheKey,
-                ttl: CACHE_DURATION,
-                tables: ["target_groups"],
-                queryFn: async () => {
-                    const result = await context.db
-                        .select()
-                        .from(targetGroups)
-                        .where(
-                            and(
-                                eq(targetGroups.id, input.id),
-                                eq(targetGroups.websiteId, input.websiteId),
-                                isNull(targetGroups.deletedAt)
-                            )
-                        )
-                        .limit(1);
+			return targetGroupsCache.withCache({
+				key: cacheKey,
+				ttl: CACHE_DURATION,
+				tables: ["target_groups"],
+				queryFn: async () => {
+					const result = await context.db
+						.select()
+						.from(targetGroups)
+						.where(
+							and(
+								eq(targetGroups.id, input.id),
+								eq(targetGroups.websiteId, input.websiteId),
+								isNull(targetGroups.deletedAt)
+							)
+						)
+						.limit(1);
 
-                    if (result.length === 0) {
-                        throw new ORPCError("NOT_FOUND", {
-                            message: "Target group not found",
-                        });
-                    }
+					if (result.length === 0) {
+						throw new ORPCError("NOT_FOUND", {
+							message: "Target group not found",
+						});
+					}
 
-                    // Check if user is fully authorized
-                    const isAuthorized = await isFullyAuthorized(
-                        context,
-                        input.websiteId
-                    );
+					// Check if user is fully authorized
+					const isAuthorized = await isFullyAuthorized(
+						context,
+						input.websiteId
+					);
 
-                    // Sanitize data for unauthorized/demo users
-                    if (!isAuthorized) {
-                        return sanitizeGroupForDemo(result[0]);
-                    }
+					// Sanitize data for unauthorized/demo users
+					if (!isAuthorized) {
+						return sanitizeGroupForDemo(result[0]);
+					}
 
-                    return result[0];
-                },
-            });
-        }),
+					return result[0];
+				},
+			});
+		}),
 
-    create: protectedProcedure
-        .input(createSchema)
-        .handler(async ({ context, input }) => {
-            await authorizeWebsiteAccess(context, input.websiteId, "update");
+	create: protectedProcedure
+		.input(createSchema)
+		.handler(async ({ context, input }) => {
+			await authorizeWebsiteAccess(context, input.websiteId, "update");
 
-            // Check if target groups feature is available on the plan
-            requireFeature(context.billing?.planId, GATED_FEATURES.TARGET_GROUPS);
+			// Check if target groups feature is available on the plan
+			requireFeature(context.billing?.planId, GATED_FEATURES.TARGET_GROUPS);
 
-            // Check current target group count against plan limit
-            const existingGroups = await context.db
-                .select({ id: targetGroups.id })
-                .from(targetGroups)
-                .where(
-                    and(
-                        eq(targetGroups.websiteId, input.websiteId),
-                        isNull(targetGroups.deletedAt)
-                    )
-                );
+			// Check current target group count against plan limit
+			const existingGroups = await context.db
+				.select({ id: targetGroups.id })
+				.from(targetGroups)
+				.where(
+					and(
+						eq(targetGroups.websiteId, input.websiteId),
+						isNull(targetGroups.deletedAt)
+					)
+				);
 
-            // Enforce plan limit before creating new target group
-            requireUsageWithinLimit(
-                context.billing?.planId,
-                GATED_FEATURES.TARGET_GROUPS,
-                existingGroups.length
-            );
+			// Enforce plan limit before creating new target group
+			requireUsageWithinLimit(
+				context.billing?.planId,
+				GATED_FEATURES.TARGET_GROUPS,
+				existingGroups.length
+			);
 
-            const [newGroup] = await context.db
-                .insert(targetGroups)
-                .values({
-                    id: randomUUIDv7(),
-                    name: input.name,
-                    description: input.description ?? null,
-                    color: input.color,
-                    rules: input.rules,
-                    websiteId: input.websiteId,
-                    createdBy: context.user.id,
-                })
-                .returning();
+			const [newGroup] = await context.db
+				.insert(targetGroups)
+				.values({
+					id: randomUUIDv7(),
+					name: input.name,
+					description: input.description ?? null,
+					color: input.color,
+					rules: input.rules,
+					websiteId: input.websiteId,
+					createdBy: context.user.id,
+				})
+				.returning();
 
-            await targetGroupsCache.invalidateByTables(["target_groups"]);
+			await targetGroupsCache.invalidateByTables(["target_groups"]);
 
-            return newGroup;
-        }),
+			return newGroup;
+		}),
 
-    update: protectedProcedure
-        .input(updateSchema)
-        .handler(async ({ context, input }) => {
-            const existingGroup = await context.db
-                .select()
-                .from(targetGroups)
-                .where(
-                    and(eq(targetGroups.id, input.id), isNull(targetGroups.deletedAt))
-                )
-                .limit(1);
+	update: protectedProcedure
+		.input(updateSchema)
+		.handler(async ({ context, input }) => {
+			const existingGroup = await context.db
+				.select()
+				.from(targetGroups)
+				.where(
+					and(eq(targetGroups.id, input.id), isNull(targetGroups.deletedAt))
+				)
+				.limit(1);
 
-            if (existingGroup.length === 0) {
-                throw new ORPCError("NOT_FOUND", {
-                    message: "Target group not found",
-                });
-            }
+			if (existingGroup.length === 0) {
+				throw new ORPCError("NOT_FOUND", {
+					message: "Target group not found",
+				});
+			}
 
-            const group = existingGroup[0];
+			const group = existingGroup[0];
 
-            await authorizeWebsiteAccess(context, group.websiteId, "update");
+			await authorizeWebsiteAccess(context, group.websiteId, "update");
 
-            const { id, ...updates } = input;
-            const [updatedGroup] = await context.db
-                .update(targetGroups)
-                .set({
-                    ...updates,
-                    updatedAt: new Date(),
-                })
-                .where(and(eq(targetGroups.id, id), isNull(targetGroups.deletedAt)))
-                .returning();
+			const { id, ...updates } = input;
+			const [updatedGroup] = await context.db
+				.update(targetGroups)
+				.set({
+					...updates,
+					updatedAt: new Date(),
+				})
+				.where(and(eq(targetGroups.id, id), isNull(targetGroups.deletedAt)))
+				.returning();
 
-            await targetGroupsCache.invalidateByTables(["target_groups"]);
+			await targetGroupsCache.invalidateByTables(["target_groups"]);
 
-            await invalidateCacheablePattern(`cacheable:flag:*${group.websiteId}*`);
-            await invalidateCacheableWithArgs("flags-client", [group.websiteId]);
+			await invalidateCacheablePattern(`cacheable:flag:*${group.websiteId}*`);
+			await invalidateCacheableWithArgs("flags-client", [group.websiteId]);
 
-            return updatedGroup;
-        }),
+			return updatedGroup;
+		}),
 
-    delete: protectedProcedure
-        .input(deleteSchema)
-        .handler(async ({ context, input }) => {
-            const existingGroup = await context.db
-                .select()
-                .from(targetGroups)
-                .where(
-                    and(eq(targetGroups.id, input.id), isNull(targetGroups.deletedAt))
-                )
-                .limit(1);
+	delete: protectedProcedure
+		.input(deleteSchema)
+		.handler(async ({ context, input }) => {
+			const existingGroup = await context.db
+				.select()
+				.from(targetGroups)
+				.where(
+					and(eq(targetGroups.id, input.id), isNull(targetGroups.deletedAt))
+				)
+				.limit(1);
 
-            if (existingGroup.length === 0) {
-                throw new ORPCError("NOT_FOUND", {
-                    message: "Target group not found",
-                });
-            }
+			if (existingGroup.length === 0) {
+				throw new ORPCError("NOT_FOUND", {
+					message: "Target group not found",
+				});
+			}
 
-            const group = existingGroup[0];
+			const group = existingGroup[0];
 
-            await authorizeWebsiteAccess(context, group.websiteId, "delete");
+			await authorizeWebsiteAccess(context, group.websiteId, "delete");
 
-            // Remove all flag associations before soft-deleting the group
-            await context.db
-                .delete(flagsToTargetGroups)
-                .where(eq(flagsToTargetGroups.targetGroupId, input.id));
+			// Remove all flag associations before soft-deleting the group
+			await context.db
+				.delete(flagsToTargetGroups)
+				.where(eq(flagsToTargetGroups.targetGroupId, input.id));
 
-            await context.db
-                .update(targetGroups)
-                .set({
-                    deletedAt: new Date(),
-                })
-                .where(
-                    and(eq(targetGroups.id, input.id), isNull(targetGroups.deletedAt))
-                );
+			await context.db
+				.update(targetGroups)
+				.set({
+					deletedAt: new Date(),
+				})
+				.where(
+					and(eq(targetGroups.id, input.id), isNull(targetGroups.deletedAt))
+				);
 
-            await targetGroupsCache.invalidateByTables(["target_groups"]);
-            await flagsCache.invalidateByTables(["flags", "flags_to_target_groups"]);
-            await invalidateCacheableWithArgs("flags-client", [group.websiteId]);
+			await targetGroupsCache.invalidateByTables(["target_groups"]);
+			await flagsCache.invalidateByTables(["flags", "flags_to_target_groups"]);
+			await invalidateCacheableWithArgs("flags-client", [group.websiteId]);
 
-            return { success: true };
-        }),
+			return { success: true };
+		}),
 };

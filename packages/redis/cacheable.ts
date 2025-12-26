@@ -11,7 +11,7 @@ interface CacheOptions {
 	prefix?: string;
 	staleWhileRevalidate?: boolean;
 	staleTime?: number;
-};
+}
 
 function deserialize(data: string): unknown {
 	return JSON.parse(data, (_, value) => {
@@ -99,10 +99,10 @@ export function cacheable<
 								if (fresh != null && redisAvailable) {
 									await redis
 										.setex(key, expireInSec, JSON.stringify(fresh))
-										.catch(() => { });
+										.catch(() => {});
 								}
 							})
-							.catch(() => { })
+							.catch(() => {})
 							.finally(() => activeRevalidations.delete(key));
 						activeRevalidations.set(key, revalidation);
 					}

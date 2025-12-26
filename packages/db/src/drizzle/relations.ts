@@ -144,13 +144,16 @@ export const flagsRelations = relations(flags, ({ one, many }) => ({
 	flagsToTargetGroups: many(flagsToTargetGroups),
 }));
 
-export const targetGroupsRelations = relations(targetGroups, ({ one, many }) => ({
-	website: one(websites, {
-		fields: [targetGroups.websiteId],
-		references: [websites.id],
-	}),
-	flagsToTargetGroups: many(flagsToTargetGroups),
-}));
+export const targetGroupsRelations = relations(
+	targetGroups,
+	({ one, many }) => ({
+		website: one(websites, {
+			fields: [targetGroups.websiteId],
+			references: [websites.id],
+		}),
+		flagsToTargetGroups: many(flagsToTargetGroups),
+	})
+);
 
 export const flagsToTargetGroupsRelations = relations(
 	flagsToTargetGroups,

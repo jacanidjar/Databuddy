@@ -7,13 +7,13 @@ export const dynamic = "force-dynamic";
 let searchHandler: ReturnType<typeof createFromSource> | null = null;
 
 function getSearchHandler() {
-    if (!searchHandler) {
-        searchHandler = createFromSource(source);
-    }
-    return searchHandler;
+	if (!searchHandler) {
+		searchHandler = createFromSource(source);
+	}
+	return searchHandler;
 }
 
 export function GET(request: Request) {
-    const handler = getSearchHandler();
-    return handler.GET(request);
+	const handler = getSearchHandler();
+	return handler.GET(request);
 }

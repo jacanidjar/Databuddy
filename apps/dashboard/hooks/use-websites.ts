@@ -13,7 +13,7 @@ export interface WebsitesListData {
 	websites: Website[];
 	chartData: Record<string, ProcessedMiniChartData>;
 	activeUsers: Record<string, number>;
-};
+}
 
 export const getWebsiteByIdKey = (id: string): QueryKey =>
 	orpc.websites.getById.queryKey({ input: { id } });
@@ -124,7 +124,8 @@ export function useCreateWebsite() {
 			toast.success("Website created successfully");
 		},
 		onError: (error) => {
-			const message = error instanceof Error ? error.message : "Failed to create website";
+			const message =
+				error instanceof Error ? error.message : "Failed to create website";
 			toast.error(message);
 		},
 	});
@@ -154,7 +155,8 @@ export function useUpdateWebsite() {
 			toast.success("Website updated successfully");
 		},
 		onError: (error) => {
-			const message = error instanceof Error ? error.message : "Failed to update website";
+			const message =
+				error instanceof Error ? error.message : "Failed to update website";
 			toast.error(message);
 		},
 	});
@@ -186,7 +188,8 @@ export function useDeleteWebsite() {
 			if (context?.previousData && context.listKey) {
 				queryClient.setQueryData(context.listKey, context.previousData);
 			}
-			const message = error instanceof Error ? error.message : "Failed to delete website";
+			const message =
+				error instanceof Error ? error.message : "Failed to delete website";
 			toast.error(message);
 		},
 		onSuccess: (_data, { id }) => {

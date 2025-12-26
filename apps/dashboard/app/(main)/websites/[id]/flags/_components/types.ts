@@ -34,14 +34,14 @@ export interface Flag {
 export interface UserRule {
 	type: "user_id" | "email" | "property";
 	operator:
-	| "equals"
-	| "contains"
-	| "starts_with"
-	| "ends_with"
-	| "in"
-	| "not_in"
-	| "exists"
-	| "not_exists";
+		| "equals"
+		| "contains"
+		| "starts_with"
+		| "ends_with"
+		| "in"
+		| "not_in"
+		| "exists"
+		| "not_exists";
 	field?: string;
 	value?: string;
 	values?: string[];
@@ -144,7 +144,7 @@ interface BaseFlagTemplate {
 	icon: string;
 	isBuiltIn: true;
 	rules?: UserRule[];
-};
+}
 
 type BooleanFlagTemplate = BaseFlagTemplate & {
 	type: "boolean";

@@ -13,7 +13,7 @@ interface VueFlagsState {
 let globalState: VueFlagsState | null = null;
 let globalManager: CoreFlagsManager | null = null;
 
-export interface FlagsPluginOptions extends FlagsConfig { }
+export interface FlagsPluginOptions extends FlagsConfig {}
 
 export function createFlagsPlugin(options: FlagsPluginOptions) {
 	return {
