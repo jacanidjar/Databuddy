@@ -425,11 +425,13 @@ function RegisterPageContent() {
 				</div>
 
 				<VisuallyHidden>
-					<Checkbox
+					<input
+						aria-hidden="true"
 						checked={isHoneypot}
 						disabled={isLoading}
-						onCheckedChange={(checked) => setIsHoneypot(checked as boolean)}
+						onChange={(e) => setIsHoneypot(e.target.checked)}
 						tabIndex={-1}
+						type="checkbox"
 					/>
 				</VisuallyHidden>
 
