@@ -3,6 +3,7 @@ import type { TrackerOptions } from "./core/types";
 import { generateUUIDv4, getTrackerConfig, isOptedOut } from "./core/utils";
 import { initErrorTracking } from "./plugins/errors";
 import { initInteractionTracking } from "./plugins/interactions";
+import { initOutgoingLinksTracking } from "./plugins/outgoing-links";
 import { initPixelTracking } from "./plugins/pixel";
 import { initScrollDepthTracking } from "./plugins/scroll-depth";
 import { initWebVitalsTracking } from "./plugins/vitals";
@@ -72,7 +73,8 @@ export class Databuddy extends BaseTracker {
 		setTimeout(() => this.screenView(), 0);
 
 		if (this.options.trackOutgoingLinks) {
-			this.trackOutgoingLinks();
+			const cleanup = initOutgoingLinksTracking(this);
+			this.cleanupFns.push(cleanup);
 		}
 		if (this.options.trackAttributes) {
 			this.trackAttributes();
@@ -270,28 +272,6 @@ export class Databuddy extends BaseTracker {
 		}
 	}
 
-	trackOutgoingLinks() {
-		const handler = (e: MouseEvent) => {
-			const link = (e.target as HTMLElement).closest("a");
-			if (!link?.href || link.hostname === window.location.hostname) {
-				return;
-			}
-
-			this.api.fetch(
-				"/outgoing",
-				{
-					eventId: generateUUIDv4(),
-					href: link.href,
-					text: link.innerText || link.title || "",
-					...this.getBaseContext(),
-				},
-				{ keepalive: true }
-			);
-		};
-		document.addEventListener("click", handler);
-		this.cleanupFns.push(() => document.removeEventListener("click", handler));
-	}
-
 	trackAttributes() {
 		const handler = (e: MouseEvent) => {
 			const trackable = (e.target as HTMLElement).closest("[data-track]");
@@ -362,7 +342,7 @@ export class Databuddy extends BaseTracker {
 				sessionStorage.removeItem("did_session");
 				sessionStorage.removeItem("did_session_timestamp");
 				sessionStorage.removeItem("did_session_start");
-			} catch {}
+			} catch { }
 		}
 		this.anonymousId = this.generateAnonymousId();
 		this.sessionId = this.generateSessionId();
@@ -407,11 +387,11 @@ function initializeDatabuddy() {
 
 	if (isOptedOut()) {
 		window.databuddy = {
-			track: () => {},
-			screenView: () => {},
-			clear: () => {},
-			flush: () => {},
-			setGlobalProperties: () => {},
+			track: () => { },
+			screenView: () => { },
+			clear: () => { },
+			flush: () => { },
+			setGlobalProperties: () => { },
 			options: { clientId: "", disabled: true },
 		};
 		window.db = window.databuddy;
@@ -431,7 +411,7 @@ if (typeof window !== "undefined") {
 		try {
 			localStorage.setItem("databuddy_opt_out", "true");
 			localStorage.setItem("databuddy_disabled", "true");
-		} catch {}
+		} catch { }
 		window.databuddyOptedOut = true;
 		window.databuddyDisabled = true;
 		if (window.databuddy) {
@@ -443,7 +423,7 @@ if (typeof window !== "undefined") {
 		try {
 			localStorage.removeItem("databuddy_opt_out");
 			localStorage.removeItem("databuddy_disabled");
-		} catch {}
+		} catch { }
 		window.databuddyOptedOut = false;
 		window.databuddyDisabled = false;
 	};
