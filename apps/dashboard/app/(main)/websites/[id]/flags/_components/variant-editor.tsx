@@ -4,9 +4,9 @@ import type { Variant } from "@databuddy/shared/flags";
 import { PlusIcon, TrashIcon } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/elastic-slider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LineSlider } from "@/components/ui/line-slider";
 import {
 	Select,
 	SelectContent,
@@ -256,13 +256,12 @@ export function VariantEditor({
 								<Label className="text-xs">
 									Traffic Weight: {variant.weight}%
 								</Label>
-								<Slider
+								<LineSlider
 									max={100}
 									min={0}
-									onValueChange={(val) =>
+									onValueChange={(val: number) =>
 										handleUpdateVariant(index, "weight", val)
 									}
-									step={1}
 									value={variant.weight}
 								/>
 							</div>

@@ -222,6 +222,50 @@ Gradually roll out features to a percentage of users.
 const { on } = useFeature('new-ui-rollout');`}
 </CodeBlock>
 
+### Multivariant Flags (A/B/n Testing)
+
+Run experiments with multiple variants. Each user is consistently assigned to a variant based on their identifier.
+
+<CodeBlock language="tsx" filename="checkout-experiment.tsx">
+{`import { useVariant, useFeature } from '@databuddy/sdk/react';
+
+function CheckoutPage() {
+  const variant = useVariant('checkout-experiment');
+  const { value, loading } = useFeature('checkout-experiment');
+  
+  if (loading) return <Skeleton />;
+  
+  // Variant-based rendering
+  switch (variant) {
+    case 'control':
+      return <CurrentCheckout />;
+    case 'simplified':
+      return <SimplifiedCheckout />;
+    case 'one-click':
+      return <OneClickCheckout />;
+    default:
+      return <CurrentCheckout />;
+  }
+}`}
+</CodeBlock>
+
+**Creating multivariant flags in the dashboard:**
+
+1. Select "multivariant" as the flag type
+2. Add your variants with keys and values (string, number, or JSON)
+3. Set traffic weights for each variant (must sum to 100%)
+4. Optionally add targeting rules to show specific variants to certain users
+
+<Callout type="info">
+  **Consistent Assignment**: Users are deterministically assigned to variants based on their userId or email, ensuring they always see the same variant across sessions.
+</Callout>
+
+**Use cases:**
+- **A/B Testing**: Compare two versions of a feature
+- **Pricing experiments**: Test different price points
+- **UI variations**: Test layouts, colors, copy
+- **Multi-armed bandits**: Run experiments with 3+ variants
+
 ## Configuration
 
 <CodeBlock language="tsx" filename="provider.tsx">

@@ -46,6 +46,7 @@ import { DependencySelector } from "./dependency-selector";
 import { ScheduleManager } from "./schedule-manager";
 import type { Flag, FlagSheetProps, TargetGroup } from "./types";
 import { UserRulesBuilder } from "./user-rules-builder";
+import { VariantEditor } from "./variant-editor";
 
 type ExpandedSection =
 	| "targeting"
@@ -424,6 +425,7 @@ export function FlagSheet({
 
 	const isLoading = createMutation.isPending || updateMutation.isPending;
 	const isRollout = watchedType === "rollout";
+	const isMultivariant = watchedType === "multivariant";
 
 	return (
 		<Sheet onOpenChange={handleOpenChange} open={isOpen}>
@@ -546,24 +548,26 @@ export function FlagSheet({
 								<div className="space-y-2">
 									<span className="text-muted-foreground text-xs">Type</span>
 									<div className="flex gap-2">
-										{(["boolean", "rollout"] as const).map((type) => {
-											const isSelected = watchedType === type;
-											return (
-												<button
-													className={cn(
-														"flex-1 cursor-pointer rounded border py-2.5 text-center font-medium text-sm capitalize transition-all",
-														isSelected
-															? "border-primary bg-primary/5 text-foreground"
-															: "border-transparent bg-secondary text-muted-foreground hover:border-border hover:bg-secondary/80 hover:text-foreground"
-													)}
-													key={type}
-													onClick={() => form.setValue("flag.type", type)}
-													type="button"
-												>
-													{type}
-												</button>
-											);
-										})}
+										{(["boolean", "rollout", "multivariant"] as const).map(
+											(type) => {
+												const isSelected = watchedType === type;
+												return (
+													<button
+														className={cn(
+															"flex-1 cursor-pointer rounded border py-2.5 text-center font-medium text-sm capitalize transition-all",
+															isSelected
+																? "border-primary bg-primary/5 text-foreground"
+																: "border-transparent bg-secondary text-muted-foreground hover:border-border hover:bg-secondary/80 hover:text-foreground"
+														)}
+														key={type}
+														onClick={() => form.setValue("flag.type", type)}
+														type="button"
+													>
+														{type}
+													</button>
+												);
+											}
+										)}
 									</div>
 								</div>
 
@@ -614,6 +618,26 @@ export function FlagSheet({
 															))}
 														</div>
 													</div>
+												)}
+											/>
+										</motion.div>
+									) : isMultivariant ? (
+										<motion.div
+											animate={{ opacity: 1, y: 0 }}
+											className="space-y-3"
+											exit={{ opacity: 0, y: -10 }}
+											initial={{ opacity: 0, y: 10 }}
+											key="multivariant"
+											transition={{ duration: 0.15 }}
+										>
+											<FormField
+												control={form.control}
+												name="flag.variants"
+												render={({ field }) => (
+													<VariantEditor
+														onChangeAction={field.onChange}
+														variants={field.value || []}
+													/>
 												)}
 											/>
 										</motion.div>
