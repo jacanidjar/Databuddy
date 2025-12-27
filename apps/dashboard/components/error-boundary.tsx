@@ -1,5 +1,6 @@
 "use client";
 
+import { trackError } from "@databuddy/sdk";
 import { ArrowLeftIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -19,6 +20,13 @@ export function ErrorBoundary({ children, fallback }: ErrorBoundaryProps) {
 	useEffect(() => {
 		const errorHandler = (error: ErrorEvent) => {
 			console.error("Error caught by boundary:", error);
+			trackError(error.error.message, {
+				stack: error.error.stack,
+				error_type: error.error.name,
+				filename: error.filename,
+				lineno: error.lineno,
+				colno: error.colno,
+			});
 			setError(error.error);
 			setHasError(true);
 		};
