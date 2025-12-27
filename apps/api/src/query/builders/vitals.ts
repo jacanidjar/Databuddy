@@ -197,49 +197,6 @@ export const VitalsBuilders: Record<string, SimpleQueryConfig> = {
 		customizable: true,
 	},
 
-	vitals_by_device: {
-		customSql: (
-			websiteId: string,
-			startDate: string,
-			endDate: string,
-			_filters?,
-			_granularity?,
-			_limit?: number
-		) => {
-			const limit = _limit ?? 100;
-			return {
-				sql: `
-					SELECT 
-						any(e.device_type) as name,
-						COUNT(DISTINCT wv.anonymous_id) as visitors,
-						quantileIf(0.50)(wv.metric_value, wv.metric_name = 'LCP' AND wv.metric_value > 0) as p50_lcp,
-						quantileIf(0.50)(wv.metric_value, wv.metric_name = 'FCP' AND wv.metric_value > 0) as p50_fcp,
-						quantileIf(0.50)(wv.metric_value, wv.metric_name = 'CLS') as p50_cls,
-						quantileIf(0.50)(wv.metric_value, wv.metric_name = 'INP' AND wv.metric_value > 0) as p50_inp,
-						quantileIf(0.50)(wv.metric_value, wv.metric_name = 'TTFB' AND wv.metric_value > 0) as p50_ttfb,
-						COUNT(*) as samples
-					FROM ${Analytics.web_vitals_spans} wv
-					LEFT JOIN ${Analytics.events} e ON (
-						wv.session_id = e.session_id 
-						AND wv.client_id = e.client_id
-						AND abs(dateDiff('second', wv.timestamp, e.time)) < 60
-					)
-					WHERE 
-						wv.client_id = {websiteId:String}
-						AND wv.timestamp >= toDateTime({startDate:String})
-						AND wv.timestamp <= toDateTime(concat({endDate:String}, ' 23:59:59'))
-						AND e.device_type != ''
-					GROUP BY e.device_type
-					ORDER BY samples DESC
-					LIMIT {limit:UInt32}
-				`,
-				params: { websiteId, startDate, endDate, limit },
-			};
-		},
-		timeField: "timestamp",
-		customizable: true,
-	},
-
 	vitals_by_region: {
 		customSql: (
 			websiteId: string,

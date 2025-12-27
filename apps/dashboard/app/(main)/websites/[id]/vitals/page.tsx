@@ -31,7 +31,6 @@ import {
 	createBrowserColumns,
 	createCityColumns,
 	createCountryColumns,
-	createDeviceColumns,
 	createPageColumns,
 	createRegionColumns,
 	type VitalsBreakdownData,
@@ -181,11 +180,6 @@ export default function VitalsPage() {
 			filters,
 		},
 		{
-			id: "vitals-by-device",
-			parameters: ["vitals_by_device"],
-			filters,
-		},
-		{
 			id: "vitals-by-region",
 			parameters: ["vitals_by_region"],
 			filters,
@@ -231,12 +225,6 @@ export default function VitalsPage() {
 
 	const browserBreakdownData =
 		(getDataForQuery("vitals-by-browser", "vitals_by_browser") as Record<
-			string,
-			unknown
-		>[]) ?? [];
-
-	const deviceBreakdownData =
-		(getDataForQuery("vitals-by-device", "vitals_by_device") as Record<
 			string,
 			unknown
 		>[]) ?? [];
@@ -475,21 +463,6 @@ export default function VitalsPage() {
 		[browserBreakdownData]
 	);
 
-	const deviceData = useMemo(
-		(): VitalsBreakdownData[] =>
-			deviceBreakdownData.map((item) => ({
-				name: (item.name as string) || "",
-				samples: (item.samples as number) || 0,
-				visitors: (item.visitors as number) || undefined,
-				lcp: (item.p50_lcp as number) || undefined,
-				fcp: (item.p50_fcp as number) || undefined,
-				cls: (item.p50_cls as number) || undefined,
-				inp: (item.p50_inp as number) || undefined,
-				ttfb: (item.p50_ttfb as number) || undefined,
-			})),
-		[deviceBreakdownData]
-	);
-
 	const regionData = useMemo(
 		(): VitalsBreakdownData[] =>
 			regionBreakdownData.map((item) => ({
@@ -583,25 +556,8 @@ export default function VitalsPage() {
 			});
 		}
 
-		if (deviceData.length > 0) {
-			tabs.push({
-				id: "devices",
-				label: "Devices",
-				data: deviceData,
-				columns: createDeviceColumns(),
-				getFilter: (row) => ({ field: "device_type", value: row.name }),
-			});
-		}
-
 		return tabs;
-	}, [
-		pageVitalsTable,
-		countryData,
-		regionData,
-		cityData,
-		browserData,
-		deviceData,
-	]);
+	}, [pageVitalsTable, countryData, regionData, cityData, browserData]);
 
 	const vitalKeys = Object.keys(VITAL_CONFIGS) as Array<
 		keyof typeof VITAL_CONFIGS
