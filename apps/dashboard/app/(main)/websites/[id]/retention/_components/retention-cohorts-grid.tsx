@@ -5,7 +5,7 @@ import dayjs from "dayjs";
 import { useMemo } from "react";
 import { EmptyState } from "@/components/empty-state";
 
-type RetentionCohort = {
+interface RetentionCohort {
 	cohort: string;
 	users: number;
 	week_0_retention: number;
@@ -14,18 +14,18 @@ type RetentionCohort = {
 	week_3_retention: number;
 	week_4_retention: number;
 	week_5_retention: number;
-};
+}
 
-type RetentionCohortsGridProps = {
+interface RetentionCohortsGridProps {
 	cohorts: RetentionCohort[];
 	isLoading: boolean;
-};
+}
 
 const WEEK_COUNT = 6;
 
-type RetentionColor = {
+interface RetentionColor {
 	className: string;
-};
+}
 
 const getRetentionColor = (percentage: number | null): RetentionColor => {
 	if (!percentage || Number.isNaN(percentage)) {
@@ -111,15 +111,15 @@ export function RetentionCohortsGrid({
 			<table className="w-full border-collapse text-sm">
 				<thead>
 					<tr className="border-border border-b">
-						<th className="w-20 bg-muted/50 px-2 py-2.5 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+						<th className="w-20 bg-accent px-2 py-2.5 text-left font-semibold text-foreground text-xs uppercase tracking-wider">
 							Cohort
 						</th>
-						<th className="w-16 bg-muted/50 px-2 py-2.5 text-right font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+						<th className="w-16 bg-accent px-2 py-2.5 text-right font-semibold text-foreground text-xs uppercase tracking-wider">
 							Users
 						</th>
 						{periodHeaders.map((header) => (
 							<th
-								className="min-w-[60px] flex-1 bg-muted/50 px-2 py-2.5 text-center font-semibold text-muted-foreground text-xs uppercase tracking-wider"
+								className="min-w-[60px] flex-1 bg-accent px-2 py-2.5 text-center font-semibold text-foreground text-xs uppercase tracking-wider"
 								key={header}
 							>
 								{header}
@@ -134,14 +134,14 @@ export function RetentionCohortsGrid({
 
 						return (
 							<tr
-								className={`hover:bg-accent/30 ${
+								className={`hover:bg-accent ${
 									rowIndex !== sortedCohorts.length - 1
-										? "border-border/50 border-b"
+										? "border-border border-b"
 										: ""
 								}`}
 								key={cohort.cohort}
 							>
-								<td className="whitespace-nowrap bg-muted/50 px-2 py-2">
+								<td className="whitespace-nowrap bg-accent px-2 py-2">
 									<span className="font-medium text-foreground text-xs">
 										{dateLabel}
 									</span>
