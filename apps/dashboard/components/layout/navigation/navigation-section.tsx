@@ -53,6 +53,10 @@ const isItemActive = (
 		return buildFullPath(`/websites/${currentWebsiteId}`, item.href);
 	})();
 
+	if (item.href === "") {
+		return pathname === fullPath;
+	}
+
 	return pathname === fullPath || pathname.startsWith(`${fullPath}/`);
 };
 
