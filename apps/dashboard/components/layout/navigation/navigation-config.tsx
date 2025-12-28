@@ -22,6 +22,7 @@ import {
 	HeartbeatIcon,
 	IdentificationCardIcon,
 	KeyIcon,
+	LightningIcon,
 	MapPinIcon,
 	PlayIcon,
 	PlugIcon,
@@ -255,6 +256,10 @@ export const websiteNavigation: NavigationSection[] = [
 		createNavItem("Users", UsersThreeIcon, "/users", {
 			rootLevel: false,
 			gatedFeature: GATED_FEATURES.USERS,
+		}),
+		createNavItem("Events", LightningIcon, "/events", {
+			rootLevel: false,
+			flag: "events",
 		}),
 		createNavItem("Funnels", FunnelIcon, "/funnels", {
 			rootLevel: false,

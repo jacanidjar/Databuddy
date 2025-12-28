@@ -14,7 +14,8 @@ export type ChartLocation =
 	| "overview-main" // Large main chart on the overview tab
 	| "funnels" // Funnel analytics stat cards
 	| "retention" // Retention analytics stat cards
-	| "website-list"; // Mini charts on the websites list page
+	| "website-list" // Mini charts on the websites list page
+	| "events"; // Events analytics stat cards
 
 export const CHART_LOCATIONS: ChartLocation[] = [
 	"overview-stats",
@@ -22,6 +23,7 @@ export const CHART_LOCATIONS: ChartLocation[] = [
 	"funnels",
 	"retention",
 	"website-list",
+	"events",
 ];
 
 export const CHART_LOCATION_LABELS: Record<ChartLocation, string> = {
@@ -30,6 +32,7 @@ export const CHART_LOCATION_LABELS: Record<ChartLocation, string> = {
 	funnels: "Funnel Stats",
 	retention: "Retention Stats",
 	"website-list": "Website List",
+	events: "Events Stats",
 };
 
 export const CHART_LOCATION_DESCRIPTIONS: Record<ChartLocation, string> = {
@@ -38,6 +41,7 @@ export const CHART_LOCATION_DESCRIPTIONS: Record<ChartLocation, string> = {
 	funnels: "Stat cards in the funnel analytics section",
 	retention: "Stat cards in the retention analytics section",
 	"website-list": "Mini charts on the websites list page",
+	events: "Stat cards in the events analytics section",
 };
 
 function isValidChartType(value: unknown): value is ChartType {
