@@ -9,18 +9,27 @@ import {
 } from "@phosphor-icons/react";
 import dayjs from "dayjs";
 import { useAtom } from "jotai";
-import { use, useMemo } from "react";
+import { use, useCallback, useMemo } from "react";
 import { StatCard } from "@/components/analytics";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useChartPreferences } from "@/hooks/use-chart-preferences";
 import { useDateFilters } from "@/hooks/use-date-filters";
-import { dynamicQueryFiltersAtom } from "@/stores/jotai/filterAtoms";
+import {
+	addDynamicFilterAtom,
+	dynamicQueryFiltersAtom,
+} from "@/stores/jotai/filterAtoms";
 import { useCustomEventsData } from "../use-custom-events";
+import { classifyEventProperties } from "./classify-properties";
 import { EventsTrendChart } from "./events-trend-chart";
+import { SummaryView } from "./summary-view";
 import type {
+	CustomEventItem,
 	CustomEventsSummary,
 	CustomEventsTrend,
 	MiniChartDataPoint,
+	PropertyClassification,
+	PropertyDistribution,
+	PropertyTopValue,
 } from "./types";
 
 interface EventsPageContentProps {
@@ -54,6 +63,7 @@ export function EventsPageContent({ params }: EventsPageContentProps) {
 
 	const { chartType, chartStepType } = useChartPreferences("events");
 	const [filters] = useAtom(dynamicQueryFiltersAtom);
+	const [, addFilter] = useAtom(addDynamicFilterAtom);
 	const { dateRange } = useDateFilters();
 
 	const {
@@ -65,11 +75,39 @@ export function EventsPageContent({ params }: EventsPageContentProps) {
 		filters,
 	});
 
+	const handleAddFilter = useCallback(
+		(eventName: string, _propertyKey: string, _value: string) => {
+			addFilter({ field: "event_name", operator: "eq", value: eventName });
+		},
+		[addFilter]
+	);
+
 	const getRawData = <T,>(id: string): T[] =>
 		(eventsResults?.find((r) => r.queryId === id)?.data?.[id] as T[]) ?? [];
 
 	const summaryData = getRawData<CustomEventsSummary>("custom_events_summary");
 	const trendsData = getRawData<CustomEventsTrend>("custom_events_trends");
+	const eventsListData = getRawData<CustomEventItem>("custom_events");
+	const classificationsData = getRawData<PropertyClassification>(
+		"custom_events_property_classification"
+	);
+	const distributionsData = getRawData<PropertyDistribution>(
+		"custom_events_property_distribution"
+	);
+	const topValuesData = getRawData<PropertyTopValue>(
+		"custom_events_property_top_values"
+	);
+
+	const classifiedEvents = useMemo(
+		() =>
+			classifyEventProperties(
+				eventsListData,
+				classificationsData,
+				distributionsData,
+				topValuesData
+			),
+		[eventsListData, classificationsData, distributionsData, topValuesData]
+	);
 
 	const summary: CustomEventsSummary = summaryData[0] ?? {
 		total_events: 0,
@@ -216,6 +254,22 @@ export function EventsPageContent({ params }: EventsPageContentProps) {
 					</div>
 
 					<EventsTrendChart chartData={chartData} isLoading={isLoading} />
+
+					<div className="rounded border bg-card">
+						<div className="border-b px-4 py-3">
+							<h3 className="font-medium text-foreground">Property Summary</h3>
+							<p className="text-muted-foreground text-sm">
+								Aggregatable properties by event type
+							</p>
+						</div>
+						<div className="p-4">
+							<SummaryView
+								events={classifiedEvents}
+								isLoading={isLoading}
+								onFilterAction={handleAddFilter}
+							/>
+						</div>
+					</div>
 				</>
 			)}
 		</div>
@@ -227,55 +281,33 @@ function EventsLoadingSkeleton() {
 		<div className="space-y-3 sm:space-y-4">
 			<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-5">
 				{Array.from({ length: 5 }).map((_, i) => (
-					<div className="rounded border bg-card" key={`stat-${i + 1}`}>
-						<div className="p-3 sm:p-4">
-							<div className="flex items-center justify-between">
-								<Skeleton className="h-4 w-20" />
-								<Skeleton className="size-8 rounded" />
-							</div>
-							<Skeleton className="mt-2 h-8 w-24" />
-							<Skeleton className="mt-1 h-3 w-16" />
-							<Skeleton className="mt-3 h-16 w-full" />
+					<div className="rounded border bg-card p-3 sm:p-4" key={`stat-${i}`}>
+						<div className="flex items-center justify-between">
+							<Skeleton className="h-4 w-20" />
+							<Skeleton className="size-8 rounded" />
 						</div>
+						<Skeleton className="mt-2 h-8 w-24" />
+						<Skeleton className="mt-1 h-3 w-16" />
+						<Skeleton className="mt-3 h-16 w-full" />
 					</div>
 				))}
 			</div>
 
 			<div className="rounded border bg-card">
-				<div className="flex items-center gap-3 border-b px-3 py-2.5 sm:px-4 sm:py-3">
-					<div className="space-y-1">
-						<Skeleton className="h-5 w-32" />
-						<Skeleton className="h-3 w-24" />
-					</div>
+				<div className="border-b px-4 py-3">
+					<Skeleton className="h-5 w-32" />
+					<Skeleton className="mt-1 h-3 w-24" />
 				</div>
 				<Skeleton className="h-[350px] w-full" />
 			</div>
 
-			<div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2">
-				<div className="rounded border bg-card">
-					<div className="border-b px-3 py-2.5 sm:px-4 sm:py-3">
-						<Skeleton className="h-5 w-32" />
-					</div>
-					<div className="p-3 sm:p-4">
-						<Skeleton className="h-64 w-full" />
-					</div>
-				</div>
-				<div className="rounded border bg-card">
-					<div className="border-b px-3 py-2.5 sm:px-4 sm:py-3">
-						<Skeleton className="h-5 w-40" />
-					</div>
-					<div className="p-3 sm:p-4">
-						<Skeleton className="h-64 w-full" />
-					</div>
-				</div>
-			</div>
-
 			<div className="rounded border bg-card">
-				<div className="border-b px-3 py-2.5 sm:px-4 sm:py-3">
-					<Skeleton className="h-5 w-28" />
+				<div className="border-b px-4 py-3">
+					<Skeleton className="h-5 w-32" />
+					<Skeleton className="mt-1 h-3 w-48" />
 				</div>
-				<div className="p-3 sm:p-4">
-					<Skeleton className="h-64 w-full" />
+				<div className="p-4">
+					<Skeleton className="h-48 w-full" />
 				</div>
 			</div>
 		</div>

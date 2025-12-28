@@ -17,13 +17,6 @@ export interface CustomEventItem {
     percentage: number;
 }
 
-export interface EventPropertyValue {
-    name: string;
-    property_key: string;
-    property_value: string;
-    count: number;
-}
-
 export interface RecentCustomEvent {
     name: string;
     event_name: string;
@@ -53,5 +46,71 @@ export interface CustomEventsTrend {
 export interface MiniChartDataPoint {
     date: string;
     value: number;
+}
+
+export type PropertyInferredType =
+    | 'boolean'
+    | 'numeric'
+    | 'datetime'
+    | 'url'
+    | 'categorical'
+    | 'aggregatable'
+    | 'text'
+    | 'high_cardinality';
+
+export type PropertyRenderStrategy =
+    | 'distribution_bar'      // Low cardinality (≤5) - show all values as bars
+    | 'top_n_chart'           // Medium cardinality (≤20) - show all in chart
+    | 'top_n_with_other'      // Aggregatable high cardinality - top N + "other"
+    | 'detail_only';          // Non-aggregatable - only in row view
+
+export interface PropertyClassification {
+    event_name: string;
+    property_key: string;
+    cardinality: number;
+    total_count: number;
+    coverage_ratio: number;
+    avg_length: number;
+    max_length: number;
+    is_numeric: boolean;
+    is_boolean: boolean;
+    is_date_like: boolean;
+    is_url_like: boolean;
+    inferred_type: PropertyInferredType;
+    render_strategy: PropertyRenderStrategy;
+    sample_values: [string, number][];
+}
+
+export interface PropertyTopValue {
+    event_name: string;
+    property_key: string;
+    property_value: string;
+    count: number;
+    total: number;
+    percentage: number;
+    rank: number;
+}
+
+export interface PropertyDistribution {
+    event_name: string;
+    property_key: string;
+    property_value: string;
+    count: number;
+    total: number;
+    percentage: number;
+    cardinality: number;
+}
+
+export interface ClassifiedProperty {
+    key: string;
+    classification: PropertyClassification;
+    values: PropertyTopValue[] | PropertyDistribution[];
+}
+
+export interface ClassifiedEvent {
+    name: string;
+    total_events: number;
+    summaryProperties: ClassifiedProperty[];
+    detailProperties: ClassifiedProperty[];
 }
 

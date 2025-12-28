@@ -12,9 +12,9 @@ import { isAnalyticsRefreshingAtom } from "@/stores/jotai/filterAtoms";
 import { AnalyticsToolbar } from "./_components/analytics-toolbar";
 import { WebsiteTrackingSetupTab } from "./_components/tabs/tracking-setup-tab";
 
-type WebsiteLayoutProps = {
+interface WebsiteLayoutProps {
 	children: React.ReactNode;
-};
+}
 
 export default function WebsiteLayout({ children }: WebsiteLayoutProps) {
 	const { id } = useParams();

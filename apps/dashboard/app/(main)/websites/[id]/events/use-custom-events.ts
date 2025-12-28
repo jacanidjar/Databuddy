@@ -26,20 +26,27 @@ export function useCustomEventsData(
             },
             { id: "custom_events", parameters: ["custom_events"], filters },
             {
-                id: "custom_event_properties",
-                parameters: ["custom_event_properties"],
-                filters,
-            },
-            {
-                id: "custom_events_recent",
-                parameters: ["custom_events_recent"],
-                filters,
-                limit: 50,
-            },
-            {
                 id: "custom_events_trends",
                 parameters: ["custom_events_trends"],
                 filters,
+            },
+            {
+                id: "custom_events_property_classification",
+                parameters: ["custom_events_property_classification"],
+                filters,
+                limit: 500,
+            },
+            {
+                id: "custom_events_property_distribution",
+                parameters: ["custom_events_property_distribution"],
+                filters,
+                limit: 500,
+            },
+            {
+                id: "custom_events_property_top_values",
+                parameters: ["custom_events_property_top_values"],
+                filters,
+                limit: 100,
             },
         ],
         options

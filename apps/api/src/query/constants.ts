@@ -92,6 +92,13 @@ export const QUERY_CATEGORIES = {
 			"custom_event_details",
 			"custom_event_trends",
 			"custom_event_by_page",
+			"custom_events_summary",
+			"custom_events_trends",
+			"custom_event_properties",
+			"custom_events_recent",
+			"custom_events_property_classification",
+			"custom_events_property_top_values",
+			"custom_events_property_distribution",
 		] as const,
 	},
 } as const;
