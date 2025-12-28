@@ -51,7 +51,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 			<input
 				ref={ref}
 				className={cn(
-					'peer flex h-9 cursor-text text-[13px] placeholder:text-[13px] w-full min-w-0 rounded-sm border border-accent-brighter px-3 py-1 text-sm outline-none transition-all selection:bg-primary selection:text-primary-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:font-medium file:text-foreground file:text-sm placeholder:text-muted disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
+					'peer flex h-9 cursor-text text-[13px] placeholder:text-[13px] w-full min-w-0 rounded-sm border border-accent-brighter px-3 py-1 text-sm outline-none transition-all selection:bg-primary selection:text-primary-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:font-medium file:text-foreground file:text-sm placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
 					'bg-input dark:bg-input/80',
 					'focus-visible:bg-background focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:blue-angled-rectangle-gradient',
 					'aria-invalid:border-destructive/60 aria-invalid:bg-destructive/5 dark:aria-invalid:border-destructive/50 dark:aria-invalid:bg-destructive/10',

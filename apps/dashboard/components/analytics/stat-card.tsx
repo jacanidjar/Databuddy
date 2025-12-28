@@ -146,7 +146,9 @@ const MiniChart = memo(
 		if (!hasData) {
 			return (
 				<div className="flex h-24 items-center justify-center pt-2">
-					<span className="text-[10px] text-muted opacity-60">No data</span>
+					<span className="text-[10px] text-muted-foreground opacity-60">
+						No data
+					</span>
 				</div>
 			);
 		}

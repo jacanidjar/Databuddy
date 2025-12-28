@@ -40,7 +40,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
 				<textarea
 					ref={ref}
 					className={cn(
-						'field-sizing-content flex min-h-16 w-full rounded-sm border border-accent-brighter px-3 py-2 text-sm outline-none transition-all placeholder:text-muted disabled:cursor-not-allowed disabled:opacity-50',
+						'field-sizing-content flex min-h-16 w-full rounded-sm border border-accent-brighter px-3 py-2 text-sm outline-none transition-all placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
 						'bg-input dark:bg-input/80',
 						'focus-visible:bg-background focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:blue-angled-rectangle-gradient',
 						'aria-invalid:border-destructive/60 aria-invalid:bg-destructive/5 dark:aria-invalid:border-destructive/50 dark:aria-invalid:bg-destructive/10',

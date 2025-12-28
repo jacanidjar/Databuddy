@@ -775,7 +775,7 @@ export function MetricsChart({
 											<span
 												className={`cursor-pointer text-xs ${
 													isHidden
-														? "text-muted line-through opacity-50"
+														? "text-muted-foreground line-through opacity-50"
 														: "text-muted-foreground hover:text-foreground"
 												}`}
 											>

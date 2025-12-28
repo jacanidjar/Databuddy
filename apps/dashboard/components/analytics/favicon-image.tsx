@@ -48,7 +48,7 @@ export function FaviconImage({
 	const fallbackContent = fallbackIcon || (
 		<GlobeIcon
 			aria-label={altText || "Website icon"}
-			className="text-muted"
+			className="text-muted-foreground"
 			size={size}
 			weight="duotone"
 		/>
