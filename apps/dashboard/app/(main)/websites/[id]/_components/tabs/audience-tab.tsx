@@ -19,9 +19,6 @@ import {
 	createLanguageColumns,
 	createTimezoneColumns,
 } from "@/components/table/rows";
-
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useBatchDynamicQuery } from "@/hooks/use-dynamic-query";
 import { PercentageBadge } from "../utils/technology-helpers";
 import type { FullTabProps } from "../utils/types";
@@ -29,28 +26,28 @@ import type { FullTabProps } from "../utils/types";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-type BrowserVersion = {
+interface BrowserVersion {
 	version: string;
 	visitors: number;
 	pageviews: number;
 	percentage?: number;
-};
+}
 
-type BrowserEntry = {
+interface BrowserEntry {
 	name: string;
 	browserName: string;
 	visitors: number;
 	pageviews: number;
 	percentage: number;
 	versions: BrowserVersion[];
-};
+}
 
-type ScreenResolutionEntry = {
+interface ScreenResolutionEntry {
 	name: string;
 	visitors: number;
 	pageviews?: number;
 	percentage?: number;
-};
+}
 
 const formatNumber = (value: number | null | undefined): string => {
 	if (value == null || Number.isNaN(value)) {
@@ -61,6 +58,183 @@ const formatNumber = (value: number | null | undefined): string => {
 		maximumFractionDigits: 1,
 	}).format(value);
 };
+
+const getGradientConfig = (percentage: number) => {
+	if (percentage >= 40) {
+		return {
+			bg: "linear-gradient(90deg, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.06) 100%)",
+			border: "rgba(34, 197, 94, 0.2)",
+		};
+	}
+	if (percentage >= 25) {
+		return {
+			bg: "linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%)",
+			border: "rgba(59, 130, 246, 0.2)",
+		};
+	}
+	if (percentage >= 10) {
+		return {
+			bg: "linear-gradient(90deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.06) 100%)",
+			border: "rgba(245, 158, 11, 0.2)",
+		};
+	}
+	return {
+		bg: "linear-gradient(90deg, rgba(107, 114, 128, 0.08) 0%, rgba(107, 114, 128, 0.04) 100%)",
+		border: "rgba(107, 114, 128, 0.15)",
+	};
+};
+
+const getDeviceInfo = (width: number, isValid: boolean) => {
+	if (!isValid) {
+		return {
+			type: "Unknown",
+			Icon: MonitorIcon,
+			isMobile: false,
+			isTablet: false,
+		};
+	}
+	if (width <= 480) {
+		return {
+			type: "Mobile",
+			Icon: DeviceMobileIcon,
+			isMobile: true,
+			isTablet: false,
+		};
+	}
+	if (width <= 1024) {
+		return {
+			type: "Tablet",
+			Icon: DeviceTabletIcon,
+			isMobile: false,
+			isTablet: true,
+		};
+	}
+	if (width <= 1440) {
+		return {
+			type: "Laptop",
+			Icon: LaptopIcon,
+			isMobile: false,
+			isTablet: false,
+		};
+	}
+	return {
+		type: "Desktop",
+		Icon: MonitorIcon,
+		isMobile: false,
+		isTablet: false,
+	};
+};
+
+const getDisplayDimensions = (
+	width: number,
+	height: number,
+	isValid: boolean,
+	isMobile: boolean,
+	isTablet: boolean
+) => {
+	if (isMobile) {
+		return { width: 36, height: 72 };
+	}
+	if (isTablet) {
+		return { width: 56, height: 72 };
+	}
+
+	const aspectRatio = isValid ? width / height : 16 / 9;
+	const maxW = 120;
+	const maxH = 72;
+	let displayWidth = maxW;
+	let displayHeight = displayWidth / aspectRatio;
+
+	if (displayHeight > maxH) {
+		displayHeight = maxH;
+		displayWidth = displayHeight * aspectRatio;
+	}
+
+	return { width: displayWidth, height: displayHeight };
+};
+
+function MobileScreen({ width, height }: { width: number; height: number }) {
+	return (
+		<div
+			className="relative overflow-hidden rounded-lg border-2 border-border bg-accent shadow-sm"
+			style={{ width: `${width}px`, height: `${height}px` }}
+		>
+			<div className="absolute top-1 left-1/2 h-1 w-4 -translate-x-1/2 rounded-full bg-border" />
+			<div className="absolute inset-1 top-3 overflow-hidden rounded bg-background/80">
+				<div className="space-y-1 p-1">
+					<div className="h-0.5 w-3/4 rounded-full bg-muted-foreground/15" />
+					<div className="h-0.5 w-1/2 rounded-full bg-muted-foreground/10" />
+					<div className="h-0.5 w-2/3 rounded-full bg-muted-foreground/10" />
+				</div>
+			</div>
+			<div className="absolute bottom-1 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-border" />
+		</div>
+	);
+}
+
+function TabletScreen({ width, height }: { width: number; height: number }) {
+	return (
+		<div
+			className="relative overflow-hidden rounded-lg border-2 border-border bg-accent shadow-sm"
+			style={{ width: `${width}px`, height: `${height}px` }}
+		>
+			<div className="absolute top-1 left-1/2 size-1 -translate-x-1/2 rounded-full bg-border" />
+			<div className="absolute inset-1.5 top-3 overflow-hidden rounded bg-background/80">
+				<div className="space-y-1 p-1.5">
+					<div className="h-1 w-3/4 rounded-full bg-muted-foreground/15" />
+					<div className="h-1 w-1/2 rounded-full bg-muted-foreground/10" />
+					<div className="h-1 w-2/3 rounded-full bg-muted-foreground/10" />
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function DesktopScreen({ width, height }: { width: number; height: number }) {
+	return (
+		<>
+			<div
+				className="relative overflow-hidden rounded border-2 border-border bg-accent shadow-sm"
+				style={{ width: `${width}px`, height: `${height}px` }}
+			>
+				<div className="absolute inset-1 overflow-hidden rounded-sm bg-background/80">
+					<div className="flex h-2 items-center gap-0.5 border-border border-b bg-accent/50 px-1">
+						<div className="size-0.5 rounded-full bg-red-400/60" />
+						<div className="size-0.5 rounded-full bg-yellow-400/60" />
+						<div className="size-0.5 rounded-full bg-green-400/60" />
+					</div>
+					<div className="space-y-1 p-1">
+						<div className="h-0.5 w-3/4 rounded-full bg-muted-foreground/15" />
+						<div className="h-0.5 w-1/2 rounded-full bg-muted-foreground/10" />
+						<div className="h-0.5 w-2/3 rounded-full bg-muted-foreground/10" />
+					</div>
+				</div>
+			</div>
+			<div className="h-1.5 w-2 bg-border" />
+			<div className="h-1 w-6 rounded-b bg-border/80" />
+		</>
+	);
+}
+
+function ScreenVisualization({
+	isMobile,
+	isTablet,
+	displayWidth,
+	displayHeight,
+}: {
+	isMobile: boolean;
+	isTablet: boolean;
+	displayWidth: number;
+	displayHeight: number;
+}) {
+	if (isMobile) {
+		return <MobileScreen height={displayHeight} width={displayWidth} />;
+	}
+	if (isTablet) {
+		return <TabletScreen height={displayHeight} width={displayWidth} />;
+	}
+	return <DesktopScreen height={displayHeight} width={displayWidth} />;
+}
 
 export function WebsiteAudienceTab({
 	websiteId,
@@ -115,36 +289,32 @@ export function WebsiteAudienceTab({
 		}
 	}, [isRefreshing, handleRefresh]);
 
-	const geographicData = useMemo(() => {
-		const result = batchResults?.find((r) => r.queryId === "geographic-data");
-		return result?.data || {};
-	}, [batchResults]);
-
-	const deviceData = useMemo(() => {
-		const result = batchResults?.find((r) => r.queryId === "device-data");
-		return result?.data || {};
-	}, [batchResults]);
+	const geographicData = useMemo(
+		() =>
+			batchResults?.find((r) => r.queryId === "geographic-data")?.data || {},
+		[batchResults]
+	);
+	const deviceData = useMemo(
+		() => batchResults?.find((r) => r.queryId === "device-data")?.data || {},
+		[batchResults]
+	);
 
 	const processedBrowserData = useMemo((): BrowserEntry[] => {
 		const browserVersions = deviceData.browser_versions || [];
 		const browserData = deviceData.browser_name || [];
 
-		return browserData.map((browser: any) => {
-			const versions = browserVersions
-				.filter((version: any) => version.browser_name === browser.name)
-				.map((version: any) => ({
-					version: version.browser_version,
-					visitors: version.visitors,
-					pageviews: version.pageviews,
-					percentage: version.percentage,
-				}));
-
-			return {
-				...browser,
-				browserName: browser.name,
-				versions,
-			};
-		});
+		return browserData.map((browser: any) => ({
+			...browser,
+			browserName: browser.name,
+			versions: browserVersions
+				.filter((v: any) => v.browser_name === browser.name)
+				.map((v: any) => ({
+					version: v.browser_version,
+					visitors: v.visitors,
+					pageviews: v.pageviews,
+					percentage: v.percentage,
+				})),
+		}));
 	}, [deviceData.browser_name, deviceData.browser_versions]);
 
 	const isLoading = isBatchLoading || isRefreshing;
@@ -207,16 +377,14 @@ export function WebsiteAudienceTab({
 				id: "percentage",
 				accessorKey: "percentage",
 				header: "Share",
-				cell: (info: CellContext<BrowserEntry, any>) => {
-					const percentage = info.getValue() as number;
-					return <PercentageBadge percentage={percentage} />;
-				},
+				cell: (info: CellContext<BrowserEntry, any>) => (
+					<PercentageBadge percentage={info.getValue() as number} />
+				),
 			},
 		],
 		[]
 	);
 
-	// Memoize displayNames to prevent recreation on every render
 	const displayNames = useMemo(() => {
 		if (typeof window === "undefined") {
 			return null;
@@ -226,7 +394,6 @@ export function WebsiteAudienceTab({
 		});
 	}, []);
 
-	// Memoize column sets to prevent recreation on every render
 	const countryColumns = useMemo(
 		() => createGeoColumns({ type: "country" }),
 		[]
@@ -256,20 +423,14 @@ export function WebsiteAudienceTab({
 				label: "Regions",
 				data: geographicData.region || [],
 				columns: regionColumns,
-				getFilter: (row: any) => ({
-					field: "region",
-					value: row.name,
-				}),
+				getFilter: (row: any) => ({ field: "region", value: row.name }),
 			},
 			{
 				id: "cities",
 				label: "Cities",
 				data: geographicData.city || [],
 				columns: cityColumns,
-				getFilter: (row: any) => ({
-					field: "city",
-					value: row.name,
-				}),
+				getFilter: (row: any) => ({ field: "city", value: row.name }),
 			},
 			...(displayNames
 				? [
@@ -278,10 +439,7 @@ export function WebsiteAudienceTab({
 							label: "Languages",
 							data: geographicData.language || [],
 							columns: languageColumns,
-							getFilter: (row: any) => ({
-								field: "language",
-								value: row.name,
-							}),
+							getFilter: (row: any) => ({ field: "language", value: row.name }),
 						},
 					]
 				: []),
@@ -290,10 +448,7 @@ export function WebsiteAudienceTab({
 				label: "Timezones",
 				data: geographicData.timezone || [],
 				columns: timezoneColumns,
-				getFilter: (row: any) => ({
-					field: "timezone",
-					value: row.name,
-				}),
+				getFilter: (row: any) => ({ field: "timezone", value: row.name }),
 			},
 		],
 		[
@@ -311,328 +466,221 @@ export function WebsiteAudienceTab({
 		]
 	);
 
+	const handleAddFilter = useCallback(
+		(field: string, value: string) =>
+			addFilter({ field, operator: "eq" as const, value }),
+		[addFilter]
+	);
+
 	return (
 		<div className="space-y-4">
-			<div className="flex">
+			<DataTable
+				columns={browserColumns}
+				data={processedBrowserData}
+				description="Expandable browser breakdown showing all versions per browser"
+				expandable={true}
+				getSubRows={(row: any) => row.versions}
+				isLoading={isLoading}
+				minHeight={400}
+				onAddFilter={handleAddFilter}
+				renderSubRow={(subRow: any, parentRow: any) => {
+					const percentage = Math.round(
+						((subRow.visitors || 0) / (parentRow.visitors || 1)) * 100
+					);
+					const config = getGradientConfig(percentage);
+					return (
+						<div
+							className="grid grid-cols-4 gap-3 border-l-2 px-4 py-1.5 text-sm transition-all duration-200"
+							style={{ background: config.bg, borderLeftColor: config.border }}
+						>
+							<div className="flex items-center gap-1.5">
+								<div className="size-1 rounded-full bg-muted-foreground/40" />
+								<span className="font-medium">
+									{subRow.version || "Unknown"}
+								</span>
+							</div>
+							<div className="text-right font-medium">
+								{formatNumber(subRow.visitors)}
+							</div>
+							<div className="text-right font-medium">
+								{formatNumber(subRow.pageviews)}
+							</div>
+							<div className="text-right">
+								<PercentageBadge percentage={percentage} />
+							</div>
+						</div>
+					);
+				}}
+				tabs={[
+					{
+						id: "browsers",
+						label: "Browsers",
+						data: processedBrowserData,
+						columns: browserColumns,
+						getFilter: (row: any) => ({
+							field: "browser_name",
+							value: row.browserName || row.name,
+						}),
+					},
+				]}
+				title="Browser Versions"
+			/>
+
+			<ErrorBoundary>
 				<DataTable
-					columns={browserColumns}
-					data={processedBrowserData}
-					description="Expandable browser breakdown showing all versions per browser"
-					expandable={true}
-					getSubRows={(row: any) => row.versions}
+					description="Visitors by location, timezone, and language (limit: 100 per category)"
+					initialPageSize={8}
 					isLoading={isLoading}
 					minHeight={400}
-					onAddFilter={(field: string, value: string) =>
-						addFilter({ field, operator: "eq" as const, value })
-					}
-					renderSubRow={(subRow: any, parentRow: any) => {
-						const percentage = Math.round(
-							((subRow.visitors || 0) / (parentRow.visitors || 1)) * 100
-						);
-						const gradientConfig =
-							percentage >= 40
-								? {
-										bg: "linear-gradient(90deg, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.06) 100%)",
-										border: "rgba(34, 197, 94, 0.2)",
-									}
-								: percentage >= 25
-									? {
-											bg: "linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%)",
-											border: "rgba(59, 130, 246, 0.2)",
-										}
-									: percentage >= 10
-										? {
-												bg: "linear-gradient(90deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.06) 100%)",
-												border: "rgba(245, 158, 11, 0.2)",
-											}
-										: {
-												bg: "linear-gradient(90deg, rgba(107, 114, 128, 0.08) 0%, rgba(107, 114, 128, 0.04) 100%)",
-												border: "rgba(107, 114, 128, 0.15)",
-											};
-
-						return (
-							<div
-								className="grid grid-cols-4 gap-3 border-l-2 px-4 py-1.5 text-sm transition-all duration-200"
-								style={{
-									background: gradientConfig.bg,
-									borderLeftColor: gradientConfig.border,
-								}}
-							>
-								<div className="flex items-center gap-1.5">
-									<div className="size-1 rounded-full bg-muted-foreground/40" />
-									<span className="font-medium">
-										{subRow.version || "Unknown"}
-									</span>
-								</div>
-								<div className="text-right font-medium">
-									{formatNumber(subRow.visitors)}
-								</div>
-								<div className="text-right font-medium">
-									{formatNumber(subRow.pageviews)}
-								</div>
-								<div className="text-right">
-									<PercentageBadge percentage={percentage} />
-								</div>
-							</div>
-						);
-					}}
-					tabs={[
-						{
-							id: "browsers",
-							label: "Browsers",
-							data: processedBrowserData,
-							columns: browserColumns,
-							getFilter: (row: any) => ({
-								field: "browser_name",
-								value: row.browserName || row.name,
-							}),
-						},
-					]}
-					title="Browser Versions"
+					onAddFilter={handleAddFilter}
+					tabs={geographicTabs}
+					title="Geographic Distribution"
 				/>
-			</div>
+			</ErrorBoundary>
 
-			{/* Enhanced Geographic Data */}
-			<div className="grid grid-cols-1 gap-4">
-				<ErrorBoundary>
-					<DataTable
-						description="Visitors by location, timezone, and language (limit: 100 per category)"
-						initialPageSize={8}
-						isLoading={isLoading}
-						minHeight={400}
-						onAddFilter={(field: string, value: string) =>
-							addFilter({ field, operator: "eq" as const, value })
-						}
-						tabs={geographicTabs}
-						title="Geographic Distribution"
-					/>
-				</ErrorBoundary>
-			</div>
+			<div className="w-full overflow-hidden rounded border bg-card backdrop-blur-sm">
+				<div className="border-b p-4 px-2 pb-2 sm:px-3">
+					<h3 className="truncate font-semibold text-foreground text-sm">
+						Screen Resolutions
+					</h3>
+					<p className="mt-0.5 text-muted-foreground text-xs">
+						Visitors by screen size and device type
+					</p>
+				</div>
 
-			{/* Screen Resolutions */}
-			<Card className="w-full overflow-hidden">
-				<CardHeader className="px-3 pb-2">
-					<div className="flex items-start justify-between gap-3">
-						<div className="min-w-0 flex-1">
-							<h3 className="truncate font-semibold text-foreground text-sm">
-								Screen Resolutions
-							</h3>
-							<p className="mt-0.5 line-clamp-2 text-muted-foreground text-xs">
-								Visitors by screen size and device type
-							</p>
-						</div>
-					</div>
-				</CardHeader>
-
-				<CardContent className="overflow-hidden px-3 pb-2">
+				<div className="p-3 sm:p-4">
 					{isLoading ? (
-						<div className="animate-pulse space-y-3" style={{ minHeight: 400 }}>
-							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-								{Array.from({ length: 6 }).map((_, index) => (
-									<div
-										className="space-y-3 rounded bg-muted/20 p-4"
-										key={`skeleton-resolution-card-${index + 1}`}
-									>
-										<Skeleton className="h-4 w-24 rounded" />
-										<Skeleton className="h-32 w-full rounded" />
-										<div className="space-y-2">
-											<div className="flex justify-between">
-												<Skeleton className="h-3 w-16 rounded-sm" />
-												<Skeleton className="h-3 w-8 rounded-sm" />
+						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+							{Array.from({ length: 6 }).map((_, i) => (
+								<div
+									className="flex flex-col rounded border bg-accent/20 p-4"
+									key={`skel-${i}`}
+								>
+									<div className="mb-3 flex items-center justify-between">
+										<div className="flex items-center gap-2">
+											<div className="size-5 animate-pulse rounded bg-muted-foreground/20" />
+											<div className="space-y-1">
+												<div className="h-4 w-20 animate-pulse rounded bg-muted-foreground/20" />
+												<div className="h-3 w-12 animate-pulse rounded bg-muted-foreground/20" />
 											</div>
-											<Skeleton className="h-2 w-full rounded-full" />
-											<Skeleton className="ml-auto h-3 w-12 rounded-sm" />
+										</div>
+										<div className="h-5 w-10 animate-pulse rounded bg-muted-foreground/20" />
+									</div>
+									<div className="mb-4 flex h-24 items-center justify-center">
+										<div className="h-16 w-28 animate-pulse rounded border-2 border-muted-foreground/10 bg-muted-foreground/5" />
+									</div>
+									<div className="space-y-2">
+										<div className="h-1.5 w-full animate-pulse rounded-full bg-muted-foreground/10" />
+										<div className="flex justify-between">
+											<div className="h-3 w-20 animate-pulse rounded bg-muted-foreground/20" />
+											<div className="h-3 w-16 animate-pulse rounded bg-muted-foreground/20" />
 										</div>
 									</div>
-								))}
-							</div>
+								</div>
+							))}
 						</div>
 					) : deviceData.screen_resolution?.length ? (
 						<div className="space-y-4">
 							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-								{(deviceData.screen_resolution || [])
+								{deviceData.screen_resolution
 									.slice(0, 6)
 									.map((item: ScreenResolutionEntry) => {
-										const resolution = item.name;
-										if (!resolution) {
+										if (!item.name) {
 											return null;
 										}
-										const [width, height] = resolution.split("x").map(Number);
-										const isValid = !(
-											Number.isNaN(width) || Number.isNaN(height)
-										);
-
+										const [width, height] = item.name.split("x").map(Number);
+										const isValid =
+											Number.isFinite(width) && Number.isFinite(height);
 										const percentage = item.percentage || 0;
-
-										let deviceType = "Unknown";
-										let deviceIcon = (
-											<MonitorIcon className="size-5 text-accent-foreground" />
+										const { type, Icon, isMobile, isTablet } = getDeviceInfo(
+											width,
+											isValid
 										);
-
-										if (isValid) {
-											if (width <= 480) {
-												deviceType = "Mobile";
-												deviceIcon = (
-													<DeviceMobileIcon className="size-5 text-accent-foreground" />
-												);
-											} else if (width <= 1024) {
-												deviceType = "Tablet";
-												deviceIcon = (
-													<DeviceTabletIcon className="size-5 text-accent-foreground" />
-												);
-											} else if (width <= 1440) {
-												deviceType = "Laptop";
-												deviceIcon = (
-													<LaptopIcon className="size-5 text-accent-foreground" />
-												);
-											} else {
-												deviceType = "Desktop";
-												deviceIcon = (
-													<MonitorIcon className="size-5 text-accent-foreground" />
-												);
-											}
-										}
-
-										// Create aspect ratio-correct box
-										const aspectRatio = isValid ? width / height : 16 / 9;
+										const display = getDisplayDimensions(
+											width,
+											height,
+											isValid,
+											isMobile,
+											isTablet
+										);
 
 										return (
 											<div
-												className="flex flex-col rounded border bg-accent p-4"
-												key={`resolution-${resolution}-${item.visitors}`}
+												className="group flex flex-col rounded border bg-accent/20 p-4 transition-colors hover:bg-accent/40"
+												key={`${item.name}-${item.visitors}`}
 											>
 												<div className="mb-3 flex items-center justify-between">
 													<div className="flex items-center gap-2">
-														{deviceIcon}
+														<Icon
+															className="size-4 text-muted-foreground"
+															weight="duotone"
+														/>
 														<div>
-															<div className="font-medium text-sm">
-																{resolution}
+															<div className="font-medium text-foreground text-sm">
+																{item.name}
 															</div>
 															<div className="text-muted-foreground text-xs">
-																{deviceType}
+																{type}
 															</div>
 														</div>
 													</div>
-													<div className="text-right">
-														<div className="font-medium text-sm">
-															{percentage}%
-														</div>
-													</div>
+													<PercentageBadge percentage={percentage} />
 												</div>
 
-												{/* Enhanced Screen visualization with perspective */}
-												<div className="perspective relative mb-4 flex h-32 justify-center">
-													<div
-														className="relative flex transform-gpu items-center justify-center rounded border-2 border-primary/20 bg-linear-to-br from-primary/8 to-primary/12 shadow-lg transition-all duration-300 hover:shadow-xl"
-														style={{
-															width: `${Math.min(200, 100 * Math.sqrt(aspectRatio))}px`,
-															height: `${Math.min(160, 100 / Math.sqrt(aspectRatio))}px`,
-															transformStyle: "preserve-3d",
-															transform: "rotateY(-8deg) rotateX(3deg)",
-															margin: "auto",
-														}}
-													>
-														{isValid && (
-															<div
-																className="transform-gpu font-mono font-semibold text-accent-foreground text-xs"
-																style={{ transform: "translateZ(5px)" }}
-															>
-																{width} × {height}
-															</div>
-														)}
-
-														{/* Enhanced Screen content simulation */}
-														<div
-															className="absolute inset-2 rounded bg-background/20"
-															style={{ transform: "translateZ(2px)" }}
+												<div className="relative mb-4 flex h-24 items-center justify-center">
+													<div className="relative flex flex-col items-center">
+														<ScreenVisualization
+															displayHeight={display.height}
+															displayWidth={display.width}
+															isMobile={isMobile}
+															isTablet={isTablet}
 														/>
-
-														{/* Browser-like UI elements */}
-														<div
-															className="absolute top-2 right-2 left-2 h-1.5 rounded-full bg-primary/30"
-															style={{ transform: "translateZ(3px)" }}
-														/>
-														<div
-															className="absolute top-5 left-2 size-1/2 rounded-full bg-primary/20"
-															style={{ transform: "translateZ(3px)" }}
-														/>
-														<div
-															className="absolute inset-x-2 bottom-4 grid grid-cols-3 gap-1"
-															style={{ transform: "translateZ(3px)" }}
-														>
-															<div className="h-1 rounded-full bg-primary/15" />
-															<div className="h-1 rounded-full bg-primary/20" />
-															<div className="h-1 rounded-full bg-primary/15" />
-														</div>
 													</div>
-
-													{/* Stand or base for desktop/laptop */}
-													{(deviceType === "Desktop" ||
-														deviceType === "Laptop") && (
-														<div
-															className="absolute bottom-0 mx-auto h-3 w-1/4 rounded-b-md border bg-accent"
-															style={{
-																left: "50%",
-																transform: "translateX(-50%)",
-																boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-															}}
-														/>
-													)}
 												</div>
 
 												<div className="mt-auto space-y-2">
-													<div className="flex items-center justify-between text-sm">
-														<span className="font-medium">
-															{formatNumber(item.visitors)} visitors
-														</span>
-													</div>
-													<div className="h-2 w-full overflow-hidden rounded-full bg-card">
+													<div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/50">
 														<div
-															className="h-full rounded-full bg-accent-foreground transition-all duration-500 ease-out"
-															style={{ width: `${percentage}%` }}
+															className="h-full rounded-full bg-primary/60 transition-all duration-500"
+															style={{ width: `${Math.min(percentage, 100)}%` }}
 														/>
 													</div>
 													<div className="flex items-center justify-between text-muted-foreground text-xs">
-														<span>
-															{formatNumber(item.pageviews)} pageviews
+														<span className="font-medium text-foreground">
+															{formatNumber(item.visitors)} visitors
 														</span>
-														<span>{percentage}% share</span>
+														<span>{formatNumber(item.pageviews)} views</span>
 													</div>
 												</div>
 											</div>
 										);
 									})}
 							</div>
-
-							{deviceData.screen_resolution &&
-								deviceData.screen_resolution.length > 6 && (
-									<div className="border-border/30 border-t pt-2 text-center text-muted-foreground text-xs">
-										Showing top 6 of {deviceData.screen_resolution.length}{" "}
-										screen resolutions
-									</div>
-								)}
+							{deviceData.screen_resolution.length > 6 && (
+								<p className="pt-1 text-center text-muted-foreground text-xs">
+									Showing top 6 of {deviceData.screen_resolution.length} screen
+									resolutions
+								</p>
+							)}
 						</div>
 					) : (
-						<div
-							className="flex flex-col items-center justify-center py-16 text-center"
-							style={{ minHeight: 400 }}
-						>
-							<div className="mb-4">
-								<div className="mx-auto mb-3 flex size-12 items-center justify-center rounded bg-accent-foreground">
-									<MonitorIcon className="size-6 text-accent" />
-								</div>
+						<div className="flex flex-col items-center justify-center py-12 text-center">
+							<div className="mb-3 flex size-12 items-center justify-center rounded bg-muted">
+								<MonitorIcon
+									className="size-6 text-muted-foreground"
+									weight="duotone"
+								/>
 							</div>
-							<h4 className="mb-2 font-medium text-base text-foreground">
-								No screen resolution data available
+							<h4 className="mb-1 font-medium text-foreground text-sm">
+								No screen resolution data
 							</h4>
-							<p className="max-w-[280px] text-muted-foreground text-sm">
-								Resolution data will appear here when visitors start using your
-								website.
+							<p className="max-w-[240px] text-muted-foreground text-xs">
+								Resolution data will appear when visitors start using your site
 							</p>
 						</div>
 					)}
-				</CardContent>
-			</Card>
+				</div>
+			</div>
 		</div>
 	);
 }
