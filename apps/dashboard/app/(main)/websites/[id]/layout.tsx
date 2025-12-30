@@ -3,7 +3,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import { useParams, usePathname } from "next/navigation";
-import { useRef } from "react";
 import { toast } from "sonner";
 import { WebsiteErrorState } from "@/components/website-error-state";
 import { useTrackingSetup } from "@/hooks/use-tracking-setup";
@@ -12,56 +11,62 @@ import { isAnalyticsRefreshingAtom } from "@/stores/jotai/filterAtoms";
 import { AnalyticsToolbar } from "./_components/analytics-toolbar";
 import { WebsiteTrackingSetupTab } from "./_components/tabs/tracking-setup-tab";
 
+const NO_TOOLBAR_ROUTES = [
+	"/assistant",
+	"/map",
+	"/flags",
+	"/databunny",
+	"/settings",
+	"/users",
+	"/agent",
+	"/pulse",
+];
+
 interface WebsiteLayoutProps {
 	children: React.ReactNode;
 }
 
 export default function WebsiteLayout({ children }: WebsiteLayoutProps) {
 	const { id } = useParams();
+	const websiteId = id as string;
 	const pathname = usePathname();
 	const queryClient = useQueryClient();
+	const [isRefreshing, setIsRefreshing] = useAtom(isAnalyticsRefreshingAtom);
+
 	const isDemoRoute = pathname?.startsWith("/demo/");
+	const hideToolbar = NO_TOOLBAR_ROUTES.some((route) =>
+		pathname.includes(route)
+	);
+
 	const {
+		data: websiteData,
 		isLoading: isWebsiteLoading,
 		isError: isWebsiteError,
 		error: websiteError,
-		data: websiteData,
-	} = useWebsite(id as string);
-	const { isTrackingSetup, isTrackingSetupLoading } = useTrackingSetup(
-		websiteData?.id ?? ""
-	);
-	const [isRefreshing, setIsRefreshing] = useAtom(isAnalyticsRefreshingAtom);
-	const toolbarRef = useRef<HTMLDivElement>(null);
+	} = useWebsite(websiteId);
 
-	const noToolbarPages = [
-		"/assistant",
-		"/map",
-		"/flags",
-		"/databunny",
-		"/settings",
-		"/users",
-		"/agent",
-		"/pulse",
-	];
-
-	const isAssistantPage = noToolbarPages.some((page) =>
-		pathname.includes(page)
-	);
+	const { isTrackingSetup, isTrackingSetupLoading } =
+		useTrackingSetup(websiteId);
 
 	if (!id) {
 		return <WebsiteErrorState error={{ data: { code: "NOT_FOUND" } }} />;
 	}
 
 	if (!isWebsiteLoading && isWebsiteError) {
-		return <WebsiteErrorState error={websiteError} websiteId={id as string} />;
+		return <WebsiteErrorState error={websiteError} websiteId={websiteId} />;
 	}
 
-	const websiteId = id as string;
 	const isToolbarLoading =
 		isWebsiteLoading ||
 		(!isDemoRoute && (isTrackingSetupLoading || isTrackingSetup === null));
+
 	const isToolbarDisabled =
 		!isDemoRoute && (!isTrackingSetup || isToolbarLoading);
+
+	const showTrackingSetup =
+		!(isDemoRoute || isTrackingSetupLoading) &&
+		websiteData &&
+		isTrackingSetup === false;
 
 	const handleRefresh = async () => {
 		setIsRefreshing(true);
@@ -84,13 +89,26 @@ export default function WebsiteLayout({ children }: WebsiteLayoutProps) {
 		}
 	};
 
+	const renderContent = () => {
+		if (hideToolbar) {
+			return children;
+		}
+
+		if (showTrackingSetup) {
+			return (
+				<div className="p-4">
+					<WebsiteTrackingSetupTab websiteId={websiteId} />
+				</div>
+			);
+		}
+
+		return children;
+	};
+
 	return (
 		<div className="flex h-full flex-col overflow-hidden">
-			{!isAssistantPage && (
-				<div
-					className="sticky top-0 right-0 left-0 z-50 shrink-0 space-y-0 overscroll-contain bg-background md:top-0 md:left-84"
-					ref={toolbarRef}
-				>
+			{!hideToolbar && (
+				<div className="sticky top-0 right-0 left-0 z-50 shrink-0 overscroll-contain bg-background md:top-0 md:left-84">
 					<AnalyticsToolbar
 						isDisabled={isToolbarDisabled}
 						isLoading={isToolbarLoading}
@@ -102,21 +120,13 @@ export default function WebsiteLayout({ children }: WebsiteLayoutProps) {
 			)}
 
 			<div
-				className={`${isAssistantPage ? "min-h-0 flex-1" : "min-h-0 flex-1 overflow-y-auto overscroll-contain"}`}
+				className={
+					hideToolbar
+						? "min-h-0 flex-1"
+						: "min-h-0 flex-1 overflow-y-auto overscroll-contain"
+				}
 			>
-				{isAssistantPage ? (
-					children
-				) : !isDemoRoute &&
-					websiteData &&
-					!isTrackingSetupLoading &&
-					isTrackingSetup !== null &&
-					isTrackingSetup === false ? (
-					<div className="p-4">
-						<WebsiteTrackingSetupTab websiteId={websiteId} />
-					</div>
-				) : (
-					children
-				)}
+				{renderContent()}
 			</div>
 		</div>
 	);
