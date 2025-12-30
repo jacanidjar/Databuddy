@@ -204,7 +204,7 @@ export function FlagSheet({
 					name: template.name,
 					description: template.description,
 					type: template.type,
-					status: "inactive",
+					status: "active",
 					defaultValue: template.defaultValue,
 					rolloutPercentage:
 						template.type === "rollout" || template.type === "boolean"

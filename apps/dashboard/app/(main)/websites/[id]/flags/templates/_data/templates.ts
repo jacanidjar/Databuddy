@@ -8,7 +8,7 @@ export const HARDCODED_TEMPLATES: FlagTemplate[] = [
 			"Start with 10% of users and gradually increase. Perfect for safely releasing new features to production.",
 		category: "rollout",
 		icon: "rocket",
-		type: "boolean",
+		type: "rollout",
 		defaultValue: false,
 		rolloutPercentage: 10,
 		isBuiltIn: true,
