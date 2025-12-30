@@ -331,36 +331,6 @@ export function FlagSheet({
 			onCloseAction();
 		} catch (error) {
 			console.error("Flag mutation error:", error);
-
-			// Extract error message from various error formats
-			let errorMessage = "Unknown error";
-			if (error instanceof Error) {
-				errorMessage = error.message;
-			} else if (typeof error === "object" && error !== null) {
-				if ("message" in error && typeof error.message === "string") {
-					errorMessage = error.message;
-				} else if ("error" in error && typeof error.error === "string") {
-					errorMessage = error.error;
-				} else {
-					errorMessage = JSON.stringify(error);
-				}
-			}
-
-			if (
-				errorMessage.includes("unique") ||
-				errorMessage.includes("CONFLICT") ||
-				errorMessage.includes("already exists")
-			) {
-				toast.error("A flag with this key already exists");
-			} else if (errorMessage.includes("FORBIDDEN")) {
-				toast.error("You don't have permission to perform this action");
-			} else if (errorMessage.includes("NOT_FOUND")) {
-				toast.error("Flag not found");
-			} else {
-				toast.error(
-					`Failed to ${isEditing ? "update" : "create"} flag: ${errorMessage}`
-				);
-			}
 		}
 	};
 
