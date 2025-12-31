@@ -26,6 +26,7 @@ import {
 	parseTimestamp,
 	validateEventSchema,
 } from "@utils/parsing-helpers";
+import { createPixelResponse, parsePixelQuery } from "@utils/pixel";
 import { parseUserAgent } from "@utils/user-agent";
 import {
 	sanitizeString,
@@ -157,6 +158,42 @@ function processOutgoingLinkData(
 }
 
 const app = new Elysia()
+	.get("/px.jpg", async ({ query, request }) => {
+		try {
+			const { eventData, eventType } = parsePixelQuery(
+				query as Record<string, string>
+			);
+
+			const validation = await validateRequest(eventData, query, request);
+			if ("error" in validation) {
+				return createPixelResponse();
+			}
+
+			const { clientId, userAgent, ip } = validation;
+
+			const botError = await checkForBot(
+				request,
+				eventData,
+				query,
+				clientId,
+				userAgent
+			);
+			if (botError) {
+				return createPixelResponse();
+			}
+
+			if (eventType === "track") {
+				insertTrackEvent(eventData, clientId, userAgent, ip);
+			} else if (eventType === "outgoing_link") {
+				insertOutgoingLink(eventData, clientId, userAgent, ip);
+			}
+
+			return createPixelResponse();
+		} catch (error) {
+			captureError(error, { message: "Error processing pixel request" });
+			return createPixelResponse();
+		}
+	})
 	.post("/vitals", async (context) => {
 		const { body, query, request } = context as {
 			body: unknown;
