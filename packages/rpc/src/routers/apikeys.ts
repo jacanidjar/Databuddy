@@ -112,7 +112,7 @@ function mapKey(key: ApiKey, full = false) {
 		start: key.start,
 		type: key.type,
 		enabled: key.enabled,
-		scopes: key.scopes,
+		scopes: getScopes(key),
 		tags: meta.tags ?? [],
 		expiresAt: key.expiresAt,
 		revokedAt: key.revokedAt,
