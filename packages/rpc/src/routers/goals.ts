@@ -337,10 +337,10 @@ export const goalsRouter = {
 					const filters = (goal.filters as Filter[]) || [];
 					const totalUsers = goal.ignoreHistoricData
 						? await getTotalWebsiteUsers(
-							input.websiteId,
-							effectiveStartDate,
-							endDate
-						)
+								input.websiteId,
+								effectiveStartDate,
+								endDate
+							)
 						: baseTotalUsers;
 
 					try {

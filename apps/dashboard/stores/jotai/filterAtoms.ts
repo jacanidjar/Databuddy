@@ -3,15 +3,15 @@ import dayjs from "dayjs";
 export interface DynamicQueryFilter {
 	field: string;
 	operator:
-	| "eq"
-	| "ne"
-	| "contains"
-	| "not_contains"
-	| "starts_with"
-	| "in"
-	| "not_in";
+		| "eq"
+		| "ne"
+		| "contains"
+		| "not_contains"
+		| "starts_with"
+		| "in"
+		| "not_in";
 	value: string | number | (string | number)[];
-};
+}
 
 import { atom } from "jotai";
 import { RECOMMENDED_DEFAULTS } from "../../app/(main)/websites/[id]/_components/utils/tracking-defaults";

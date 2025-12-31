@@ -43,7 +43,7 @@ const TREND_THRESHOLD = 5; // percentage
 interface EventsCheckResult {
 	hasEvents: boolean;
 	error: string | null;
-};
+}
 
 async function getTrackingEventsStatus(
 	websiteId: string
@@ -126,7 +126,7 @@ const calculateTrend = (dataPoints: { date: string; value: number }[]) => {
 interface ActiveUsersRow {
 	websiteId: string;
 	activeUsers: number;
-};
+}
 
 const fetchActiveUsers = async (
 	websiteIds: string[]

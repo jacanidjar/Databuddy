@@ -1,6 +1,7 @@
 import type { FlagResult, StorageInterface } from "./types";
 
-const isBrowser = typeof window !== "undefined" && typeof localStorage !== "undefined";
+const isBrowser =
+	typeof window !== "undefined" && typeof localStorage !== "undefined";
 
 export class BrowserFlagStorage implements StorageInterface {
 	private readonly ttl = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
@@ -42,7 +43,7 @@ export class BrowserFlagStorage implements StorageInterface {
 						result[flagKey] = (parsed.value || parsed) as FlagResult;
 					}
 				}
-			} catch { }
+			} catch {}
 		}
 		return result;
 	}
@@ -90,7 +91,7 @@ export class BrowserFlagStorage implements StorageInterface {
 				expiresAt: Date.now() + this.ttl,
 			};
 			localStorage.setItem(`db-flag-${key}`, JSON.stringify(item));
-		} catch { }
+		} catch {}
 	}
 
 	private isExpired(expiresAt?: number): boolean {

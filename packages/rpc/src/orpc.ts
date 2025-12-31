@@ -77,11 +77,11 @@ export const createRPCContext = async (opts: { headers: Headers }) => {
 	// Get billing information if user is authenticated
 	let billingContext:
 		| {
-			customerId: string;
-			isOrganization: boolean;
-			canUserUpgrade: boolean;
-			planId: string;
-		}
+				customerId: string;
+				isOrganization: boolean;
+				canUserUpgrade: boolean;
+				planId: string;
+		  }
 		| undefined;
 
 	if (session?.user) {
