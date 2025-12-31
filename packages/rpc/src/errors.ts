@@ -6,23 +6,23 @@ import { z } from "zod";
  */
 
 const resourceSchema = z.object({
-    resourceType: z.string(),
-    resourceId: z.string().optional(),
+	resourceType: z.string(),
+	resourceId: z.string().optional(),
 });
 
 const limitSchema = z.object({
-    limit: z.number(),
-    current: z.number(),
-    nextPlan: z.string().optional(),
+	limit: z.number(),
+	current: z.number(),
+	nextPlan: z.string().optional(),
 });
 
 const featureSchema = z.object({
-    feature: z.string(),
-    requiredPlan: z.string().optional(),
+	feature: z.string(),
+	requiredPlan: z.string().optional(),
 });
 
 const retrySchema = z.object({
-    retryAfter: z.number().int().min(1),
+	retryAfter: z.number().int().min(1),
 });
 
 /**
@@ -38,50 +38,49 @@ const retrySchema = z.object({
  * ```
  */
 export const baseErrors = {
-    // Authentication errors
-    UNAUTHORIZED: {
-        message: "Authentication is required for this action",
-    },
-    FORBIDDEN: {
-        message: "You do not have permission to perform this action",
-    },
+	// Authentication errors
+	UNAUTHORIZED: {
+		message: "Authentication is required for this action",
+	},
+	FORBIDDEN: {
+		message: "You do not have permission to perform this action",
+	},
 
-    // Resource errors
-    NOT_FOUND: {
-        message: "The requested resource was not found",
-        data: resourceSchema.optional(),
-    },
-    CONFLICT: {
-        message: "A resource with this identifier already exists",
-        data: resourceSchema.optional(),
-    },
+	// Resource errors
+	NOT_FOUND: {
+		message: "The requested resource was not found",
+		data: resourceSchema.optional(),
+	},
+	CONFLICT: {
+		message: "A resource with this identifier already exists",
+		data: resourceSchema.optional(),
+	},
 
-    // Validation errors
-    BAD_REQUEST: {
-        message: "Invalid request parameters",
-    },
+	// Validation errors
+	BAD_REQUEST: {
+		message: "Invalid request parameters",
+	},
 
-    // Rate limiting
-    RATE_LIMITED: {
-        message: "Too many requests, please try again later",
-        data: retrySchema,
-    },
+	// Rate limiting
+	RATE_LIMITED: {
+		message: "Too many requests, please try again later",
+		data: retrySchema,
+	},
 
-    // Billing/plan errors
-    PLAN_LIMIT_EXCEEDED: {
-        message: "You have reached the limit for your current plan",
-        data: limitSchema,
-    },
-    FEATURE_UNAVAILABLE: {
-        message: "This feature is not available on your current plan",
-        data: featureSchema,
-    },
+	// Billing/plan errors
+	PLAN_LIMIT_EXCEEDED: {
+		message: "You have reached the limit for your current plan",
+		data: limitSchema,
+	},
+	FEATURE_UNAVAILABLE: {
+		message: "This feature is not available on your current plan",
+		data: featureSchema,
+	},
 
-    // Server errors
-    INTERNAL_SERVER_ERROR: {
-        message: "An unexpected error occurred",
-    },
+	// Server errors
+	INTERNAL_SERVER_ERROR: {
+		message: "An unexpected error occurred",
+	},
 } as const;
 
 export type BaseErrors = typeof baseErrors;
-

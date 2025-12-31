@@ -221,15 +221,15 @@ export const RecentErrorsTable = ({ recentErrors }: Props) => {
 					}
 
 					return (
-								<div className="flex items-center gap-1.5">
-									<CountryFlag
-										country={countryCode || countryName || ""}
-										size={16}
-									/>
-									<span className="max-w-[80px] truncate text-sm">
-										{countryName}
-									</span>
-								</div>
+						<div className="flex items-center gap-1.5">
+							<CountryFlag
+								country={countryCode || countryName || ""}
+								size={16}
+							/>
+							<span className="max-w-[80px] truncate text-sm">
+								{countryName}
+							</span>
+						</div>
 					);
 				},
 			},
@@ -246,10 +246,7 @@ export const RecentErrorsTable = ({ recentErrors }: Props) => {
 						<Tooltip skipProvider>
 							<TooltipTrigger asChild>
 								<div className="flex items-center gap-1.5 text-muted-foreground">
-									<ClockIcon
-										className="size-3.5 shrink-0"
-										weight="duotone"
-									/>
+									<ClockIcon className="size-3.5 shrink-0" weight="duotone" />
 									<span className="whitespace-nowrap text-sm">{relative}</span>
 								</div>
 							</TooltipTrigger>

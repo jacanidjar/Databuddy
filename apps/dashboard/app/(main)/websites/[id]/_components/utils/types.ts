@@ -6,12 +6,12 @@ export interface DateRange {
 	end_date: string;
 	granularity?: "hourly" | "daily";
 	timezone?: string;
-};
+}
 
 export interface BaseTabProps {
 	websiteId: string;
 	dateRange: DateRange;
-};
+}
 
 export type WebsiteData = ReturnType<typeof useWebsite>["data"];
 
@@ -30,7 +30,7 @@ export interface MetricPoint {
 	sessions?: number;
 	bounce_rate?: number;
 	[key: string]: string | number | undefined;
-};
+}
 
 export interface TrackingOptions {
 	disabled: boolean;
@@ -54,7 +54,7 @@ export interface TrackingOptions {
 	enableBatching: boolean;
 	batchSize: number;
 	batchTimeout: number;
-};
+}
 
 export interface TrackingOptionConfig {
 	key: keyof TrackingOptions;
@@ -62,4 +62,4 @@ export interface TrackingOptionConfig {
 	description: string;
 	data: string[];
 	inverted?: boolean;
-};
+}

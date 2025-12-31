@@ -13,10 +13,7 @@ export default function PaymentSuccess() {
 			</div>
 
 			<div className="flex w-full max-w-md flex-col items-center">
-				<CheckCircle
-					className="mb-4 size-20 text-green-500"
-					weight="duotone"
-				/>
+				<CheckCircle className="mb-4 size-20 text-green-500" weight="duotone" />
 				<h1 className="mb-2 text-center font-bold text-2xl md:text-3xl">
 					Payment Successful!
 				</h1>

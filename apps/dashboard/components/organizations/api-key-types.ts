@@ -34,7 +34,7 @@ export interface ApiKeyAccessEntry {
 	resourceType: ApiResourceType;
 	resourceId?: string | null;
 	scopes: ApiScope[];
-};
+}
 
 export interface ApiKeyListItem {
 	id: string;
@@ -52,7 +52,7 @@ export interface ApiKeyListItem {
 	createdAt: Date;
 	updatedAt: Date;
 	metadata?: Record<string, unknown>;
-};
+}
 
 export interface ApiKeyDetail extends ApiKeyListItem {
 	access: Array<{ id: string } & ApiKeyAccessEntry>;
@@ -69,4 +69,4 @@ export interface CreateApiKeyInput {
 	rateLimitMax?: number;
 	expiresAt?: string;
 	metadata?: Record<string, unknown>;
-};
+}

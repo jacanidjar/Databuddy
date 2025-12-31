@@ -36,7 +36,7 @@ async function buildIndexes(): Promise<AdvancedIndex[]> {
 				console.error(`Failed to index page: ${page.url}`);
 				return null;
 			}
-		}),
+		})
 	);
 
 	return results.filter((index): index is AdvancedIndex => index !== null);
