@@ -4,6 +4,7 @@ import type {
 } from "@databuddy/shared/types/website";
 import {
 	ArrowSquareOutIcon,
+	CodeIcon,
 	CopyIcon,
 	EyeIcon,
 	GearIcon,
@@ -39,12 +40,12 @@ import { useDeleteWebsite } from "@/hooks/use-websites";
 import { TOAST_MESSAGES } from "../[id]/_components/shared/tracking-constants";
 import MiniChart from "./mini-chart";
 
-type WebsiteCardProps = {
+interface WebsiteCardProps {
 	website: Website;
 	chartData?: ProcessedMiniChartData;
 	activeUsers?: number;
 	isLoadingChart?: boolean;
-};
+}
 
 function TrendStat({
 	trend,
@@ -181,7 +182,7 @@ export const WebsiteCard = memo(
 											<Skeleton className="mx-auto h-24 w-full rounded sm:h-28" />
 										</div>
 									) : chartData ? (
-										chartData.data.length > 0 ? (
+										chartData.data.length > 0 && chartData.totalViews > 0 ? (
 											<div className="h-28 space-y-2">
 												<div className="h-full duration-300 [--chart-color:var(--color-primary)] motion-reduce:transition-none group-hover:[--chart-color:theme(colors.primary.600)]">
 													<MiniChart
@@ -192,8 +193,21 @@ export const WebsiteCard = memo(
 												</div>
 											</div>
 										) : (
-											<div className="flex h-28 items-center justify-center text-center text-muted-foreground text-xs">
-												No data yet
+											<div className="flex h-28 flex-col items-center justify-center gap-2 px-4 text-center">
+												<div className="flex size-8 items-center justify-center rounded bg-amber-500/10">
+													<CodeIcon
+														className="size-4 text-amber-500"
+														weight="duotone"
+													/>
+												</div>
+												<div className="space-y-0.5">
+													<p className="font-medium text-foreground text-xs">
+														Tracking not set up
+													</p>
+													<p className="text-[11px] text-muted-foreground">
+														Click to add tracking code
+													</p>
+												</div>
 											</div>
 										)
 									) : (
