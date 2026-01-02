@@ -10,6 +10,7 @@ import {
 	UserIcon,
 } from "@phosphor-icons/react";
 import { useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CreateOrganizationDialog } from "@/components/organizations/create-organization-dialog";
@@ -31,13 +32,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-const getOrganizationInitials = (name: string) =>
-	name
-		.split(" ")
-		.map((n) => n[0])
-		.join("")
-		.toUpperCase()
-		.slice(0, 2);
+const getDicebearUrl = (seed: string) =>
+	`https://api.dicebear.com/9.x/glass/svg?seed=${seed}`;
 
 const getPlanDisplayInfo = (planId: PlanId | null) => {
 	if (!planId || planId === PLAN_IDS.FREE) {
@@ -80,6 +76,7 @@ function filterOrganizations<T extends { name: string; slug?: string | null }>(
 
 interface OrganizationSelectorTriggerProps {
 	activeOrganization: {
+		id?: string;
 		name: string;
 		slug?: string | null;
 		logo?: string | null;
@@ -113,14 +110,34 @@ function OrganizationSelectorTrigger({
 							<AvatarImage
 								alt={activeOrganization?.name || "Personal"}
 								className="rounded"
-								src={activeOrganization?.logo || undefined}
+								src={
+									activeOrganization?.logo ||
+									(activeOrganization
+										? getDicebearUrl(
+												activeOrganization.id ||
+													activeOrganization.slug ||
+													activeOrganization.name
+											)
+										: getDicebearUrl("personal"))
+								}
 							/>
-							<AvatarFallback className="bg-secondary font-medium text-xs">
-								{activeOrganization?.name ? (
-									getOrganizationInitials(activeOrganization.name)
-								) : (
-									<UserIcon weight="duotone" />
-								)}
+							<AvatarFallback className="bg-secondary">
+								<Image
+									alt={activeOrganization?.name || "Personal"}
+									className="rounded"
+									height={28}
+									src={
+										activeOrganization
+											? getDicebearUrl(
+													activeOrganization.id ||
+														activeOrganization.slug ||
+														activeOrganization.name
+												)
+											: getDicebearUrl("personal")
+									}
+									unoptimized
+									width={28}
+								/>
 							</AvatarFallback>
 						</Avatar>
 					</div>
@@ -292,9 +309,22 @@ export function OrganizationSelector() {
 									onClick={() => handleSelectOrganization(org.id)}
 								>
 									<Avatar className="size-5">
-										<AvatarImage alt={org.name} src={org.logo || undefined} />
-										<AvatarFallback className="bg-sidebar-primary/30 text-xs">
-											{getOrganizationInitials(org.name)}
+										<AvatarImage
+											alt={org.name}
+											src={
+												org.logo ||
+												getDicebearUrl(org.id || org.slug || org.name)
+											}
+										/>
+										<AvatarFallback className="bg-sidebar-primary/30">
+											<Image
+												alt={org.name}
+												className="rounded"
+												height={20}
+												src={getDicebearUrl(org.id || org.slug || org.name)}
+												unoptimized
+												width={20}
+											/>
 										</AvatarFallback>
 									</Avatar>
 									<div className="flex min-w-0 flex-1 flex-col items-start text-left">
