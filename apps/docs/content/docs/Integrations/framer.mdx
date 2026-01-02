@@ -3,9 +3,15 @@ title: Framer
 description: Add privacy-first analytics to your Framer site
 ---
 
+import { Step, Steps } from "@/components/docs";
+import { Callout } from "@/components/docs";
+import { CodeBlock } from "@/components/docs";
+
 Databuddy enables you to gather privacy-first analytics on user behavior, capture custom events, track performance metrics, and more within your Framer site - all while maintaining GDPR compliance without cookies.
 
-> **Easy Setup**: Install our [official Framer plugin](https://www.framer.com/marketplace/plugins/databuddy-analytics/) from the Framer Marketplace for the fastest setup, or manually add the script using the instructions below.
+<Callout type="info">
+**Easy Setup**: Install our [official Framer plugin](https://www.framer.com/marketplace/plugins/databuddy-analytics/) from the Framer Marketplace for the fastest setup, or manually add the script using the instructions below.
+</Callout>
 
 ## Installation Methods
 
@@ -13,15 +19,32 @@ Databuddy enables you to gather privacy-first analytics on user behavior, captur
 
 The easiest way to add Databuddy to your Framer site is through our official plugin:
 
+<Steps>
+<Step>
+
+## Install the Plugin
+
 1. Open your Framer project
 2. Go to **Plugins** in the left sidebar
 3. Search for "Databuddy Analytics"
 4. Click **Install** on the [Databuddy Analytics plugin](https://www.framer.com/marketplace/plugins/databuddy-analytics/)
-5. Enter your Client ID from your [Databuddy dashboard](https://app.databuddy.cc)
-6. Configure optional settings:
+
+</Step>
+<Step>
+
+## Configure Settings
+
+1. Enter your Client ID from your [Databuddy dashboard](https://app.databuddy.cc)
+2. Configure optional settings:
    - Custom CDN URL (for self-hosted setups)
    - Custom Dashboard URL (for self-hosted setups)
-7. Publish your site
+
+</Step>
+<Step>
+
+## Publish Your Site
+
+Click **Publish** to make your changes live.
 
 **Plugin Benefits**:
 - Zero configuration needed
@@ -29,18 +52,27 @@ The easiest way to add Databuddy to your Framer site is through our official plu
 - Self-hosted option available
 - No manual code editing required
 
-> Plugin created by [@dominikkoch](https://x.com/dominikkoch)
+<Callout type="success">
+Plugin created by [Dominik Koch](https://dominikkoch.dev/)
+</Callout>
+
+</Step>
+</Steps>
 
 ### Option 2: Manual Installation
 
 If you prefer manual control or need custom configuration:
 
-#### 1. Get Your Tracking Script
+<Steps>
+<Step>
+
+## Get Your Tracking Script
 
 Navigate to your [Databuddy dashboard](https://app.databuddy.cc) and copy your tracking code snippet:
 
-```html
-<script>
+<CodeBlock
+  language="html"
+  code={`<script>
   (function () {
     var script = document.createElement("script");
     script.async = true;
@@ -51,10 +83,13 @@ Navigate to your [Databuddy dashboard](https://app.databuddy.cc) and copy your t
     script.setAttribute("data-track-errors", "true");
     document.head.appendChild(script);
   })();
-</script>
-```
+</script>`}
+/>
 
-#### 2. Add the Script to Your Framer Project
+</Step>
+<Step>
+
+## Add the Script to Your Framer Project
 
 1. Open your Framer project
 2. Go to **Site Settings** > **General**
@@ -62,7 +97,10 @@ Navigate to your [Databuddy dashboard](https://app.databuddy.cc) and copy your t
 4. Paste your Databuddy snippet into the **Start of &lt;head&gt; tag** section
 5. Click **Save** and publish your changes
 
-#### 3. Verify Installation
+</Step>
+<Step>
+
+## Verify Installation
 
 Once published, you can verify that Databuddy is working by:
 
@@ -71,28 +109,37 @@ Once published, you can verify that Databuddy is working by:
 3. Checking the Console tab for a "Databuddy initialized" message
 4. Visiting your Databuddy dashboard to see real-time analytics
 
+<Callout type="success">
+If you see real-time data in your dashboard, congratulations! Databuddy is now tracking your Framer site analytics.
+</Callout>
+
+</Step>
+</Steps>
+
 ## Advanced Features
 
 ### Custom Event Tracking
 
 Track custom interactions in your Framer components using data attributes:
 
-```html
-<!-- Track button clicks -->
+<CodeBlock
+  language="html"
+  code={`<!-- Track button clicks -->
 <button data-track="cta_clicked" data-button-type="primary">Get Started</button>
 
 <!-- Track form submissions -->
 <form data-track="newsletter_signup" data-form-location="header">
   <!-- form content -->
-</form>
-```
+</form>`}
+/>
 
 ### Performance Monitoring
 
 Enable performance tracking by updating your script configuration:
 
-```html
-<script>
+<CodeBlock
+  language="html"
+  code={`<script>
   (function () {
     var script = document.createElement("script");
     script.async = true;
@@ -104,8 +151,8 @@ Enable performance tracking by updating your script configuration:
     script.setAttribute("data-track-errors", "true");
     document.head.appendChild(script);
   })();
-</script>
-```
+</script>`}
+/>
 
 ## Benefits for Framer Sites
 
@@ -123,29 +170,35 @@ Enable performance tracking by updating your script configuration:
 
 ### Plugin Issues
 
+<Callout type="warning">
 If the plugin isn't working:
 
 1. Ensure you've entered the correct Client ID
 2. Verify your site is published (not just preview mode)
 3. Check that the plugin is enabled in your Framer project settings
 4. For self-hosted setups, verify your CDN and Dashboard URLs are correct
+</Callout>
 
 ### Script Not Loading
 
+<Callout type="warning">
 If Databuddy isn't working:
 
 1. Ensure the script is in the **Start of &lt;head&gt; tag** section
 2. Check that your Client ID is correct
 3. Verify your site is published (not just preview mode)
 4. Check browser console for any error messages
+</Callout>
 
 ### Data Not Appearing
 
+<Callout type="info">
 If analytics data isn't showing:
 
 1. Wait 2-3 minutes for data processing
 2. Check that your domain is verified in Databuddy dashboard
 3. Ensure you're viewing the correct date range
 4. Try visiting your site in an incognito window
+</Callout>
 
 Need help? Contact our support team at [help@databuddy.cc](mailto:help@databuddy.cc).
