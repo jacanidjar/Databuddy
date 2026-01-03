@@ -27,7 +27,7 @@ type User = {
 };
 
 type ProfileButtonClientProps = {
-	user: User;
+user: User
 };
 
 export function ProfileButtonClient({ user }: ProfileButtonClientProps) {
