@@ -323,6 +323,24 @@ SETTINGS index_granularity = 8192
 `;
 
 /**
+ * Daily aggregated pageviews for mini-charts
+ */
+const CREATE_DAILY_PAGEVIEWS_TABLE = `
+CREATE TABLE IF NOT EXISTS ${DATABASES.ANALYTICS}.daily_pageviews (
+  client_id String CODEC(ZSTD(1)),
+  date Date CODEC(Delta(2), ZSTD(1)),
+  
+  pageviews UInt64 CODEC(ZSTD(1)),
+  
+  INDEX idx_client_id client_id TYPE bloom_filter(0.01) GRANULARITY 1
+) ENGINE = SummingMergeTree
+PARTITION BY toYYYYMM(date)
+ORDER BY (client_id, date)
+TTL toDateTime(date) + INTERVAL 1 YEAR
+SETTINGS index_granularity = 8192
+`;
+
+/**
  * Materialized view for custom events hourly aggregation
  */
 const CREATE_CUSTOM_EVENTS_HOURLY_MV = `
@@ -338,6 +356,20 @@ AS SELECT
   uniqState(session_id) AS unique_sessions
 FROM ${DATABASES.ANALYTICS}.custom_event_spans
 GROUP BY client_id, path, event_name, hour
+`;
+
+/**
+ * Materialized view for daily pageviews aggregation
+ */
+const CREATE_DAILY_PAGEVIEWS_MV = `
+CREATE MATERIALIZED VIEW IF NOT EXISTS ${DATABASES.ANALYTICS}.daily_pageviews_mv
+TO ${DATABASES.ANALYTICS}.daily_pageviews
+AS SELECT
+  client_id,
+  toDate(time) AS date,
+  countIf(event_name = 'screen_view') AS pageviews
+FROM ${DATABASES.ANALYTICS}.events
+GROUP BY client_id, date
 `;
 
 const CREATE_CUSTOM_OUTGOING_LINKS_TABLE = `
@@ -566,6 +598,15 @@ export interface CustomEventsHourlyAggregate {
 	unique_sessions: number;
 }
 
+/**
+ * Daily pageviews aggregate type
+ */
+export interface DailyPageviewsAggregate {
+	client_id: string;
+	date: string;
+	pageviews: number;
+}
+
 export interface CustomOutgoingLink {
 	id: string;
 	client_id: string;
@@ -718,6 +759,7 @@ export async function initClickHouseSchema() {
 				name: "custom_events_hourly",
 				query: CREATE_CUSTOM_EVENTS_HOURLY_TABLE,
 			},
+			{ name: "daily_pageviews", query: CREATE_DAILY_PAGEVIEWS_TABLE },
 			{ name: "blocked_traffic", query: CREATE_BLOCKED_TRAFFIC_TABLE },
 			{ name: "email_events", query: CREATE_EMAIL_EVENTS_TABLE },
 			{ name: "outgoing_links", query: CREATE_CUSTOM_OUTGOING_LINKS_TABLE },
@@ -732,6 +774,7 @@ export async function initClickHouseSchema() {
 				name: "custom_events_hourly_mv",
 				query: CREATE_CUSTOM_EVENTS_HOURLY_MV,
 			},
+			{ name: "daily_pageviews_mv", query: CREATE_DAILY_PAGEVIEWS_MV },
 		];
 
 		// Uptime tables

@@ -174,21 +174,10 @@ const fetchChartData = async (
       date_range AS (
         SELECT arrayJoin(arrayMap(d -> toDate(today()) - d, range(7))) AS date
       ),
-      daily_pageviews AS (
-        SELECT
-          client_id,
-          toDate(time) as event_date,
-          countIf(event_name = 'screen_view') as pageviews
-        FROM analytics.events
-        WHERE
-          client_id IN {websiteIds:Array(String)}
-          AND toDate(time) >= (today() - 6)
-        GROUP BY client_id, event_date
-      ),
       has_any_data AS (
         SELECT client_id, 1 AS hasData
-        FROM analytics.events
-        WHERE client_id IN {websiteIds:Array(String)} AND event_name = 'screen_view'
+        FROM analytics.daily_pageviews
+        WHERE client_id IN {websiteIds:Array(String)} AND pageviews > 0
         GROUP BY client_id
       )
     SELECT
@@ -201,9 +190,11 @@ const fetchChartData = async (
     CROSS JOIN
       date_range
     LEFT JOIN
-      daily_pageviews ON all_websites.website_id = daily_pageviews.client_id AND date_range.date = daily_pageviews.event_date
+      analytics.daily_pageviews ON all_websites.website_id = daily_pageviews.client_id AND date_range.date = daily_pageviews.date
     LEFT JOIN
       has_any_data ON all_websites.website_id = has_any_data.client_id
+    WHERE
+      date_range.date >= (today() - 6)
     ORDER BY
       websiteId,
       date ASC
