@@ -9,6 +9,7 @@ import { flagSchedulesRouter } from "./routers/flag-schedules";
 import { flagsRouter } from "./routers/flags";
 import { funnelsRouter } from "./routers/funnels";
 import { goalsRouter } from "./routers/goals";
+import { insightsRouter } from "./routers/insights";
 import { miniChartsRouter } from "./routers/mini-charts";
 import { organizationsRouter } from "./routers/organizations";
 import { preferencesRouter } from "./routers/preferences";
@@ -36,6 +37,7 @@ export const appRouter = {
 	export: exportRouter,
 	sso: ssoRouter,
 	uptime: uptimeRouter,
+	insights: insightsRouter,
 };
 
 export type AppRouter = typeof appRouter;

@@ -15,11 +15,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { WebsiteDialog } from "@/components/website-dialog";
 import { useGlobalAnalytics } from "@/hooks/use-global-analytics";
 import { usePulseStatus } from "@/hooks/use-pulse-status";
+import { useSmartInsights } from "@/hooks/use-smart-insights";
 import { useWebsites } from "@/hooks/use-websites";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "../websites/_components/page-header";
 import { WebsiteCard } from "../websites/_components/website-card";
-import { HighlightsSection } from "./_components/highlights-section";
+import { SmartInsightsSection } from "./_components/smart-insights-section";
 import { SummaryStats } from "./_components/summary-stats";
 
 function WebsiteCardSkeleton() {
@@ -66,8 +67,6 @@ export default function HomePage() {
 		averageTrend,
 		trendDirection,
 		websiteCount,
-		topPerformers,
-		needsSetup,
 	} = useGlobalAnalytics();
 
 	const {
@@ -76,6 +75,8 @@ export default function HomePage() {
 		healthPercentage,
 		isLoading: isPulseLoading,
 	} = usePulseStatus();
+
+	const { insights, isLoading: isInsightsLoading } = useSmartInsights();
 
 	return (
 		<div className="flex h-full flex-col">
@@ -134,14 +135,11 @@ export default function HomePage() {
 					websiteCount={websiteCount}
 				/>
 
-				{/* Highlights */}
-				{!isLoading && (topPerformers.length > 0 || needsSetup.length > 0) && (
-					<HighlightsSection
-						isLoading={isLoading}
-						needsSetup={needsSetup}
-						topPerformers={topPerformers}
-					/>
-				)}
+				{/* Smart Insights */}
+				<SmartInsightsSection
+					insights={insights}
+					isLoading={isLoading || isInsightsLoading}
+				/>
 
 				{/* Websites Section */}
 				<div className="space-y-4">
