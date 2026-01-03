@@ -109,7 +109,9 @@ export class CoreFlagsManager implements FlagsManager {
 	private removeStaleKeys(validKeys: Set<string>, user?: UserContext): void {
 		const ctx = user ?? this.config.user;
 		const suffix =
-			ctx?.userId || ctx?.email ? `:${ctx.userId ?? ""}:${ctx.email ?? ""}` : "";
+			ctx?.userId || ctx?.email
+				? `:${ctx.userId ?? ""}:${ctx.email ?? ""}`
+				: "";
 
 		for (const key of this.cache.keys()) {
 			const belongsToUser = suffix ? key.endsWith(suffix) : !key.includes(":");
