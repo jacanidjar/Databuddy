@@ -1,7 +1,7 @@
 "use client";
 
 import { GATED_FEATURES } from "@databuddy/shared/types/features";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import { useParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
@@ -41,6 +41,7 @@ const FlagsListSkeleton = () => (
 export default function FlagsPage() {
 	const { id } = useParams();
 	const websiteId = id as string;
+	const queryClient = useQueryClient();
 	const [isFlagSheetOpen, setIsFlagSheetOpen] = useAtom(isFlagSheetOpenAtom);
 	const [editingFlag, setEditingFlag] = useState<Flag | null>(null);
 	const [flagToDelete, setFlagToDelete] = useState<Flag | null>(null);
@@ -57,7 +58,9 @@ export default function FlagsPage() {
 	const deleteFlagMutation = useMutation({
 		...orpc.flags.delete.mutationOptions(),
 		onSuccess: () => {
-			orpc.flags.list.key({ input: { websiteId } });
+			queryClient.invalidateQueries({
+				queryKey: orpc.flags.list.key({ input: { websiteId } }),
+			});
 		},
 	});
 
