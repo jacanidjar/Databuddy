@@ -7,6 +7,7 @@ import {
 	flagsToTargetGroups,
 	inArray,
 	isNull,
+	ne,
 	targetGroups,
 } from "@databuddy/db";
 import { createDrizzleCache, redis } from "@databuddy/redis";
@@ -21,11 +22,13 @@ import {
 	handleFlagUpdateDependencyCascading,
 	invalidateFlagCache,
 } from "@databuddy/shared/flags/utils";
+import { GATED_FEATURES } from "@databuddy/shared/types/features";
 import { ORPCError } from "@orpc/server";
 import { randomUUIDv7 } from "bun";
 import { z } from "zod";
 import type { Context } from "../orpc";
 import { protectedProcedure, publicProcedure } from "../orpc";
+import { requireFeature, requireUsageWithinLimit } from "../types/billing";
 import { authorizeWebsiteAccess, isFullyAuthorized } from "../utils/auth";
 import { getCacheAuthContext } from "../utils/cache-keys";
 
@@ -223,7 +226,7 @@ function sanitizeFlagForDemo<T extends FlagWithTargetGroups>(flag: T): T {
 		...flag,
 		rules: Array.isArray(flag.rules) && flag.rules.length > 0 ? [] : flag.rules,
 		targetGroups: flag.targetGroups?.map(
-			(group: { rules?: unknown; [key: string]: unknown }) => ({
+			(group: { rules?: unknown;[key: string]: unknown }) => ({
 				...group,
 				rules:
 					Array.isArray(group.rules) && group.rules.length > 0
@@ -438,7 +441,31 @@ export const flagsRouter = {
 				"update"
 			);
 
-			// Check for circular dependencies
+			// Check if feature flags feature is available on the plan
+			requireFeature(context.billing?.planId, GATED_FEATURES.FEATURE_FLAGS);
+
+			// Count existing flags (excluding archived ones)
+			const existingFlags = await context.db
+				.select({ id: flags.id })
+				.from(flags)
+				.where(
+					and(
+						getScopeCondition(
+							input.websiteId,
+							input.organizationId,
+							context.user.id
+						),
+						isNull(flags.deletedAt),
+						ne(flags.status, "archived")
+					)
+				);
+
+			requireUsageWithinLimit(
+				context.billing?.planId,
+				GATED_FEATURES.FEATURE_FLAGS,
+				existingFlags.length
+			);
+
 			if (input.dependencies && input.dependencies.length > 0) {
 				await checkCircularDependency(
 					context,
@@ -620,6 +647,34 @@ export const flagsRouter = {
 				throw new ORPCError("FORBIDDEN", {
 					message: "Not authorized to update this flag",
 				});
+			}
+
+			const isUnarchiving =
+				flag.status === "archived" &&
+				input.status &&
+				input.status !== "archived";
+
+			if (isUnarchiving) {
+				const existingActiveFlags = await context.db
+					.select({ id: flags.id })
+					.from(flags)
+					.where(
+						and(
+							getScopeCondition(
+								flag.websiteId || undefined,
+								flag.organizationId || undefined,
+								context.user.id
+							),
+							isNull(flags.deletedAt),
+							ne(flags.status, "archived")
+						)
+					);
+
+				requireUsageWithinLimit(
+					context.billing?.planId,
+					GATED_FEATURES.FEATURE_FLAGS,
+					existingActiveFlags.length
+				);
 			}
 
 			// Check for circular dependencies if dependencies are being updated
