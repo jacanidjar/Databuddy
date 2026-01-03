@@ -3,13 +3,13 @@ import dayjs from "dayjs";
 export interface DynamicQueryFilter {
 	field: string;
 	operator:
-	| "eq"
-	| "ne"
-	| "contains"
-	| "not_contains"
-	| "starts_with"
-	| "in"
-	| "not_in";
+		| "eq"
+		| "ne"
+		| "contains"
+		| "not_contains"
+		| "starts_with"
+		| "in"
+		| "not_in";
 	value: string | number | (string | number)[];
 }
 

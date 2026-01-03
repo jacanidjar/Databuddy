@@ -45,21 +45,17 @@ export const invalidateFlagCache = async (
 		flagsCache.invalidateByKey(`byId:${id}:${scope}`),
 	];
 
-	if (clientId) {	
+	if (clientId) {
 		if (key) {
-			invalidations.push(
-				invalidateCacheableWithArgs("flag", [key, clientId])
-			);
+			invalidations.push(invalidateCacheableWithArgs("flag", [key, clientId]));
 		}
-		invalidations.push(
-			invalidateCacheableWithArgs("flags-client", [clientId])
-		);
+		invalidations.push(invalidateCacheableWithArgs("flags-client", [clientId]));
 	}
 
 	await Promise.allSettled(invalidations);
 };
 
-export const getScopeCondition = (	
+export const getScopeCondition = (
 	websiteId?: string | null,
 	organizationId?: string | null,
 	userId?: string
