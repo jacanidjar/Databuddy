@@ -329,7 +329,7 @@ const buildInsights = (
             currentValue: row.currentErrors,
             previousValue: row.previousErrors,
             changePercent: Math.round(changePercent),
-            link: `/websites/${row.websiteId}?tab=errors`,
+            link: `/websites/${row.websiteId}/errors`,
         });
     }
 
@@ -361,7 +361,7 @@ const buildInsights = (
             currentValue: row.currentP75,
             previousValue: row.previousP75,
             changePercent: Math.round(changePercent),
-            link: `/websites/${row.websiteId}?tab=performance`,
+            link: `/websites/${row.websiteId}/vitals`,
         });
     }
 
@@ -388,7 +388,7 @@ const buildInsights = (
             currentValue: row.currentCount,
             previousValue: row.previousCount,
             changePercent: Math.round(changePercent),
-            link: `/websites/${row.websiteId}?tab=events`,
+            link: `/websites/${row.websiteId}/events`,
         });
     }
 
