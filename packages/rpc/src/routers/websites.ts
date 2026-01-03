@@ -311,48 +311,39 @@ export const websitesRouter = {
 
 	listWithCharts: protectedProcedure
 		.input(z.object({ organizationId: z.string().optional() }).default({}))
-		.handler(({ context, input }) => {
-			const chartsListCacheKey = `listWithCharts:${context.user.id}:${input.organizationId || ""}`;
-
-			return websiteCache.withCache({
-				key: chartsListCacheKey,
-				ttl: CACHE_DURATION,
-				tables: ["websites"],
-				queryFn: async () => {
-					if (input.organizationId) {
-						const { success } = await websitesApi.hasPermission({
-							headers: context.headers,
-							body: { permissions: { website: ["read"] } },
-						});
-						if (!success) {
-							throw new ORPCError("FORBIDDEN", {
-								message: "Missing organization permissions.",
-							});
-						}
-					}
-					const whereClause = buildWebsiteFilter(
-						context.user.id,
-						input.organizationId
-					);
-
-					const websites = await context.db.query.websites.findMany({
-						where: whereClause,
-						orderBy: (table, { desc }) => [desc(table.createdAt)],
+		.handler(async ({ context, input }) => {
+			if (input.organizationId) {
+				const { success } = await websitesApi.hasPermission({
+					headers: context.headers,
+					body: { permissions: { website: ["read"] } },
+				});
+				if (!success) {
+					throw new ORPCError("FORBIDDEN", {
+						message: "Missing organization permissions.",
 					});
+				}
+			}
+			const whereClause = buildWebsiteFilter(
+				context.user.id,
+				input.organizationId
+			);
 
-					const websiteIds = websites.map((site) => site.id);
-					const [chartData, activeUsers] = await Promise.all([
-						fetchChartData(websiteIds),
-						fetchActiveUsers(websiteIds),
-					]);
-
-					return {
-						websites,
-						chartData,
-						activeUsers,
-					};
-				},
+			const websites = await context.db.query.websites.findMany({
+				where: whereClause,
+				orderBy: (table, { desc }) => [desc(table.createdAt)],
 			});
+
+			const websiteIds = websites.map((site) => site.id);
+			const [chartData, activeUsers] = await Promise.all([
+				fetchChartData(websiteIds),
+				fetchActiveUsers(websiteIds),
+			]);
+
+			return {
+				websites,
+				chartData,
+				activeUsers,
+			};
 		}),
 
 	getById: publicProcedure
