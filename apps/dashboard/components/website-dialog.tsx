@@ -1,6 +1,5 @@
 "use client";
 
-import { WEBSITE_NAME_REGEX } from "@databuddy/validation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
@@ -46,7 +45,7 @@ const formSchema = z.object({
 		.string()
 		.trim()
 		.min(1, "Name is required")
-		.regex(WEBSITE_NAME_REGEX, "Use alphanumeric, spaces, -, _, or ."),
+		.regex(/^[a-zA-Z0-9\s\-_]+$/, "Use alphanumeric, spaces, -, _"),
 	domain: z
 		.string()
 		.min(1, "Domain is required")
