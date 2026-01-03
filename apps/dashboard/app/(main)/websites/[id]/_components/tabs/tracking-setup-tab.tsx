@@ -386,37 +386,28 @@ function OptionToggle({
 	onToggle: () => void;
 }) {
 	const isEnabled = option.inverted ? !enabled : enabled;
-
-	const handleKeyDown = (event: React.KeyboardEvent) => {
-		if (event.key === "Enter" || event.key === " ") {
-			event.preventDefault();
-			onToggle();
-		}
-	};
+	const switchId = `switch-${option.key}`;
 
 	return (
-		<div
+		<label
 			className={cn(
 				"group flex w-full cursor-pointer items-center gap-3 rounded border p-3 text-left transition-all",
 				"hover:border-primary/50 hover:bg-accent/50",
 				isEnabled && "border-primary/30 bg-primary/5"
 			)}
-			onClick={onToggle}
-			onKeyDown={handleKeyDown}
-			role="button"
-			tabIndex={0}
+			htmlFor={switchId}
 		>
 			<Switch
 				checked={isEnabled}
 				className="shrink-0"
+				id={switchId}
 				onCheckedChange={onToggle}
-				onClick={(e) => e.stopPropagation()}
 			/>
 			<div className="min-w-0 flex-1">
 				<span className="font-medium text-sm">{option.title}</span>
 				<p className="text-muted-foreground text-xs">{option.description}</p>
 			</div>
-		</div>
+		</label>
 	);
 }
 
