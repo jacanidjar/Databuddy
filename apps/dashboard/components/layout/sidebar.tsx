@@ -90,13 +90,17 @@ export function Sidebar({ user = null }: SidebarProps) {
 	const [selectedCategory, setSelectedCategory] = useState<string | undefined>(
 		undefined
 	);
-	const { websites, isLoading: isLoadingWebsites } = useWebsites();
-	const accordionStates = useAccordionStates();
-	const sidebarRef = useRef<HTMLDivElement>(null);
-	const previousFocusRef = useRef<HTMLElement | null>(null);
 
 	const isDemo = pathname.startsWith("/demo");
 	const isWebsite = pathname.startsWith("/websites/");
+	const enabled = !isDemo;
+
+	const { websites, isLoading: isLoadingWebsites } = useWebsites({
+		enabled,
+	});
+	const accordionStates = useAccordionStates();
+	const sidebarRef = useRef<HTMLDivElement>(null);
+	const previousFocusRef = useRef<HTMLElement | null>(null);
 
 	const websiteId = useMemo(
 		() => (isDemo || isWebsite ? pathname.split("/")[2] : null),

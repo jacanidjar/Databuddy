@@ -67,9 +67,9 @@ function getAccessibleWebsites(authCtx: AuthContext) {
 				? eq(websites.organizationId, authCtx.apiKey.organizationId)
 				: authCtx.apiKey.userId
 					? and(
-							eq(websites.userId, authCtx.apiKey.userId),
-							isNull(websites.organizationId)
-						)
+						eq(websites.userId, authCtx.apiKey.userId),
+						isNull(websites.organizationId)
+					)
 					: eq(websites.id, "");
 			return db
 				.select(select)
@@ -90,6 +90,56 @@ function getAccessibleWebsites(authCtx: AuthContext) {
 	}
 
 	return [];
+}
+
+async function verifyWebsiteAccess(
+	ctx: AuthContext,
+	websiteId: string
+): Promise<boolean> {
+	if (!ctx.isAuthenticated) {
+		return false;
+	}
+
+	const website = await db.query.websites.findFirst({
+		where: eq(websites.id, websiteId),
+		columns: {
+			id: true,
+			isPublic: true,
+			userId: true,
+			organizationId: true,
+		},
+	});
+
+	if (!website) {
+		return false;
+	}
+
+	if (website.isPublic) {
+		return true;
+	}
+
+	if (ctx.apiKey) {
+		if (hasGlobalAccess(ctx.apiKey)) {
+			if (ctx.apiKey.organizationId) {
+				return website.organizationId === ctx.apiKey.organizationId;
+			}
+			if (ctx.apiKey.userId) {
+				return (
+					website.userId === ctx.apiKey.userId && !website.organizationId
+				);
+			}
+			return false;
+		}
+
+		const accessibleIds = getAccessibleWebsiteIds(ctx.apiKey);
+		return accessibleIds.includes(websiteId);
+	}
+
+	if (ctx.user) {
+		return website.userId === ctx.user.id && !website.organizationId;
+	}
+
+	return false;
 }
 
 const MS_PER_DAY = 86_400_000;
@@ -116,12 +166,12 @@ function getTimeUnit(
 type ParamInput =
 	| string
 	| {
-			name: string;
-			start_date?: string;
-			end_date?: string;
-			granularity?: string;
-			id?: string;
-	  };
+		name: string;
+		start_date?: string;
+		end_date?: string;
+		granularity?: string;
+		id?: string;
+	};
 
 function parseParam(p: ParamInput) {
 	if (typeof p === "string") {
@@ -200,10 +250,30 @@ export const query = new Elysia({ prefix: "/v1/query" })
 		async ({
 			body,
 			query: q,
+			auth: ctx,
 		}: {
 			body: CompileRequestType;
 			query: { website_id?: string; timezone?: string };
+			auth: AuthContext;
 		}) => {
+			if (!ctx.isAuthenticated) {
+				return AUTH_FAILED;
+			}
+
+			if (q.website_id) {
+				const hasAccess = await verifyWebsiteAccess(ctx, q.website_id);
+				if (!hasAccess) {
+					return new Response(
+						JSON.stringify({
+							success: false,
+							error: "Access denied to this website",
+							code: "ACCESS_DENIED",
+						}),
+						{ status: 403, headers: { "Content-Type": "application/json" } }
+					);
+				}
+			}
+
 			try {
 				const domain = q.website_id
 					? await getWebsiteDomain(q.website_id)
@@ -227,11 +297,28 @@ export const query = new Elysia({ prefix: "/v1/query" })
 		({
 			body,
 			query: q,
+			auth: ctx,
 		}: {
 			body: DynamicQueryRequestType | DynamicQueryRequestType[];
 			query: { website_id?: string; timezone?: string };
+			auth: AuthContext;
 		}) =>
 			record("executeQuery", async () => {
+				if (!ctx.isAuthenticated) {
+					return AUTH_FAILED;
+				}
+
+				if (q.website_id) {
+					const hasAccess = await verifyWebsiteAccess(ctx, q.website_id);
+					if (!hasAccess) {
+						return {
+							success: false,
+							error: "Access denied to this website",
+							code: "ACCESS_DENIED",
+						};
+					}
+				}
+
 				const tz = q.timezone || "UTC";
 				const isBatch = Array.isArray(body);
 				setAttributes({

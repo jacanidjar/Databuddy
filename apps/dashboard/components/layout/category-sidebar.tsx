@@ -52,7 +52,10 @@ export function CategorySidebar({
 	user = null,
 }: CategorySidebarProps) {
 	const pathname = usePathname();
-	const { websites, isLoading: isLoadingWebsites } = useWebsites();
+	const isDemo = pathname.startsWith("/demo");
+	const { websites, isLoading: isLoadingWebsites } = useWebsites({
+		enabled: !isDemo,
+	});
 	const [helpOpen, setHelpOpen] = useState(false);
 	const { isOn } = useFlags();
 
