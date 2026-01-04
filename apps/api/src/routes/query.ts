@@ -1,5 +1,5 @@
 import { auth } from "@databuddy/auth";
-import { and, db, eq, inArray, isNull, websites } from "@databuddy/db";
+import { and, db, eq, inArray, isNull, member, websites } from "@databuddy/db";
 import { filterOptions } from "@databuddy/shared/lists/filters";
 import { Elysia, t } from "elysia";
 import {
@@ -136,7 +136,27 @@ async function verifyWebsiteAccess(
 	}
 
 	if (ctx.user) {
-		return website.userId === ctx.user.id && !website.organizationId;
+		// Direct ownership (personal websites)
+		if (website.userId === ctx.user.id && !website.organizationId) {
+			return true;
+		}
+
+		// Organization access - check if user is a member of the website's organization
+		if (website.organizationId) {
+			const membership = await db.query.member.findFirst({
+				where: and(
+					eq(member.userId, ctx.user.id),
+					eq(member.organizationId, website.organizationId)
+				),
+				columns: {
+					id: true,
+				},
+			});
+
+			return !!membership;
+		}
+
+		return false;
 	}
 
 	return false;
