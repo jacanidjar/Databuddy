@@ -11,7 +11,6 @@ import {
 
 const SAMPLE_SIZE = 500;
 const randomId = () => Math.random().toString(36).slice(2, 15);
-const randomEmail = () => `${randomId()}@${randomId()}.com`;
 
 describe("hashString", () => {
 	it("is deterministic and non-negative across many inputs", () => {
@@ -223,9 +222,13 @@ describe("selectVariant", () => {
 	it("provides sticky assignment across many users", () => {
 		const flag = {
 			key: "exp-1",
+			type: "multivariant" as const,
+			status: "active" as const,
+			defaultValue: false,
+			rolloutPercentage: null,
 			variants: [
-				{ key: "a", value: "A", weight: 50 },
-				{ key: "b", value: "B", weight: 50 },
+				{ key: "a", value: "A", weight: 50, type: "string" as const },
+				{ key: "b", value: "B", weight: 50, type: "string" as const },
 			],
 		};
 
@@ -236,16 +239,20 @@ describe("selectVariant", () => {
 			expect(r1.variant).toBe(r2.variant);
 			expect(r1.value).toBe(r2.value);
 			expect(["a", "b"]).toContain(r1.variant);
-			expect(["A", "B"]).toContain(r1.value);
+			expect(["A", "B"]).toContain(r1.value as string);
 		}
 	});
 
 	it("distributes variants roughly according to weights", () => {
 		const flag = {
 			key: "weighted",
+			type: "multivariant" as const,
+			status: "active" as const,
+			defaultValue: false,
+			rolloutPercentage: null,
 			variants: [
-				{ key: "heavy", value: 1, weight: 80 },
-				{ key: "light", value: 2, weight: 20 },
+				{ key: "heavy", value: 1, weight: 80, type: "number" as const },
+				{ key: "light", value: 2, weight: 20, type: "number" as const },
 			],
 		};
 
@@ -261,15 +268,29 @@ describe("selectVariant", () => {
 
 	it("handles edge cases", () => {
 		expect(
-			selectVariant({ key: "x", defaultValue: true, variants: [] }, {})
+			selectVariant(
+				{
+					key: "x",
+					type: "multivariant" as const,
+					status: "active" as const,
+					defaultValue: true,
+					rolloutPercentage: null,
+					variants: [],
+				},
+				{}
+			)
 		).toEqual({ value: true, variant: "default" });
 
 		const noWeights = {
 			key: "nw",
+			type: "multivariant" as const,
+			status: "active" as const,
+			defaultValue: false,
+			rolloutPercentage: null,
 			variants: [
-				{ key: "a", value: 1 },
-				{ key: "b", value: 2 },
-				{ key: "c", value: 3 },
+				{ key: "a", value: 1, type: "number" as const },
+				{ key: "b", value: 2, type: "number" as const },
+				{ key: "c", value: 3, type: "number" as const },
 			],
 		};
 		const r = selectVariant(noWeights, { userId: "test" });
@@ -281,14 +302,26 @@ describe("evaluateFlag", () => {
 	it("handles boolean flags with defaults", () => {
 		expect(
 			evaluateFlag(
-				{ key: "f", type: "boolean", defaultValue: true, status: "active" },
+				{
+					key: "f",
+					type: "boolean",
+					defaultValue: true,
+					status: "active",
+					rolloutPercentage: null,
+				},
 				{}
 			)
 		).toMatchObject({ enabled: true, reason: "BOOLEAN_DEFAULT" });
 
 		expect(
 			evaluateFlag(
-				{ key: "f", type: "boolean", defaultValue: false, status: "active" },
+				{
+					key: "f",
+					type: "boolean",
+					defaultValue: false,
+					status: "active",
+					rolloutPercentage: null,
+				},
 				{}
 			)
 		).toMatchObject({ enabled: false, reason: "BOOLEAN_DEFAULT" });
@@ -297,20 +330,21 @@ describe("evaluateFlag", () => {
 	it("matches rules in priority order", () => {
 		const flag = {
 			key: "r",
-			type: "boolean",
+			type: "boolean" as const,
 			defaultValue: false,
-			status: "active",
+			status: "active" as const,
+			rolloutPercentage: null,
 			payload: { x: 1 },
 			rules: [
 				{
-					type: "user_id",
+					type: "user_id" as const,
 					operator: "equals",
 					value: "vip",
 					enabled: true,
 					batch: false,
 				},
 				{
-					type: "email",
+					type: "email" as const,
 					operator: "contains",
 					value: "@admin",
 					enabled: false,
@@ -340,11 +374,13 @@ describe("evaluateFlag", () => {
 	it("handles multivariant flags", () => {
 		const flag = {
 			key: "mv",
-			type: "multivariant",
-			status: "active",
+			type: "multivariant" as const,
+			status: "active" as const,
+			defaultValue: false,
+			rolloutPercentage: null,
 			variants: [
-				{ key: "a", value: "A", weight: 50 },
-				{ key: "b", value: "B", weight: 50 },
+				{ key: "a", value: "A", weight: 50, type: "string" as const },
+				{ key: "b", value: "B", weight: 50, type: "string" as const },
 			],
 			payload: { exp: true },
 		};
@@ -353,7 +389,7 @@ describe("evaluateFlag", () => {
 			const r = evaluateFlag(flag, { userId: randomId() });
 			expect(r.enabled).toBe(true);
 			expect(r.reason).toBe("MULTIVARIANT_EVALUATED");
-			expect(["A", "B"]).toContain(r.value);
+			expect(["A", "B"]).toContain(r.value as string);
 			expect(r.payload).toEqual({ exp: true });
 		}
 	});
@@ -374,10 +410,10 @@ describe("rollout distribution", () => {
 					evaluateFlag(
 						{
 							key: `${label}-0`,
-							type: "rollout",
+							type: "rollout" as const,
 							rolloutPercentage: 0,
 							rolloutBy,
-							status: "active",
+							status: "active" as const,
 							defaultValue: false,
 						},
 						ctx
@@ -388,10 +424,10 @@ describe("rollout distribution", () => {
 					evaluateFlag(
 						{
 							key: `${label}-100`,
-							type: "rollout",
+							type: "rollout" as const,
 							rolloutPercentage: 100,
 							rolloutBy,
-							status: "active",
+							status: "active" as const,
 							defaultValue: false,
 						},
 						ctx
@@ -403,10 +439,10 @@ describe("rollout distribution", () => {
 		it(`${label}-based: 50% distributes ~50%`, () => {
 			const flag = {
 				key: `${label}-50`,
-				type: "rollout",
+				type: "rollout" as const,
 				rolloutPercentage: 50,
 				rolloutBy,
-				status: "active",
+				status: "active" as const,
 				defaultValue: false,
 			};
 
@@ -423,10 +459,10 @@ describe("rollout distribution", () => {
 		it(`${label}-based: sticky assignment`, () => {
 			const flag = {
 				key: `${label}-sticky`,
-				type: "rollout",
+				type: "rollout" as const,
 				rolloutPercentage: 50,
 				rolloutBy,
-				status: "active",
+				status: "active" as const,
 				defaultValue: false,
 			};
 
@@ -445,16 +481,20 @@ describe("rollout distribution", () => {
 	it("falls back to anonymous when identifier missing", () => {
 		const orgFlag = {
 			key: "org-no-id",
-			type: "rollout",
+			type: "rollout" as const,
 			rolloutPercentage: 50,
-			rolloutBy: "organization",
-			status: "active",
+			rolloutBy: "organization" as const,
+			status: "active" as const,
 			defaultValue: false,
 		};
 		const r = evaluateFlag(orgFlag, { userId: "x" });
 		expect(r.reason).toMatch(/ROLLOUT/);
 
-		const teamFlag = { ...orgFlag, rolloutBy: "team", key: "team-no-id" };
+		const teamFlag = {
+			...orgFlag,
+			rolloutBy: "team" as const,
+			key: "team-no-id",
+		};
 		const r2 = evaluateFlag(teamFlag, { userId: "x" });
 		expect(r2.reason).toMatch(/ROLLOUT/);
 	});
@@ -464,13 +504,14 @@ describe("target groups", () => {
 	it("matches target group rules and respects priority", () => {
 		const flag = {
 			key: "tg",
-			type: "boolean",
+			type: "boolean" as const,
 			defaultValue: false,
-			status: "active",
+			status: "active" as const,
+			rolloutPercentage: null,
 			payload: { beta: true },
 			rules: [
 				{
-					type: "user_id",
+					type: "user_id" as const,
 					operator: "equals",
 					value: "direct",
 					enabled: true,
@@ -482,7 +523,7 @@ describe("target groups", () => {
 					id: "g1",
 					rules: [
 						{
-							type: "email",
+							type: "email" as const,
 							operator: "ends_with",
 							value: "@beta.com",
 							enabled: true,
@@ -494,7 +535,7 @@ describe("target groups", () => {
 					id: "g2",
 					rules: [
 						{
-							type: "property",
+							type: "property" as const,
 							operator: "equals",
 							field: "plan",
 							value: "pro",
@@ -507,7 +548,7 @@ describe("target groups", () => {
 					id: "blocklist",
 					rules: [
 						{
-							type: "email",
+							type: "email" as const,
 							operator: "contains",
 							value: "@blocked",
 							enabled: false,
@@ -551,16 +592,17 @@ describe("target groups", () => {
 	it("handles batch rules in target groups", () => {
 		const flag = {
 			key: "tg-batch",
-			type: "boolean",
+			type: "boolean" as const,
 			defaultValue: false,
-			status: "active",
+			status: "active" as const,
+			rolloutPercentage: null,
 			rules: [],
 			resolvedTargetGroups: [
 				{
 					id: "allow",
 					rules: [
 						{
-							type: "user_id",
+							type: "user_id" as const,
 							operator: "in",
 							batch: true,
 							batchValues: ["u1", "u2", "u3"],
@@ -614,9 +656,9 @@ describe("edge cases and stress tests", () => {
 
 		const flag = {
 			key: "special",
-			type: "rollout",
+			type: "rollout" as const,
 			rolloutPercentage: 50,
-			status: "active",
+			status: "active" as const,
 			defaultValue: false,
 		};
 
@@ -630,9 +672,9 @@ describe("edge cases and stress tests", () => {
 	it("handles rapid sequential evaluations", () => {
 		const flag = {
 			key: "rapid",
-			type: "rollout",
+			type: "rollout" as const,
 			rolloutPercentage: 50,
-			status: "active",
+			status: "active" as const,
 			defaultValue: false,
 		};
 
@@ -651,14 +693,26 @@ describe("edge cases and stress tests", () => {
 
 			expect(
 				evaluateFlag(
-					{ key: "z", type: "rollout", rolloutPercentage: 0, status: "active", defaultValue: false },
+					{
+						key: "z",
+						type: "rollout" as const,
+						rolloutPercentage: 0,
+						status: "active" as const,
+						defaultValue: false,
+					},
 					ctx
 				).enabled
 			).toBe(false);
 
 			expect(
 				evaluateFlag(
-					{ key: "h", type: "rollout", rolloutPercentage: 100, status: "active", defaultValue: false },
+					{
+						key: "h",
+						type: "rollout" as const,
+						rolloutPercentage: 100,
+						status: "active" as const,
+						defaultValue: false,
+					},
 					ctx
 				).enabled
 			).toBe(true);
@@ -668,9 +722,9 @@ describe("edge cases and stress tests", () => {
 		for (const pct of [10, 25, 50, 75, 90]) {
 			const flag = {
 				key: `pct-${pct}`,
-				type: "rollout",
+				type: "rollout" as const,
 				rolloutPercentage: pct,
-				status: "active",
+				status: "active" as const,
 				defaultValue: false,
 			};
 
@@ -692,12 +746,13 @@ describe("edge cases and stress tests", () => {
 	it("complex nested context properties", () => {
 		const flag = {
 			key: "nested",
-			type: "boolean",
+			type: "boolean" as const,
 			defaultValue: false,
-			status: "active",
+			status: "active" as const,
+			rolloutPercentage: null,
 			rules: [
 				{
-					type: "property",
+					type: "property" as const,
 					operator: "exists",
 					field: "meta",
 					enabled: true,
