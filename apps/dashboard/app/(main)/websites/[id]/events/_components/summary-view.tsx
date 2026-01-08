@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { parseAsString, useQueryState } from "nuqs";
 import { useMemo } from "react";
+import { EmptyState } from "@/components/empty-state";
 import {
 	Select,
 	SelectContent,
@@ -60,14 +61,13 @@ export function SummaryView({
 
 	if (events.length === 0) {
 		return (
-			<div className="flex flex-col items-center justify-center py-12 text-center">
-				<ChartBarIcon
-					className="size-10 text-muted-foreground/40"
-					weight="duotone"
+			<div className="flex flex-1 items-center justify-center py-12">
+				<EmptyState
+					description="No aggregatable properties found"
+					icon={<ChartBarIcon />}
+					title="No properties"
+					variant="minimal"
 				/>
-				<p className="mt-3 text-muted-foreground text-sm">
-					No aggregatable properties found
-				</p>
 			</div>
 		);
 	}
@@ -126,17 +126,13 @@ export function SummaryView({
 			)}
 
 			{activeEvent && activeEvent.summaryProperties.length === 0 && (
-				<div className="flex flex-col items-center justify-center py-12 text-center">
-					<ListBulletsIcon
-						className="size-8 text-muted-foreground/40"
-						weight="duotone"
+				<div className="flex flex-1 items-center justify-center py-12">
+					<EmptyState
+						description="This event has no aggregatable properties. Check the Stream tab for individual event details."
+						icon={<ListBulletsIcon />}
+						title="No aggregatable properties"
+						variant="minimal"
 					/>
-					<p className="mt-3 text-muted-foreground text-sm">
-						This event has no aggregatable properties.
-					</p>
-					<p className="text-muted-foreground/60 text-xs">
-						Check the Stream tab for individual event details.
-					</p>
 				</div>
 			)}
 		</div>

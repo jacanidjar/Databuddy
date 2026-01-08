@@ -24,6 +24,7 @@ import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -656,28 +657,37 @@ export default function EventsStreamPage() {
 
 	if (isError) {
 		return (
-			<div className="flex h-full flex-col items-center justify-center py-24 text-center text-muted-foreground">
-				<LightningIcon className="mb-4 size-12 opacity-50" weight="duotone" />
-				<p className="mb-2 font-medium text-lg">Failed to load events</p>
-				<p className="text-sm">
-					{error?.message || "There was an error loading the events"}
-				</p>
+			<div className="flex flex-1 items-center justify-center py-16">
+				<EmptyState
+					description={
+						error?.message || "There was an error loading the events"
+					}
+					icon={<LightningIcon />}
+					title="Failed to load events"
+					variant="error"
+				/>
 			</div>
 		);
 	}
 
 	if (!allEvents || allEvents.length === 0) {
 		return (
-			<div className="flex h-full flex-col items-center justify-center py-24 text-center text-muted-foreground">
-				<LightningIcon className="mb-4 size-12 opacity-50" weight="duotone" />
-				<p className="mb-2 font-medium text-lg">No events yet</p>
-				<p className="mx-auto max-w-md text-balance text-sm">
-					Events will appear here once your tracker starts collecting them. Use{" "}
-					<code className="rounded bg-muted px-1 py-0.5 text-xs">
-						databuddy.track()
-					</code>{" "}
-					to send custom events.
-				</p>
+			<div className="flex flex-1 items-center justify-center py-16">
+				<EmptyState
+					description={
+						<>
+							Events will appear here once your tracker starts collecting them.
+							Use{" "}
+							<code className="rounded bg-muted px-1 py-0.5 text-xs">
+								databuddy.track()
+							</code>{" "}
+							to send custom events.
+						</>
+					}
+					icon={<LightningIcon />}
+					title="No events yet"
+					variant="minimal"
+				/>
 			</div>
 		);
 	}

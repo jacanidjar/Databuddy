@@ -11,6 +11,7 @@ import dayjs from "dayjs";
 import { useAtom } from "jotai";
 import { use, useCallback, useMemo } from "react";
 import { StatCard } from "@/components/analytics";
+import { EmptyState } from "@/components/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useChartPreferences } from "@/hooks/use-chart-preferences";
 import { useDateFilters } from "@/hooks/use-date-filters";
@@ -184,20 +185,22 @@ export function EventsPageContent({ params }: EventsPageContentProps) {
 			{isLoading ? (
 				<EventsLoadingSkeleton />
 			) : summary.total_events === 0 ? (
-				<div className="rounded border bg-card p-8 text-center">
-					<LightningIcon
-						className="mx-auto size-12 text-muted-foreground/40"
-						weight="duotone"
+				<div className="flex flex-1 items-center justify-center py-16">
+					<EmptyState
+						description={
+							<>
+								Events will appear here once your tracker starts collecting
+								them. Use{" "}
+								<code className="rounded bg-muted px-1 py-0.5 text-xs">
+									databuddy.track()
+								</code>{" "}
+								to send custom events.
+							</>
+						}
+						icon={<LightningIcon />}
+						title="No events yet"
+						variant="minimal"
 					/>
-					<h3 className="mt-4 font-medium text-foreground">No events yet</h3>
-					<p className="mx-auto mt-1 max-w-md text-balance text-muted-foreground text-sm">
-						Events will appear here once your tracker starts collecting them.
-						Use{" "}
-						<code className="rounded bg-muted px-1 py-0.5 text-xs">
-							databuddy.track()
-						</code>{" "}
-						to send custom events.
-					</p>
 				</div>
 			) : (
 				<>
