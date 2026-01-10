@@ -5,11 +5,7 @@ import {
 	getTableDefinition,
 } from "@databuddy/shared/schema/analytics-tables";
 import type { CustomQueryConfig } from "@databuddy/shared/types/custom-query";
-import {
-	AGGREGATE_FUNCTIONS,
-	type AggregateFunction,
-} from "@databuddy/shared/types/custom-query";
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { Label } from "@/components/ui/label";
 import {
 	Select,
@@ -18,6 +14,60 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+
+/**
+ * Smart metric options - pre-configured combinations that make sense
+ */
+interface MetricOption {
+	id: string;
+	label: string;
+	aggregate: "count" | "sum" | "avg" | "max" | "min" | "uniq";
+	field: string;
+}
+
+function getMetricOptionsForTable(tableName: string): MetricOption[] {
+	const table = getTableDefinition(tableName);
+	if (!table) {
+		return [];
+	}
+
+	const options: MetricOption[] = [
+		// Always available
+		{ id: "count_all", label: "Total Count", aggregate: "count", field: "*" },
+	];
+
+	// Add unique counts for string fields
+	for (const col of table.columns) {
+		if (col.type === "string" && col.filterable) {
+			options.push({
+				id: `uniq_${col.name}`,
+				label: `Unique ${col.label}`,
+				aggregate: "uniq",
+				field: col.name,
+			});
+		}
+	}
+
+	// Add numeric aggregates
+	for (const col of table.columns) {
+		if (col.type === "number" && col.aggregatable) {
+			options.push({
+				id: `sum_${col.name}`,
+				label: `Total ${col.label}`,
+				aggregate: "sum",
+				field: col.name,
+			});
+			options.push({
+				id: `avg_${col.name}`,
+				label: `Average ${col.label}`,
+				aggregate: "avg",
+				field: col.name,
+			});
+		}
+	}
+
+	return options;
+}
 
 interface CustomQueryBuilderProps {
 	value: CustomQueryConfig | null;
@@ -35,108 +85,70 @@ export function CustomQueryBuilder({
 			ANALYTICS_TABLES.map((t) => ({
 				name: t.name,
 				label: t.label,
-				description: t.description,
 			})),
 		[]
 	);
 
-	const columns = useMemo(() => {
+	const metricOptions = useMemo(
+		() => (value?.table ? getMetricOptionsForTable(value.table) : []),
+		[value?.table]
+	);
+
+	// Get current metric ID from value
+	const currentMetricId = useMemo(() => {
+		if (!value?.selects?.length) {
+			return "";
+		}
+		const sel = value.selects.at(0);
+		if (!sel) {
+			return "";
+		}
+		return `${sel.aggregate}_${sel.field === "*" ? "all" : sel.field}`;
+	}, [value?.selects]);
+
+	const handleTableChange = (tableName: string) => {
+		onChangeAction({
+			table: tableName,
+			selects: [{ field: "*", aggregate: "count", alias: "Total Count" }],
+		});
+	};
+
+	const handleMetricChange = (metricId: string) => {
 		if (!value?.table) {
-			return [];
+			return;
 		}
-		const table = getTableDefinition(value.table);
-		if (!table) {
-			return [];
+		const metric = metricOptions.find((m) => m.id === metricId);
+		if (!metric) {
+			return;
 		}
-		return table.columns.filter((c) => c.aggregatable || c.type === "string");
-	}, [value?.table]);
-
-	const handleTableChange = useCallback(
-		(tableName: string) => {
-			onChangeAction({
-				table: tableName,
-				selects: [{ field: "*", aggregate: "count", alias: "Count" }],
-			});
-		},
-		[onChangeAction]
-	);
-
-	const handleAggregateChange = useCallback(
-		(aggregate: AggregateFunction) => {
-			if (!value) {
-				return;
-			}
-			const currentField = value.selects.at(0)?.field || "*";
-			// If switching to count, allow * field
-			// Otherwise, pick first valid column
-			const field =
-				aggregate === "count"
-					? currentField
-					: currentField === "*"
-						? columns.at(0)?.name || "*"
-						: currentField;
-
-			const alias =
-				aggregate === "count"
-					? "Count"
-					: `${aggregate.charAt(0).toUpperCase()}${aggregate.slice(1)}`;
-
-			onChangeAction({
-				...value,
-				selects: [{ field, aggregate, alias }],
-			});
-		},
-		[value, columns, onChangeAction]
-	);
-
-	const handleFieldChange = useCallback(
-		(field: string) => {
-			if (!value) {
-				return;
-			}
-			const aggregate = value.selects.at(0)?.aggregate || "count";
-			const col = columns.find((c) => c.name === field);
-			const alias = field === "*" ? "Count" : col?.label || field;
-
-			onChangeAction({
-				...value,
-				selects: [{ field, aggregate, alias }],
-			});
-		},
-		[value, columns, onChangeAction]
-	);
-
-	const currentAggregate = value?.selects.at(0)?.aggregate || "count";
-	const currentField = value?.selects.at(0)?.field || "*";
-
-	// Filter aggregates based on field
-	const availableAggregates =
-		currentField === "*"
-			? AGGREGATE_FUNCTIONS.filter((a) => a.value === "count")
-			: AGGREGATE_FUNCTIONS;
+		onChangeAction({
+			...value,
+			selects: [
+				{
+					field: metric.field,
+					aggregate: metric.aggregate,
+					alias: metric.label,
+				},
+			],
+		});
+	};
 
 	return (
 		<div className="space-y-4">
-			{/* Table */}
 			<div className="space-y-2">
-				<Label>From Table</Label>
+				<Label>Table</Label>
 				<Select
 					disabled={disabled}
 					onValueChange={handleTableChange}
 					value={value?.table || ""}
 				>
 					<SelectTrigger>
-						<SelectValue placeholder="Select a table..." />
+						<SelectValue placeholder="Select table..." />
 					</SelectTrigger>
 					<SelectContent>
-						{tables.map((table) => (
-							<SelectItem key={table.name} value={table.name}>
-								<div className="flex items-center gap-2">
-									<span>{table.label}</span>
-									<span className="text-muted-foreground text-xs">
-										— {table.description}
-									</span>
-								</div>
+						{tables.map((t) => (
+							<SelectItem key={t.name} value={t.name}>
+								{t.label}
 							</SelectItem>
 						))}
 					</SelectContent>
@@ -144,64 +156,25 @@ export function CustomQueryBuilder({
 			</div>
 
 			{value?.table && (
-				<>
-					{/* Aggregate + Field in one row */}
-					<div className="space-y-2">
-						<Label>Calculate</Label>
-						<div className="flex gap-2">
-							<Select
-								disabled={disabled}
-								onValueChange={(v) =>
-									handleAggregateChange(v as AggregateFunction)
-								}
-								value={currentAggregate}
-							>
-								<SelectTrigger className="w-[140px]">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{availableAggregates.map((agg) => (
-										<SelectItem key={agg.value} value={agg.value}>
-											{agg.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-
-							<span className="flex items-center text-muted-foreground text-sm">
-								of
-							</span>
-
-							<Select
-								disabled={disabled}
-								onValueChange={handleFieldChange}
-								value={currentField}
-							>
-								<SelectTrigger className="flex-1">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="*">All rows</SelectItem>
-									{columns.map((col) => (
-										<SelectItem key={col.name} value={col.name}>
-											{col.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
-					</div>
-
-					{/* Preview */}
-					<div className="rounded border bg-muted/50 p-3">
-						<p className="text-muted-foreground text-xs">Query preview:</p>
-						<p className="font-mono text-sm">
-							SELECT {currentAggregate.toUpperCase()}(
-							{currentField === "*" ? "*" : currentField}) FROM{" "}
-							{value.table}
-						</p>
-					</div>
-				</>
+				<div className="space-y-2">
+					<Label>Metric</Label>
+					<Select
+						disabled={disabled}
+						onValueChange={handleMetricChange}
+						value={currentMetricId}
+					>
+						<SelectTrigger>
+							<SelectValue placeholder="Select metric..." />
+						</SelectTrigger>
+						<SelectContent>
+							{metricOptions.map((m) => (
+								<SelectItem key={m.id} value={m.id}>
+									{m.label}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+				</div>
 			)}
 		</div>
 	);
