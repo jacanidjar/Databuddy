@@ -1,6 +1,7 @@
 "use client";
 
 import {
+	ArrowClockwiseIcon,
 	CalendarBlankIcon,
 	LightningIcon,
 	TagIcon,
@@ -70,9 +71,9 @@ export function EventsPageContent({ params }: EventsPageContentProps) {
 	const {
 		results: eventsResults,
 		isLoading,
+		isFetching,
 		error,
 	} = useCustomEventsData(websiteId, dateRange, {
-		queryKey: ["customEventsData", websiteId, dateRange],
 		filters,
 	});
 
@@ -180,8 +181,16 @@ export function EventsPageContent({ params }: EventsPageContentProps) {
 		);
 	}
 
+	const showRefreshingIndicator = isFetching && !isLoading;
+
 	return (
 		<div className="space-y-3 p-3 sm:space-y-4 sm:p-4">
+			{showRefreshingIndicator && (
+				<div className="flex items-center justify-center gap-2 rounded border border-primary/20 bg-primary/5 py-2 text-primary text-sm">
+					<ArrowClockwiseIcon className="size-4 animate-spin" />
+					<span>Refreshing data…</span>
+				</div>
+			)}
 			{isLoading ? (
 				<EventsLoadingSkeleton />
 			) : summary.total_events === 0 ? (
@@ -266,7 +275,11 @@ export function EventsPageContent({ params }: EventsPageContentProps) {
 						/>
 					</div>
 
-					<EventsTrendChart chartData={chartData} isLoading={isLoading} />
+					<EventsTrendChart
+						chartData={chartData}
+						isFetching={isFetching}
+						isLoading={isLoading}
+					/>
 
 					<div className="rounded border bg-card">
 						<div className="border-b px-4 py-3">
@@ -278,6 +291,7 @@ export function EventsPageContent({ params }: EventsPageContentProps) {
 						<div className="p-4">
 							<SummaryView
 								events={classifiedEvents}
+								isFetching={isFetching}
 								isLoading={isLoading}
 								onFilterAction={handleAddFilter}
 							/>

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+	ArrowClockwiseIcon,
 	ArrowRightIcon,
 	ChartBarIcon,
 	FunnelIcon,
@@ -28,6 +29,7 @@ import type {
 
 interface SummaryViewProps {
 	events: ClassifiedEvent[];
+	isFetching?: boolean;
 	isLoading?: boolean;
 	onFilterAction: (
 		eventName: string,
@@ -38,6 +40,7 @@ interface SummaryViewProps {
 
 export function SummaryView({
 	events,
+	isFetching,
 	isLoading,
 	onFilterAction,
 }: SummaryViewProps) {
@@ -101,6 +104,12 @@ export function SummaryView({
 							{activeEvent.summaryProperties.length} propert
 							{activeEvent.summaryProperties.length !== 1 ? "ies" : "y"}
 						</span>
+						{isFetching && !isLoading && (
+							<div className="flex items-center gap-1.5 text-muted-foreground text-xs">
+								<ArrowClockwiseIcon className="size-3 animate-spin" />
+								<span>Updating…</span>
+							</div>
+						)}
 						<Link
 							className="flex items-center gap-1 text-primary text-sm transition-colors hover:text-primary/80 hover:underline"
 							href={`/websites/${websiteId}/events/${encodeURIComponent(activeEvent.name)}`}
