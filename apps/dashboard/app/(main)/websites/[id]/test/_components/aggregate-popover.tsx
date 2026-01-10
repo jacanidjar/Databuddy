@@ -25,6 +25,7 @@ import {
 
 interface AggregatePopoverProps {
 	columns: TableColumn[];
+	existingSelects: CustomQuerySelect[];
 	onAddAction: (select: CustomQuerySelect) => void;
 	disabled?: boolean;
 }
@@ -45,47 +46,69 @@ const AGGREGATES: {
 
 export function AggregatePopover({
 	columns,
+	existingSelects,
 	onAddAction,
 	disabled,
 }: AggregatePopoverProps) {
 	const [open, setOpen] = useState(false);
-	const [field, setField] = useState("*");
+	const [field, setField] = useState("");
 	const [aggregate, setAggregate] = useState<AggregateFunction>("count");
+
+	// Check if a field+aggregate combo already exists
+	const isAlreadySelected = (f: string, agg: AggregateFunction) => {
+		return existingSelects.some((s) => s.field === f && s.aggregate === agg);
+	};
 
 	// Group columns by type
 	const { stringColumns, numberColumns } = useMemo(() => {
 		return {
 			stringColumns: columns.filter((c) => c.type === "string"),
-			numberColumns: columns.filter((c) => c.type === "number" && c.aggregatable),
+			numberColumns: columns.filter(
+				(c) => c.type === "number" && c.aggregatable
+			),
 		};
 	}, [columns]);
 
-	// Get available aggregates based on selected field
+	// Get available aggregates based on selected field, excluding already selected
 	const availableAggregates = useMemo(() => {
-		if (field === "*") {
-			return AGGREGATES.filter((a) => a.value === "count");
+		if (!field) {
+			return [];
 		}
-		const isNumber = numberColumns.some((c) => c.name === field);
-		const fieldType = isNumber ? "number" : "string";
-		return AGGREGATES.filter((a) => a.forTypes.includes(fieldType));
-	}, [field, numberColumns]);
+		let baseAggregates = AGGREGATES;
+		if (field === "*") {
+			baseAggregates = AGGREGATES.filter((a) => a.value === "count");
+		} else {
+			const isNumber = numberColumns.some((c) => c.name === field);
+			const fieldType = isNumber ? "number" : "string";
+			baseAggregates = AGGREGATES.filter((a) => a.forTypes.includes(fieldType));
+		}
+		// Filter out already selected combinations
+		return baseAggregates.filter((a) => !isAlreadySelected(field, a.value));
+	}, [field, numberColumns, existingSelects]);
 
 	const resetForm = () => {
-		setField("*");
+		setField("");
 		setAggregate("count");
 	};
 
 	const handleFieldChange = (newField: string) => {
 		setField(newField);
-		// Auto-select best aggregate for field type
+		// Auto-select best available aggregate for field type
 		const isNumber = numberColumns.some((c) => c.name === newField);
-		if (newField === "*") {
-			setAggregate("count");
-		} else if (isNumber) {
-			setAggregate("sum");
-		} else {
-			setAggregate("uniq");
-		}
+
+		// Determine preferred aggregates in order
+		const preferredOrder: AggregateFunction[] =
+			newField === "*"
+				? ["count"]
+				: isNumber
+					? ["sum", "avg", "max", "min", "count", "uniq"]
+					: ["uniq", "count"];
+
+		// Find first available that's not already selected
+		const firstAvailable = preferredOrder.find(
+			(agg) => !isAlreadySelected(newField, agg)
+		);
+		setAggregate(firstAvailable || "count");
 	};
 
 	const handleAdd = () => {
@@ -138,7 +161,7 @@ export function AggregatePopover({
 						value={field}
 					>
 						<SelectTrigger>
-							<SelectValue />
+							<SelectValue placeholder="Select field..." />
 						</SelectTrigger>
 						<SelectContent>
 							<SelectItem value="*">All rows</SelectItem>
@@ -168,35 +191,45 @@ export function AggregatePopover({
 					</Select>
 				</div>
 
-				{availableAggregates.length > 1 && (
-					<div className="space-y-2">
-						<Select
-							disabled={disabled}
-							onValueChange={(v) => setAggregate(v as AggregateFunction)}
-							value={aggregate}
-						>
-							<SelectTrigger>
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								{availableAggregates.map((agg) => (
-									<SelectItem key={agg.value} value={agg.value}>
-										{agg.label}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
+				{field && availableAggregates.length === 0 && (
+					<p className="text-muted-foreground text-sm">
+						All calculations for this field are already added.
+					</p>
 				)}
 
-				<Button
-					className="w-full"
-					disabled={disabled}
-					onClick={handleAdd}
-					size="sm"
-				>
-					Add
-				</Button>
+				{field && availableAggregates.length > 0 && (
+					<>
+						{availableAggregates.length > 1 && (
+							<div className="space-y-2">
+								<Select
+									disabled={disabled}
+									onValueChange={(v) => setAggregate(v as AggregateFunction)}
+									value={aggregate}
+								>
+									<SelectTrigger>
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{availableAggregates.map((agg) => (
+											<SelectItem key={agg.value} value={agg.value}>
+												{agg.label}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+						)}
+
+						<Button
+							className="w-full"
+							disabled={disabled || availableAggregates.length === 0}
+							onClick={handleAdd}
+							size="sm"
+						>
+							Add
+						</Button>
+					</>
+				)}
 			</PopoverContent>
 		</Popover>
 	);

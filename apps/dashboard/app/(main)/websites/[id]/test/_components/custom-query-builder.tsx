@@ -161,10 +161,10 @@ export function CustomQueryBuilder({
 					<div className="flex flex-wrap items-center gap-2">
 						{value.filters?.map((filter, index) => (
 							<QueryChip
+								disabled={disabled}
 								key={`${filter.field}-${filter.operator}-${index}`}
 								label={formatFilter(filter)}
 								onRemoveAction={() => removeFilter(index)}
-								disabled={disabled}
 							/>
 						))}
 						<FilterPopover
@@ -185,6 +185,7 @@ export function CustomQueryBuilder({
 					<div className="flex flex-wrap items-center gap-2">
 						{value.selects.map((select, index) => (
 							<QueryChip
+								disabled={disabled}
 								key={`${select.field}-${select.aggregate}-${index}`}
 								label={formatSelect(select)}
 								onRemoveAction={
@@ -192,12 +193,12 @@ export function CustomQueryBuilder({
 										? () => removeSelect(index)
 										: undefined
 								}
-								disabled={disabled}
 							/>
 						))}
 						<AggregatePopover
 							columns={columns}
 							disabled={disabled}
+							existingSelects={value.selects}
 							onAddAction={addSelect}
 						/>
 					</div>
