@@ -140,6 +140,11 @@ export function validateRequest(
 						customer_id: website.ownerId || "",
 						feature_id: "events",
 						send_event: true,
+						customer_data: {
+							website_domain: website.domain,
+							website_id: website.id,
+							website_name: website.name,
+						},
 					})
 				);
 				const data = result.data;
