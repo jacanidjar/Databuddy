@@ -14,23 +14,22 @@ import {
 initTracing();
 
 process.on("unhandledRejection", (reason, _promise) => {
-	captureError(reason);
+	captureError(reason, { type: "unhandledRejection" });
 });
 
 process.on("uncaughtException", (error) => {
-	captureError(error);
+	captureError(error, { type: "uncaughtException" });
+	process.exit(1);
 });
 
 process.on("SIGTERM", async () => {
 	await shutdownTracing().catch(() => {
-		// Shutdown error
 	});
 	process.exit(0);
 });
 
 process.on("SIGINT", async () => {
 	await shutdownTracing().catch(() => {
-		// Shutdown error
 	});
 	process.exit(0);
 });
@@ -76,7 +75,7 @@ const app = new Elysia()
 			const statusCode = code === "NOT_FOUND" ? 404 : 500;
 			endRequestSpan(store.tracing.span, statusCode, store.tracing.startTime);
 		}
-		captureError(error);
+		captureError(error, { type: "elysia_error", code });
 	})
 	.get("/health", () => ({ status: "ok" }))
 	.post("/", async ({ headers, body }) => {
@@ -89,10 +88,15 @@ const app = new Elysia()
 
 			const parsed = headerSchema.safeParse(headers);
 			if (!parsed.success) {
+				const errorDetails = parsed.error.format();
+				captureError(new Error("Missing required headers"), {
+					type: "validation_error",
+					scheduleId: headers["x-schedule-id"] as string,
+				});
 				return new Response(
 					JSON.stringify({
 						error: "Missing required headers",
-						details: parsed.error.format(),
+						details: errorDetails,
 					}),
 					{
 						status: 400,
@@ -112,12 +116,19 @@ const app = new Elysia()
 			});
 
 			if (!isValid) {
+				captureError(new Error("Invalid QStash signature"), {
+					type: "auth_error",
+					scheduleId,
+				});
 				return new Response("Invalid signature", { status: 401 });
 			}
 
 			const schedule = await lookupSchedule(scheduleId);
 			if (!schedule.success) {
-				captureError(schedule.error);
+				captureError(new Error(schedule.error), {
+					type: "schedule_not_found",
+					scheduleId,
+				});
 				return new Response(
 					JSON.stringify({
 						error: "Schedule not found",
@@ -145,19 +156,39 @@ const app = new Elysia()
 			);
 
 			if (!result.success) {
-				captureError(result.error);
+				captureError(new Error(result.error), {
+					type: "uptime_check_failed",
+					monitorId,
+					url: schedule.data.url,
+				});
+				console.error(
+					"[uptime] Failed to check uptime:",
+					monitorId,
+					schedule.data.url,
+					result.error
+				);
 				return new Response("Failed to check uptime", { status: 500 });
 			}
 
 			try {
 				await sendUptimeEvent(result.data, monitorId);
 			} catch (error) {
-				captureError(error);
+				captureError(error, {
+					type: "producer_error",
+					monitorId,
+					httpCode: result.data.http_code,
+				});
+				console.error(
+					"[uptime] Failed to send uptime event:",
+					monitorId,
+					error instanceof Error ? error.message : String(error)
+				);
 			}
 
 			return new Response("Uptime check complete", { status: 200 });
 		} catch (error) {
-			captureError(error);
+			captureError(error, { type: "unexpected_error" });
+			console.error("[uptime] Unexpected error in POST handler:", error);
 			return new Response("Internal server error", { status: 500 });
 		}
 	});

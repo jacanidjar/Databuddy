@@ -94,20 +94,28 @@ export function record<T>(name: string, fn: () => Promise<T> | T): Promise<T> {
 }
 
 /**
- * Capture error in active span
+ * Capture error in active span and log to console
  */
 export function captureError(
 	error: unknown,
 	attributes?: Record<string, string | number | boolean>
 ): void {
+	const errorObj = error instanceof Error ? error : new Error(String(error));
+	const errorMessage = errorObj.message;
+	const errorStack = errorObj.stack;
+
+	console.error("[uptime] Error:", errorMessage, {
+		error: errorMessage,
+		stack: errorStack,
+		...(attributes ?? {}),
+	});
+
 	const span = trace.getActiveSpan();
 	if (!span) {
 		return;
 	}
 
-	span.recordException(
-		error instanceof Error ? error : new Error(String(error))
-	);
+	span.recordException(errorObj);
 	span.setStatus({ code: SpanStatusCode.ERROR });
 
 	if (attributes) {
