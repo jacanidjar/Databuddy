@@ -78,7 +78,7 @@ const app = new Elysia()
 		captureError(error, { type: "elysia_error", code });
 	})
 	.get("/health", () => ({ status: "ok" }))
-	.post("/", async ({ headers, body }) => {
+	.post("/", async ({ headers, body, request }) => {
 		try {
 			const headerSchema = z.object({
 				"upstash-signature": z.string(),
@@ -108,11 +108,14 @@ const app = new Elysia()
 			const { "upstash-signature": signature, "x-schedule-id": scheduleId } =
 				parsed.data;
 
+			const requestUrl = new URL(request.url);
+			const verificationUrl = `${requestUrl.protocol}//${requestUrl.host}${requestUrl.pathname}`;
+
 			const isValid = await receiver.verify({
 				// @ts-expect-error, this doesn't require type assertions
 				body,
 				signature,
-				url: "https://uptime.databuddy.cc",
+				url: verificationUrl,
 			});
 
 			if (!isValid) {
