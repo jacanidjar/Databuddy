@@ -111,74 +111,90 @@ export function MonitorRow({
 	const displayUrl = isWebsiteMonitor ? schedule.website?.domain : schedule.url;
 
 	return (
-		<div className="group flex items-center gap-4 border-b p-4 transition-colors last:border-b-0 hover:bg-accent/50">
-			<Link
-				className="flex min-w-0 flex-1 items-center gap-4"
-				href={`/monitors/${schedule.id}`}
-			>
-				<div className="flex size-10 shrink-0 items-center justify-center rounded border bg-secondary-brighter">
-					<HeartbeatIcon
-						className="text-accent-foreground"
-						size={20}
-						weight="duotone"
-					/>
-				</div>
-				<div className="min-w-0 flex-1">
-					<h3 className="truncate font-semibold text-base text-foreground transition-colors group-hover:text-primary">
-						{displayName}
-					</h3>
-					<div className="mt-1 flex items-center gap-4 text-muted-foreground text-sm">
-						<div className="flex items-center gap-1.5">
-							<GlobeIcon className="size-3.5 shrink-0" weight="duotone" />
-							<span className="truncate">{displayUrl}</span>
-						</div>
-						<span>•</span>
-						<span>
-							{granularityLabels[schedule.granularity] || schedule.granularity}
-						</span>
+		<div className="border-border border-b">
+			<div className="group flex items-center hover:bg-accent/50">
+				<Link
+					className="flex flex-1 cursor-pointer items-center gap-4 px-4 py-3 text-left sm:px-6 sm:py-4"
+					href={`/monitors/${schedule.id}`}
+				>
+					<div className="flex size-10 shrink-0 items-center justify-center rounded border bg-secondary">
+						<HeartbeatIcon
+							className="text-accent-foreground"
+							size={20}
+							weight="duotone"
+						/>
 					</div>
-				</div>
-			</Link>
-			<Badge
-				className={
-					schedule.isPaused
-						? "border-amber-500/20 bg-amber-500/10 text-amber-600"
-						: "border-green-500/20 bg-green-500/10 text-green-600"
-				}
-				variant={schedule.isPaused ? "secondary" : "default"}
-			>
-				{schedule.isPaused ? "Paused" : "Active"}
-			</Badge>
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button size="sm" variant="ghost">
-						<DotsThreeIcon size={20} />
-					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent align="end">
-					<DropdownMenuItem onClick={onEditAction}>
-						<PencilIcon size={16} />
-						Edit
-					</DropdownMenuItem>
-					<DropdownMenuItem
-						disabled={
-							isPausing || pauseMutation.isPending || resumeMutation.isPending
-						}
-						onClick={handleTogglePause}
-					>
-						<HeartbeatIcon size={16} />
-						{schedule.isPaused ? "Resume" : "Pause"}
-					</DropdownMenuItem>
-					<DropdownMenuItem
-						className="text-destructive focus:text-destructive"
-						disabled={deleteMutation.isPending}
-						onClick={handleDelete}
-					>
-						<TrashIcon size={16} />
-						Delete
-					</DropdownMenuItem>
-				</DropdownMenuContent>
-			</DropdownMenu>
+					<div className="min-w-0 flex-1">
+						<div className="flex items-center gap-2">
+							<h3 className="truncate font-medium text-foreground">
+								{displayName}
+							</h3>
+							<Badge
+								className={
+									schedule.isPaused
+										? "gap-1.5"
+										: "gap-1.5"
+								}
+								variant={schedule.isPaused ? "amber" : "green"}
+							>
+								<span
+									className={`size-1.5 rounded ${
+										schedule.isPaused ? "bg-amber-500" : "bg-green-500"
+									}`}
+								/>
+								{schedule.isPaused ? "Paused" : "Active"}
+							</Badge>
+						</div>
+						<div className="mt-0.5 flex items-center gap-2">
+							<div className="flex items-center gap-1.5">
+								<GlobeIcon className="size-3.5 shrink-0" weight="duotone" />
+								<span className="truncate text-muted-foreground text-xs">
+									{displayUrl}
+								</span>
+							</div>
+							<span className="text-muted-foreground text-xs">•</span>
+							<span className="text-muted-foreground text-xs">
+								{granularityLabels[schedule.granularity] || schedule.granularity}
+							</span>
+						</div>
+					</div>
+				</Link>
+
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button
+							className="size-8 opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100"
+							size="icon"
+							variant="ghost"
+						>
+							<DotsThreeIcon className="size-5" weight="bold" />
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="end" className="w-40">
+						<DropdownMenuItem onClick={onEditAction}>
+							<PencilIcon className="size-4" weight="duotone" />
+							Edit
+						</DropdownMenuItem>
+						<DropdownMenuItem
+							disabled={
+								isPausing || pauseMutation.isPending || resumeMutation.isPending
+							}
+							onClick={handleTogglePause}
+						>
+							<HeartbeatIcon className="size-4" weight="duotone" />
+							{schedule.isPaused ? "Resume" : "Pause"}
+						</DropdownMenuItem>
+						<DropdownMenuItem
+							className="text-destructive focus:text-destructive"
+							disabled={deleteMutation.isPending}
+							onClick={handleDelete}
+						>
+							<TrashIcon className="size-4" weight="duotone" />
+							Delete
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
+			</div>
 		</div>
 	);
 }

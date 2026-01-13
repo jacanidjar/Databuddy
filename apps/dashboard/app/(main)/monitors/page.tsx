@@ -6,14 +6,39 @@ import {
 	PlusIcon,
 } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { EmptyState } from "@/components/empty-state";
-import { MonitorRow } from "@/components/monitors/monitor-row";
 import { MonitorSheet } from "@/components/monitors/monitor-sheet";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { orpc } from "@/lib/orpc";
 import { cn } from "@/lib/utils";
+import { MonitorsList, type Monitor } from "./_components/monitors-list";
 import { PageHeader } from "./_components/page-header";
+
+const MonitorsListSkeleton = () => (
+	<div className="border-border border-t">
+		{[...new Array(5)].map((_, i) => (
+			<div
+				className="flex animate-pulse items-center border-border border-b px-4 py-3 sm:px-6 sm:py-4"
+				key={`skeleton-${i + 1}`}
+			>
+				<div className="flex flex-1 items-center gap-4">
+					<Skeleton className="size-10 shrink-0 rounded" />
+					<div className="min-w-0 flex-1 space-y-2">
+						<div className="flex items-center gap-2">
+							<Skeleton className="h-5 w-40" />
+							<Skeleton className="h-5 w-16" />
+						</div>
+						<Skeleton className="h-4 w-48" />
+					</div>
+					<Skeleton className="size-8 shrink-0" />
+				</div>
+			</div>
+		))}
+	</div>
+);
 
 export default function MonitorsPage() {
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -44,7 +69,7 @@ export default function MonitorsPage() {
 		setIsSheetOpen(true);
 	};
 
-	const handleEdit = (schedule: any) => {
+	const handleEdit = (schedule: Monitor) => {
 		setEditingSchedule({
 			id: schedule.id,
 			url: schedule.url,
@@ -55,81 +80,80 @@ export default function MonitorsPage() {
 		setIsSheetOpen(true);
 	};
 
-	return (
-		<div className="flex h-full flex-col">
-			<PageHeader
-				description="View and manage all your uptime monitors."
-				icon={<HeartbeatIcon />}
-				right={
-					<>
-						<Button
-							disabled={isLoading || isFetching}
-							onClick={() => refetch()}
-							size="icon"
-							variant="secondary"
-						>
-							<ArrowClockwiseIcon
-								className={cn(
-									"size-4",
-									(isLoading || isFetching) && "animate-spin"
-								)}
-							/>
-						</Button>
-						<Button onClick={handleCreate}>
-							<PlusIcon className="mr-2 size-4" />
-							Create Monitor
-						</Button>
-					</>
-				}
-				title="Monitors"
-			/>
+	const handleDelete = () => {
+		refetch();
+	};
 
-			<div className="flex-1 overflow-y-auto p-6">
-				{isLoading ? (
-					<div className="flex h-full items-center justify-center">
-						<span className="text-muted-foreground text-sm">
-							Loading monitors...
-						</span>
-					</div>
-				) : isError ? (
-					<div className="flex h-full items-center justify-center">
-						<EmptyState
-							action={{ label: "Retry", onClick: () => refetch() }}
-							description="Something went wrong while fetching monitors."
-							icon={<HeartbeatIcon />}
-							title="Failed to load monitors"
-						/>
-					</div>
-				) : schedules && schedules.length > 0 ? (
-					<div className="rounded-md border bg-card">
-						{schedules.map((schedule) => (
-							<MonitorRow
-								key={schedule.id}
-								onDeleteAction={() => refetch()}
-								onEditAction={() => handleEdit(schedule)}
-								onRefetchAction={() => refetch()}
-								schedule={schedule}
+	const handleSheetClose = () => {
+		setIsSheetOpen(false);
+		setEditingSchedule(null);
+	};
+
+	return (
+		<ErrorBoundary>
+			<div className="h-full overflow-y-auto">
+				<PageHeader
+					count={schedules?.length}
+					description="View and manage all your uptime monitors"
+					icon={<HeartbeatIcon />}
+					right={
+						<>
+							<Button
+								disabled={isLoading || isFetching}
+								onClick={() => refetch()}
+								size="icon"
+								variant="secondary"
+							>
+								<ArrowClockwiseIcon
+									className={cn(
+										"size-4",
+										(isLoading || isFetching) && "animate-spin"
+									)}
+								/>
+							</Button>
+							<Button onClick={handleCreate}>
+								<PlusIcon className="mr-2 size-4" />
+								Create Monitor
+							</Button>
+						</>
+					}
+					title="Monitors"
+				/>
+
+				<Suspense fallback={<MonitorsListSkeleton />}>
+					{isError ? (
+						<div className="flex h-full items-center justify-center py-16">
+							<EmptyState
+								action={{ label: "Retry", onClick: () => refetch() }}
+								description="Something went wrong while fetching monitors."
+								icon={<HeartbeatIcon />}
+								title="Failed to load monitors"
+								variant="minimal"
 							/>
-						))}
-					</div>
-				) : (
-					<div className="flex h-full items-center justify-center">
-						<EmptyState
-							action={{ label: "Create Monitor", onClick: handleCreate }}
-							description="Create your first uptime monitor to start tracking."
-							icon={<HeartbeatIcon />}
-							title="No monitors found"
+						</div>
+					) : (
+						<MonitorsList
+							isLoading={isLoading}
+							monitors={schedules || []}
+							onCreateMonitorAction={handleCreate}
+							onDeleteMonitorAction={handleDelete}
+							onEditMonitorAction={handleEdit}
+							onRefetchAction={refetch}
 						/>
-					</div>
+					)}
+				</Suspense>
+
+				{isSheetOpen && (
+					<Suspense fallback={null}>
+						<MonitorSheet
+							onCloseAction={handleSheetClose}
+							onSaveAction={refetch}
+							open={isSheetOpen}
+							schedule={editingSchedule}
+						/>
+					</Suspense>
 				)}
 			</div>
-
-			<MonitorSheet
-				onCloseAction={setIsSheetOpen}
-				onSaveAction={refetch}
-				open={isSheetOpen}
-				schedule={editingSchedule}
-			/>
-		</div>
+		</ErrorBoundary>
 	);
 }
