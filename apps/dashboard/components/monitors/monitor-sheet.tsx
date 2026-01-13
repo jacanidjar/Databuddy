@@ -1,21 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-	CaretDownIcon,
-	CodeIcon,
-	InfoIcon,
-	PlusIcon,
-	XIcon,
-} from "@phosphor-icons/react";
+import { CodeIcon, InfoIcon } from "@phosphor-icons/react";
 import { useMutation } from "@tanstack/react-query";
 import clsx from "clsx";
-import { AnimatePresence, motion } from "framer-motion";
-import { type KeyboardEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Form,
@@ -43,7 +35,8 @@ import {
 } from "@/components/ui/tooltip";
 import { useWebsite } from "@/hooks/use-websites";
 import { orpc } from "@/lib/orpc";
-import { cn } from "@/lib/utils";
+import { CollapsibleSection } from "./collapsible-section";
+import { FieldPathInput } from "./field-path-input";
 
 const granularityOptions = [
 	{ value: "minute", label: "1m" },
@@ -55,6 +48,8 @@ const granularityOptions = [
 ] as const;
 
 const monitorFormSchema = z.object({
+	name: z.string().optional(),
+	url: z.string().url("Please enter a valid URL (e.g. https://example.com)"),
 	granularity: z.enum([
 		"minute",
 		"five_minutes",
@@ -70,13 +65,15 @@ const monitorFormSchema = z.object({
 
 type MonitorFormData = z.infer<typeof monitorFormSchema>;
 
-interface MonitorDialogProps {
+interface MonitorSheetProps {
 	open: boolean;
 	onCloseAction: (open: boolean) => void;
-	websiteId: string;
+	websiteId?: string; // Optional now
 	onSaveAction?: () => void;
 	schedule?: {
 		id: string;
+		url: string;
+		name?: string | null;
 		granularity: string;
 		jsonParsingConfig?: {
 			enabled: boolean;
@@ -86,283 +83,29 @@ interface MonitorDialogProps {
 	} | null;
 }
 
-const DOT_NOTATION_REGEX = /^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*$/;
-
-interface FieldPathInputProps {
-	value: string[];
-	onChange: (value: string[]) => void;
-}
-
-function FieldPathInput({ value = [], onChange }: FieldPathInputProps) {
-	const [inputValue, setInputValue] = useState("");
-	const [error, setError] = useState<string | null>(null);
-
-	const validatePath = (path: string) => {
-		if (!path) {
-			return false;
-		}
-		// Simple dot notation validation: alphanumeric chars + underscores, separated by dots
-		return DOT_NOTATION_REGEX.test(path);
-	};
-
-	const addPath = (path: string) => {
-		const trimmed = path.trim();
-		if (!trimmed) {
-			return;
-		}
-
-		if (value.includes(trimmed)) {
-			setError("Path already exists");
-			return;
-		}
-
-		if (!validatePath(trimmed)) {
-			setError("Invalid path format (use dot notation e.g. services.db)");
-			return;
-		}
-
-		onChange([...value, trimmed]);
-		setInputValue("");
-		setError(null);
-	};
-
-	const removePath = (pathToRemove: string) => {
-		onChange(value.filter((path) => path !== pathToRemove));
-	};
-
-	const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === "Enter" || e.key === ",") {
-			e.preventDefault();
-			addPath(inputValue);
-		} else if (e.key === "Backspace" && !inputValue && value.length > 0) {
-			removePath(value.at(-1) ?? "");
-		}
-	};
-
-	const handleBlur = () => {
-		if (inputValue) {
-			addPath(inputValue);
-		}
-		setError(null);
-	};
-
-	const generatePreview = () => {
-		if (value.length === 0) {
-			return {
-				status: "ok",
-				services: {
-					database: {
-						status: "up",
-						latency: 45,
-					},
-				},
-			};
-		}
-
-		const preview = {};
-		for (const path of value) {
-			let current: any = preview;
-			const parts = path.split(".");
-			const last = parts.pop();
-			if (!last) {
-				continue;
-			}
-
-			for (const part of parts) {
-				if (!current[part]) {
-					current[part] = {};
-				}
-				current = current[part];
-			}
-
-			if (last.includes("status")) {
-				current[last] = "up";
-			} else if (last.includes("latency")) {
-				current[last] = 45;
-			} else {
-				current[last] = "ok";
-			}
-		}
-		return preview;
-	};
-
-	return (
-		<div className="space-y-4">
-			<div className="space-y-3">
-				<div className="flex flex-wrap gap-2 rounded-sm border border-accent-brighter bg-input p-1.5 transition-all focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 dark:bg-input/80">
-					{value.map((path) => (
-						<Badge
-							className="flex items-center gap-1 pr-1"
-							key={path}
-							variant="secondary"
-						>
-							{path}
-							<button
-								className="rounded-full p-0.5 hover:bg-muted-foreground/20"
-								onClick={() => removePath(path)}
-								type="button"
-							>
-								<XIcon className="size-3" />
-								<span className="sr-only">Remove {path}</span>
-							</button>
-						</Badge>
-					))}
-					<Input
-						className="h-6 min-w-[120px] flex-1 border-0 bg-transparent p-0 text-sm shadow-none placeholder:text-muted-foreground focus-visible:ring-0"
-						onBlur={handleBlur}
-						onChange={(e) => {
-							setInputValue(e.target.value);
-							setError(null);
-						}}
-						onKeyDown={handleKeyDown}
-						placeholder={value.length === 0 ? "e.g. services.database" : ""}
-						value={inputValue}
-					/>
-				</div>
-				{error && <p className="text-destructive text-xs">{error}</p>}
-			</div>
-
-			<div className="rounded-md border bg-muted/50 p-4">
-				<div className="mb-3 flex items-center justify-between">
-					<p className="font-medium text-xs">
-						{value.length === 0
-							? "Example API Response"
-							: "Extracted Data Preview"}
-					</p>
-					{value.length === 0 && (
-						<span className="text-muted-foreground text-xs">
-							(Add fields above to see preview)
-						</span>
-					)}
-				</div>
-				<div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-					<div className="space-y-2">
-						<pre className="overflow-x-auto rounded-md bg-background p-3 font-mono text-[10px] text-muted-foreground leading-relaxed">
-							{JSON.stringify(generatePreview(), null, 2)}
-						</pre>
-					</div>
-					<div className="space-y-4">
-						<div className="space-y-2">
-							<p className="font-medium text-xs">How it works</p>
-							<p className="text-muted-foreground text-xs leading-relaxed">
-								We extract the exact values at the paths you provide. To track
-								service health, you should target specific <b>status</b>{" "}
-								(string) and <b>latency</b> (number) fields.
-							</p>
-						</div>
-						{value.length === 0 && (
-							<div className="space-y-2">
-								<p className="font-medium text-xs">Try these examples:</p>
-								<div className="flex flex-col gap-1.5">
-									{[
-										{ label: "Root status", path: "status" },
-										{ label: "DB status", path: "services.database.status" },
-										{
-											label: "DB latency",
-											path: "services.database.latency",
-										},
-									].map((example) => (
-										<button
-											className="flex w-fit items-center gap-2 rounded bg-background px-2 py-1 text-left text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-											key={example.path}
-											onClick={() => addPath(example.path)}
-											type="button"
-										>
-											<PlusIcon className="size-3" />
-											<code className="font-mono text-[10px]">
-												{example.path}
-											</code>
-										</button>
-									))}	
-								</div>
-							</div>
-						)}
-					</div>
-				</div>
-			</div>
-		</div>
-	);
-}
-
-function CollapsibleSection({
-	icon: Icon,
-	title,
-	badge,
-	isExpanded,
-	onToggleAction,
-	children,
-}: {
-	icon: React.ComponentType<{ size?: number; weight?: "duotone" | "fill" }>;
-	title: string;
-	badge?: number;
-	isExpanded: boolean;
-	onToggleAction: () => void;
-	children: React.ReactNode;
-}) {
-	return (
-		<div>
-			<button
-				className="group flex w-full cursor-pointer items-center justify-between rounded py-3 text-left transition-colors hover:bg-accent/50"
-				onClick={onToggleAction}
-				type="button"
-			>
-				<div className="flex items-center gap-2.5">
-					<Icon size={16} weight="duotone" />
-					<span className="font-medium text-sm">{title}</span>
-					{badge !== undefined && badge > 0 && (
-						<span className="flex size-5 items-center justify-center rounded-full bg-primary font-medium text-primary-foreground text-xs">
-							{badge}
-						</span>
-					)}
-				</div>
-				<CaretDownIcon
-					className={cn(
-						"size-4 text-muted-foreground transition-transform duration-200",
-						isExpanded && "rotate-180"
-					)}
-					weight="fill"
-				/>
-			</button>
-
-			<AnimatePresence initial={false}>
-				{isExpanded && (
-					<motion.div
-						animate={{ height: "auto", opacity: 1 }}
-						className="overflow-hidden"
-						exit={{ height: 0, opacity: 0 }}
-						initial={{ height: 0, opacity: 0 }}
-						transition={{ duration: 0.2, ease: "easeInOut" }}
-					>
-						<div className="pb-4">{children}</div>
-					</motion.div>
-				)}
-			</AnimatePresence>
-		</div>
-	);
-}
-
 export function MonitorSheet({
 	open,
 	onCloseAction,
 	websiteId,
 	onSaveAction,
 	schedule,
-}: MonitorDialogProps) {
+}: MonitorSheetProps) {
 	const isEditing = !!schedule;
-	const { data: website } = useWebsite(websiteId);
+	// Only fetch website if websiteId is provided
+	const { data: website } = useWebsite(websiteId || "");
 	const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
-
-	const jsonConfig = schedule?.jsonParsingConfig;
 
 	const form = useForm<MonitorFormData>({
 		resolver: zodResolver(monitorFormSchema),
 		defaultValues: {
+			name: schedule?.name ?? "",
+			url: schedule?.url ?? "",
 			granularity:
 				(schedule?.granularity as MonitorFormData["granularity"]) ||
 				"ten_minutes",
-			jsonParsingEnabled: jsonConfig?.enabled ?? false,
-			jsonParsingMode: jsonConfig?.mode ?? "auto",
-			jsonParsingFields: jsonConfig?.fields ?? [],
+			jsonParsingEnabled: schedule?.jsonParsingConfig?.enabled ?? false,
+			jsonParsingMode: schedule?.jsonParsingConfig?.mode ?? "auto",
+			jsonParsingFields: schedule?.jsonParsingConfig?.fields ?? [],
 		},
 	});
 
@@ -376,7 +119,24 @@ export function MonitorSheet({
 	useEffect(() => {
 		if (open) {
 			const jsonConfig = schedule?.jsonParsingConfig;
+
+			// If creating new and websiteId exists, pre-fill URL if empty
+			let initialUrl = schedule?.url ?? "";
+			if (!(isEditing || initialUrl) && website?.domain) {
+				initialUrl = website.domain.startsWith("http")
+					? website.domain
+					: `https://${website.domain}`;
+			}
+
+			// Pre-fill name if available or creating for website
+			let initialName = schedule?.name ?? "";
+			if (!(isEditing || initialName) && website?.name) {
+				initialName = website.name;
+			}
+
 			form.reset({
+				name: initialName,
+				url: initialUrl,
 				granularity:
 					(schedule?.granularity as MonitorFormData["granularity"]) ||
 					"ten_minutes",
@@ -386,7 +146,7 @@ export function MonitorSheet({
 			});
 			setIsAdvancedOpen(jsonConfig?.enabled ?? false);
 		}
-	}, [open, schedule, form]);
+	}, [open, schedule, form, website, isEditing]);
 
 	const getErrorMessage = (error: unknown): string => {
 		const defaultMessage = "Failed to create monitor.";
@@ -409,6 +169,8 @@ export function MonitorSheet({
 					return (
 						rpcError.message || "Invalid request. Please check your input."
 					);
+				case "CONFLICT":
+					return rpcError.message || "A monitor for this URL already exists.";
 				default:
 					return rpcError.message || defaultMessage;
 			}
@@ -441,19 +203,10 @@ export function MonitorSheet({
 				});
 				toast.success("Monitor updated successfully");
 			} else {
-				if (!website?.domain) {
-					toast.error("Website domain not found");
-					return;
-				}
-
-				const url = website.domain.startsWith("http")
-					? website.domain
-					: `https://${website.domain}`;
-
 				await createMutation.mutateAsync({
 					websiteId,
-					url,
-					name: website.name ?? undefined,
+					url: data.url,
+					name: data.name || undefined,
 					granularity: data.granularity,
 					jsonParsingConfig,
 				});
@@ -479,7 +232,7 @@ export function MonitorSheet({
 					<SheetDescription>
 						{isEditing
 							? "Update your uptime monitor settings"
-							: "Set up a new uptime monitor for your website"}
+							: "Set up a new uptime monitor"}
 					</SheetDescription>
 				</SheetHeader>
 
@@ -489,6 +242,51 @@ export function MonitorSheet({
 						onSubmit={form.handleSubmit(handleSubmit)}
 					>
 						<SheetBody className="space-y-6">
+							<div className="space-y-4">
+								<FormField
+									control={form.control}
+									name="name"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Name (Optional)</FormLabel>
+											<FormControl>
+												<Input placeholder="e.g. Production API" {...field} />
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="url"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>URL</FormLabel>
+											<FormControl>
+												<Input
+													placeholder="https://api.example.com/health"
+													{...field}
+													// Disable URL editing if it's an existing monitor (usually we don't change the URL of an existing monitor as it might break stats history, but for now let's allow it or follow previous logic?
+													// Previous logic didn't allow editing URL, only granularity/json.
+													// RPC `updateSchedule` does NOT take `url` as input. So we should disable it for editing.
+													disabled={isEditing}
+												/>
+											</FormControl>
+											{isEditing && (
+												<p className="text-[0.8rem] text-muted-foreground">
+													To monitor a different URL, please create a new
+													monitor.
+												</p>
+											)}
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
+
+							<div className="h-px bg-border" />
+
 							<FormField
 								control={form.control}
 								name="granularity"

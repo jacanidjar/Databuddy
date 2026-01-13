@@ -112,6 +112,7 @@ export const uptimeRouter = {
 			return await db.query.uptimeSchedules.findMany({
 				where: and(...conditions),
 				orderBy: (table, { desc }) => [desc(table.createdAt)],
+				with: { website: true },
 			});
 		}),
 
@@ -121,6 +122,7 @@ export const uptimeRouter = {
 			const [dbSchedule, qstashSchedule] = await Promise.all([
 				db.query.uptimeSchedules.findFirst({
 					where: eq(uptimeSchedules.id, input.scheduleId),
+					with: { website: true },
 				}),
 				client.schedules.get(input.scheduleId).catch(() => null),
 			]);

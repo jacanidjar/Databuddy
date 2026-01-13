@@ -23,6 +23,7 @@ import { orpc } from "@/lib/orpc";
 
 const granularityLabels: Record<string, string> = {
 	minute: "Every minute",
+	five_minutes: "Every 5 minutes",
 	ten_minutes: "Every 10 minutes",
 	thirty_minutes: "Every 30 minutes",
 	hour: "Hourly",
@@ -31,7 +32,7 @@ const granularityLabels: Record<string, string> = {
 	day: "Daily",
 };
 
-type MonitorRowProps = {
+interface MonitorRowProps {
 	schedule: {
 		id: string;
 		websiteId: string | null;
@@ -48,16 +49,16 @@ type MonitorRowProps = {
 			domain: string;
 		} | null;
 	};
-	onEdit: () => void;
-	onDelete: () => void;
-	onRefetch: () => void;
-};
+	onEditAction: () => void;
+	onDeleteAction: () => void;
+	onRefetchAction: () => void;
+}
 
 export function MonitorRow({
 	schedule,
-	onEdit,
-	onDelete,
-	onRefetch,
+	onEditAction,
+	onDeleteAction,
+	onRefetchAction,
 }: MonitorRowProps) {
 	const [isPausing, setIsPausing] = useState(false);
 
@@ -81,7 +82,7 @@ export function MonitorRow({
 				await pauseMutation.mutateAsync({ scheduleId: schedule.id });
 				toast.success("Monitor paused");
 			}
-			onRefetch();
+			onRefetchAction();
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : "Failed to update monitor";
@@ -95,7 +96,7 @@ export function MonitorRow({
 		try {
 			await deleteMutation.mutateAsync({ scheduleId: schedule.id });
 			toast.success("Monitor deleted");
-			onDelete();
+			onDeleteAction();
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : "Failed to delete monitor";
@@ -110,40 +111,34 @@ export function MonitorRow({
 	const displayUrl = isWebsiteMonitor ? schedule.website?.domain : schedule.url;
 
 	return (
-		<div className="flex items-center gap-4 border-b p-4 transition-colors last:border-b-0 hover:bg-accent/50">
-			<div className="flex size-10 shrink-0 items-center justify-center rounded border bg-secondary-brighter">
-				<HeartbeatIcon
-					className="text-accent-foreground"
-					size={20}
-					weight="duotone"
-				/>
-			</div>
-			<div className="min-w-0 flex-1">
-				{isWebsiteMonitor ? (
-					<Link
-						className="group block"
-						href={`/websites/${schedule.websiteId}/pulse`}
-					>
-						<h3 className="truncate font-semibold text-base text-foreground transition-colors group-hover:text-primary">
-							{displayName}
-						</h3>
-					</Link>
-				) : (
-					<h3 className="truncate font-semibold text-base text-foreground">
+		<div className="group flex items-center gap-4 border-b p-4 transition-colors last:border-b-0 hover:bg-accent/50">
+			<Link
+				className="flex min-w-0 flex-1 items-center gap-4"
+				href={`/monitors/${schedule.id}`}
+			>
+				<div className="flex size-10 shrink-0 items-center justify-center rounded border bg-secondary-brighter">
+					<HeartbeatIcon
+						className="text-accent-foreground"
+						size={20}
+						weight="duotone"
+					/>
+				</div>
+				<div className="min-w-0 flex-1">
+					<h3 className="truncate font-semibold text-base text-foreground transition-colors group-hover:text-primary">
 						{displayName}
 					</h3>
-				)}
-				<div className="mt-1 flex items-center gap-4 text-muted-foreground text-sm">
-					<div className="flex items-center gap-1.5">
-						<GlobeIcon className="size-3.5 shrink-0" weight="duotone" />
-						<span className="truncate">{displayUrl}</span>
+					<div className="mt-1 flex items-center gap-4 text-muted-foreground text-sm">
+						<div className="flex items-center gap-1.5">
+							<GlobeIcon className="size-3.5 shrink-0" weight="duotone" />
+							<span className="truncate">{displayUrl}</span>
+						</div>
+						<span>•</span>
+						<span>
+							{granularityLabels[schedule.granularity] || schedule.granularity}
+						</span>
 					</div>
-					<span>•</span>
-					<span>
-						{granularityLabels[schedule.granularity] || schedule.granularity}
-					</span>
 				</div>
-			</div>
+			</Link>
 			<Badge
 				className={
 					schedule.isPaused
@@ -161,7 +156,7 @@ export function MonitorRow({
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
-					<DropdownMenuItem onClick={onEdit}>
+					<DropdownMenuItem onClick={onEditAction}>
 						<PencilIcon size={16} />
 						Edit
 					</DropdownMenuItem>

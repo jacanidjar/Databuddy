@@ -14,6 +14,7 @@ import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
+import { MonitorSheet } from "@/components/monitors/monitor-sheet";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -31,7 +32,6 @@ import { useBatchDynamicQuery } from "@/hooks/use-dynamic-query";
 import { useWebsite } from "@/hooks/use-websites";
 import { orpc } from "@/lib/orpc";
 import { WebsitePageHeader } from "../_components/website-page-header";
-import { MonitorSheet } from "./_components/monitor-dialog";
 import { RecentActivity } from "./_components/recent-activity";
 import { UptimeHeatmap } from "./_components/uptime-heatmap";
 
@@ -158,6 +158,8 @@ export default function PulsePage() {
 		if (schedule) {
 			setEditingSchedule({
 				id: schedule.id,
+				url: schedule.url,
+				name: schedule.name,
 				granularity: schedule.granularity,
 				jsonParsingConfig: schedule.jsonParsingConfig,
 			});

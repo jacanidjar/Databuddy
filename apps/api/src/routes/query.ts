@@ -1,5 +1,14 @@
 import { auth } from "@databuddy/auth";
-import { and, db, eq, inArray, isNull, member, websites } from "@databuddy/db";
+import {
+	and,
+	db,
+	eq,
+	inArray,
+	isNull,
+	member,
+	uptimeSchedules,
+	websites,
+} from "@databuddy/db";
 import { filterOptions } from "@databuddy/shared/lists/filters";
 import type { CustomQueryRequest } from "@databuddy/shared/types/custom-query";
 import { Elysia, t } from "elysia";
@@ -157,6 +166,45 @@ async function verifyWebsiteAccess(
 		}
 
 		return false;
+	}
+
+	return false;
+}
+
+async function verifyScheduleAccess(
+	ctx: AuthContext,
+	scheduleId: string
+): Promise<boolean> {
+	const schedule = await db.query.uptimeSchedules.findFirst({
+		where: eq(uptimeSchedules.id, scheduleId),
+		columns: {
+			id: true,
+			userId: true,
+			websiteId: true,
+		},
+	});
+
+	if (!schedule) {
+		return false;
+	}
+
+	if (!ctx.isAuthenticated) {
+		return false;
+	}
+
+	// If schedule has a websiteId, verify website access instead
+	if (schedule.websiteId) {
+		return verifyWebsiteAccess(ctx, schedule.websiteId);
+	}
+
+	// For custom monitors (no websiteId), check user ownership
+	if (ctx.user) {
+		return schedule.userId === ctx.user.id;
+	}
+
+	if (ctx.apiKey) {
+		// API key must belong to the same user who owns the schedule
+		return ctx.apiKey.userId === schedule.userId;
 	}
 
 	return false;
@@ -325,12 +373,28 @@ export const query = new Elysia({ prefix: "/v1/query" })
 			auth: ctx,
 		}: {
 			body: DynamicQueryRequestType | DynamicQueryRequestType[];
-			query: { website_id?: string; timezone?: string };
+			query: { website_id?: string; schedule_id?: string; timezone?: string };
 			auth: AuthContext;
 		}) =>
 			record("executeQuery", async () => {
-				// Check website access first (handles public websites)
-				if (q.website_id) {
+				// Determine the effective ID to use for queries
+				let effectiveId: string | undefined;
+
+				// Check schedule_id first (for custom uptime monitors)
+				if (q.schedule_id) {
+					const hasAccess = await verifyScheduleAccess(ctx, q.schedule_id);
+					if (!hasAccess) {
+						return {
+							success: false,
+							error: ctx.isAuthenticated
+								? "Access denied to this monitor"
+								: "Authentication required",
+							code: ctx.isAuthenticated ? "ACCESS_DENIED" : "AUTH_REQUIRED",
+						};
+					}
+					effectiveId = q.schedule_id;
+				} else if (q.website_id) {
+					// Check website access (handles public websites)
 					const hasAccess = await verifyWebsiteAccess(ctx, q.website_id);
 					if (!hasAccess) {
 						return {
@@ -341,8 +405,9 @@ export const query = new Elysia({ prefix: "/v1/query" })
 							code: ctx.isAuthenticated ? "ACCESS_DENIED" : "AUTH_REQUIRED",
 						};
 					}
+					effectiveId = q.website_id;
 				} else if (!ctx.isAuthenticated) {
-					// No website_id and not authenticated
+					// No website_id/schedule_id and not authenticated
 					return AUTH_FAILED;
 				}
 
@@ -357,7 +422,7 @@ export const query = new Elysia({ prefix: "/v1/query" })
 					const cache = await getCachedWebsiteDomain([]);
 					const results = await Promise.all(
 						body.map((req) =>
-							runDynamicQuery(req, q.website_id, tz, cache).catch((e) => ({
+							runDynamicQuery(req, effectiveId, tz, cache).catch((e) => ({
 								success: false,
 								error: e instanceof Error ? e.message : "Query failed",
 							}))
@@ -368,7 +433,7 @@ export const query = new Elysia({ prefix: "/v1/query" })
 
 				return {
 					success: true,
-					...(await runDynamicQuery(body, q.website_id, tz)),
+					...(await runDynamicQuery(body, effectiveId, tz)),
 				};
 			}),
 		{
