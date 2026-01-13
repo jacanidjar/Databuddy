@@ -424,6 +424,13 @@ await client.sendToChannel("slack", {
 });
 ```
 
+## Roadmap
+
+See [TODO.md](./TODO.md) for planned features including:
+- Database-backed alarm system
+- Uptime monitoring integration
+- Additional notification providers (Teams, Telegram, PagerDuty, SMS, etc.)
+
 ## License
 
 Internal use only.
