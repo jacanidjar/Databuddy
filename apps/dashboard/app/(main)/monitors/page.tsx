@@ -7,14 +7,14 @@ import {
 } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
 import { Suspense, useState } from "react";
-import { ErrorBoundary } from "@/components/error-boundary";
 import { EmptyState } from "@/components/empty-state";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { MonitorSheet } from "@/components/monitors/monitor-sheet";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { orpc } from "@/lib/orpc";
 import { cn } from "@/lib/utils";
-import { MonitorsList, type Monitor } from "./_components/monitors-list";
+import { type Monitor, MonitorsList } from "./_components/monitors-list";
 import { PageHeader } from "./_components/page-header";
 
 const MonitorsListSkeleton = () => (
