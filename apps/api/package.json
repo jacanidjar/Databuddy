@@ -38,7 +38,7 @@
     "@opentelemetry/sdk-trace-node": "^2.3.0",
     "@opentelemetry/semantic-conventions": "^1.38.0",
     "@orpc/server": "^1.13.4",
-    "ai": "^6.0.33",
+    "ai": "^5.0.51",
     "autumn-js": "^0.1.69",
     "bullmq": "^5.66.5",
     "dayjs": "^1.11.19",

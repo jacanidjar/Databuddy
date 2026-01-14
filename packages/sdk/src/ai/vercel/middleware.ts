@@ -507,7 +507,7 @@ export const databuddyLLM = (options: DatabuddyLLMOptions = {}) => {
 		}) as T;
 	};
 
-	return { track };
+	return { track, transport };
 };
 
 // biome-ignore lint/performance/noBarrelFile: we need to export the transport function
