@@ -408,6 +408,9 @@ CREATE TABLE IF NOT EXISTS ${DATABASES.OBSERVABILITY}.ai_call_spans (
   output_tokens UInt32 CODEC(ZSTD(1)),
   total_tokens UInt32 CODEC(ZSTD(1)),
   cached_input_tokens Nullable(UInt32) CODEC(ZSTD(1)),
+  cache_creation_input_tokens Nullable(UInt32) CODEC(ZSTD(1)),
+  reasoning_tokens Nullable(UInt32) CODEC(ZSTD(1)),
+  web_search_count Nullable(UInt16) CODEC(ZSTD(1)),
   
   input_token_cost_usd Nullable(Float64) CODEC(Gorilla, ZSTD(1)),
   output_token_cost_usd Nullable(Float64) CODEC(Gorilla, ZSTD(1)),
@@ -418,6 +421,8 @@ CREATE TABLE IF NOT EXISTS ${DATABASES.OBSERVABILITY}.ai_call_spans (
   tool_call_names Array(String) CODEC(ZSTD(1)),
   
   duration_ms UInt32 CODEC(ZSTD(1)),
+  trace_id Nullable(String) CODEC(ZSTD(1)),
+  http_status Nullable(UInt16) CODEC(ZSTD(1)),
   
   error_name LowCardinality(Nullable(String)) CODEC(ZSTD(1)),
   error_message Nullable(String) CODEC(ZSTD(1)),
@@ -658,6 +663,9 @@ export interface AICallSpan {
 	output_tokens: number;
 	total_tokens: number;
 	cached_input_tokens?: number;
+	cache_creation_input_tokens?: number;
+	reasoning_tokens?: number;
+	web_search_count?: number;
 	input_token_cost_usd?: number;
 	output_token_cost_usd?: number;
 	total_token_cost_usd?: number;
@@ -665,6 +673,8 @@ export interface AICallSpan {
 	tool_result_count: number;
 	tool_call_names: string[];
 	duration_ms: number;
+	trace_id?: string;
+	http_status?: number;
 	error_name?: string;
 	error_message?: string;
 	error_stack?: string;

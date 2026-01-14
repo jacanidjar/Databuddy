@@ -6,15 +6,21 @@ import { z } from "zod";
 
 const aiCallSchema = z.object({
 	timestamp: z.union([z.date(), z.number(), z.string()]),
+	traceId: z.string().optional(),
 	type: z.enum(["generate", "stream"]),
 	model: z.string(),
 	provider: z.string(),
 	finishReason: z.string().optional(),
+	input: z.array(z.unknown()).optional(),
+	output: z.array(z.unknown()).optional(),
 	usage: z.object({
 		inputTokens: z.number(),
 		outputTokens: z.number(),
 		totalTokens: z.number(),
 		cachedInputTokens: z.number().optional(),
+		cacheCreationInputTokens: z.number().optional(),
+		reasoningTokens: z.number().optional(),
+		webSearchCount: z.number().optional(),
 	}),
 	cost: z.object({
 		inputTokenCostUSD: z.number().optional(),
@@ -25,6 +31,7 @@ const aiCallSchema = z.object({
 		toolCallCount: z.number(),
 		toolResultCount: z.number(),
 		toolCallNames: z.array(z.string()),
+		availableTools: z.array(z.string()).optional(),
 	}),
 	error: z
 		.object({
@@ -34,6 +41,8 @@ const aiCallSchema = z.object({
 		})
 		.optional(),
 	durationMs: z.number(),
+	httpStatus: z.number().optional(),
+	params: z.record(z.string(), z.unknown()).optional(),
 });
 
 const app = new Elysia().post("/llm", async (context) => {
@@ -94,6 +103,9 @@ const app = new Elysia().post("/llm", async (context) => {
 				output_tokens: call.usage.outputTokens,
 				total_tokens: call.usage.totalTokens,
 				cached_input_tokens: call.usage.cachedInputTokens,
+				cache_creation_input_tokens: call.usage.cacheCreationInputTokens,
+				reasoning_tokens: call.usage.reasoningTokens,
+				web_search_count: call.usage.webSearchCount,
 				input_token_cost_usd: call.cost.inputTokenCostUSD,
 				output_token_cost_usd: call.cost.outputTokenCostUSD,
 				total_token_cost_usd: call.cost.totalTokenCostUSD,
@@ -101,6 +113,8 @@ const app = new Elysia().post("/llm", async (context) => {
 				tool_result_count: call.tools.toolResultCount,
 				tool_call_names: call.tools.toolCallNames,
 				duration_ms: call.durationMs,
+				trace_id: call.traceId,
+				http_status: call.httpStatus,
 				error_name: call.error?.name,
 				error_message: call.error?.message,
 				error_stack: call.error?.stack,
