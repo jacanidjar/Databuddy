@@ -5,9 +5,9 @@
  * and platform identification.
  */
 
+import { bots } from "@databuddy/shared/lists/bots";
 import { captureError, record } from "@lib/tracing";
 import { UAParser } from "ua-parser-js";
-import { bots } from "../../../../packages/shared/src/flags/lists/bots";
 
 export interface UserAgentInfo {
 	bot: {

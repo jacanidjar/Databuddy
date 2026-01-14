@@ -1,5 +1,6 @@
 "use client";
 
+import { filterOptions } from "@databuddy/shared/lists/filters";
 import type { DynamicQueryFilter } from "@databuddy/shared/types/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FloppyDiskIcon } from "@phosphor-icons/react";
@@ -16,7 +17,6 @@ import {
 import { FormDialog } from "@/components/ui/form-dialog";
 import { Input } from "@/components/ui/input";
 import { getOperatorLabel } from "@/hooks/use-filters";
-import { filterOptions } from "../../../../../../../../packages/shared/src/flags/lists/filters";
 
 const formSchema = z.object({
 	name: z

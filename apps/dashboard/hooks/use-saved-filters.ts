@@ -1,9 +1,9 @@
 "use client";
 
+import { filterOptions } from "@databuddy/shared/lists/filters";
 import type { DynamicQueryFilter } from "@databuddy/shared/types/api";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { filterOptions } from "../../../packages/shared/src/flags/lists/filters";
 
 export interface SavedFilter {
 	id: string;

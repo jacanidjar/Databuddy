@@ -1,5 +1,6 @@
 "use client";
 
+import { filterOptions } from "@databuddy/shared/lists/filters";
 import type { DynamicQueryFilter } from "@databuddy/shared/types/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -50,7 +51,6 @@ import {
 	useAutocompleteData,
 } from "@/hooks/use-funnels";
 import { cn } from "@/lib/utils";
-import { filterOptions } from "../../../../../../../../packages/shared/src/flags/lists/filters";
 
 type FilterOption = (typeof filterOptions)[number];
 
@@ -68,7 +68,9 @@ function getSuggestions(
 	field: string,
 	autocompleteData: AutocompleteData | undefined
 ): string[] {
-	if (!autocompleteData) return [];
+	if (!autocompleteData) {
+		return [];
+	}
 
 	const suggestionMap: Record<string, string[] | undefined> = {
 		browser_name: autocompleteData.browsers,
@@ -101,7 +103,9 @@ function ValueSuggestions({
 				.slice(0, MAX_SUGGESTIONS)
 		: suggestions.slice(0, MAX_SUGGESTIONS);
 
-	if (suggestions.length === 0) return null;
+	if (suggestions.length === 0) {
+		return null;
+	}
 
 	return (
 		<div className="space-y-2">

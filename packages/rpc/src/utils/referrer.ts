@@ -1,6 +1,6 @@
-import { referrers } from "../../../shared/src/flags/lists/referrers";
+import { referrers } from "@databuddy/shared/lists/referrers";
 
-export type ReferrerInfo = {
+export interface ReferrerInfo {
 	type: string;
 	name: string;
 	url: string;

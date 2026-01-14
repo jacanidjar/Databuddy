@@ -1,5 +1,6 @@
 "use client";
 
+import { filterOptions } from "@databuddy/shared/lists/filters";
 import type { DynamicQueryFilter } from "@databuddy/shared/types/api";
 import {
 	BookmarkIcon,
@@ -19,7 +20,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getOperatorLabel } from "@/hooks/use-filters";
 import type { SavedFilter } from "@/hooks/use-saved-filters";
-import { filterOptions } from "../../../../../../../../packages/shared/src/flags/lists/filters";
 
 interface SavedFiltersMenuProps {
 	savedFilters: SavedFilter[];
@@ -40,7 +40,9 @@ function filtersMatch(
 	a: DynamicQueryFilter[],
 	b: DynamicQueryFilter[]
 ): boolean {
-	if (a.length !== b.length) return false;
+	if (a.length !== b.length) {
+		return false;
+	}
 	return a.every((f1, i) => {
 		const f2 = b[i];
 		return (

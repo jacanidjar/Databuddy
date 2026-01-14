@@ -1,5 +1,6 @@
 "use client";
 
+import { filterOptions } from "@databuddy/shared/lists/filters";
 import type { DateRange } from "@databuddy/shared/types/analytics";
 import type { CustomQueryConfig } from "@databuddy/shared/types/custom-query";
 import type { QueryOutputField } from "@databuddy/shared/types/query";
@@ -60,7 +61,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { operatorOptions } from "@/hooks/use-filters";
 import { useAutocompleteData } from "@/hooks/use-funnels";
 import { cn } from "@/lib/utils";
-import { filterOptions } from "../../../../../../../../packages/shared/src/flags/lists/filters";
 import { CustomQueryBuilder } from "./custom-query-builder";
 import { useDashboardData } from "./hooks/use-dashboard-data";
 import type { QueryTypeOption } from "./hooks/use-query-types";

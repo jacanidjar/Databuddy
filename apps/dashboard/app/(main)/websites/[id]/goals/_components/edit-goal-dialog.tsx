@@ -1,5 +1,6 @@
 "use client";
 
+import { filterOptions } from "@databuddy/shared/lists/filters";
 import type { GoalFilter } from "@databuddy/shared/types/api";
 import { PlusIcon, Target, TrashIcon } from "@phosphor-icons/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -27,7 +28,6 @@ import { Switch } from "@/components/ui/switch";
 import { goalFunnelOperatorOptions, useFilters } from "@/hooks/use-filters";
 import type { AutocompleteData } from "@/hooks/use-funnels";
 import type { CreateGoalData, Goal } from "@/hooks/use-goals";
-import { filterOptions } from "../../../../../../../../packages/shared/src/flags/lists/filters";
 
 const defaultFilter: GoalFilter = {
 	field: "browser_name",

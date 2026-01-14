@@ -1,5 +1,5 @@
 import { chQuery } from "@databuddy/db";
-import { referrers } from "../../../shared/src/flags/lists/referrers";
+import { referrers } from "@databuddy/shared/lists/referrers";
 
 export interface AnalyticsStep {
 	step_number: number;

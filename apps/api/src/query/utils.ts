@@ -2,11 +2,11 @@ import {
 	getCountryCode,
 	getCountryName,
 } from "@databuddy/shared/country-codes";
-import { referrers } from "../../../../packages/shared/src/flags/lists/referrers";
+import { referrers } from "@databuddy/shared/lists/referrers";
 import { mapScreenResolutionToDeviceType } from "./screen-resolution-to-device-type";
 import type { SimpleQueryConfig } from "./types";
 
-type DataRow = {
+interface DataRow {
 	name?: string;
 	pageviews?: number;
 	visitors?: number;

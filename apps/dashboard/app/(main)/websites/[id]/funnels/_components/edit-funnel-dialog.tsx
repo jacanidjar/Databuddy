@@ -1,5 +1,6 @@
 "use client";
 
+import { filterOptions } from "@databuddy/shared/lists/filters";
 import {
 	DragDropContext,
 	Draggable,
@@ -44,7 +45,6 @@ import type {
 	FunnelStep,
 } from "@/hooks/use-funnels";
 import { cn } from "@/lib/utils";
-import { filterOptions } from "../../../../../../../../packages/shared/src/flags/lists/filters";
 
 const defaultFilter: FunnelFilter = {
 	field: "browser_name",

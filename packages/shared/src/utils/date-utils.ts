@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 import relativeTimePlugin from "dayjs/plugin/relativeTime";
 import timezonePlugin from "dayjs/plugin/timezone";
 import utcPlugin from "dayjs/plugin/utc";
-import { TIMEZONES } from "../flags/lists/timezones";
+import { TIMEZONES } from "../lists/timezones";
 
 dayjs.extend(utcPlugin);
 dayjs.extend(timezonePlugin);
@@ -11,7 +11,7 @@ dayjs.extend(relativeTimePlugin);
 const DEFAULT_DATE_FORMAT = "MMM D, YYYY";
 const DEFAULT_TIME_FORMAT = "h:mm A";
 
-type DateFormatOptions = {
+interface DateFormatOptions {
 	timezone?: string;
 	dateFormat?: string;
 	timeFormat?: string;
