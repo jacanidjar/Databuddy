@@ -1,6 +1,5 @@
 "use client";
 
-import { filterOptions } from "@databuddy/shared/lists/filters";
 import type { DynamicQueryFilter } from "@databuddy/shared/types/api";
 import { FloppyDiskIcon, PencilIcon, XIcon } from "@phosphor-icons/react";
 import { useAtom } from "jotai";
@@ -14,6 +13,7 @@ import {
 	dynamicQueryFiltersAtom,
 	removeDynamicFilterAtom,
 } from "@/stores/jotai/filterAtoms";
+import { filterOptions } from "../../../../../../../../packages/shared/src/flags/lists/filters";
 import { SaveFilterDialog } from "./save-filter-dialog";
 import { SavedFiltersMenu } from "./saved-filters-menu";
 

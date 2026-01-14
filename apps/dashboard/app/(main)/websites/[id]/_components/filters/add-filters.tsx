@@ -1,6 +1,5 @@
 "use client";
 
-import { filterOptions } from "@databuddy/shared/lists/filters";
 import type { DynamicQueryFilter } from "@databuddy/shared/types/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -51,6 +50,7 @@ import {
 	useAutocompleteData,
 } from "@/hooks/use-funnels";
 import { cn } from "@/lib/utils";
+import { filterOptions } from "../../../../../../../../packages/shared/src/flags/lists/filters";
 
 type FilterOption = (typeof filterOptions)[number];
 

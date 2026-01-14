@@ -1,3 +1,4 @@
+import { getApiKeyFromHeader, hasKeyScope } from "@lib/api-key";
 import { insertAICallSpans } from "@lib/event-service";
 import { validateRequest } from "@lib/request-validation";
 import { captureError } from "@lib/tracing";
@@ -53,6 +54,33 @@ const app = new Elysia().post("/llm", async (context) => {
 	};
 
 	try {
+		// Verify API key with write:llm scope
+		const apiKey = await getApiKeyFromHeader(request.headers);
+		if (apiKey === null) {
+			return new Response(
+				JSON.stringify({
+					status: "error",
+					message: "Invalid or missing API key with write:llm scope",
+				}),
+				{
+					status: 401,
+					headers: { "Content-Type": "application/json" },
+				}
+			);
+		}
+		if (!hasKeyScope(apiKey, "write:llm")) {
+			return new Response(
+				JSON.stringify({
+					status: "error",
+					message: "Invalid or missing API key with write:llm scope",
+				}),
+				{
+					status: 401,
+					headers: { "Content-Type": "application/json" },
+				}
+			);
+		}
+
 		const validation = await validateRequest(body, query, request);
 		if ("error" in validation) {
 			return validation.error;

@@ -1,5 +1,5 @@
 import { chQuery } from "@databuddy/db";
-import { referrers } from "@databuddy/shared/lists/referrers";
+import { referrers } from "../../../shared/src/flags/lists/referrers";
 
 export interface AnalyticsStep {
 	step_number: number;
@@ -582,8 +582,8 @@ export const processFunnelAnalytics = async (
 	const biggestDropoff =
 		stepsAnalytics.length > 1
 			? stepsAnalytics
-					.slice(1)
-					.reduce((max, s) => (s.dropoff_rate > max.dropoff_rate ? s : max))
+				.slice(1)
+				.reduce((max, s) => (s.dropoff_rate > max.dropoff_rate ? s : max))
 			: stepsAnalytics[0];
 
 	return {

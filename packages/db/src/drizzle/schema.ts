@@ -466,23 +466,7 @@ export const team = pgTable(
 export const apiKeyType = pgEnum("api_key_type", ["user", "sdk", "automation"]);
 export const apiScope = pgEnum("api_scope", [
 	"read:data",
-	"write:data",
-	"read:experiments",
-	"track:events",
-	"admin:apikeys",
-	// New scopes for core use cases
-	"read:analytics",
-	"write:custom-sql",
-	"read:export",
-	"write:otel",
-	// Administrative scopes
-	"admin:users",
-	"admin:organizations",
-	"admin:websites",
-	// Rate limiting and usage scopes
-	"rate:standard",
-	"rate:premium",
-	"rate:enterprise",
+	"write:llm",
 ]);
 
 // Resource type for flexible, future-proof per-resource access control

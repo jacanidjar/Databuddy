@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 import relativeTimePlugin from "dayjs/plugin/relativeTime";
 import timezonePlugin from "dayjs/plugin/timezone";
 import utcPlugin from "dayjs/plugin/utc";
-import { TIMEZONES } from "../lists/timezones";
+import { TIMEZONES } from "../flags/lists/timezones";
 
 dayjs.extend(utcPlugin);
 dayjs.extend(timezonePlugin);
