@@ -259,7 +259,7 @@ export function ApiKeyDetailDialog({
 
 									{/* Permissions Section */}
 									<section className="space-y-3">
-										<Label className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
+										<Label className="font-medium text-muted-foreground text-xs uppercase">
 											Permissions
 										</Label>
 										<div className="rounded border bg-card p-1">
