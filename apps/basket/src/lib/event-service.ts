@@ -383,7 +383,7 @@ export function insertOutgoingLinksBatch(
  */
 export async function insertAICallSpans(
 	calls: Array<{
-		website_id: string;
+		website_id?: string;
 		user_id?: string;
 		timestamp: number;
 		type: "generate" | "stream";
@@ -410,14 +410,14 @@ export async function insertAICallSpans(
 		error_message?: string;
 		error_stack?: string;
 	}>,
-	websiteId: string
+	websiteId?: string
 ): Promise<void> {
 	if (calls.length === 0) {
 		return;
 	}
 
 	const spans: AICallSpan[] = calls.map((call) => ({
-		website_id: websiteId,
+		website_id: call.website_id ?? websiteId,
 		user_id: call.user_id,
 		timestamp: call.timestamp,
 		type: call.type,

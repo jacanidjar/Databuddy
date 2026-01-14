@@ -1,7 +1,8 @@
 import { getApiKeyFromHeader, hasKeyScope } from "@lib/api-key";
 import { insertAICallSpans } from "@lib/event-service";
 import { validateRequest } from "@lib/request-validation";
-import { captureError } from "@lib/tracing";
+import { captureError, record, setAttributes } from "@lib/tracing";
+import { Autumn as autumn } from "autumn-js";
 import { Elysia } from "elysia";
 import { z } from "zod";
 
@@ -54,7 +55,6 @@ const app = new Elysia().post("/llm", async (context) => {
 	};
 
 	try {
-		// Verify API key with write:llm scope
 		const apiKey = await getApiKeyFromHeader(request.headers);
 		if (apiKey === null) {
 			return new Response(
@@ -81,14 +81,69 @@ const app = new Elysia().post("/llm", async (context) => {
 			);
 		}
 
-		const validation = await validateRequest(body, query, request);
-		if ("error" in validation) {
-			return validation.error;
+		const ownerId = apiKey.organizationId ?? apiKey.userId ?? undefined;
+
+		// Always run autumn check using API key owner's ID
+		if (ownerId) {
+			try {
+				const result = await record("autumn.check", () =>
+					autumn.check({
+						customer_id: ownerId,
+						feature_id: "llm",
+						send_event: true,
+						// @ts-expect-error autumn types are not up to date
+						properties: {
+							api_key_id: apiKey.id,
+
+						},
+					})
+				);
+				const data = result.data;
+
+				if (data && !(data.allowed || data.overage_allowed)) {
+					setAttributes({
+						validation_failed: true,
+						validation_reason: "exceeded_event_limit",
+						autumn_allowed: false,
+					});
+					return new Response(
+						JSON.stringify({
+							status: "error",
+							message: "Exceeded event limit",
+						}),
+						{
+							status: 429,
+							headers: { "Content-Type": "application/json" },
+						}
+					);
+				}
+
+				setAttributes({
+					autumn_allowed: data?.allowed ?? false,
+					autumn_overage_allowed: data?.overage_allowed ?? false,
+				});
+			} catch (error) {
+				captureError(error, {
+					message: "Autumn check failed, allowing event through",
+				});
+				setAttributes({
+					autumn_check_failed: true,
+				});
+			}
 		}
 
-		const { clientId } = validation;
+		// Optionally validate website if clientId is provided
+		let websiteId: string | undefined;
+		const clientId =
+			query.client_id || request.headers.get("databuddy-client-id") || undefined;
+		if (clientId) {
+			const validation = await validateRequest(body, query, request);
+			if ("error" in validation) {
+				return validation.error;
+			}
+			websiteId = validation.clientId;
+		}
 
-		// Support both single call and array of calls
 		const parseResult = z
 			.union([aiCallSchema, z.array(aiCallSchema)])
 			.safeParse(body);
@@ -121,7 +176,8 @@ const app = new Elysia().post("/llm", async (context) => {
 						: new Date(call.timestamp).getTime();
 
 			return {
-				website_id: clientId,
+				website_id: websiteId,
+				user_id: ownerId,
 				timestamp: timestamp || now,
 				type: call.type,
 				model: call.model,
@@ -149,7 +205,7 @@ const app = new Elysia().post("/llm", async (context) => {
 			};
 		});
 
-		await insertAICallSpans(spans, clientId);
+		await insertAICallSpans(spans, websiteId);
 
 		return new Response(
 			JSON.stringify({
