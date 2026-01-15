@@ -75,6 +75,26 @@ function createErrorResponse(
 	});
 }
 
+/**
+ * Get the owner ID for a website (organizationId or userId)
+ * Used for LLM queries which are scoped by owner, not website
+ */
+async function getWebsiteOwnerId(websiteId: string): Promise<string | null> {
+	const website = await db.query.websites.findFirst({
+		where: eq(websites.id, websiteId),
+		columns: {
+			organizationId: true,
+			userId: true,
+		},
+	});
+
+	if (!website) {
+		return null;
+	}
+
+	return website.organizationId ?? website.userId ?? null;
+}
+
 async function verifyWebsiteAccess(
 	ctx: AuthContext,
 	websiteId: string
@@ -363,6 +383,18 @@ async function executeDynamicQuery(
 		domainCache?.[projectId] ??
 		(await getWebsiteDomain(projectId).catch(() => null));
 
+	// Check if any LLM queries are requested - they need owner_id, not website_id
+	const hasLlmQueries = request.parameters.some((param) => {
+		const name = typeof param === "string" ? param : param.name;
+		return name.startsWith("llm_");
+	});
+
+	// Resolve owner ID for LLM queries (organizationId or userId)
+	let ownerId: string | null = null;
+	if (hasLlmQueries) {
+		ownerId = await getWebsiteOwnerId(projectId);
+	}
+
 	type PreparedParameter =
 		| { id: string; error: string }
 		| { id: string; request: QueryRequest & { type: string } };
@@ -376,18 +408,23 @@ async function executeDynamicQuery(
 			return { id, error: `Unknown query type: ${name}` };
 		}
 
-		const hasRequiredFields = projectId && paramFrom && paramTo;
+		const isLlmQuery = name.startsWith("llm_");
+		const effectiveProjectId = isLlmQuery ? ownerId : projectId;
+
+		const hasRequiredFields = effectiveProjectId && paramFrom && paramTo;
 		if (!hasRequiredFields) {
 			return {
 				id,
-				error: "Missing project identifier, start_date, or end_date",
+				error: isLlmQuery && !ownerId
+					? "Could not resolve owner for LLM query"
+					: "Missing project identifier, start_date, or end_date",
 			};
 		}
 
 		return {
 			id,
 			request: {
-				projectId,
+				projectId: effectiveProjectId,
 				type: name,
 				from: paramFrom,
 				to: paramTo,
