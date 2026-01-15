@@ -1,15 +1,11 @@
 "use client";
 
 import type { DynamicQueryRequest } from "@databuddy/shared/types/api";
-import { BugIcon } from "@phosphor-icons/react/dist/ssr/Bug";
-import { WarningIcon } from "@phosphor-icons/react/dist/ssr/Warning";
-import { useParams } from "next/navigation";
 import { useMemo } from "react";
-import { StatCard } from "@/components/analytics/stat-card";
 import { SimpleMetricsChart } from "@/components/charts/simple-metrics-chart";
 import { DataTable, type TabConfig } from "@/components/table/data-table";
-import { useDateFilters } from "@/hooks/use-date-filters";
 import { useBatchDynamicQuery } from "@/hooks/use-dynamic-query";
+import type { DateRange } from "@/types/date-range";
 import {
 	createErrorColumns,
 	createHttpStatusColumns,
@@ -17,12 +13,12 @@ import {
 	type LlmErrorBreakdownRow,
 	type LlmHttpStatusRow,
 	type LlmRecentErrorRow,
-} from "../_components/llm-columns";
+} from "./llm-columns";
 import { formatPercent, formatTokenCount } from "../_lib/llm-analytics-utils";
 
-interface LlmOverviewKpiRow {
-	error_count: number;
-	error_rate: number;
+interface LlmErrorsTabProps {
+	websiteId: string;
+	dateRange: DateRange;
 }
 
 interface LlmErrorRateSeriesRow {
@@ -31,13 +27,8 @@ interface LlmErrorRateSeriesRow {
 	error_rate: number;
 }
 
-export default function LlmReliabilityPage() {
-	const { id } = useParams();
-	const websiteId = id as string;
-	const { dateRange } = useDateFilters();
-
+export function LlmErrorsTab({ websiteId, dateRange }: LlmErrorsTabProps) {
 	const queries: DynamicQueryRequest[] = [
-		{ id: "llm-kpis", parameters: ["llm_overview_kpis"] },
 		{ id: "llm-error-series", parameters: ["llm_error_rate_time_series"] },
 		{ id: "llm-errors", parameters: ["llm_error_breakdown"] },
 		{ id: "llm-status", parameters: ["llm_http_status_breakdown"] },
@@ -49,10 +40,6 @@ export default function LlmReliabilityPage() {
 		dateRange,
 		queries
 	);
-
-	const kpiRow = (
-		getDataForQuery("llm-kpis", "llm_overview_kpis") as LlmOverviewKpiRow[]
-	)[0] ?? { error_count: 0, error_rate: 0 };
 
 	const errorSeries =
 		(getDataForQuery(
@@ -87,7 +74,7 @@ export default function LlmReliabilityPage() {
 			errorSeries.map((row) => ({
 				date: row.date,
 				errors: row.error_count ?? 0,
-				rate: row.error_rate ?? 0,
+				rate: (row.error_rate ?? 0) * 100,
 			})),
 		[errorSeries]
 	);
@@ -118,30 +105,6 @@ export default function LlmReliabilityPage() {
 
 	return (
 		<div className="space-y-4 p-4">
-			<div className="space-y-1">
-				<h1 className="text-balance font-semibold text-foreground text-lg">
-					LLM Reliability
-				</h1>
-				<p className="text-pretty text-muted-foreground text-sm">
-					Watch error rates, failure reasons, and HTTP status patterns.
-				</p>
-			</div>
-
-			<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-				<StatCard
-					icon={BugIcon}
-					isLoading={isLoading}
-					title="Error Count"
-					value={formatTokenCount(kpiRow.error_count)}
-				/>
-				<StatCard
-					icon={WarningIcon}
-					isLoading={isLoading}
-					title="Error Rate"
-					value={formatPercent(kpiRow.error_rate)}
-				/>
-			</div>
-
 			<SimpleMetricsChart
 				data={errorChart}
 				description="Errors and error rate over time"
@@ -158,7 +121,7 @@ export default function LlmReliabilityPage() {
 						key: "rate",
 						label: "Error Rate",
 						color: "#f59e0b",
-						formatValue: (value) => formatPercent(value),
+						formatValue: (value) => `${value.toFixed(1)}%`,
 					},
 				]}
 				title="Error Trends"

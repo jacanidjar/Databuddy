@@ -1,22 +1,13 @@
 "use client";
 
 import type { DynamicQueryRequest } from "@databuddy/shared/types/api";
-import {
-	ChartLineUpIcon,
-	CurrencyDollarIcon,
-	LightningIcon,
-	RobotIcon,
-	WarningIcon,
-} from "@phosphor-icons/react";
 import { useAtom } from "jotai";
-import { useParams } from "next/navigation";
 import { useMemo } from "react";
-import { StatCard } from "@/components/analytics/stat-card";
 import { SimpleMetricsChart } from "@/components/charts/simple-metrics-chart";
 import { DataTable, type TabConfig } from "@/components/table/data-table";
-import { useDateFilters } from "@/hooks/use-date-filters";
 import { useBatchDynamicQuery } from "@/hooks/use-dynamic-query";
 import { addDynamicFilterAtom } from "@/stores/jotai/filterAtoms";
+import type { DateRange } from "@/types/date-range";
 import {
 	createErrorColumns,
 	createFinishReasonColumns,
@@ -26,27 +17,16 @@ import {
 	type LlmFinishReasonRow,
 	type LlmModelBreakdownRow,
 	type LlmProviderBreakdownRow,
-} from "./_components/llm-columns";
+} from "./llm-columns";
 import {
 	formatDurationMs,
-	formatPercent,
 	formatTokenCount,
 	formatUsd,
-} from "./_lib/llm-analytics-utils";
+} from "../_lib/llm-analytics-utils";
 
-interface LlmOverviewKpiRow {
-	total_calls: number;
-	total_cost: number;
-	total_tokens: number;
-	total_input_tokens: number;
-	total_output_tokens: number;
-	avg_duration_ms: number;
-	p75_duration_ms: number;
-	error_count: number;
-	error_rate: number;
-	cache_hit_rate: number;
-	tool_use_rate: number;
-	web_search_rate: number;
+interface LlmOverviewTabProps {
+	websiteId: string;
+	dateRange: DateRange;
 }
 
 interface LlmTimeSeriesRow {
@@ -58,14 +38,10 @@ interface LlmTimeSeriesRow {
 	p75_duration_ms: number;
 }
 
-export default function LlmAnalyticsOverviewPage() {
-	const { id } = useParams();
-	const websiteId = id as string;
-	const { dateRange } = useDateFilters();
+export function LlmOverviewTab({ websiteId, dateRange }: LlmOverviewTabProps) {
 	const [, addFilter] = useAtom(addDynamicFilterAtom);
 
 	const queries: DynamicQueryRequest[] = [
-		{ id: "llm-kpis", parameters: ["llm_overview_kpis"] },
 		{ id: "llm-series", parameters: ["llm_time_series"] },
 		{ id: "llm-provider", parameters: ["llm_provider_breakdown"] },
 		{ id: "llm-model", parameters: ["llm_model_breakdown"] },
@@ -78,23 +54,6 @@ export default function LlmAnalyticsOverviewPage() {
 		dateRange,
 		queries
 	);
-
-	const kpiRow = (
-		getDataForQuery("llm-kpis", "llm_overview_kpis") as LlmOverviewKpiRow[]
-	)[0] ?? {
-		total_calls: 0,
-		total_cost: 0,
-		total_tokens: 0,
-		total_input_tokens: 0,
-		total_output_tokens: 0,
-		avg_duration_ms: 0,
-		p75_duration_ms: 0,
-		error_count: 0,
-		error_rate: 0,
-		cache_hit_rate: 0,
-		tool_use_rate: 0,
-		web_search_rate: 0,
-	};
 
 	const timeSeries =
 		(getDataForQuery("llm-series", "llm_time_series") as LlmTimeSeriesRow[]) ??
@@ -129,6 +88,7 @@ export default function LlmAnalyticsOverviewPage() {
 			})),
 		[timeSeries]
 	);
+
 	const costSeries = useMemo(
 		() =>
 			timeSeries.map((row) => ({
@@ -137,6 +97,7 @@ export default function LlmAnalyticsOverviewPage() {
 			})),
 		[timeSeries]
 	);
+
 	const latencySeries = useMemo(
 		() =>
 			timeSeries.map((row) => ({
@@ -196,64 +157,11 @@ export default function LlmAnalyticsOverviewPage() {
 		}
 
 		return tabs;
-	}, [
-		providerBreakdown,
-		modelBreakdown,
-		finishReasonBreakdown,
-		errorBreakdown,
-	]);
+	}, [providerBreakdown, modelBreakdown, finishReasonBreakdown, errorBreakdown]);
 
 	return (
 		<div className="space-y-4 p-4">
-			<div className="space-y-1">
-				<h1 className="text-balance font-semibold text-foreground text-lg">
-					LLM Analytics
-				</h1>
-				<p className="text-pretty text-muted-foreground text-sm">
-					Track LLM usage, cost, performance, and reliability for this website.
-				</p>
-			</div>
-
-			<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-				<StatCard
-					icon={RobotIcon}
-					isLoading={isLoading}
-					title="Total Calls"
-					value={formatTokenCount(kpiRow.total_calls)}
-				/>
-				<StatCard
-					icon={CurrencyDollarIcon}
-					isLoading={isLoading}
-					title="Total Cost"
-					value={formatUsd(kpiRow.total_cost)}
-				/>
-				<StatCard
-					icon={LightningIcon}
-					isLoading={isLoading}
-					title="Total Tokens"
-					value={formatTokenCount(kpiRow.total_tokens)}
-				/>
-				<StatCard
-					icon={ChartLineUpIcon}
-					isLoading={isLoading}
-					title="Avg Latency"
-					value={formatDurationMs(kpiRow.avg_duration_ms)}
-				/>
-				<StatCard
-					icon={ChartLineUpIcon}
-					isLoading={isLoading}
-					title="p75 Latency"
-					value={formatDurationMs(kpiRow.p75_duration_ms)}
-				/>
-				<StatCard
-					icon={WarningIcon}
-					isLoading={isLoading}
-					title="Error Rate"
-					value={formatPercent(kpiRow.error_rate)}
-				/>
-			</div>
-
-			<div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<SimpleMetricsChart
 					data={callsSeries}
 					description="Call volume over time"

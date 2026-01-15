@@ -1,25 +1,22 @@
 "use client";
 
 import type { DynamicQueryRequest } from "@databuddy/shared/types/api";
-import { ChartLineUpIcon } from "@phosphor-icons/react/dist/ssr/ChartLineUp";
-import { useParams } from "next/navigation";
 import { useMemo } from "react";
-import { StatCard } from "@/components/analytics/stat-card";
 import { SimpleMetricsChart } from "@/components/charts/simple-metrics-chart";
 import { DataTable, type TabConfig } from "@/components/table/data-table";
-import { useDateFilters } from "@/hooks/use-date-filters";
 import { useBatchDynamicQuery } from "@/hooks/use-dynamic-query";
+import type { DateRange } from "@/types/date-range";
 import {
 	createLatencyColumns,
 	createSlowCallColumns,
 	type LlmLatencyBreakdownRow,
 	type LlmSlowCallRow,
-} from "../_components/llm-columns";
+} from "./llm-columns";
 import { formatDurationMs } from "../_lib/llm-analytics-utils";
 
-interface LlmOverviewKpiRow {
-	avg_duration_ms: number;
-	p75_duration_ms: number;
+interface LlmPerformanceTabProps {
+	websiteId: string;
+	dateRange: DateRange;
 }
 
 interface LlmLatencySeriesRow {
@@ -29,21 +26,11 @@ interface LlmLatencySeriesRow {
 	p95_duration_ms: number;
 }
 
-const getLatestLatency = (rows: LlmLatencySeriesRow[]) => {
-	if (rows.length === 0) {
-		return { p95: 0 };
-	}
-	const latest = rows[rows.length - 1];
-	return { p95: latest?.p95_duration_ms ?? 0 };
-};
-
-export default function LlmPerformancePage() {
-	const { id } = useParams();
-	const websiteId = id as string;
-	const { dateRange } = useDateFilters();
-
+export function LlmPerformanceTab({
+	websiteId,
+	dateRange,
+}: LlmPerformanceTabProps) {
 	const queries: DynamicQueryRequest[] = [
-		{ id: "llm-kpis", parameters: ["llm_overview_kpis"] },
 		{ id: "llm-latency-series", parameters: ["llm_latency_time_series"] },
 		{ id: "llm-latency-model", parameters: ["llm_latency_by_model"] },
 		{ id: "llm-latency-provider", parameters: ["llm_latency_by_provider"] },
@@ -55,10 +42,6 @@ export default function LlmPerformancePage() {
 		dateRange,
 		queries
 	);
-
-	const kpiRow = (
-		getDataForQuery("llm-kpis", "llm_overview_kpis") as LlmOverviewKpiRow[]
-	)[0] ?? { avg_duration_ms: 0, p75_duration_ms: 0 };
 
 	const latencySeries =
 		(getDataForQuery(
@@ -83,11 +66,6 @@ export default function LlmPerformancePage() {
 			...row,
 			name: row.trace_id ?? row.model,
 		})) ?? [];
-
-	const latestLatency = useMemo(
-		() => getLatestLatency(latencySeries),
-		[latencySeries]
-	);
 
 	const latencyChartData = useMemo(
 		() =>
@@ -126,36 +104,6 @@ export default function LlmPerformancePage() {
 
 	return (
 		<div className="space-y-4 p-4">
-			<div className="space-y-1">
-				<h1 className="text-balance font-semibold text-foreground text-lg">
-					LLM Performance
-				</h1>
-				<p className="text-pretty text-muted-foreground text-sm">
-					Monitor latency trends and identify slow calls.
-				</p>
-			</div>
-
-			<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-				<StatCard
-					icon={ChartLineUpIcon}
-					isLoading={isLoading}
-					title="Avg Latency"
-					value={formatDurationMs(kpiRow.avg_duration_ms)}
-				/>
-				<StatCard
-					icon={ChartLineUpIcon}
-					isLoading={isLoading}
-					title="p75 Latency"
-					value={formatDurationMs(kpiRow.p75_duration_ms)}
-				/>
-				<StatCard
-					icon={ChartLineUpIcon}
-					isLoading={isLoading}
-					title="p95 Latency"
-					value={formatDurationMs(latestLatency.p95)}
-				/>
-			</div>
-
 			<SimpleMetricsChart
 				data={latencyChartData}
 				description="Latency percentiles over time"
