@@ -1,11 +1,12 @@
 "use client";
 
+import type { DateRange } from "@databuddy/shared/types/analytics";
 import type { DynamicQueryRequest } from "@databuddy/shared/types/api";
 import { useMemo } from "react";
 import { SimpleMetricsChart } from "@/components/charts/simple-metrics-chart";
 import { DataTable, type TabConfig } from "@/components/table/data-table";
 import { useBatchDynamicQuery } from "@/hooks/use-dynamic-query";
-import type { DateRange } from "@/types/date-range";
+import { formatTokenCount } from "../_lib/llm-analytics-utils";
 import {
 	createErrorColumns,
 	createHttpStatusColumns,
@@ -14,7 +15,6 @@ import {
 	type LlmHttpStatusRow,
 	type LlmRecentErrorRow,
 } from "./llm-columns";
-import { formatPercent, formatTokenCount } from "../_lib/llm-analytics-utils";
 
 interface LlmErrorsTabProps {
 	websiteId: string;
@@ -104,7 +104,7 @@ export function LlmErrorsTab({ websiteId, dateRange }: LlmErrorsTabProps) {
 	}, [errorBreakdown, statusBreakdown]);
 
 	return (
-		<div className="space-y-4 p-4">
+		<div className="space-y-4">
 			<SimpleMetricsChart
 				data={errorChart}
 				description="Errors and error rate over time"

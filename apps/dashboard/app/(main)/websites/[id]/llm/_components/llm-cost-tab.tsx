@@ -1,5 +1,6 @@
 "use client";
 
+import type { DateRange } from "@databuddy/shared/types/analytics";
 import type { DynamicQueryRequest } from "@databuddy/shared/types/api";
 import { useAtom } from "jotai";
 import { useMemo } from "react";
@@ -7,14 +8,13 @@ import { SimpleMetricsChart } from "@/components/charts/simple-metrics-chart";
 import { DataTable, type TabConfig } from "@/components/table/data-table";
 import { useBatchDynamicQuery } from "@/hooks/use-dynamic-query";
 import { addDynamicFilterAtom } from "@/stores/jotai/filterAtoms";
-import type { DateRange } from "@/types/date-range";
+import { formatUsd, pivotTimeSeries } from "../_lib/llm-analytics-utils";
 import {
 	createModelColumns,
 	createProviderColumns,
 	type LlmModelBreakdownRow,
 	type LlmProviderBreakdownRow,
 } from "./llm-columns";
-import { formatUsd, pivotTimeSeries } from "../_lib/llm-analytics-utils";
 
 interface LlmCostTabProps {
 	websiteId: string;
@@ -135,7 +135,7 @@ export function LlmCostTab({ websiteId, dateRange }: LlmCostTabProps) {
 	}));
 
 	return (
-		<div className="space-y-4 p-4">
+		<div className="space-y-4">
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<SimpleMetricsChart
 					data={providerPivot.data}

@@ -1,5 +1,6 @@
 "use client";
 
+import type { DateRange } from "@databuddy/shared/types/analytics";
 import type { DynamicQueryRequest } from "@databuddy/shared/types/api";
 import {
 	ChartLineIcon,
@@ -15,7 +16,6 @@ import { EmptyState } from "@/components/empty-state";
 import { useChartPreferences } from "@/hooks/use-chart-preferences";
 import { useDateFilters } from "@/hooks/use-date-filters";
 import { useBatchDynamicQuery } from "@/hooks/use-dynamic-query";
-import type { DateRange } from "@/types/date-range";
 import {
 	formatDurationMs,
 	formatPercent,
@@ -58,7 +58,7 @@ export function LlmTabPageWrapper({ children }: LlmTabPageWrapperProps) {
 	const params = useParams();
 	const websiteId = params.id as string;
 
-	const { chartType, chartStepType } = useChartPreferences("llm-analytics");
+	const { chartType, chartStepType } = useChartPreferences("llm");
 	const { dateRange } = useDateFilters();
 
 	const queries: DynamicQueryRequest[] = [

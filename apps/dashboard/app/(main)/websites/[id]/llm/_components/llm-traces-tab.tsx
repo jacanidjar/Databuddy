@@ -1,10 +1,10 @@
 "use client";
 
+import type { DateRange } from "@databuddy/shared/types/analytics";
 import type { DynamicQueryRequest } from "@databuddy/shared/types/api";
 import { useMemo } from "react";
 import { DataTable } from "@/components/table/data-table";
 import { useBatchDynamicQuery } from "@/hooks/use-dynamic-query";
-import type { DateRange } from "@/types/date-range";
 import {
 	createRecentCallColumns,
 	createToolNameColumns,
@@ -65,7 +65,7 @@ export function LlmTracesTab({ websiteId, dateRange }: LlmTracesTabProps) {
 	);
 
 	return (
-		<div className="space-y-4 p-4">
+		<div className="space-y-4">
 			<DataTable
 				columns={createTraceColumns()}
 				data={traceRows}

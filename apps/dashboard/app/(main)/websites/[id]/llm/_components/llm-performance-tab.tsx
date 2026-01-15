@@ -1,18 +1,18 @@
 "use client";
 
+import type { DateRange } from "@databuddy/shared/types/analytics";
 import type { DynamicQueryRequest } from "@databuddy/shared/types/api";
 import { useMemo } from "react";
 import { SimpleMetricsChart } from "@/components/charts/simple-metrics-chart";
 import { DataTable, type TabConfig } from "@/components/table/data-table";
 import { useBatchDynamicQuery } from "@/hooks/use-dynamic-query";
-import type { DateRange } from "@/types/date-range";
+import { formatDurationMs } from "../_lib/llm-analytics-utils";
 import {
 	createLatencyColumns,
 	createSlowCallColumns,
 	type LlmLatencyBreakdownRow,
 	type LlmSlowCallRow,
 } from "./llm-columns";
-import { formatDurationMs } from "../_lib/llm-analytics-utils";
 
 interface LlmPerformanceTabProps {
 	websiteId: string;
@@ -103,7 +103,7 @@ export function LlmPerformanceTab({
 	}, [latencyByModel, latencyByProvider]);
 
 	return (
-		<div className="space-y-4 p-4">
+		<div className="space-y-4">
 			<SimpleMetricsChart
 				data={latencyChartData}
 				description="Latency percentiles over time"

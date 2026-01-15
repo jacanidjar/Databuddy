@@ -15,7 +15,8 @@ export type ChartLocation =
 	| "funnels" // Funnel analytics stat cards
 	| "retention" // Retention analytics stat cards
 	| "website-list" // Mini charts on the websites list page
-	| "events"; // Events analytics stat cards
+	| "events" // Events analytics stat cards
+	| "llm"; // LLM analytics stat cards
 
 export const CHART_LOCATIONS: ChartLocation[] = [
 	"overview-stats",
@@ -24,6 +25,7 @@ export const CHART_LOCATIONS: ChartLocation[] = [
 	"retention",
 	"website-list",
 	"events",
+	"llm",
 ];
 
 export const CHART_LOCATION_LABELS: Record<ChartLocation, string> = {
@@ -33,6 +35,7 @@ export const CHART_LOCATION_LABELS: Record<ChartLocation, string> = {
 	retention: "Retention Stats",
 	"website-list": "Website List",
 	events: "Events Stats",
+	llm: "LLM Stats",
 };
 
 export const CHART_LOCATION_DESCRIPTIONS: Record<ChartLocation, string> = {
@@ -42,6 +45,7 @@ export const CHART_LOCATION_DESCRIPTIONS: Record<ChartLocation, string> = {
 	retention: "Stat cards in the retention analytics section",
 	"website-list": "Mini charts on the websites list page",
 	events: "Stat cards in the events analytics section",
+	llm: "Stat cards in the LLM analytics section",
 };
 
 function isValidChartType(value: unknown): value is ChartType {
@@ -62,10 +66,10 @@ function isValidStepType(value: unknown): value is ChartStepType {
 	);
 }
 
-type LocationPreferences = {
+interface LocationPreferences {
 	chartType: ChartType;
 	chartStepType: ChartStepType;
-};
+}
 
 type AllPreferences = Partial<Record<ChartLocation, LocationPreferences>>;
 

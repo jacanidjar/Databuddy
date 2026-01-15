@@ -54,7 +54,7 @@ export function LlmAnalyticsContent() {
 	const params = useParams();
 	const websiteId = params.id as string;
 
-	const { chartType, chartStepType } = useChartPreferences("llm-analytics");
+	const { chartType, chartStepType } = useChartPreferences("llm");
 	const { dateRange } = useDateFilters();
 
 	const queries: DynamicQueryRequest[] = [
