@@ -29,8 +29,8 @@ interface LlmOverviewKpiRow {
 	total_calls: number;
 	total_cost: number;
 	total_tokens: number;
-	input_tokens: number;
-	output_tokens: number;
+	total_input_tokens: number;
+	total_output_tokens: number;
 	cache_hit_rate: number;
 }
 
@@ -70,8 +70,8 @@ export default function LlmCostPage() {
 		total_calls: 0,
 		total_cost: 0,
 		total_tokens: 0,
-		input_tokens: 0,
-		output_tokens: 0,
+		total_input_tokens: 0,
+		total_output_tokens: 0,
 		cache_hit_rate: 0,
 	};
 
@@ -190,13 +190,13 @@ export default function LlmCostPage() {
 					icon={LightningIcon}
 					isLoading={isLoading}
 					title="Input Tokens"
-					value={formatTokenCount(kpiRow.input_tokens)}
+					value={formatTokenCount(kpiRow.total_input_tokens)}
 				/>
 				<StatCard
 					icon={LightningIcon}
 					isLoading={isLoading}
 					title="Output Tokens"
-					value={formatTokenCount(kpiRow.output_tokens)}
+					value={formatTokenCount(kpiRow.total_output_tokens)}
 				/>
 				<StatCard
 					icon={CurrencyDollarIcon}

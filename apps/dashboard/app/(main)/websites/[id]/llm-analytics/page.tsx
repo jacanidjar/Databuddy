@@ -38,8 +38,8 @@ interface LlmOverviewKpiRow {
 	total_calls: number;
 	total_cost: number;
 	total_tokens: number;
-	input_tokens: number;
-	output_tokens: number;
+	total_input_tokens: number;
+	total_output_tokens: number;
 	avg_duration_ms: number;
 	p75_duration_ms: number;
 	error_count: number;
@@ -85,8 +85,8 @@ export default function LlmAnalyticsOverviewPage() {
 		total_calls: 0,
 		total_cost: 0,
 		total_tokens: 0,
-		input_tokens: 0,
-		output_tokens: 0,
+		total_input_tokens: 0,
+		total_output_tokens: 0,
 		avg_duration_ms: 0,
 		p75_duration_ms: 0,
 		error_count: 0,
