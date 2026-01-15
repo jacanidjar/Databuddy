@@ -1,5 +1,6 @@
 "use client";
 
+import type { DateRange } from "@databuddy/shared/types/analytics";
 import type { DynamicQueryRequest } from "@databuddy/shared/types/api";
 import { useAtom } from "jotai";
 import { useMemo } from "react";
@@ -7,7 +8,11 @@ import { SimpleMetricsChart } from "@/components/charts/simple-metrics-chart";
 import { DataTable, type TabConfig } from "@/components/table/data-table";
 import { useBatchDynamicQuery } from "@/hooks/use-dynamic-query";
 import { addDynamicFilterAtom } from "@/stores/jotai/filterAtoms";
-import type { DateRange } from "@/types/date-range";
+import {
+	formatDurationMs,
+	formatTokenCount,
+	formatUsd,
+} from "../_lib/llm-analytics-utils";
 import {
 	createErrorColumns,
 	createFinishReasonColumns,
@@ -18,11 +23,6 @@ import {
 	type LlmModelBreakdownRow,
 	type LlmProviderBreakdownRow,
 } from "./llm-columns";
-import {
-	formatDurationMs,
-	formatTokenCount,
-	formatUsd,
-} from "../_lib/llm-analytics-utils";
 
 interface LlmOverviewTabProps {
 	websiteId: string;
@@ -157,10 +157,15 @@ export function LlmOverviewTab({ websiteId, dateRange }: LlmOverviewTabProps) {
 		}
 
 		return tabs;
-	}, [providerBreakdown, modelBreakdown, finishReasonBreakdown, errorBreakdown]);
+	}, [
+		providerBreakdown,
+		modelBreakdown,
+		finishReasonBreakdown,
+		errorBreakdown,
+	]);
 
 	return (
-		<div className="space-y-4 p-4">
+		<div className="space-y-4">
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<SimpleMetricsChart
 					data={callsSeries}
