@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { connect } from "node:tls";
-import { db, eq, uptimeSchedules } from "@databuddy/db";
+import { db, eq, uptimeSchedules, uptimeMonitorState } from "@databuddy/db";
 import { type JsonParsingConfig, parseJsonResponse } from "./json-parser";
 import { captureError, record } from "./lib/tracing";
 import type { ActionResult, UptimeData } from "./types";
@@ -322,7 +322,59 @@ export function checkUptime(
 				getProbeMetadata(),
 			]);
 
-			const { status, retries, streak } = calculateStatus(pingResult.ok);
+			// Fetch previous state
+			const previousState = await db.query.uptimeMonitorState.findFirst({
+				where: eq(uptimeMonitorState.id, siteId),
+			});
+
+			const isUp = pingResult.ok;
+			const status = isUp ? MonitorStatus.UP : MonitorStatus.DOWN;
+
+			// Calculate streak and previous status
+			const previousStatus = previousState?.status ?? null;
+			let streak = previousState?.consecutiveFailures ?? 0;
+			let lastChangeAt = previousState?.lastChangeAt ?? new Date(timestamp);
+
+			if (status === MonitorStatus.DOWN) {
+				if (previousStatus === MonitorStatus.DOWN) {
+					streak += 1;
+				} else {
+					streak = 1; // Reset streak on first failure or transition to down
+				}
+			} else {
+				streak = 0; // Reset streak on success
+			}
+
+			if (status !== previousStatus) {
+				lastChangeAt = new Date(timestamp);
+			}
+
+			// Persist new state
+			await db
+				.insert(uptimeMonitorState)
+				.values({
+					id: siteId,
+					status,
+					consecutiveFailures: streak,
+					lastCheckedAt: new Date(timestamp),
+					lastChangeAt,
+					updatedAt: new Date(),
+				})
+				.onConflictDoUpdate({
+					target: uptimeMonitorState.id,
+					set: {
+						status,
+						consecutiveFailures: streak,
+						lastCheckedAt: new Date(timestamp),
+						lastChangeAt,
+						updatedAt: new Date(),
+					},
+				});
+
+			const retries = 0; // Keeping existing logic for now, though checkUptime has retries logic inside pingWebsite loop?
+			// Actually pingWebsite handles internal retries (redirects), but maxRetries arg in checkUptime is unused in pingWebsite loop except for redirects?
+			// The pingWebsite function has a loop for REDIRECTS, not retries on failure (except simple fetch error logic?). 
+			// We'll stick to 'streak' logic for alarms.
 
 			if (!pingResult.ok) {
 				const cert = await checkCertificate(normalizedUrl);
@@ -351,6 +403,7 @@ export function checkUptime(
 						check_type: "http",
 						user_agent: CONFIG.userAgent,
 						error: pingResult.error,
+						previous_status: previousStatus,
 					},
 				};
 			}
@@ -395,6 +448,7 @@ export function checkUptime(
 					user_agent: CONFIG.userAgent,
 					error: "",
 					json_data: jsonData ? JSON.stringify(jsonData) : undefined,
+					previous_status: previousStatus,
 				},
 			};
 		} catch (error) {

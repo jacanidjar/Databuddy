@@ -30,6 +30,7 @@ export const UptimeSchema = t.Object({
 	user_agent: t.String(),
 	error: t.String(),
 	json_data: t.Optional(t.String()),
+	previous_status: t.Optional(t.Union([t.Number(), t.Null()])),
 });
 
 export interface UptimeData {
@@ -55,6 +56,7 @@ export interface UptimeData {
 	user_agent: string;
 	error: string;
 	json_data?: string;
+	previous_status?: number | null;
 }
 
 export type ActionResult<T> =

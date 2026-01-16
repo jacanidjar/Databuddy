@@ -1,6 +1,8 @@
 import { relations } from "drizzle-orm/relations";
 import {
 	account,
+	alarms,
+	alarmTriggerHistory,
 	apikey,
 	flags,
 	flagsToTargetGroups,
@@ -29,6 +31,7 @@ export const userRelations = relations(user, ({ many }) => ({
 	websites: many(websites),
 	funnelDefinitions: many(funnelDefinitions),
 	apikeys: many(apikey),
+	alarms: many(alarms),
 }));
 
 export const organizationRelations = relations(organization, ({ many }) => ({
@@ -38,6 +41,7 @@ export const organizationRelations = relations(organization, ({ many }) => ({
 		relationName: "websites_organizationId_organization_id",
 	}),
 	teams: many(team),
+	alarms: many(alarms),
 }));
 
 export const accountRelations = relations(account, ({ one }) => ({
@@ -104,6 +108,7 @@ export const websitesRelations = relations(websites, ({ one, many }) => ({
 		relationName: "websites_organizationId_organization_id",
 	}),
 	funnelDefinitions: many(funnelDefinitions),
+	alarms: many(alarms),
 }));
 
 export const funnelDefinitionsRelations = relations(
@@ -195,3 +200,34 @@ export const linksRelations = relations(links, ({ one }) => ({
 		references: [user.id],
 	}),
 }));
+
+export const alarmsRelations = relations(alarms, ({ one, many }) => ({
+	user: one(user, {
+		fields: [alarms.userId],
+		references: [user.id],
+	}),
+	organization: one(organization, {
+		fields: [alarms.organizationId],
+		references: [organization.id],
+	}),
+	website: one(websites, {
+		fields: [alarms.websiteId],
+		references: [websites.id],
+	}),
+	triggerHistory: many(alarmTriggerHistory),
+}));
+
+export const alarmTriggerHistoryRelations = relations(
+	alarmTriggerHistory,
+	({ one }) => ({
+		alarm: one(alarms, {
+			fields: [alarmTriggerHistory.alarmId],
+			references: [alarms.id],
+		}),
+		website: one(websites, {
+			fields: [alarmTriggerHistory.websiteId],
+			references: [websites.id],
+		}),
+	})
+);
+

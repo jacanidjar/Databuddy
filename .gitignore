@@ -49,3 +49,6 @@ yarn-error.log*
 
 *.tsbuildinfo
 *.buildinfo
+.env.example
+create-user-manual.ts
+.env.example

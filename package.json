@@ -23,7 +23,7 @@
   "scripts": {
     "setup": "bun run setup.ts",
     "build": "dotenv -- turbo run build",
-    "dev": "dotenv -- turbo run dev",
+    "dev": "dotenv -- turbo run dev --no-daemon --ui=stream",
     "start": "dotenv -- turbo run start",
     "test": "dotenv -- bun test ./apps",
     "test:watch": "dotenv -- bun test --watch ./apps",

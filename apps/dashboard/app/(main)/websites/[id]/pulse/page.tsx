@@ -34,6 +34,7 @@ import { orpc } from "@/lib/orpc";
 import { WebsitePageHeader } from "../_components/website-page-header";
 import { RecentActivity } from "./_components/recent-activity";
 import { UptimeHeatmap } from "./_components/uptime-heatmap";
+import { AlarmList } from "./_components/alarms/alarm-list";
 
 dayjs.extend(relativeTime);
 
@@ -354,6 +355,10 @@ export default function PulsePage() {
 								days={90}
 								isLoading={isLoadingHeatmap}
 							/>
+						</div>
+
+						<div className="border-b bg-sidebar p-6">
+							<AlarmList websiteId={websiteId as string} />
 						</div>
 
 						<div className="bg-sidebar">

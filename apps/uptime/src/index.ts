@@ -192,6 +192,28 @@ const app = new Elysia()
                 );
             }
 
+            // Check and trigger alarms for uptime status changes
+            try {
+                const { checkAndTriggerAlarms } = await import("./alarm-trigger");
+                await checkAndTriggerAlarms(
+                    schedule.data.websiteId || monitorId,
+                    result.data,
+                    result.data.failure_streak,
+                    result.data.previous_status ?? null
+                );
+            } catch (error) {
+                // Don't fail the uptime check if alarm trigger fails
+                captureError(error, {
+                    type: "alarm_trigger_error",
+                    monitorId,
+                });
+                console.error(
+                    "[uptime] Failed to trigger alarms:",
+                    monitorId,
+                    error instanceof Error ? error.message : String(error)
+                );
+            }
+
             return new Response("Uptime check complete", { status: 200 });
         } catch (error) {
             captureError(error, { type: "unexpected_error" });

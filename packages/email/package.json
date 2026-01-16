@@ -9,8 +9,8 @@
     "./config": "./config.ts"
   },
   "scripts": {
-    "dev": "email dev --dir src/emails --port 3001",
-    "preview": "email dev --dir src/emails --port 3001"
+    "dev": "node ./node_modules/react-email/dist/index.js dev --dir src/emails --port 3001",
+    "preview": "node ./node_modules/react-email/dist/index.js dev --dir src/emails --port 3001"
   },
   "main": "./src/emails/index.ts",
   "dependencies": {
