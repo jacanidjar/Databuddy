@@ -464,7 +464,7 @@ export const team = pgTable(
 );
 
 export const apiKeyType = pgEnum("api_key_type", ["user", "sdk", "automation"]);
-export const apiScope = pgEnum("api_scope", ["read:data", "write:llm"]);
+export const apiScope = pgEnum("api_scope", ["read:data", "write:llm", "write:data", "read:analytics", "write:custom-sql", "read:export", "write:otel", "admin:apikeys", "admin:users", "admin:organizations", "admin:websites", "rate:standard", "rate:premium", "rate:enterprise", "read:experiments", "track:events"]);
 
 // Resource type for flexible, future-proof per-resource access control
 export const apiResourceType = pgEnum("api_resource_type", [

@@ -17,6 +17,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 interface BuildParamsOptions {
 	websiteId?: string;
 	scheduleId?: string;
+	linkId?: string;
 	dateRange?: DateRange;
 	additionalParams?: Record<string, string | number>;
 }
@@ -24,13 +25,16 @@ interface BuildParamsOptions {
 function buildParams({
 	websiteId,
 	scheduleId,
+	linkId,
 	dateRange,
 	additionalParams,
 }: BuildParamsOptions): URLSearchParams {
 	const params = new URLSearchParams(additionalParams as Record<string, string>);
 
-	// Use schedule_id for custom monitors, website_id for website-linked monitors
-	if (scheduleId) {
+	// Use appropriate ID based on context
+	if (linkId) {
+		params.set("link_id", linkId);
+	} else if (scheduleId) {
 		params.set("schedule_id", scheduleId);
 	} else if (websiteId) {
 		params.set("website_id", websiteId);
@@ -81,6 +85,7 @@ function transformFilters(filters?: DynamicQueryRequest["filters"]) {
 interface FetchOptions {
 	websiteId?: string;
 	scheduleId?: string;
+	linkId?: string;
 }
 
 async function fetchDynamicQuery(
@@ -100,6 +105,7 @@ async function fetchDynamicQuery(
 	const params = buildParams({
 		websiteId: options.websiteId,
 		scheduleId: options.scheduleId,
+		linkId: options.linkId,
 		dateRange,
 		additionalParams: { timezone },
 	});
@@ -217,6 +223,7 @@ export function useDynamicQuery<T extends (keyof ParameterDataMap)[]>(
 interface BatchQueryOptions {
 	websiteId?: string;
 	scheduleId?: string;
+	linkId?: string;
 }
 
 export function useBatchDynamicQuery(
@@ -231,7 +238,7 @@ export function useBatchDynamicQuery(
 			? { websiteId: idOrOptions }
 			: idOrOptions;
 
-	const effectiveId = queryOptions.websiteId || queryOptions.scheduleId;
+	const effectiveId = queryOptions.websiteId || queryOptions.scheduleId || queryOptions.linkId;
 
 	const fetchData = useCallback(
 		async ({ signal }: { signal?: AbortSignal }) => {
@@ -251,6 +258,7 @@ export function useBatchDynamicQuery(
 			"batch-dynamic-query",
 			queryOptions.websiteId,
 			queryOptions.scheduleId,
+			queryOptions.linkId,
 			dateRange.start_date,
 			dateRange.end_date,
 			dateRange.granularity,

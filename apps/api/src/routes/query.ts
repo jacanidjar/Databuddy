@@ -5,6 +5,7 @@ import {
 	eq,
 	inArray,
 	isNull,
+	links,
 	member,
 	uptimeSchedules,
 	websites,
@@ -202,13 +203,74 @@ async function verifyScheduleAccess(
 	return false;
 }
 
+async function verifyLinkAccess(
+	ctx: AuthContext,
+	linkId: string
+): Promise<boolean> {
+	const link = await db.query.links.findFirst({
+		where: and(eq(links.id, linkId), isNull(links.deletedAt)),
+		columns: {
+			id: true,
+			organizationId: true,
+			createdBy: true,
+		},
+	});
+
+	if (!link) {
+		return false;
+	}
+
+	if (!ctx.isAuthenticated) {
+		return false;
+	}
+
+	// Check organization membership
+	if (ctx.user && link.organizationId) {
+		const membership = await db.query.member.findFirst({
+			where: and(
+				eq(member.userId, ctx.user.id),
+				eq(member.organizationId, link.organizationId)
+			),
+			columns: { id: true },
+		});
+		return !!membership;
+	}
+
+	// Check direct ownership
+	if (ctx.user) {
+		return link.createdBy === ctx.user.id;
+	}
+
+	if (ctx.apiKey) {
+		return ctx.apiKey.organizationId === link.organizationId;
+	}
+
+	return false;
+}
+
 async function resolveProjectAccess(
 	ctx: AuthContext,
-	options: { websiteId?: string; scheduleId?: string }
+	options: { websiteId?: string; scheduleId?: string; linkId?: string }
 ): Promise<ProjectAccessResult> {
-	const { websiteId, scheduleId } = options;
+	const { websiteId, scheduleId, linkId } = options;
 
-	// Check schedule_id first (for custom uptime monitors)
+	// Check link_id first (for link shortener)
+	if (linkId) {
+		const hasAccess = await verifyLinkAccess(ctx, linkId);
+		if (!hasAccess) {
+			return {
+				success: false,
+				error: ctx.isAuthenticated
+					? "Access denied to this link"
+					: "Authentication required",
+				code: ctx.isAuthenticated ? "ACCESS_DENIED" : "AUTH_REQUIRED",
+				status: ctx.isAuthenticated ? 403 : 401,
+			};
+		}
+		return { success: true, projectId: linkId };
+	}
+
+	// Check schedule_id (for custom uptime monitors)
 	if (scheduleId) {
 		const hasAccess = await verifyScheduleAccess(ctx, scheduleId);
 		if (!hasAccess) {
@@ -252,7 +314,7 @@ async function resolveProjectAccess(
 
 	return {
 		success: false,
-		error: "Missing project identifier (website_id or schedule_id)",
+		error: "Missing project identifier (website_id, schedule_id, or link_id)",
 		code: "MISSING_PROJECT_ID",
 		status: 400,
 	};
@@ -639,13 +701,14 @@ export const query = new Elysia({ prefix: "/v1/query" })
 			auth: ctx,
 		}: {
 			body: DynamicQueryRequestType | DynamicQueryRequestType[];
-			query: { website_id?: string; schedule_id?: string; timezone?: string };
+			query: { website_id?: string; schedule_id?: string; link_id?: string; timezone?: string };
 			auth: AuthContext;
 		}) =>
 			record("executeQuery", async () => {
 				const accessResult = await resolveProjectAccess(ctx, {
 					websiteId: q.website_id,
 					scheduleId: q.schedule_id,
+					linkId: q.link_id,
 				});
 
 				if (!accessResult.success) {

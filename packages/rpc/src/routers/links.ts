@@ -1,5 +1,5 @@
 import { websitesApi } from "@databuddy/auth";
-import { and, chQuery, desc, eq, isNull, links } from "@databuddy/db";
+import { and, desc, eq, isNull, links } from "@databuddy/db";
 import { ORPCError } from "@orpc/server";
 import { randomUUIDv7 } from "bun";
 import { z } from "zod";
@@ -80,12 +80,6 @@ const updateLinkSchema = z.object({
 
 const deleteLinkSchema = z.object({
 	id: z.string(),
-});
-
-const getLinkStatsSchema = z.object({
-	id: z.string(),
-	from: z.string().optional(),
-	to: z.string().optional(),
 });
 
 export const linksRouter = {
@@ -255,95 +249,5 @@ export const linksRouter = {
 				.where(eq(links.id, input.id));
 
 			return { success: true };
-		}),
-
-	stats: protectedProcedure
-		.input(getLinkStatsSchema)
-		.handler(async ({ context, input }) => {
-			const existingLink = await context.db
-				.select({ organizationId: links.organizationId })
-				.from(links)
-				.where(and(eq(links.id, input.id), isNull(links.deletedAt)))
-				.limit(1);
-
-			if (existingLink.length === 0) {
-				throw new ORPCError("NOT_FOUND", {
-					message: "Link not found",
-				});
-			}
-
-			await authorizeOrganizationAccess(
-				context,
-				existingLink[0].organizationId,
-				"read"
-			);
-
-			const fromDate =
-				input.from ||
-				new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-			const toDate = input.to || new Date().toISOString();
-
-			const totalClicksResult = await chQuery<{ total: number }>(
-				`SELECT count() as total
-				FROM analytics.link_visits
-				WHERE link_id = {linkId:String}
-					AND timestamp >= {from:DateTime64(3)}
-					AND timestamp <= {to:DateTime64(3)}`,
-				{ linkId: input.id, from: fromDate, to: toDate }
-			);
-
-			const clicksByDayResult = await chQuery<{ date: string; clicks: number }>(
-				`SELECT
-					toDate(timestamp) as date,
-					count() as clicks
-				FROM analytics.link_visits
-				WHERE link_id = {linkId:String}
-					AND timestamp >= {from:DateTime64(3)}
-					AND timestamp <= {to:DateTime64(3)}
-				GROUP BY date
-				ORDER BY date`,
-				{ linkId: input.id, from: fromDate, to: toDate }
-			);
-
-			const topReferrersResult = await chQuery<{
-				referrer: string;
-				clicks: number;
-			}>(
-				`SELECT
-					coalesce(referrer, 'Direct') as referrer,
-					count() as clicks
-				FROM analytics.link_visits
-				WHERE link_id = {linkId:String}
-					AND timestamp >= {from:DateTime64(3)}
-					AND timestamp <= {to:DateTime64(3)}
-				GROUP BY referrer
-				ORDER BY clicks DESC
-				LIMIT 10`,
-				{ linkId: input.id, from: fromDate, to: toDate }
-			);
-
-			const topCountriesResult = await chQuery<{
-				country: string;
-				clicks: number;
-			}>(
-				`SELECT
-					coalesce(country, 'Unknown') as country,
-					count() as clicks
-				FROM analytics.link_visits
-				WHERE link_id = {linkId:String}
-					AND timestamp >= {from:DateTime64(3)}
-					AND timestamp <= {to:DateTime64(3)}
-				GROUP BY country
-				ORDER BY clicks DESC
-				LIMIT 10`,
-				{ linkId: input.id, from: fromDate, to: toDate }
-			);
-
-			return {
-				totalClicks: totalClicksResult[0]?.total ?? 0,
-				clicksByDay: clicksByDayResult,
-				topReferrers: topReferrersResult,
-				topCountries: topCountriesResult,
-			};
 		}),
 };

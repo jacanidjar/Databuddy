@@ -1,5 +1,450 @@
 import type { Filter, SimpleQueryConfig, TimeUnit } from "../types";
 
+// ============================================================================
+// Link Shortener Query Builders
+// ============================================================================
+
+export const LinkShortenerBuilders: Record<string, SimpleQueryConfig> = {
+	link_total_clicks: {
+		meta: {
+			title: "Link Total Clicks",
+			description: "Total clicks for a shortened link within the date range.",
+			category: "Links",
+			tags: ["links", "shortener", "clicks", "total"],
+			output_fields: [
+				{
+					name: "total",
+					type: "number",
+					label: "Total Clicks",
+					description: "Total number of clicks on this link",
+				},
+			],
+			default_visualization: "metric",
+			supports_granularity: [],
+			version: "1.0",
+		},
+		customSql: (
+			linkId: string,
+			startDate: string,
+			endDate: string,
+		) => ({
+			sql: `
+				SELECT count() as total
+				FROM analytics.link_visits
+				WHERE link_id = {linkId:String}
+					AND timestamp >= toDateTime({startDate:String})
+					AND timestamp <= toDateTime(concat({endDate:String}, ' 23:59:59'))
+			`,
+			params: { linkId, startDate, endDate },
+		}),
+		timeField: "timestamp",
+		customizable: false,
+	},
+
+	link_clicks_by_day: {
+		meta: {
+			title: "Link Clicks by Day",
+			description: "Daily breakdown of clicks for a shortened link.",
+			category: "Links",
+			tags: ["links", "shortener", "clicks", "daily", "timeseries"],
+			output_fields: [
+				{
+					name: "date",
+					type: "string",
+					label: "Date",
+					description: "Date of the clicks",
+				},
+				{
+					name: "clicks",
+					type: "number",
+					label: "Clicks",
+					description: "Number of clicks on this date",
+				},
+			],
+			default_visualization: "timeseries",
+			supports_granularity: ["day"],
+			version: "1.0",
+		},
+		customSql: (
+			linkId: string,
+			startDate: string,
+			endDate: string,
+		) => ({
+			sql: `
+				SELECT
+					formatDateTime(toDate(timestamp), '%Y-%m-%d') as date,
+					count() as clicks
+				FROM analytics.link_visits
+				WHERE link_id = {linkId:String}
+					AND timestamp >= toDateTime({startDate:String})
+					AND timestamp <= toDateTime(concat({endDate:String}, ' 23:59:59'))
+				GROUP BY toDate(timestamp)
+				ORDER BY toDate(timestamp) ASC
+			`,
+			params: { linkId, startDate, endDate },
+		}),
+		timeField: "timestamp",
+		customizable: false,
+	},
+
+	link_referrers_by_day: {
+		meta: {
+			title: "Link Unique Referrers by Day",
+			description: "Daily count of unique referrers for a shortened link.",
+			category: "Links",
+			tags: ["links", "shortener", "referrers", "daily", "timeseries"],
+			output_fields: [
+				{
+					name: "date",
+					type: "string",
+					label: "Date",
+					description: "Date",
+				},
+				{
+					name: "value",
+					type: "number",
+					label: "Unique Referrers",
+					description: "Number of unique referrers on this date",
+				},
+			],
+			default_visualization: "timeseries",
+			supports_granularity: ["day"],
+			version: "1.0",
+		},
+		customSql: (
+			linkId: string,
+			startDate: string,
+			endDate: string,
+		) => ({
+			sql: `
+				SELECT
+					formatDateTime(toDate(timestamp), '%Y-%m-%d') as date,
+					uniq(referrer) as value
+				FROM analytics.link_visits
+				WHERE link_id = {linkId:String}
+					AND timestamp >= toDateTime({startDate:String})
+					AND timestamp <= toDateTime(concat({endDate:String}, ' 23:59:59'))
+				GROUP BY toDate(timestamp)
+				ORDER BY toDate(timestamp) ASC
+			`,
+			params: { linkId, startDate, endDate },
+		}),
+		timeField: "timestamp",
+		customizable: false,
+	},
+
+	link_countries_by_day: {
+		meta: {
+			title: "Link Unique Countries by Day",
+			description: "Daily count of unique countries for a shortened link.",
+			category: "Links",
+			tags: ["links", "shortener", "countries", "daily", "timeseries"],
+			output_fields: [
+				{
+					name: "date",
+					type: "string",
+					label: "Date",
+					description: "Date",
+				},
+				{
+					name: "value",
+					type: "number",
+					label: "Unique Countries",
+					description: "Number of unique countries on this date",
+				},
+			],
+			default_visualization: "timeseries",
+			supports_granularity: ["day"],
+			version: "1.0",
+		},
+		customSql: (
+			linkId: string,
+			startDate: string,
+			endDate: string,
+		) => ({
+			sql: `
+				SELECT
+					formatDateTime(toDate(timestamp), '%Y-%m-%d') as date,
+					uniq(country) as value
+				FROM analytics.link_visits
+				WHERE link_id = {linkId:String}
+					AND timestamp >= toDateTime({startDate:String})
+					AND timestamp <= toDateTime(concat({endDate:String}, ' 23:59:59'))
+				GROUP BY toDate(timestamp)
+				ORDER BY toDate(timestamp) ASC
+			`,
+			params: { linkId, startDate, endDate },
+		}),
+		timeField: "timestamp",
+		customizable: false,
+	},
+
+	link_top_referrers: {
+		meta: {
+			title: "Link Top Referrers",
+			description: "Top referrers for a shortened link.",
+			category: "Links",
+			tags: ["links", "shortener", "referrers", "traffic"],
+			output_fields: [
+				{
+					name: "name",
+					type: "string",
+					label: "Name",
+					description: "The referring source name",
+				},
+				{
+					name: "referrer",
+					type: "string",
+					label: "Referrer",
+					description: "The referring source URL",
+				},
+				{
+					name: "clicks",
+					type: "number",
+					label: "Clicks",
+					description: "Number of clicks from this referrer",
+				},
+			],
+			default_visualization: "table",
+			supports_granularity: [],
+			version: "1.0",
+		},
+		customSql: (
+			linkId: string,
+			startDate: string,
+			endDate: string,
+			_filters?: Filter[],
+			_granularity?: TimeUnit,
+			_limit?: number,
+		) => {
+			const limit = _limit || 10;
+			return {
+				sql: `
+					SELECT
+						coalesce(nullIf(referrer, ''), 'Direct') as name,
+						coalesce(nullIf(referrer, ''), 'Direct') as referrer,
+						count() as clicks
+					FROM analytics.link_visits
+					WHERE link_id = {linkId:String}
+						AND timestamp >= toDateTime({startDate:String})
+						AND timestamp <= toDateTime(concat({endDate:String}, ' 23:59:59'))
+					GROUP BY referrer
+					ORDER BY clicks DESC
+					LIMIT {limit:UInt32}
+				`,
+				params: { linkId, startDate, endDate, limit },
+			};
+		},
+		timeField: "timestamp",
+		customizable: false,
+	},
+
+	link_top_countries: {
+		meta: {
+			title: "Link Top Countries",
+			description: "Top countries for a shortened link.",
+			category: "Links",
+			tags: ["links", "shortener", "countries", "geo"],
+			output_fields: [
+				{
+					name: "name",
+					type: "string",
+					label: "Country",
+					description: "The country name",
+				},
+				{
+					name: "country_code",
+					type: "string",
+					label: "Country Code",
+					description: "The country code",
+				},
+				{
+					name: "country_name",
+					type: "string",
+					label: "Country Name",
+					description: "The country name (same as name for countries)",
+				},
+				{
+					name: "clicks",
+					type: "number",
+					label: "Clicks",
+					description: "Number of clicks from this country",
+				},
+			],
+			default_visualization: "table",
+			supports_granularity: [],
+			version: "1.0",
+		},
+		customSql: (
+			linkId: string,
+			startDate: string,
+			endDate: string,
+			_filters?: Filter[],
+			_granularity?: TimeUnit,
+			_limit?: number,
+		) => {
+			const limit = _limit || 10;
+			return {
+				sql: `
+					SELECT
+						coalesce(nullIf(country, ''), 'Unknown') as name,
+						coalesce(nullIf(country, ''), 'Unknown') as country,
+						count() as clicks
+					FROM analytics.link_visits
+					WHERE link_id = {linkId:String}
+						AND timestamp >= toDateTime({startDate:String})
+						AND timestamp <= toDateTime(concat({endDate:String}, ' 23:59:59'))
+					GROUP BY country
+					ORDER BY clicks DESC
+					LIMIT {limit:UInt32}
+				`,
+				params: { linkId, startDate, endDate, limit },
+			};
+		},
+		timeField: "timestamp",
+		customizable: false,
+		plugins: { normalizeGeo: true },
+	},
+
+	link_top_regions: {
+		meta: {
+			title: "Link Top Regions",
+			description: "Top regions for a shortened link.",
+			category: "Links",
+			tags: ["links", "shortener", "regions", "geo"],
+			output_fields: [
+				{
+					name: "name",
+					type: "string",
+					label: "Region",
+					description: "The region name",
+				},
+				{
+					name: "country_code",
+					type: "string",
+					label: "Country Code",
+					description: "The country code",
+				},
+				{
+					name: "country_name",
+					type: "string",
+					label: "Country Name",
+					description: "The country name",
+				},
+				{
+					name: "clicks",
+					type: "number",
+					label: "Clicks",
+					description: "Number of clicks from this region",
+				},
+			],
+			default_visualization: "table",
+			supports_granularity: [],
+			version: "1.0",
+		},
+		customSql: (
+			linkId: string,
+			startDate: string,
+			endDate: string,
+			_filters?: Filter[],
+			_granularity?: TimeUnit,
+			_limit?: number,
+		) => {
+			const limit = _limit || 10;
+			return {
+				sql: `
+					SELECT
+						coalesce(nullIf(region, ''), 'Unknown') as name,
+						coalesce(nullIf(country, ''), 'Unknown') as country,
+						count() as clicks
+					FROM analytics.link_visits
+					WHERE link_id = {linkId:String}
+						AND timestamp >= toDateTime({startDate:String})
+						AND timestamp <= toDateTime(concat({endDate:String}, ' 23:59:59'))
+					GROUP BY region, country
+					ORDER BY clicks DESC
+					LIMIT {limit:UInt32}
+				`,
+				params: { linkId, startDate, endDate, limit },
+			};
+		},
+		timeField: "timestamp",
+		customizable: false,
+		plugins: { normalizeGeo: true },
+	},
+
+	link_top_cities: {
+		meta: {
+			title: "Link Top Cities",
+			description: "Top cities for a shortened link.",
+			category: "Links",
+			tags: ["links", "shortener", "cities", "geo"],
+			output_fields: [
+				{
+					name: "name",
+					type: "string",
+					label: "City",
+					description: "The city name",
+				},
+				{
+					name: "country_code",
+					type: "string",
+					label: "Country Code",
+					description: "The country code",
+				},
+				{
+					name: "country_name",
+					type: "string",
+					label: "Country Name",
+					description: "The country name",
+				},
+				{
+					name: "clicks",
+					type: "number",
+					label: "Clicks",
+					description: "Number of clicks from this city",
+				},
+			],
+			default_visualization: "table",
+			supports_granularity: [],
+			version: "1.0",
+		},
+		customSql: (
+			linkId: string,
+			startDate: string,
+			endDate: string,
+			_filters?: Filter[],
+			_granularity?: TimeUnit,
+			_limit?: number,
+		) => {
+			const limit = _limit || 10;
+			return {
+				sql: `
+					SELECT
+						coalesce(nullIf(city, ''), 'Unknown') as name,
+						coalesce(nullIf(country, ''), 'Unknown') as country,
+						count() as clicks
+					FROM analytics.link_visits
+					WHERE link_id = {linkId:String}
+						AND timestamp >= toDateTime({startDate:String})
+						AND timestamp <= toDateTime(concat({endDate:String}, ' 23:59:59'))
+					GROUP BY city, country
+					ORDER BY clicks DESC
+					LIMIT {limit:UInt32}
+				`,
+				params: { linkId, startDate, endDate, limit },
+			};
+		},
+		timeField: "timestamp",
+		customizable: false,
+		plugins: { normalizeGeo: true },
+	},
+};
+
+// ============================================================================
+// Outbound Links Query Builders (Website Analytics)
+// ============================================================================
+
 export const LinksBuilders: Record<string, SimpleQueryConfig> = {
 	outbound_links: {
 		meta: {

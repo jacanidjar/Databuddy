@@ -3,7 +3,7 @@ import { DevicesBuilders } from "./devices";
 import { EngagementBuilders } from "./engagement";
 import { ErrorsBuilders } from "./errors";
 import { GeoBuilders } from "./geo";
-import { LinksBuilders } from "./links";
+import { LinkShortenerBuilders, LinksBuilders } from "./links";
 import { LLMAnalyticsBuilders } from "./llm-analytics";
 import { PagesBuilders } from "./pages";
 import { PerformanceBuilders } from "./performance";
@@ -26,6 +26,7 @@ export const QueryBuilders = {
 	...CustomEventsBuilders,
 	...ProfilesBuilders,
 	...LinksBuilders,
+	...LinkShortenerBuilders,
 	...EngagementBuilders,
 	...VitalsBuilders,
 	...UptimeBuilders,
