@@ -1,5 +1,6 @@
-import { and, clickHouse, db, eq, isNull, links } from "@databuddy/db";
+import { and, db, eq, isNull, links } from "@databuddy/db";
 import { Elysia, redirect, t } from "elysia";
+import { sendLinkVisit } from "../lib/producer";
 import { extractIp, getGeo } from "../utils/geo";
 import { hashIp } from "../utils/hash";
 import { parseUserAgent } from "../utils/user-agent";
@@ -28,30 +29,24 @@ export const redirectRoute = new Elysia().get(
 			Promise.resolve(parseUserAgent(userAgent)),
 		]);
 
-		clickHouse
-			.insert({
-				table: "analytics.link_visits",
-				values: [
-					{
-						id: crypto.randomUUID(),
-						link_id: link.id,
-						timestamp: new Date()
-							.toISOString()
-							.replace("T", " ")
-							.replace("Z", ""),
-						referrer,
-						user_agent: userAgent,
-						ip_hash: hashIp(ip),
-						country: geo.country,
-						region: geo.region,
-						city: geo.city,
-						browser_name: ua.browserName,
-						device_type: ua.deviceType,
-					},
-				],
-				format: "JSONEachRow",
-			})
-			.catch((err) => console.error("Failed to track visit:", err));
+		sendLinkVisit(
+			{
+				link_id: link.id,
+				timestamp: new Date()
+					.toISOString()
+					.replace("T", " ")
+					.replace("Z", ""),
+				referrer,
+				user_agent: userAgent,
+				ip_hash: hashIp(ip),
+				country: geo.country,
+				region: geo.region,
+				city: geo.city,
+				browser_name: ua.browserName,
+				device_type: ua.deviceType,
+			},
+			link.id
+		).catch((err) => console.error("Failed to track visit:", err));
 
 		return redirect(link.targetUrl, 302);
 	},

@@ -13,6 +13,7 @@ sources:
       - analytics-email-events
       - analytics-blocked-traffic
       - analytics-uptime-checks
+      - analytics-link-visits
     auto_offset_reset: earliest
     sasl:
       enabled: true
@@ -47,6 +48,7 @@ transforms:
       email_events: '.topic == "analytics-email-events"'
       blocked_traffic: '.topic == "analytics-blocked-traffic"'
       uptime_checks: '.topic == "analytics-uptime-checks"'
+      link_visits: '.topic == "analytics-link-visits"'
 
   redpanda_metrics_transform:
     type: remap
@@ -284,6 +286,26 @@ sinks:
     endpoint: "${CLICKHOUSE_URL}"
     database: uptime
     table: uptime_monitor
+    auth:
+      strategy: basic
+      user: "${CLICKHOUSE_USER}"
+      password: "${CLICKHOUSE_PASSWORD}"
+    batch:
+      max_events: 5000
+      max_bytes: 5000000
+      timeout_secs: 5
+    date_time_best_effort: true
+    skip_unknown_fields: true
+    encoding:
+      timestamp_format: unix_ms
+
+  clickhouse_link_visits:
+    type: clickhouse
+    inputs:
+      - route_analytics.link_visits
+    endpoint: "${CLICKHOUSE_URL}"
+    database: analytics
+    table: link_visits
     auth:
       strategy: basic
       user: "${CLICKHOUSE_USER}"

@@ -292,6 +292,7 @@
         "@databuddy/redis": "workspace:*",
         "@maxmind/geoip2-node": "^6.3.4",
         "elysia": "^1.4.22",
+        "kafkajs": "^2.2.4",
         "ua-parser-js": "^2.0.8",
       },
       "devDependencies": {
