@@ -139,7 +139,7 @@ export function Sidebar({ user = null }: SidebarProps) {
 						...baseConfig,
 						navigationMap: {
 							...baseConfig.navigationMap,
-							websites: isLoadingWebsites
+							home: isLoadingWebsites
 								? createLoadingWebsitesNavigation()
 								: createWebsitesNavigation(websites),
 						},
@@ -171,13 +171,32 @@ export function Sidebar({ user = null }: SidebarProps) {
 		}
 
 		return {
-			navigation: navSections.filter((entry) => {
-				if (entry.flag) {
-					const flagState = isEnabled(entry.flag);
-					return flagState.status === "ready" && flagState.on;
-				}
-				return true;
-			}),
+			navigation: navSections
+				.map((entry) => {
+					if (isNavigationSection(entry)) {
+						const filteredItems = entry.items.filter((item) => {
+							if (item.flag) {
+								const flagState = isEnabled(item.flag);
+								return flagState.status === "ready" && flagState.on;
+							}
+							return true;
+						});
+						return { ...entry, items: filteredItems };
+					}
+					return entry;
+				})
+				.filter((entry) => {
+					if (entry.flag) {
+						const flagState = isEnabled(entry.flag);
+						if (!(flagState.status === "ready" && flagState.on)) {
+							return false;
+						}
+					}
+					if (isNavigationSection(entry) && entry.items.length === 0) {
+						return false;
+					}
+					return true;
+				}),
 			header: headerComponent,
 			currentWebsiteId: currentId,
 		};

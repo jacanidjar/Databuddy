@@ -26,6 +26,7 @@ import {
 	IdentificationCardIcon,
 	KeyIcon,
 	LightningIcon,
+	LinkIcon,
 	MapPinIcon,
 	PlayIcon,
 	PlugIcon,
@@ -132,6 +133,17 @@ export const createWebsitesNavigation = (
 		"Add Your First Website",
 		(website) => ({ domain: website.domain })
 	),
+	createNavSection("Observability", ActivityIcon, [
+		// createNavItem("LLM Analytics", BrainIcon, "/llm", {
+		// 	highlight: true,
+		// 	flag: "llm",
+		// }),
+		createNavItem("Links", LinkIcon, "/links", {
+			highlight: true,
+			flag: "links",
+		}),
+
+	])
 ];
 
 export const personalNavigation: NavigationSection[] = [
@@ -340,9 +352,9 @@ export const categoryConfig = {
 	main: createCategoryConfig(
 		[
 			{
-				id: "websites",
-				name: "Websites",
-				icon: GlobeSimpleIcon,
+				id: "home",
+				name: "Home",
+				icon: HouseIcon,
 				production: true,
 			},
 			{
@@ -378,9 +390,9 @@ export const categoryConfig = {
 				production: true,
 			},
 		],
-		"websites",
+		"home",
 		{
-			websites: [],
+			home: [],
 			monitors: monitorsNavigation,
 			organizations: organizationNavigation,
 			billing: billingNavigation,

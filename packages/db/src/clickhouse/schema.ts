@@ -225,7 +225,6 @@ GROUP BY client_id, path, metric_name, hour
 
 const CREATE_LINK_VISITS_TABLE = `
 CREATE TABLE IF NOT EXISTS ${DATABASES.ANALYTICS}.link_visits (
-  id UUID CODEC(ZSTD(1)),
   link_id String CODEC(ZSTD(1)),
   timestamp DateTime64(3, 'UTC') CODEC(Delta(8), ZSTD(1)),
   referrer Nullable(String) CODEC(ZSTD(1)),
@@ -241,7 +240,6 @@ CREATE TABLE IF NOT EXISTS ${DATABASES.ANALYTICS}.link_visits (
 ) ENGINE = MergeTree
 PARTITION BY toDate(timestamp)
 ORDER BY (link_id, timestamp)
-TTL toDateTime(timestamp) + INTERVAL 1 YEAR
 SETTINGS index_granularity = 8192, ttl_only_drop_parts = 1
 `;
 

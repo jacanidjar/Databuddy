@@ -53,7 +53,7 @@ export function MobileCategorySelector({
 						...baseConfig,
 						navigationMap: {
 							...baseConfig.navigationMap,
-							websites: isLoadingWebsites
+							home: isLoadingWebsites
 								? createLoadingWebsitesNavigation()
 								: createWebsitesNavigation(websites),
 						},

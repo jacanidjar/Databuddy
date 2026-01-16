@@ -1,23 +1,17 @@
 import { websitesApi } from "@databuddy/auth";
-import { and, chQuery, desc, eq, isNull, links } from "@databuddy/db";
+import { and, desc, eq, isNull, links } from "@databuddy/db";
+import { invalidateLinkCache } from "@databuddy/redis";
 import { ORPCError } from "@orpc/server";
 import { randomUUIDv7 } from "bun";
+import { customAlphabet } from "nanoid";
 import { z } from "zod";
 import type { Context } from "../orpc";
 import { protectedProcedure } from "../orpc";
 
-const BASE62_CHARS =
-	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-function generateSlug(): string {
-	const bytes = new Uint8Array(8);
-	crypto.getRandomValues(bytes);
-	let slug = "";
-	for (let i = 0; i < 8; i++) {
-		slug += BASE62_CHARS[bytes[i] % 62];
-	}
-	return slug;
-}
+const generateSlug = customAlphabet(
+	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+	8
+);
 
 async function authorizeOrganizationAccess(
 	context: Context,
@@ -66,26 +60,40 @@ const getLinkSchema = z.object({
 	organizationId: z.string(),
 });
 
+const slugRegex = /^[a-zA-Z0-9_-]+$/;
+
 const createLinkSchema = z.object({
 	organizationId: z.string(),
 	name: z.string().min(1).max(255),
 	targetUrl: z.url(),
+	slug: z
+		.string()
+		.min(3)
+		.max(50)
+		.regex(
+			slugRegex,
+			"Slug can only contain letters, numbers, hyphens, and underscores"
+		)
+		.optional(),
 });
 
 const updateLinkSchema = z.object({
 	id: z.string(),
 	name: z.string().min(1).max(255).optional(),
 	targetUrl: z.url().optional(),
+	slug: z
+		.string()
+		.min(3)
+		.max(50)
+		.regex(
+			slugRegex,
+			"Slug can only contain letters, numbers, hyphens, and underscores"
+		)
+		.optional(),
 });
 
 const deleteLinkSchema = z.object({
 	id: z.string(),
-});
-
-const getLinkStatsSchema = z.object({
-	id: z.string(),
-	from: z.string().optional(),
-	to: z.string().optional(),
 });
 
 export const linksRouter = {
@@ -148,6 +156,38 @@ export const linksRouter = {
 				});
 			}
 
+			if (input.slug) {
+				try {
+					const linkId = randomUUIDv7();
+					const [newLink] = await context.db
+						.insert(links)
+						.values({
+							id: linkId,
+							organizationId: input.organizationId,
+							createdBy: context.user.id,
+							slug: input.slug,
+							name: input.name,
+							targetUrl: input.targetUrl,
+						})
+						.returning();
+
+					await invalidateLinkCache(input.slug).catch(() => { });
+
+					return newLink;
+				} catch (error) {
+					const dbError = error as { code?: string; constraint?: string };
+					if (
+						dbError.code === "23505" &&
+						dbError.constraint === "links_slug_unique"
+					) {
+						throw new ORPCError("CONFLICT", {
+							message: "This slug is already taken",
+						});
+					}
+					throw error;
+				}
+			}
+
 			let slug = "";
 			let attempts = 0;
 			const maxAttempts = 10;
@@ -168,9 +208,11 @@ export const linksRouter = {
 							targetUrl: input.targetUrl,
 						})
 						.returning();
+
+					await invalidateLinkCache(slug).catch(() => { });
+
 					return newLink;
 				} catch (error) {
-					// If unique constraint violation, retry with new slug
 					const dbError = error as { code?: string; constraint?: string };
 					if (
 						dbError.code === "23505" &&
@@ -216,23 +258,49 @@ export const linksRouter = {
 			}
 
 			const { id, ...updates } = input;
-			const [updatedLink] = await context.db
-				.update(links)
-				.set({
-					...updates,
-					updatedAt: new Date(),
-				})
-				.where(eq(links.id, id))
-				.returning();
+			const oldSlug = link.slug;
 
-			return updatedLink;
+			try {
+				const [updatedLink] = await context.db
+					.update(links)
+					.set({
+						...updates,
+						updatedAt: new Date(),
+					})
+					.where(eq(links.id, id))
+					.returning();
+
+				// Invalidate old slug cache
+				await invalidateLinkCache(oldSlug).catch(() => { });
+
+				// If slug changed, also invalidate new slug (in case of negative cache)
+				if (input.slug && input.slug !== oldSlug) {
+					await invalidateLinkCache(input.slug).catch(() => { });
+				}
+
+				return updatedLink;
+			} catch (error) {
+				const dbError = error as { code?: string; constraint?: string };
+				if (
+					dbError.code === "23505" &&
+					dbError.constraint === "links_slug_unique"
+				) {
+					throw new ORPCError("CONFLICT", {
+						message: "This slug is already taken",
+					});
+				}
+				throw error;
+			}
 		}),
 
 	delete: protectedProcedure
 		.input(deleteLinkSchema)
 		.handler(async ({ context, input }) => {
 			const existingLink = await context.db
-				.select({ organizationId: links.organizationId })
+				.select({
+					organizationId: links.organizationId,
+					slug: links.slug,
+				})
 				.from(links)
 				.where(and(eq(links.id, input.id), isNull(links.deletedAt)))
 				.limit(1);
@@ -243,9 +311,11 @@ export const linksRouter = {
 				});
 			}
 
+			const link = existingLink[0];
+
 			await authorizeOrganizationAccess(
 				context,
-				existingLink[0].organizationId,
+				link.organizationId,
 				"delete"
 			);
 
@@ -254,96 +324,9 @@ export const linksRouter = {
 				.set({ deletedAt: new Date() })
 				.where(eq(links.id, input.id));
 
+			// Invalidate the cache for this slug
+			await invalidateLinkCache(link.slug).catch(() => { });
+
 			return { success: true };
-		}),
-
-	stats: protectedProcedure
-		.input(getLinkStatsSchema)
-		.handler(async ({ context, input }) => {
-			const existingLink = await context.db
-				.select({ organizationId: links.organizationId })
-				.from(links)
-				.where(and(eq(links.id, input.id), isNull(links.deletedAt)))
-				.limit(1);
-
-			if (existingLink.length === 0) {
-				throw new ORPCError("NOT_FOUND", {
-					message: "Link not found",
-				});
-			}
-
-			await authorizeOrganizationAccess(
-				context,
-				existingLink[0].organizationId,
-				"read"
-			);
-
-			const fromDate =
-				input.from ||
-				new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-			const toDate = input.to || new Date().toISOString();
-
-			const totalClicksResult = await chQuery<{ total: number }>(
-				`SELECT count() as total
-				FROM analytics.link_visits
-				WHERE link_id = {linkId:String}
-					AND timestamp >= {from:DateTime64(3)}
-					AND timestamp <= {to:DateTime64(3)}`,
-				{ linkId: input.id, from: fromDate, to: toDate }
-			);
-
-			const clicksByDayResult = await chQuery<{ date: string; clicks: number }>(
-				`SELECT
-					toDate(timestamp) as date,
-					count() as clicks
-				FROM analytics.link_visits
-				WHERE link_id = {linkId:String}
-					AND timestamp >= {from:DateTime64(3)}
-					AND timestamp <= {to:DateTime64(3)}
-				GROUP BY date
-				ORDER BY date`,
-				{ linkId: input.id, from: fromDate, to: toDate }
-			);
-
-			const topReferrersResult = await chQuery<{
-				referrer: string;
-				clicks: number;
-			}>(
-				`SELECT
-					coalesce(referrer, 'Direct') as referrer,
-					count() as clicks
-				FROM analytics.link_visits
-				WHERE link_id = {linkId:String}
-					AND timestamp >= {from:DateTime64(3)}
-					AND timestamp <= {to:DateTime64(3)}
-				GROUP BY referrer
-				ORDER BY clicks DESC
-				LIMIT 10`,
-				{ linkId: input.id, from: fromDate, to: toDate }
-			);
-
-			const topCountriesResult = await chQuery<{
-				country: string;
-				clicks: number;
-			}>(
-				`SELECT
-					coalesce(country, 'Unknown') as country,
-					count() as clicks
-				FROM analytics.link_visits
-				WHERE link_id = {linkId:String}
-					AND timestamp >= {from:DateTime64(3)}
-					AND timestamp <= {to:DateTime64(3)}
-				GROUP BY country
-				ORDER BY clicks DESC
-				LIMIT 10`,
-				{ linkId: input.id, from: fromDate, to: toDate }
-			);
-
-			return {
-				totalClicks: totalClicksResult[0]?.total ?? 0,
-				clicksByDay: clicksByDayResult,
-				topReferrers: topReferrersResult,
-				topCountries: topCountriesResult,
-			};
 		}),
 };

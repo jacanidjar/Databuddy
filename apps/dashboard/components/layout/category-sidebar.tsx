@@ -67,7 +67,7 @@ export function CategorySidebar({
 						...baseConfig,
 						navigationMap: {
 							...baseConfig.navigationMap,
-							websites: isLoadingWebsites
+							home: isLoadingWebsites
 								? createLoadingWebsitesNavigation()
 								: createWebsitesNavigation(websites),
 						},
