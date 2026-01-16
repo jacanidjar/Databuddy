@@ -186,8 +186,9 @@ const fetchChartData = async (
       ),
       has_any_data AS (
         SELECT client_id, 1 AS hasData
-        FROM aggregated_pageviews
-        WHERE pageviews > 0
+        FROM analytics.daily_pageviews
+        WHERE client_id IN {websiteIds:Array(String)}
+          AND pageviews > 0
         GROUP BY client_id
       )
     SELECT
