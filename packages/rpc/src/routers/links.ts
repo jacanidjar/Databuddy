@@ -1,5 +1,6 @@
 import { websitesApi } from "@databuddy/auth";
 import { and, desc, eq, isNull, links } from "@databuddy/db";
+import { invalidateLinkCache } from "@databuddy/redis";
 import { ORPCError } from "@orpc/server";
 import { randomUUIDv7 } from "bun";
 import { customAlphabet } from "nanoid";
@@ -69,7 +70,10 @@ const createLinkSchema = z.object({
 		.string()
 		.min(3)
 		.max(50)
-		.regex(slugRegex, "Slug can only contain letters, numbers, hyphens, and underscores")
+		.regex(
+			slugRegex,
+			"Slug can only contain letters, numbers, hyphens, and underscores"
+		)
 		.optional(),
 });
 
@@ -81,7 +85,10 @@ const updateLinkSchema = z.object({
 		.string()
 		.min(3)
 		.max(50)
-		.regex(slugRegex, "Slug can only contain letters, numbers, hyphens, and underscores")
+		.regex(
+			slugRegex,
+			"Slug can only contain letters, numbers, hyphens, and underscores"
+		)
 		.optional(),
 });
 
@@ -163,6 +170,9 @@ export const linksRouter = {
 							targetUrl: input.targetUrl,
 						})
 						.returning();
+
+					await invalidateLinkCache(input.slug).catch(() => { });
+
 					return newLink;
 				} catch (error) {
 					const dbError = error as { code?: string; constraint?: string };
@@ -198,9 +208,11 @@ export const linksRouter = {
 							targetUrl: input.targetUrl,
 						})
 						.returning();
+
+					await invalidateLinkCache(slug).catch(() => { });
+
 					return newLink;
 				} catch (error) {
-					// If unique constraint violation, retry with new slug
 					const dbError = error as { code?: string; constraint?: string };
 					if (
 						dbError.code === "23505" &&
@@ -246,6 +258,7 @@ export const linksRouter = {
 			}
 
 			const { id, ...updates } = input;
+			const oldSlug = link.slug;
 
 			try {
 				const [updatedLink] = await context.db
@@ -256,6 +269,14 @@ export const linksRouter = {
 					})
 					.where(eq(links.id, id))
 					.returning();
+
+				// Invalidate old slug cache
+				await invalidateLinkCache(oldSlug).catch(() => { });
+
+				// If slug changed, also invalidate new slug (in case of negative cache)
+				if (input.slug && input.slug !== oldSlug) {
+					await invalidateLinkCache(input.slug).catch(() => { });
+				}
 
 				return updatedLink;
 			} catch (error) {
@@ -276,7 +297,10 @@ export const linksRouter = {
 		.input(deleteLinkSchema)
 		.handler(async ({ context, input }) => {
 			const existingLink = await context.db
-				.select({ organizationId: links.organizationId })
+				.select({
+					organizationId: links.organizationId,
+					slug: links.slug,
+				})
 				.from(links)
 				.where(and(eq(links.id, input.id), isNull(links.deletedAt)))
 				.limit(1);
@@ -287,9 +311,11 @@ export const linksRouter = {
 				});
 			}
 
+			const link = existingLink[0];
+
 			await authorizeOrganizationAccess(
 				context,
-				existingLink[0].organizationId,
+				link.organizationId,
 				"delete"
 			);
 
@@ -297,6 +323,9 @@ export const linksRouter = {
 				.update(links)
 				.set({ deletedAt: new Date() })
 				.where(eq(links.id, input.id));
+
+			// Invalidate the cache for this slug
+			await invalidateLinkCache(link.slug).catch(() => { });
 
 			return { success: true };
 		}),

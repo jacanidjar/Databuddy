@@ -1,20 +1,53 @@
 import { and, db, eq, isNull, links } from "@databuddy/db";
+import {
+	type CachedLink,
+	getCachedLink,
+	setCachedLink,
+	setCachedLinkNotFound,
+} from "@databuddy/redis";
 import { Elysia, redirect, t } from "elysia";
 import { sendLinkVisit } from "../lib/producer";
 import { extractIp, getGeo } from "../utils/geo";
 import { hashIp } from "../utils/hash";
 import { parseUserAgent } from "../utils/user-agent";
 
+async function getLinkBySlug(slug: string): Promise<CachedLink | null> {
+	// Try cache first
+	const cached = await getCachedLink(slug).catch(() => null);
+	if (cached) {
+		return cached;
+	}
+
+	// Fetch from database
+	const dbLink = await db.query.links.findFirst({
+		where: and(eq(links.slug, slug), isNull(links.deletedAt)),
+		columns: {
+			id: true,
+			targetUrl: true,
+		},
+	});
+
+	if (!dbLink) {
+		// Cache negative result with short TTL
+		await setCachedLinkNotFound(slug).catch(() => { });
+		return null;
+	}
+
+	const link: CachedLink = {
+		id: dbLink.id,
+		targetUrl: dbLink.targetUrl,
+	};
+
+	// Cache the result
+	await setCachedLink(slug, link).catch(() => { });
+
+	return link;
+}
+
 export const redirectRoute = new Elysia().get(
 	"/:slug",
 	async ({ params, request }) => {
-		const link = await db.query.links.findFirst({
-			where: and(eq(links.slug, params.slug), isNull(links.deletedAt)),
-			columns: {
-				id: true,
-				targetUrl: true,
-			},
-		});
+		const link = await getLinkBySlug(params.slug);
 
 		if (!link) {
 			return Response.json({ error: "Link not found" }, { status: 404 });

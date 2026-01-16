@@ -2,5 +2,6 @@
 export * from "./cache-invalidation";
 export * from "./cacheable";
 export * from "./drizzle-cache";
+export * from "./links-cache";
 export * from "./redis";
 export { redis as default } from "./redis";
