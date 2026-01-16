@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LinkIcon } from "@phosphor-icons/react";
 import { useEffect } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -18,6 +17,10 @@ import {
 import { FormDialog } from "@/components/ui/form-dialog";
 import { Input } from "@/components/ui/input";
 import { type Link, useCreateLink, useUpdateLink } from "@/hooks/use-links";
+
+const LINKS_BASE_URL = "dby.sh";
+
+const slugRegex = /^[a-zA-Z0-9_-]+$/;
 
 const formSchema = z.object({
 	name: z
@@ -43,6 +46,18 @@ const formSchema = z.object({
 			},
 			{ message: "Please enter a valid URL" }
 		),
+	slug: z
+		.string()
+		.trim()
+		.max(50, "Slug must be less than 50 characters")
+		.refine((val) => val === "" || val.length >= 3, {
+			message: "Slug must be at least 3 characters",
+		})
+		.refine((val) => val === "" || slugRegex.test(val), {
+			message: "Only letters, numbers, hyphens, and underscores",
+		})
+		.optional()
+		.or(z.literal("")),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -72,16 +87,29 @@ export function LinkDialog({
 		defaultValues: {
 			name: "",
 			targetUrl: "",
+			slug: "",
 		},
 	});
 
 	useEffect(() => {
 		if (link) {
-			form.reset({ name: link.name, targetUrl: link.targetUrl });
+			let targetUrl = link.targetUrl;
+			if (targetUrl.startsWith("https://")) {
+				targetUrl = targetUrl.slice(8);
+			} else if (targetUrl.startsWith("http://")) {
+				targetUrl = targetUrl.slice(7);
+			}
+			form.reset({
+				name: link.name,
+				targetUrl,
+				slug: link.slug,
+			});
 		} else {
-			form.reset({ name: "", targetUrl: "" });
+			form.reset({ name: "", targetUrl: "", slug: "" });
 		}
 	}, [link, form]);
+
+	const slugValue = form.watch("slug");
 
 	const getErrorMessage = (error: unknown, isEditingMode: boolean): string => {
 		const defaultMessage = `Failed to ${isEditingMode ? "update" : "create"} link.`;
@@ -127,12 +155,15 @@ export function LinkDialog({
 			targetUrl = `https://${targetUrl}`;
 		}
 
+		const slug = formData.slug?.trim() || undefined;
+
 		try {
 			if (link?.id) {
 				const result = await updateLinkMutation.mutateAsync({
 					id: link.id,
 					name: formData.name,
 					targetUrl,
+					slug,
 				});
 				if (onSave) {
 					onSave(result);
@@ -143,6 +174,7 @@ export function LinkDialog({
 					organizationId: activeOrganization.id,
 					name: formData.name,
 					targetUrl,
+					slug,
 				});
 				if (onSave) {
 					onSave(result);
@@ -169,7 +201,6 @@ export function LinkDialog({
 					? "Update the details of your existing link."
 					: "Create a short link to track clicks and analytics."
 			}
-			icon={<LinkIcon className="size-5" weight="duotone" />}
 			isSubmitting={isPending}
 			onOpenChange={onOpenChange}
 			onSubmit={form.handleSubmit(handleSubmit)}
@@ -200,13 +231,13 @@ export function LinkDialog({
 							<FormLabel>Target URL</FormLabel>
 							<FormControl>
 								<div className="flex items-center">
-									<span className="inline-flex h-9 items-center rounded-l border border-r-0 bg-muted px-3 text-muted-foreground text-sm">
+									<span className="inline-flex h-9 items-center rounded-none border border-r-0 bg-dialog px-3 text-accent-foreground text-sm">
 										https://
 									</span>
 									<Input
 										placeholder="example.com/landing-page"
 										{...field}
-										className="rounded-l-none"
+										className="rounded-l-none border border-border border-l-0"
 										onChange={(e) => {
 											let url = e.target.value.trim();
 											if (
@@ -229,6 +260,44 @@ export function LinkDialog({
 									/>
 								</div>
 							</FormControl>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+				<FormField
+					control={form.control}
+					name="slug"
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>
+								Custom slug{" "}
+								<span className="text-muted-foreground">(optional)</span>
+							</FormLabel>
+							<FormControl>
+								<div className="flex items-center">
+									<span className="inline-flex h-9 items-center rounded-none border border-r-0 bg-dialog px-3 text-accent-foreground text-sm">
+										{LINKS_BASE_URL}/
+									</span>
+									<Input
+										placeholder="my-campaign"
+										{...field}
+										className="rounded-l-none border border-border border-l-0"
+										onChange={(e) => {
+											const value = e.target.value.replace(/\s/g, "-");
+											field.onChange(value);
+										}}
+									/>
+								</div>
+							</FormControl>
+							{slugValue && slugValue.length >= 3 ? (
+								<p className="font-mono text-muted-foreground text-xs">
+									{LINKS_BASE_URL}/{slugValue}
+								</p>
+							) : (
+								<p className="text-muted-foreground text-xs">
+									Leave empty to generate a random short slug
+								</p>
+							)}
 							<FormMessage />
 						</FormItem>
 					)}

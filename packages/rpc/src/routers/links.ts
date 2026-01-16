@@ -2,22 +2,15 @@ import { websitesApi } from "@databuddy/auth";
 import { and, desc, eq, isNull, links } from "@databuddy/db";
 import { ORPCError } from "@orpc/server";
 import { randomUUIDv7 } from "bun";
+import { customAlphabet } from "nanoid";
 import { z } from "zod";
 import type { Context } from "../orpc";
 import { protectedProcedure } from "../orpc";
 
-const BASE62_CHARS =
-	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-function generateSlug(): string {
-	const bytes = new Uint8Array(8);
-	crypto.getRandomValues(bytes);
-	let slug = "";
-	for (let i = 0; i < 8; i++) {
-		slug += BASE62_CHARS[bytes[i] % 62];
-	}
-	return slug;
-}
+const generateSlug = customAlphabet(
+	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+	8
+);
 
 async function authorizeOrganizationAccess(
 	context: Context,
@@ -66,16 +59,30 @@ const getLinkSchema = z.object({
 	organizationId: z.string(),
 });
 
+const slugRegex = /^[a-zA-Z0-9_-]+$/;
+
 const createLinkSchema = z.object({
 	organizationId: z.string(),
 	name: z.string().min(1).max(255),
 	targetUrl: z.url(),
+	slug: z
+		.string()
+		.min(3)
+		.max(50)
+		.regex(slugRegex, "Slug can only contain letters, numbers, hyphens, and underscores")
+		.optional(),
 });
 
 const updateLinkSchema = z.object({
 	id: z.string(),
 	name: z.string().min(1).max(255).optional(),
 	targetUrl: z.url().optional(),
+	slug: z
+		.string()
+		.min(3)
+		.max(50)
+		.regex(slugRegex, "Slug can only contain letters, numbers, hyphens, and underscores")
+		.optional(),
 });
 
 const deleteLinkSchema = z.object({
@@ -140,6 +147,35 @@ export const linksRouter = {
 				throw new ORPCError("BAD_REQUEST", {
 					message: "Target URL must be an absolute HTTP or HTTPS URL",
 				});
+			}
+
+			if (input.slug) {
+				try {
+					const linkId = randomUUIDv7();
+					const [newLink] = await context.db
+						.insert(links)
+						.values({
+							id: linkId,
+							organizationId: input.organizationId,
+							createdBy: context.user.id,
+							slug: input.slug,
+							name: input.name,
+							targetUrl: input.targetUrl,
+						})
+						.returning();
+					return newLink;
+				} catch (error) {
+					const dbError = error as { code?: string; constraint?: string };
+					if (
+						dbError.code === "23505" &&
+						dbError.constraint === "links_slug_unique"
+					) {
+						throw new ORPCError("CONFLICT", {
+							message: "This slug is already taken",
+						});
+					}
+					throw error;
+				}
 			}
 
 			let slug = "";
@@ -210,16 +246,30 @@ export const linksRouter = {
 			}
 
 			const { id, ...updates } = input;
-			const [updatedLink] = await context.db
-				.update(links)
-				.set({
-					...updates,
-					updatedAt: new Date(),
-				})
-				.where(eq(links.id, id))
-				.returning();
 
-			return updatedLink;
+			try {
+				const [updatedLink] = await context.db
+					.update(links)
+					.set({
+						...updates,
+						updatedAt: new Date(),
+					})
+					.where(eq(links.id, id))
+					.returning();
+
+				return updatedLink;
+			} catch (error) {
+				const dbError = error as { code?: string; constraint?: string };
+				if (
+					dbError.code === "23505" &&
+					dbError.constraint === "links_slug_unique"
+				) {
+					throw new ORPCError("CONFLICT", {
+						message: "This slug is already taken",
+					});
+				}
+				throw error;
+			}
 		}),
 
 	delete: protectedProcedure

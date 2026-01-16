@@ -16,7 +16,7 @@ class LinksProducer {
 	private producer: Producer | null = null;
 	private connected = false;
 	private readonly config: ProducerConfig;
-
+	
 	constructor(config: ProducerConfig) {
 		this.config = config;
 	}
