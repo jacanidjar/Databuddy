@@ -63,7 +63,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 type AlarmFormProps = {
 	websiteId: string;
-	initialData?: any; // Using any to avoid strict type complex matching with DB result
+	initialData?: Partial<FormValues> & { id: string };
 	onSuccess: () => void;
 	onCancel: () => void;
 };
@@ -78,12 +78,12 @@ export function AlarmForm({
 
 	// Mutations
 	const createMutation = useMutation({
-		...orpc.alarms.create.mutationOptions(),
+        mutationFn: (data: any) => orpc.alarms.create(data),
 		onSuccess: () => {
 			toast.success("Alarm created successfully");
 			onSuccess();
 		},
-		onError: (error: any) => {
+		onError: (error: unknown) => {
 			toast.error(
 				error instanceof Error ? error.message : "Failed to create alarm"
 			);
@@ -91,12 +91,12 @@ export function AlarmForm({
 	});
 
 	const updateMutation = useMutation({
-		...orpc.alarms.update.mutationOptions(),
+        mutationFn: (data: any) => orpc.alarms.update(data),
 		onSuccess: () => {
 			toast.success("Alarm updated successfully");
 			onSuccess();
 		},
-		onError: (error: any) => {
+		onError: (error: unknown) => {
 			toast.error(
 				error instanceof Error ? error.message : "Failed to update alarm"
 			);
@@ -106,8 +106,10 @@ export function AlarmForm({
 	// Query for Quick Assign / Copying
 	const { data: availableAlarms } = useQuery({
 		...orpc.alarms.list.queryOptions({
-            // We want global alarms (different website)
-			userId: undefined, // Current user implied
+            input: {
+                // We want global alarms (different website)
+                userId: undefined, // Current user implied
+            }
 		}),
         enabled: !isEditing, // Only fetch for create mode
 	});
@@ -115,11 +117,11 @@ export function AlarmForm({
     // Valid alarms to copy from (not from this website)
     const alarmsToCopy = useMemo(() => {
         if (!availableAlarms) return [];
-        return availableAlarms.filter((a: any) => a.websiteId !== websiteId);
+        return availableAlarms.filter((a) => a.websiteId !== websiteId);
     }, [availableAlarms, websiteId]);
 
 	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema),
+		resolver: zodResolver(formSchema) as any,
 		defaultValues: {
 			name: "",
 			description: "",
@@ -161,20 +163,21 @@ export function AlarmForm({
 	}, [initialData, form]);
 
     const handleCopySelect = (alarmId: string) => {
-        const template = alarmsToCopy.find((a: any) => a.id === alarmId);
+        const template = alarmsToCopy.find((a) => a.id === alarmId);
         if (template) {
             form.setValue("name", `${template.name} (Copy)`);
             form.setValue("description", template.description || "");
-            form.setValue("notificationChannels", template.notificationChannels as any);
+            form.setValue("notificationChannels", template.notificationChannels as ("slack" | "discord" | "email" | "webhook")[]);
             form.setValue("slackWebhookUrl", template.slackWebhookUrl || "");
             form.setValue("discordWebhookUrl", template.discordWebhookUrl || "");
             form.setValue("emailAddresses", template.emailAddresses || []);
             form.setValue("emailAddressInput", template.emailAddresses?.[0] || "");
             form.setValue("webhookUrl", template.webhookUrl || "");
             if (template.triggerConditions) {
+                const conditions = template.triggerConditions as any;
                 form.setValue("triggerConditions", {
-                    consecutiveFailures: (template.triggerConditions as any).consecutiveFailures,
-                    cooldownMinutes: (template.triggerConditions as any).cooldownMinutes,
+                    consecutiveFailures: conditions.consecutiveFailures || 3,
+                    cooldownMinutes: conditions.cooldownMinutes || 5,
                 });
             }
             toast.info("Settings copied from " + template.name);
@@ -236,7 +239,7 @@ export function AlarmForm({
                                 <SelectValue placeholder="Select an alarm to copy settings from..." />
                             </SelectTrigger>
                             <SelectContent>
-                                {alarmsToCopy.map((alarm: any) => (
+                                {alarmsToCopy.map((alarm) => (
                                     <SelectItem key={alarm.id} value={alarm.id}>
                                         {alarm.name}
                                     </SelectItem>
@@ -249,7 +252,7 @@ export function AlarmForm({
 				<FormField
 					control={form.control}
 					name="name"
-					render={({ field }: { field: any }) => (
+						render={({ field }) => (
 						<FormItem>
 							<FormLabel>Alarm Name</FormLabel>
 							<FormControl>
@@ -263,7 +266,7 @@ export function AlarmForm({
 				<FormField
 					control={form.control}
 					name="description"
-					render={({ field }: { field: any }) => (
+						render={({ field }) => (
 						<FormItem>
 							<FormLabel>Description (Optional)</FormLabel>
 							<FormControl>
@@ -283,7 +286,7 @@ export function AlarmForm({
 					<FormField
 						control={form.control}
 						name="notificationChannels"
-						render={({ field }: { field: any }) => (
+							render={({ field }) => (
 							<FormItem>
 								<FormControl>
 									<ToggleGroup
@@ -321,7 +324,7 @@ export function AlarmForm({
 						<FormField
 							control={form.control}
 							name="slackWebhookUrl"
-							render={({ field }: { field: any }) => (
+								render={({ field }) => (
 								<FormItem>
 									<FormLabel>Slack Webhook URL</FormLabel>
 									<FormControl>
@@ -337,7 +340,7 @@ export function AlarmForm({
 						<FormField
 							control={form.control}
 							name="discordWebhookUrl"
-							render={({ field }: { field: any }) => (
+								render={({ field }) => (
 								<FormItem>
 									<FormLabel>Discord Webhook URL</FormLabel>
 									<FormControl>
@@ -356,7 +359,7 @@ export function AlarmForm({
 						<FormField
 							control={form.control}
 							name="emailAddressInput"
-							render={({ field }: { field: any }) => (
+								render={({ field }) => (
 								<FormItem>
 									<FormLabel>Email Address</FormLabel>
 									<FormControl>
@@ -375,7 +378,7 @@ export function AlarmForm({
 						<FormField
 							control={form.control}
 							name="webhookUrl"
-							render={({ field }: { field: any }) => (
+								render={({ field }) => (
 								<FormItem>
 									<FormLabel>Webhook URL</FormLabel>
 									<FormControl>
@@ -394,7 +397,7 @@ export function AlarmForm({
 						<FormField
 							control={form.control}
 							name="triggerConditions.consecutiveFailures"
-							render={({ field }: { field: any }) => (
+								render={({ field }) => (
 								<FormItem>
 									<FormLabel>Consecutive Failures</FormLabel>
 									<FormControl>
@@ -410,7 +413,7 @@ export function AlarmForm({
 						<FormField
 							control={form.control}
 							name="triggerConditions.cooldownMinutes"
-							render={({ field }: { field: any }) => (
+								render={({ field }) => (
 								<FormItem>
 									<FormLabel>Cooldown (Minutes)</FormLabel>
 									<FormControl>

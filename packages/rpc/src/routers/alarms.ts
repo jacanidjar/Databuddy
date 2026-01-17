@@ -65,7 +65,7 @@ export const alarmsRouter = {
             }
 
             return db.query.alarms.findMany({
-                where: and(or(...conditions)),
+                where: and(...conditions),
                 orderBy: [desc(alarms.createdAt)],
                 with: {
                     website: true,
@@ -324,9 +324,12 @@ export const alarmsRouter = {
                         alarm.emailAddresses &&
                         alarm.emailAddresses.length > 0
                     ) {
-                        // Note: Email requires a sendEmail function to be provided
-                        // This would typically come from the @databuddy/email package
-                        results.email = false; // Will implement with proper email service
+                        await sendEmail({
+                            to: alarm.emailAddresses,
+                            subject: testPayload.title,
+                            text: testPayload.message,
+                        });
+                        results.email = true;
                     } else if (channel === "webhook" && alarm.webhookUrl) {
                         await sendWebhook(alarm.webhookUrl, testPayload, {
                             headers: (alarm.webhookHeaders as Record<string, string>) ?? {},

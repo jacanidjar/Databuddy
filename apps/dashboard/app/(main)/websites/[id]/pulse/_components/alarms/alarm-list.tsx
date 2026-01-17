@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { PlusIcon, TrashIcon } from "@phosphor-icons/react";
+import { PlusIcon, TrashIcon, BellIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -44,9 +44,11 @@ export function AlarmList({ websiteId }: AlarmListProps) {
 		refetch,
 	} = useQuery({
 		...orpc.alarms.listByWebsite.queryOptions({
-			websiteId,
-			triggerType: "uptime",
-			enabledOnly: false, // We want to see disabled ones too
+			input: {
+				websiteId,
+				triggerType: "uptime",
+				enabledOnly: false, // We want to see disabled ones too
+			},
 		}),
 	});
 
@@ -65,58 +67,42 @@ export function AlarmList({ websiteId }: AlarmListProps) {
 		},
 	});
 
-	const handleEdit = (alarmId: string) => {
-		setEditingAlarmId(alarmId);
-		setIsSheetOpen(true);
-	};
+	const editingAlarm = alarms?.find((alarm) => alarm.id === editingAlarmId);
 
 	const handleCreate = () => {
 		setEditingAlarmId(null);
 		setIsSheetOpen(true);
 	};
 
-	const handleSheetOpenChange = (open: boolean) => {
-		setIsSheetOpen(open);
-		if (!open) setEditingAlarmId(null);
+	const handleEdit = (alarmId: string) => {
+		setEditingAlarmId(alarmId);
+		setIsSheetOpen(true);
 	};
-
-	// We'll need to fetch the full alarm details when editing, 
-    // or just pass the specialized data?
-    // The listByWebsite endpoint returns the alarm object, which should match what we need.
-    // However, create/update might need specific formatted data.
-    // The AlarmForm will handle fetching the full details if needed, or we pass the data.
-    // For simplicity, we'll let the form fetch if it needs or just pass the data we have if complete.
-    // Looking at alarms.ts, listByWebsite returns `db.query.alarms.findMany` which returns all fields.
-    const editingAlarm = alarms?.find(a => a.id === editingAlarmId);
 
 	return (
 		<div className="space-y-4">
-			<div className="flex items-center justify-between">
-				<div>
-					<h3 className="font-medium text-lg">Alarms</h3>
-					<p className="text-muted-foreground text-sm">
-						Get notified when your site goes down.
-					</p>
-				</div>
-				<Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
+			<div className="flex justify-end">
+				<Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
 					<SheetTrigger asChild>
-						<Button size="sm" onClick={handleCreate}>
-							<PlusIcon className="mr-2 size-4" />
+						<Button onClick={handleCreate}>
+							<PlusIcon className="mr-2 h-4 w-4" />
 							Create Alarm
 						</Button>
 					</SheetTrigger>
-					<SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-						<SheetHeader className="mb-6">
+					<SheetContent className="sm:max-w-md">
+						<SheetHeader>
 							<SheetTitle>
-								{editingAlarmId ? "Edit Alarm" : "Create Alarm"}
+								{editingAlarm ? "Edit Alarm" : "Create Alarm"}
 							</SheetTitle>
 							<SheetDescription>
-								Configure your uptime monitoring alerts.
+								{editingAlarm
+									? "Make changes to your alarm here. Click save when you're done."
+									: "Create a new alarm to monitor your website."}
 							</SheetDescription>
 						</SheetHeader>
 						<AlarmForm
 							websiteId={websiteId}
-							initialData={editingAlarm}
+							initialData={editingAlarm as any} // Cast specific DB type to Form type
 							onSuccess={() => {
 								setIsSheetOpen(false);
 								refetch();
@@ -136,6 +122,7 @@ export function AlarmList({ websiteId }: AlarmListProps) {
 					title="No alarms configured"
 					description="Create an alarm to get notified via Slack, Discord, Email, or Webhooks when your site goes down."
 					variant="minimal"
+					icon={BellIcon}
 					action={{
 						label: "Create Alarm",
 						onClick: handleCreate,
@@ -146,7 +133,7 @@ export function AlarmList({ websiteId }: AlarmListProps) {
 					{alarms.map((alarm) => (
 						<AlarmCard
 							key={alarm.id}
-							alarm={alarm as any} // Cast if types drift, but should match
+							alarm={alarm as any} // Cast to handle JSON type inference mismatch
 							onEdit={() => handleEdit(alarm.id)}
 							onDelete={() => setDeletingAlarmId(alarm.id)}
 							onRefetch={refetch}

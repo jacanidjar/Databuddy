@@ -143,21 +143,10 @@ if %ERRORLEVEL% NEQ 0 (
 
 echo.
 
-REM ============================================================
-REM Step 6: Start development server
-REM ============================================================
-echo %YELLOW%[6/6] Starting development server...%RESET%
-echo.
-echo %CYAN%============================================================%RESET%
-echo %GREEN%Starting Databuddy in development mode...%RESET%
-echo %CYAN%============================================================%RESET%
-echo.
-echo Press Ctrl+C to stop the server.
-echo.
 
-call bun run dev
-
-REM If dev server stops, pause before closing
 echo.
-echo %YELLOW%Development server stopped.%RESET%
+echo %GREEN%Restart complete!%RESET%
+echo %YELLOW%You can now run 'bun run dev' to start the server.%RESET%
+echo.
 pause
+

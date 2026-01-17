@@ -1,6 +1,7 @@
 # Implement Uptime Monitoring Alarms (Bounty #268)
 
 /claim #268
+/claim #268
 
 ## Description
 This PR implements the full Uptime Monitoring Alarm system, integrating the uptime service with the notification system. It allows users to create, manage, and assign alarms to monitored websites, and triggers notifications based on configurable thresholds (consecutive failures) and state changes (UP/DOWN).
@@ -23,8 +24,7 @@ This PR implements the full Uptime Monitoring Alarm system, integrating the upti
     - Test notifications directly from UI.
 
 ### 3. dev / Environment Fixes
-- **Windows Support:** Fixed `dev.bat` and `packages/email/package.json` to correctly handle `bun` paths and binary execution on Windows environments.
-- **Scripts:** Added database update options to `dev.bat` for smoother local development.
+- **Windows Support:** Fixed `packages/email/package.json` to correctly handle `bun` paths and binary execution on Windows environments.
 
 ## Testing
 - **Unit Tests:** Verified `alarm-trigger.test.ts`.

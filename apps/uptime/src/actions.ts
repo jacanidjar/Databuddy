@@ -309,7 +309,6 @@ export function checkUptime(
 	siteId: string,
 	url: string,
 	attempt = 1,
-	_maxRetries: number = CONFIG.maxRetries,
 	jsonParsingConfig?: JsonParsingConfig | null
 ): Promise<ActionResult<UptimeData>> {
 	return record("uptime.check_uptime", async () => {

@@ -157,7 +157,7 @@ async function sendDownNotification(
             consecutiveFailures,
             responseTime: `${uptimeData.total_ms}ms`,
             probeRegion: uptimeData.probe_region,
-            dashboardLink: `https://app.databuddy.com/uptime/${uptimeData.site_id}`,
+            dashboardLink: `${process.env.BETTER_AUTH_URL || "https://app.databuddy.com"}/uptime/${uptimeData.site_id}`,
         },
     };
 
@@ -215,7 +215,7 @@ async function sendRecoveryNotification(
             recoveredAt: dayjs().toISOString(),
             responseTime: `${uptimeData.total_ms}ms`,
             httpStatus: uptimeData.http_code,
-            dashboardLink: `https://app.databuddy.com/uptime/${uptimeData.site_id}`,
+            dashboardLink: `${process.env.BETTER_AUTH_URL || "https://app.databuddy.com"}/uptime/${uptimeData.site_id}`,
         },
     };
 
